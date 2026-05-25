@@ -1,0 +1,322 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { 
+  Send, 
+  User, 
+  Sparkles, 
+  Loader2, 
+  Bot, 
+  Plus, 
+  MessageSquare,
+  History,
+  MoreVertical,
+  Lock,
+  Trash2,
+  Copy,
+  CheckCircle2
+} from "lucide-react";
+import { chatWithXakAI } from "@/ai/flows/xak-ai-chat-assistant-flow";
+import { cn } from "@/lib/utils";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, orderBy, limit, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+
+function FormattedContent({ content }: { content: string }) {
+  const { toast } = useToast();
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  const handleCopy = (text: string, id: number) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    toast({ title: "Copied" });
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const parts = content.split(/(```[\s\S]*?```)/g);
+
+  return (
+    <div className="space-y-4">
+      {parts.map((part, i) => {
+        if (part.startsWith('```')) {
+          const match = part.match(/```(\w*)\n?([\s\S]*?)```/);
+          const lang = match?.[1] || "code";
+          const code = match?.[2] || "";
+
+          return (
+            <div key={i} className="my-6 rounded-2xl overflow-hidden border-2 border-white/10 bg-zinc-950 shadow-2xl group/code">
+              <div className="flex items-center justify-between px-6 py-2 bg-white/5 border-b border-white/5">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">{lang}</span>
+                <button 
+                  onClick={() => handleCopy(code, i)}
+                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                >
+                  {copiedId === i ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                  {copiedId === i ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <div className="p-6 overflow-x-auto custom-scrollbar">
+                <pre className="font-mono text-sm text-sky-400 leading-relaxed whitespace-pre">
+                  {code.trim()}
+                </pre>
+              </div>
+            </div>
+          );
+        }
+        return <div key={i} className="whitespace-pre-wrap leading-relaxed">{part}</div>;
+      })}
+    </div>
+  );
+}
+
+export default function XakAIPage() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<{ role: 'user' | 'model', content: string }[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  const sessionsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, "users", user.uid, "xak_ai_sessions"), orderBy("updatedAt", "desc"), limit(20));
+  }, [firestore, user]);
+
+  const { data: sessions } = useCollection(sessionsQuery);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) viewport.scrollTop = viewport.scrollHeight;
+    }
+  }, [messages, loading]);
+
+  useEffect(() => {
+    if (activeSessionId && sessions) {
+      const session = sessions.find(s => s.id === activeSessionId);
+      if (session) setMessages(session.messages || []);
+    } else if (!activeSessionId) {
+      setMessages([]);
+    }
+  }, [activeSessionId, sessions]);
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
+
+    const userMessage = input;
+    const currentMessages = [...messages, { role: 'user' as const, content: userMessage }];
+    
+    // Format history for Genkit
+    const history = messages.map(m => ({
+      role: m.role as any,
+      content: [{ text: m.content }]
+    }));
+
+    setInput("");
+    setMessages(currentMessages);
+    setLoading(true);
+
+    try {
+      const response = await chatWithXakAI({ 
+        message: userMessage,
+        history,
+        userId: user?.uid 
+      });
+      const aiResponse = response.response;
+      const finalMessages = [...currentMessages, { role: 'model' as const, content: aiResponse }];
+      setMessages(finalMessages);
+
+      if (user && firestore) {
+        if (!activeSessionId) {
+          addDocumentNonBlocking(collection(firestore, "users", user.uid, "xak_ai_sessions"), {
+            title: userMessage.substring(0, 30),
+            messages: finalMessages,
+            updatedAt: serverTimestamp(),
+            createdAt: serverTimestamp()
+          }).then(docRef => {
+            if (docRef) setActiveSessionId(docRef.id);
+          });
+        } else {
+          updateDoc(doc(firestore, "users", user.uid, "xak_ai_sessions", activeSessionId), {
+            messages: finalMessages,
+            updatedAt: serverTimestamp()
+          });
+        }
+      }
+    } catch (error) { 
+      toast({ variant: "destructive", title: "Error", description: "Xak AI is having trouble right now." }); 
+    } finally { 
+      setLoading(false); 
+    }
+  };
+
+  const handleDeleteSession = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!firestore || !user) return;
+    deleteDocumentNonBlocking(doc(firestore, "users", user.uid, "xak_ai_sessions", id));
+    if (activeSessionId === id) {
+      setActiveSessionId(null);
+      setMessages([]);
+    }
+    toast({ title: "Session Deleted" });
+  };
+
+  if (!mounted) return null;
+
+  return (
+    <div className="h-[calc(100vh-80px)] flex overflow-hidden animate-fade-in text-white relative">
+      <aside className={cn(
+        "hidden lg:flex w-72 border-r border-white/10 bg-black/40 backdrop-blur-3xl flex-col z-20",
+        !user && "opacity-50 pointer-events-none grayscale"
+      )}>
+        <div className="p-6">
+           <Button 
+            onClick={() => setActiveSessionId(null)} 
+            disabled={!user}
+            className="w-full h-12 bg-white/5 hover:bg-white/10 text-white border-2 border-white/10 rounded-xl font-bold flex items-center justify-start px-5 gap-3 shadow-xl transition-all"
+           >
+              <Plus className="w-4 h-4" /> New Session
+           </Button>
+        </div>
+        
+        <ScrollArea className="flex-1 px-4 py-2">
+           <div className="space-y-1">
+              <h3 className="px-4 text-[9px] font-black uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+                <History className="w-3 h-3" /> Chat History
+              </h3>
+              {!user ? (
+                <div className="px-4 py-10 text-center space-y-4">
+                  <Lock className="w-6 h-6 mx-auto opacity-20" />
+                  <p className="text-[10px] font-bold text-white/30 uppercase leading-relaxed">Sign in to save your history.</p>
+                </div>
+              ) : (
+                sessions?.map(s => (
+                  <button 
+                    key={s.id} 
+                    onClick={() => setActiveSessionId(s.id)} 
+                    className={cn(
+                      "w-full px-4 py-3 rounded-xl text-left transition-all flex items-center justify-between group",
+                      activeSessionId === s.id ? "bg-primary/20 text-white border border-primary/20" : "hover:bg-white/5 text-white/60"
+                    )}
+                  >
+                     <div className="flex items-center gap-3 truncate">
+                        <MessageSquare className="w-3.5 h-3.5 shrink-0 opacity-40" />
+                        <span className="text-[10px] font-bold truncate block uppercase tracking-wider">{s.title || "Untitled"}</span>
+                     </div>
+                     <button 
+                      onClick={(e) => handleDeleteSession(e, s.id)}
+                      className="opacity-0 group-hover:opacity-40 hover:!opacity-100 p-1 rounded-md hover:bg-rose-500/20 text-rose-500 transition-all"
+                     >
+                        <Trash2 className="w-3 h-3" />
+                     </button>
+                  </button>
+                ))
+              )}
+           </div>
+        </ScrollArea>
+      </aside>
+
+      <main className="flex-1 flex flex-col relative bg-transparent">
+        <header className="h-16 border-b border-white/10 flex items-center justify-between px-8 bg-black/20 backdrop-blur-xl sticky top-0 z-20">
+          <div className="flex items-center gap-3">
+            <Bot className="w-6 h-6 text-primary animate-pulse" />
+            <span className="text-xl font-black uppercase italic tracking-tighter">Xak AI</span>
+          </div>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[8px] font-black uppercase px-3 py-1">Active</Badge>
+            ) : (
+              <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[8px] font-black uppercase px-3 py-1">Guest</Badge>
+            )}
+            <MoreVertical className="w-4 h-4 text-white/20" />
+          </div>
+        </header>
+
+        <ScrollArea className="flex-1" ref={scrollRef}>
+          <div className="max-w-5xl mx-auto py-12 px-6 space-y-10 pb-32">
+            {messages.length === 0 && !loading && (
+              <div className="py-20 text-center space-y-12 animate-in fade-in duration-700">
+                <div className="w-24 h-24 rounded-[2.5rem] bg-white/5 border-4 border-white/10 flex items-center justify-center mx-auto shadow-2xl animate-float">
+                  <Sparkles className="w-12 h-12 text-primary animate-pulse" />
+                </div>
+                <h2 className="text-6xl font-black uppercase italic tracking-tighter drop-shadow-2xl">I'm Xak AI. <br/> How can I help?</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                   {[
+                     "Write a script for a game", 
+                     "Explain how logic works", 
+                     "Refactor my code", 
+                     "Create a task for me"
+                   ].map(p => (
+                     <button key={p} onClick={() => setInput(p)} className="p-8 rounded-[2.5rem] bg-black/40 border-2 border-white/5 text-xs font-black uppercase tracking-widest text-left hover:border-primary/40 hover:bg-primary/5 transition-all italic shadow-xl">
+                       "{p}"
+                     </button>
+                   ))}
+                </div>
+              </div>
+            )}
+
+            {messages.map((msg, i) => (
+              <div key={i} className={cn("flex gap-6", msg.role === 'user' ? "flex-row-reverse" : "")}>
+                <div className={cn(
+                  "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border-2 shadow-2xl",
+                  msg.role === 'user' ? "bg-white/5 border-white/10" : "bg-primary/20 border-primary/40"
+                )}>
+                  {msg.role === 'user' ? <User className="w-6 h-6 text-white/40" /> : <Bot className="w-6 h-6 text-primary" />}
+                </div>
+                <div className={cn(
+                  "p-10 rounded-[3rem] text-lg font-medium leading-relaxed italic max-w-[90%] shadow-2xl border",
+                  msg.role === 'user' ? "bg-white/5 border-white/10 rounded-tr-none" : "bg-black/60 border-white/10 rounded-tl-none"
+                )}>
+                   <FormattedContent content={msg.content} />
+                </div>
+              </div>
+            ))}
+            
+            {loading && (
+              <div className="flex gap-6 animate-in fade-in">
+                <div className="w-12 h-12 rounded-2xl bg-primary/20 border-2 border-primary/40 flex items-center justify-center shadow-2xl">
+                  <Bot className="w-6 h-6 text-primary animate-pulse" />
+                </div>
+                <div className="p-10 rounded-[3rem] rounded-tl-none bg-black/60 border border-white/10 shadow-2xl flex items-center gap-2">
+                   <div className="w-2.5 h-2.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                   <div className="w-2.5 h-2.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                   <div className="w-2.5 h-2.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+
+        <div className="p-8 bg-black/20 backdrop-blur-3xl border-t border-white/10">
+          <form onSubmit={handleSend} className="max-w-4xl mx-auto relative group">
+            <Input 
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask Xak AI anything..."
+              className="h-20 w-full bg-black/60 border-4 border-white/10 focus-visible:border-primary focus-visible:ring-0 rounded-full px-12 pr-24 font-bold italic text-base shadow-2xl transition-all text-white placeholder:text-white/20"
+            />
+            <button 
+              type="submit" 
+              disabled={loading || !input.trim()}
+              className="absolute right-4 top-3 h-14 w-14 bg-primary hover:bg-primary/90 text-white rounded-full transition-all active:scale-90 shadow-xl flex items-center justify-center disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
+            </button>
+          </form>
+        </div>
+      </main>
+    </div>
+  );
+}

@@ -1,0 +1,66 @@
+
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Professional user profile with identity customizations.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" },
+        "currencyBalance": { "type": "number" },
+        "subscription": { "type": "string" },
+        "aura": { "type": "string" },
+        "nameplate": { "type": "string" },
+        "mood": { "type": "string" },
+        "isBanned": { "type": "boolean" },
+        "banReason": { "type": "string" },
+        "personalEmail": { "type": "string" }
+      }
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A message transmitted in a channel or DM, supporting text and images.",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderPhoto": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Friend": {
+      "title": "Friend",
+      "description": "A registered link between two users for quick communication.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "status": { "type": "string", "enum": ["online", "offline"] }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["password", "google.com", "anonymous"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "#/backend/entities/User",
+      "description": "Central user profile data."
+    },
+    "/users/{userId}/friends/{friendId}": {
+      "schema": "#/backend/entities/Friend",
+      "description": "Member's friend registry for quick access."
+    },
+    "/chat/{targetId}/messages/{msgId}": {
+      "schema": "#/backend/entities/ChatMessage",
+      "description": "Real-time messages for channels, servers, or DMs."
+    }
+  }
+}

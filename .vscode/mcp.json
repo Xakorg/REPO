@@ -1,0 +1,11 @@
+{
+    "servers": {
+      "claude-mcp": {
+        "type": "sse",
+        "url": "https://mcp.claude.ai/sse",
+        "headers": {
+          "anthropic-beta": "mcp-client-connectors-2025-04-04"
+        }
+      }
+    }
+  }
