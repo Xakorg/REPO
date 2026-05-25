@@ -30,12 +30,12 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
-      // ✅ FIXED NOTIFICATIONS
+      // ✅ FIXED NOTIFICATIONS (CRITICAL FIX)
       match /notifications/{docId} {
 
         allow create: if isSignedIn();
 
-        // IMPORTANT: read covers BOTH get + list
+        // read = get + list (THIS is the key fix)
         allow read: if isOwner(userId);
 
         allow update, delete: if isOwner(userId);
