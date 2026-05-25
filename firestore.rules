@@ -22,27 +22,23 @@ service cloud.firestore {
     // ─────────────────────────────────────────────
     // USERS
     // ─────────────────────────────────────────────
-    match /users/{userId} {
+match /users/{userId} {
 
-      allow read, write: if isOwner(userId);
+  allow read, write: if isOwner(userId);
 
-      match /{allPaths=**} {
-        allow read, write: if isOwner(userId);
-      }
+  // ❌ IMPORTANT: REMOVE allPaths=** (it breaks subcollection queries)
 
-      // ✅ FIXED NOTIFICATIONS (CRITICAL FIX)
-      match /notifications/{docId} {
+  // Notifications subcollection
+  match /notifications/{docId} {
 
-        allow create: if isSignedIn();
+    allow create: if isSignedIn();
 
-        // read = get + list (THIS is the key fix)
-        allow read: if isOwner(userId);
+    // THIS is enough for BOTH get + list
+    allow read: if isOwner(userId);
 
-        allow update, delete: if isOwner(userId);
-      }
-    }
-
-
+    allow update, delete: if isOwner(userId);
+  }
+}
     // ─────────────────────────────────────────────
     // ADMIN REGISTRY
     // ─────────────────────────────────────────────
