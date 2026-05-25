@@ -30,13 +30,12 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
-      // Notifications (FIXED: proper list/get separation)
-      match /notifications/{id} {
+      // ✅ FIXED NOTIFICATIONS (correct Firestore structure)
+      match /notifications/{docId} {
+
         allow create: if isSignedIn();
 
-        allow read: if isOwner(userId);
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
+        allow read, get, list: if isOwner(userId);
 
         allow update, delete: if isOwner(userId);
       }
@@ -48,7 +47,6 @@ service cloud.firestore {
     // ─────────────────────────────────────────────
     match /admins/{userId} {
       allow read: if isSignedIn();
-      // no client writes
     }
 
 
@@ -65,7 +63,7 @@ service cloud.firestore {
 
 
     // ─────────────────────────────────────────────
-    // LEADERBOARD (FIXED: prevents score spoofing)
+    // LEADERBOARD
     // ─────────────────────────────────────────────
     match /leaderboard/{id} {
 
@@ -81,7 +79,7 @@ service cloud.firestore {
 
 
     // ─────────────────────────────────────────────
-    // NEWS (ADMIN ONLY WRITE)
+    // NEWS
     // ─────────────────────────────────────────────
     match /news/{id} {
       allow read: if true;
@@ -139,7 +137,7 @@ service cloud.firestore {
 
 
     // ─────────────────────────────────────────────
-    // CONTACT MESSAGES (FIXED SPAM CONTROL)
+    // CONTACT MESSAGES
     // ─────────────────────────────────────────────
     match /contact_messages/{msgId} {
 
