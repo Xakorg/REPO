@@ -154,10 +154,6 @@ match /users/{userId} {
     match /meetings/{meetingId} {
 
       allow read, write: if isSignedIn();
-
-      match /{allPaths=**} {
-        allow read, write: if isSignedIn();
-      }
     }
 
 
@@ -223,10 +219,6 @@ match /users/{userId} {
     match /whiteboards/{id} {
 
       allow read, write: if isSignedIn();
-
-      match /{allPaths=**} {
-        allow read, write: if isSignedIn();
-      }
     }
   }
 }
