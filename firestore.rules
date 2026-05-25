@@ -9,20 +9,25 @@ service cloud.firestore {
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
+    // FIX: previously also granted admin to anyone whose email matched
+    // `.*@xakteir\.com`. Because the app auto-assigns every user a
+    // `@xakteir.com` alias (see docs/blueprint.md), that check made every
+    // signed-in user an admin — a full privilege-escalation bug.
+    // Admin status now comes ONLY from the `admins/{uid}` registry,
+    // which is itself write-protected (no client write rule).
     function isAdmin() {
       return request.auth != null &&
-        (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) || 
-         request.auth.token.email.matches('.*@xakteir\\.com'));
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     // ─── USER DATA ───────────────────────────────────────────────────────
     match /users/{userId} {
       allow read, write: if isOwner(userId);
-      
+
       match /{allPaths=**} {
         allow read, write: if isOwner(userId);
       }
-      
+
       // Allow system or other users to send notifications
       match /notifications/{id} {
         allow create: if isSignedIn();
@@ -33,27 +38,28 @@ service cloud.firestore {
     // ─── ADMIN REGISTRY ───────────────────────────────────────────────────
     match /admins/{userId} {
       allow read: if isSignedIn();
+      // No client writes — admins are provisioned server-side / via console.
     }
 
     // ─── PUBLIC COLLECTIONS ───────────────────────────────────────────────
     match /system_stats/{id} { allow read: if true; }
     match /system_stats { allow read: if true; }
-    
+
     match /leaderboard/{id} { allow read: if true; allow write: if isSignedIn(); }
     match /leaderboard { allow read: if true; }
-    
+
     match /news/{id} { allow read: if true; allow write: if isAdmin(); }
     match /news { allow read: if true; }
-    
+
     match /indexedSites/{id} { allow read: if true; allow write: if isSignedIn(); }
     match /indexedSites { allow read: if true; }
-    
+
     match /publishedProjects/{id} { allow read: if true; allow write: if isSignedIn(); }
     match /publishedProjects { allow read: if true; }
-    
-    match /videos/{id} { 
-      allow read: if true; 
-      allow write: if isSignedIn(); 
+
+    match /videos/{id} {
+      allow read: if true;
+      allow write: if isSignedIn();
       match /comments/{commentId} {
         allow read: if true;
         allow create: if isSignedIn();
@@ -81,19 +87,19 @@ service cloud.firestore {
     // ─── SOCIAL & GROUPS ──────────────────────────────────────────────────
     match /globalMessages/{id} { allow read: if true; allow create: if isSignedIn(); }
     match /globalMessages { allow read: if true; }
-    
+
     match /global_feed/{id} { allow read: if true; allow write: if isAdmin(); }
     match /global_feed { allow read: if true; }
-    
+
     match /global_notifications/{id} { allow read: if true; allow write: if isAdmin(); }
     match /global_notifications { allow read: if true; }
-    
+
     match /groups/{id} { allow read: if true; allow write: if isSignedIn(); }
     match /groups { allow read: if true; }
-    
+
     match /buddies/{id} { allow read: if true; allow write: if isSignedIn(); }
     match /buddies { allow read: if true; }
-    
+
     match /whiteboards/{id} {
       allow read, write: if isSignedIn();
       match /{allPaths=**} {
