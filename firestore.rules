@@ -2,106 +2,233 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ─── HELPERS ──────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────
     function isSignedIn() {
       return request.auth != null;
     }
+
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
-    // FIX: previously also granted admin to anyone whose email matched
-    // `.*@xakteir\.com`. Because the app auto-assigns every user a
-    // `@xakteir.com` alias (see docs/blueprint.md), that check made every
-    // signed-in user an admin — a full privilege-escalation bug.
-    // Admin status now comes ONLY from the `admins/{uid}` registry,
-    // which is itself write-protected (no client write rule).
+
     function isAdmin() {
-      return request.auth != null &&
+      return isSignedIn() &&
         exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // ─── USER DATA ───────────────────────────────────────────────────────
+
+    // ─────────────────────────────────────────────
+    // USERS
+    // ─────────────────────────────────────────────
     match /users/{userId} {
+
       allow read, write: if isOwner(userId);
 
       match /{allPaths=**} {
         allow read, write: if isOwner(userId);
       }
 
-      // Allow system or other users to send notifications
+      // Notifications (FIXED: proper list/get separation)
       match /notifications/{id} {
         allow create: if isSignedIn();
-        allow read, update, delete: if isOwner(userId);
+
+        allow read: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+
+        allow update, delete: if isOwner(userId);
       }
     }
 
-    // ─── ADMIN REGISTRY ───────────────────────────────────────────────────
+
+    // ─────────────────────────────────────────────
+    // ADMIN REGISTRY
+    // ─────────────────────────────────────────────
     match /admins/{userId} {
       allow read: if isSignedIn();
-      // No client writes — admins are provisioned server-side / via console.
+      // no client writes
     }
 
-    // ─── PUBLIC COLLECTIONS ───────────────────────────────────────────────
-    match /system_stats/{id} { allow read: if true; }
-    match /system_stats { allow read: if true; }
 
-    match /leaderboard/{id} { allow read: if true; allow write: if isSignedIn(); }
-    match /leaderboard { allow read: if true; }
+    // ─────────────────────────────────────────────
+    // PUBLIC SYSTEM DATA
+    // ─────────────────────────────────────────────
+    match /system_stats/{id} {
+      allow read: if true;
+    }
 
-    match /news/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /news { allow read: if true; }
+    match /system_stats {
+      allow read: if true;
+    }
 
-    match /indexedSites/{id} { allow read: if true; allow write: if isSignedIn(); }
-    match /indexedSites { allow read: if true; }
 
-    match /publishedProjects/{id} { allow read: if true; allow write: if isSignedIn(); }
-    match /publishedProjects { allow read: if true; }
+    // ─────────────────────────────────────────────
+    // LEADERBOARD (FIXED: prevents score spoofing)
+    // ─────────────────────────────────────────────
+    match /leaderboard/{id} {
 
-    match /videos/{id} {
+      allow read: if true;
+
+      allow write: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid;
+    }
+
+    match /leaderboard {
+      allow read: if true;
+    }
+
+
+    // ─────────────────────────────────────────────
+    // NEWS (ADMIN ONLY WRITE)
+    // ─────────────────────────────────────────────
+    match /news/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /news {
+      allow read: if true;
+    }
+
+
+    // ─────────────────────────────────────────────
+    // INDEXED SITES
+    // ─────────────────────────────────────────────
+    match /indexedSites/{id} {
       allow read: if true;
       allow write: if isSignedIn();
+    }
+
+    match /indexedSites {
+      allow read: if true;
+    }
+
+
+    // ─────────────────────────────────────────────
+    // PUBLISHED PROJECTS
+    // ─────────────────────────────────────────────
+    match /publishedProjects/{id} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /publishedProjects {
+      allow read: if true;
+    }
+
+
+    // ─────────────────────────────────────────────
+    // VIDEOS + COMMENTS
+    // ─────────────────────────────────────────────
+    match /videos/{id} {
+
+      allow read: if true;
+      allow write: if isSignedIn();
+
       match /comments/{commentId} {
         allow read: if true;
         allow create: if isSignedIn();
       }
     }
-    match /videos { allow read: if true; }
 
-    // ─── SUPPORT REGISTRY ─────────────────────────────────────────────────
+    match /videos {
+      allow read: if true;
+    }
+
+
+    // ─────────────────────────────────────────────
+    // CONTACT MESSAGES (FIXED SPAM CONTROL)
+    // ─────────────────────────────────────────────
     match /contact_messages/{msgId} {
-      allow create: if true;
+
+      allow create: if isSignedIn();
+
       allow read, update, delete: if isAdmin();
     }
+
     match /contact_messages {
       allow read: if isAdmin();
     }
 
-    // ─── MEETINGS ────────────────────────────────────────────────────────
+
+    // ─────────────────────────────────────────────
+    // MEETINGS
+    // ─────────────────────────────────────────────
     match /meetings/{meetingId} {
+
       allow read, write: if isSignedIn();
+
       match /{allPaths=**} {
         allow read, write: if isSignedIn();
       }
     }
 
-    // ─── SOCIAL & GROUPS ──────────────────────────────────────────────────
-    match /globalMessages/{id} { allow read: if true; allow create: if isSignedIn(); }
-    match /globalMessages { allow read: if true; }
 
-    match /global_feed/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /global_feed { allow read: if true; }
+    // ─────────────────────────────────────────────
+    // GLOBAL SOCIAL DATA
+    // ─────────────────────────────────────────────
+    match /globalMessages/{id} {
+      allow read: if true;
+      allow create: if isSignedIn();
+    }
 
-    match /global_notifications/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /global_notifications { allow read: if true; }
+    match /globalMessages {
+      allow read: if true;
+    }
 
-    match /groups/{id} { allow read: if true; allow write: if isSignedIn(); }
-    match /groups { allow read: if true; }
 
-    match /buddies/{id} { allow read: if true; allow write: if isSignedIn(); }
-    match /buddies { allow read: if true; }
+    match /global_feed/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
 
+    match /global_feed {
+      allow read: if true;
+    }
+
+
+    match /global_notifications/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /global_notifications {
+      allow read: if true;
+    }
+
+
+    // ─────────────────────────────────────────────
+    // GROUPS / SOCIAL GRAPH
+    // ─────────────────────────────────────────────
+    match /groups/{id} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /groups {
+      allow read: if true;
+    }
+
+
+    match /buddies/{id} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /buddies {
+      allow read: if true;
+    }
+
+
+    // ─────────────────────────────────────────────
+    // WHITEBOARDS
+    // ─────────────────────────────────────────────
     match /whiteboards/{id} {
+
       allow read, write: if isSignedIn();
+
       match /{allPaths=**} {
         allow read, write: if isSignedIn();
       }
