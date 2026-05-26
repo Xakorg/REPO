@@ -12,6 +12,7 @@ import { CommandCenter } from '@/components/CommandCenter';
 import { LockedAccountGuard } from '@/components/LockedAccountGuard';
 import { TimeTravelOverlay } from '@/components/TimeTravelOverlay';
 import { NotificationManager } from '@/components/NotificationManager';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
   title: 'Xakteir',
@@ -51,6 +52,7 @@ export default function RootLayout({
             </LockedAccountGuard>
           </OnboardingProvider>
         </FirebaseClientProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
