@@ -18,34 +18,25 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-
     // ─────────────────────────────────────────────
-    // USERS
+    // USERS & SUBCOLLECTIONS
     // ─────────────────────────────────────────────
-match /users/{userId} {
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
 
-  allow read, write: if isOwner(userId);
+      // Notifications subcollection (Covers both get and list)
+      match /notifications/{docId} {
+        allow create: if isSignedIn();
+        allow read, update, delete: if isOwner(userId);
+      }
+    }
 
-  // ❌ IMPORTANT: REMOVE allPaths=** (it breaks subcollection queries)
-
-  // Notifications subcollection
-  match /notifications/{docId} {
-
-    allow create: if isSignedIn();
-
-    // THIS is enough for BOTH get + list
-    allow read: if isOwner(userId);
-
-    allow update, delete: if isOwner(userId);
-  }
-}
     // ─────────────────────────────────────────────
     // ADMIN REGISTRY
     // ─────────────────────────────────────────────
     match /admins/{userId} {
       allow read: if isSignedIn();
     }
-
 
     // ─────────────────────────────────────────────
     // PUBLIC SYSTEM DATA
@@ -54,26 +45,14 @@ match /users/{userId} {
       allow read: if true;
     }
 
-    match /system_stats {
-      allow read: if true;
-    }
-
-
     // ─────────────────────────────────────────────
     // LEADERBOARD
     // ─────────────────────────────────────────────
     match /leaderboard/{id} {
-
       allow read: if true;
-
       allow write: if isSignedIn()
         && request.resource.data.uid == request.auth.uid;
     }
-
-    match /leaderboard {
-      allow read: if true;
-    }
-
 
     // ─────────────────────────────────────────────
     // NEWS
@@ -83,11 +62,6 @@ match /users/{userId} {
       allow write: if isAdmin();
     }
 
-    match /news {
-      allow read: if true;
-    }
-
-
     // ─────────────────────────────────────────────
     // INDEXED SITES
     // ─────────────────────────────────────────────
@@ -95,11 +69,6 @@ match /users/{userId} {
       allow read: if true;
       allow write: if isSignedIn();
     }
-
-    match /indexedSites {
-      allow read: if true;
-    }
-
 
     // ─────────────────────────────────────────────
     // PUBLISHED PROJECTS
@@ -109,16 +78,10 @@ match /users/{userId} {
       allow write: if isSignedIn();
     }
 
-    match /publishedProjects {
-      allow read: if true;
-    }
-
-
     // ─────────────────────────────────────────────
     // VIDEOS + COMMENTS
     // ─────────────────────────────────────────────
     match /videos/{id} {
-
       allow read: if true;
       allow write: if isSignedIn();
 
@@ -128,34 +91,20 @@ match /users/{userId} {
       }
     }
 
-    match /videos {
-      allow read: if true;
-    }
-
-
     // ─────────────────────────────────────────────
     // CONTACT MESSAGES
     // ─────────────────────────────────────────────
     match /contact_messages/{msgId} {
-
       allow create: if isSignedIn();
-
       allow read, update, delete: if isAdmin();
     }
-
-    match /contact_messages {
-      allow read: if isAdmin();
-    }
-
 
     // ─────────────────────────────────────────────
     // MEETINGS
     // ─────────────────────────────────────────────
     match /meetings/{meetingId} {
-
       allow read, write: if isSignedIn();
     }
-
 
     // ─────────────────────────────────────────────
     // GLOBAL SOCIAL DATA
@@ -165,30 +114,15 @@ match /users/{userId} {
       allow create: if isSignedIn();
     }
 
-    match /globalMessages {
-      allow read: if true;
-    }
-
-
     match /global_feed/{id} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    match /global_feed {
-      allow read: if true;
-    }
-
-
     match /global_notifications/{id} {
       allow read: if true;
       allow write: if isAdmin();
     }
-
-    match /global_notifications {
-      allow read: if true;
-    }
-
 
     // ─────────────────────────────────────────────
     // GROUPS / SOCIAL GRAPH
@@ -198,26 +132,15 @@ match /users/{userId} {
       allow write: if isSignedIn();
     }
 
-    match /groups {
-      allow read: if true;
-    }
-
-
     match /buddies/{id} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /buddies {
-      allow read: if true;
-    }
-
-
     // ─────────────────────────────────────────────
     // WHITEBOARDS
     // ─────────────────────────────────────────────
     match /whiteboards/{id} {
-
       allow read, write: if isSignedIn();
     }
   }
