@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -24,25 +23,28 @@ service cloud.firestore {
         );
     }
 
+    function hasValidUid() {
+      return request.resource.data.uid is string
+        && request.resource.data.uid == request.auth.uid;
+    }
+
+    function resourceOwned() {
+      return resource.data.uid is string
+        && resource.data.uid == request.auth.uid;
+    }
+
     // ─────────────────────────────────────────────
     // USERS
     // ─────────────────────────────────────────────
 
     match /users/{userId} {
 
-      // FIX #1:
-      // Explicit GET/LIST separation
-      // Helps Firestore query evaluation
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      // FIX #2:
-      // Explicit create/update/delete separation
-      // Avoid broad write ambiguity
+      allow read: if isOwner(userId);
 
       allow create: if isOwner(userId);
+
       allow update: if isOwner(userId);
+
       allow delete: if isOwner(userId);
 
       // ─────────────────────────────────────────
@@ -51,53 +53,16 @@ service cloud.firestore {
 
       match /notifications/{docId} {
 
-        // FIX #3:
-        // Explicit get/list instead of read
-        // Firestore list() behaves differently
+        // Simplified rules prevent query ambiguity
 
-        allow get: if isOwner(userId);
-
-        allow list: if isOwner(userId);
-
-        // FIX #4:
-        // Restrict create to owner only
-        // Prevent cross-user notification injection
-
-        allow create: if isSignedIn()
-          && request.auth.uid == userId;
-
-        // FIX #5:
-        // Validate document ownership
-        // Prevent malformed docs from breaking queries
-
-        allow update, delete: if isOwner(userId)
-          && resource.data.uid == request.auth.uid;
-
-        // FIX #6:
-        // Validate writes contain correct uid
+        allow read: if isOwner(userId);
 
         allow create: if isOwner(userId)
-          && request.resource.data.uid == request.auth.uid;
+          && hasValidUid();
+
+        allow update, delete: if isOwner(userId)
+          && resourceOwned();
       }
-    }
-
-    // ─────────────────────────────────────────────
-    // COLLECTION GROUP SUPPORT
-    // ─────────────────────────────────────────────
-
-    // FIX #7:
-    // Allows collectionGroup("notifications")
-
-    match /{path=**}/notifications/{docId} {
-
-      allow get, list: if isSignedIn()
-        && resource.data.uid == request.auth.uid;
-
-      allow create: if isSignedIn()
-        && request.resource.data.uid == request.auth.uid;
-
-      allow update, delete: if isSignedIn()
-        && resource.data.uid == request.auth.uid;
     }
 
     // ─────────────────────────────────────────────
@@ -106,15 +71,9 @@ service cloud.firestore {
 
     match /admins/{userId} {
 
-      // FIX #8:
-      // Restrict admin registry visibility
-
       allow get: if isAdmin();
 
       allow list: if false;
-
-      // Optional:
-      // Only existing admins may manage admins
 
       allow create, update, delete: if isAdmin();
     }
@@ -135,11 +94,8 @@ service cloud.firestore {
 
       allow read: if true;
 
-      // FIX #9:
-      // Validate ownership on updates too
-
       allow create, update: if isSignedIn()
-        && request.resource.data.uid == request.auth.uid;
+        && hasValidUid();
 
       allow delete: if isAdmin();
     }
@@ -149,7 +105,9 @@ service cloud.firestore {
     // ─────────────────────────────────────────────
 
     match /news/{id} {
+
       allow read: if true;
+
       allow write: if isAdmin();
     }
 
@@ -174,10 +132,11 @@ service cloud.firestore {
 
       allow read: if true;
 
-      allow create: if isSignedIn();
+      allow create: if isSignedIn()
+        && hasValidUid();
 
       allow update, delete: if isSignedIn()
-        && resource.data.uid == request.auth.uid;
+        && resourceOwned();
     }
 
     // ─────────────────────────────────────────────
@@ -197,10 +156,10 @@ service cloud.firestore {
         allow read: if true;
 
         allow create: if isSignedIn()
-          && request.resource.data.uid == request.auth.uid;
+          && hasValidUid();
 
         allow update, delete: if isSignedIn()
-          && resource.data.uid == request.auth.uid;
+          && resourceOwned();
       }
     }
 
@@ -221,10 +180,6 @@ service cloud.firestore {
 
     match /meetings/{meetingId} {
 
-      // FIX #10:
-      // Prevent fully public authenticated access
-      // Add participant validation
-
       allow read, update, delete: if isSignedIn()
         && request.auth.uid in resource.data.participants;
 
@@ -241,7 +196,7 @@ service cloud.firestore {
       allow read: if true;
 
       allow create: if isSignedIn()
-        && request.resource.data.uid == request.auth.uid;
+        && hasValidUid();
 
       allow update, delete: if isAdmin();
     }
@@ -251,7 +206,9 @@ service cloud.firestore {
     // ─────────────────────────────────────────────
 
     match /global_feed/{id} {
+
       allow read: if true;
+
       allow write: if isAdmin();
     }
 
@@ -260,7 +217,9 @@ service cloud.firestore {
     // ─────────────────────────────────────────────
 
     match /global_notifications/{id} {
+
       allow read: if true;
+
       allow write: if isAdmin();
     }
 
@@ -308,3 +267,4 @@ service cloud.firestore {
     }
   }
 }
+
