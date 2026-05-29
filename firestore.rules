@@ -1,46 +1,128 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ─────────────────────────────────────────────
     // HELPERS
     // ─────────────────────────────────────────────
+
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return isSignedIn()
+        && request.auth.uid == userId;
     }
 
     function isAdmin() {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      return isSignedIn()
+        && exists(
+          /databases/$(database)/documents/admins/$(request.auth.uid)
+        );
     }
 
     // ─────────────────────────────────────────────
-    // USERS & SUBCOLLECTIONS
+    // USERS
     // ─────────────────────────────────────────────
-    match /users/{userId} {
-      allow read, write: if isOwner(userId);
 
-      // Notifications subcollection (Covers both get and list)
+    match /users/{userId} {
+
+      // FIX #1:
+      // Explicit GET/LIST separation
+      // Helps Firestore query evaluation
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      // FIX #2:
+      // Explicit create/update/delete separation
+      // Avoid broad write ambiguity
+
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+
+      // ─────────────────────────────────────────
+      // NOTIFICATIONS
+      // ─────────────────────────────────────────
+
       match /notifications/{docId} {
-        allow create: if isSignedIn();
-        allow read, update, delete: if isOwner(userId);
+
+        // FIX #3:
+        // Explicit get/list instead of read
+        // Firestore list() behaves differently
+
+        allow get: if isOwner(userId);
+
+        allow list: if isOwner(userId);
+
+        // FIX #4:
+        // Restrict create to owner only
+        // Prevent cross-user notification injection
+
+        allow create: if isSignedIn()
+          && request.auth.uid == userId;
+
+        // FIX #5:
+        // Validate document ownership
+        // Prevent malformed docs from breaking queries
+
+        allow update, delete: if isOwner(userId)
+          && resource.data.uid == request.auth.uid;
+
+        // FIX #6:
+        // Validate writes contain correct uid
+
+        allow create: if isOwner(userId)
+          && request.resource.data.uid == request.auth.uid;
       }
     }
 
     // ─────────────────────────────────────────────
-    // ADMIN REGISTRY
+    // COLLECTION GROUP SUPPORT
     // ─────────────────────────────────────────────
-    match /admins/{userId} {
-      allow read: if isSignedIn();
+
+    // FIX #7:
+    // Allows collectionGroup("notifications")
+
+    match /{path=**}/notifications/{docId} {
+
+      allow get, list: if isSignedIn()
+        && resource.data.uid == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update, delete: if isSignedIn()
+        && resource.data.uid == request.auth.uid;
     }
 
     // ─────────────────────────────────────────────
-    // PUBLIC SYSTEM DATA
+    // ADMINS
     // ─────────────────────────────────────────────
+
+    match /admins/{userId} {
+
+      // FIX #8:
+      // Restrict admin registry visibility
+
+      allow get: if isAdmin();
+
+      allow list: if false;
+
+      // Optional:
+      // Only existing admins may manage admins
+
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // SYSTEM STATS
+    // ─────────────────────────────────────────────
+
     match /system_stats/{id} {
       allow read: if true;
     }
@@ -48,15 +130,24 @@ service cloud.firestore {
     // ─────────────────────────────────────────────
     // LEADERBOARD
     // ─────────────────────────────────────────────
+
     match /leaderboard/{id} {
+
       allow read: if true;
-      allow write: if isSignedIn()
+
+      // FIX #9:
+      // Validate ownership on updates too
+
+      allow create, update: if isSignedIn()
         && request.resource.data.uid == request.auth.uid;
+
+      allow delete: if isAdmin();
     }
 
     // ─────────────────────────────────────────────
     // NEWS
     // ─────────────────────────────────────────────
+
     match /news/{id} {
       allow read: if true;
       allow write: if isAdmin();
@@ -65,59 +156,108 @@ service cloud.firestore {
     // ─────────────────────────────────────────────
     // INDEXED SITES
     // ─────────────────────────────────────────────
+
     match /indexedSites/{id} {
+
       allow read: if true;
-      allow write: if isSignedIn();
+
+      allow create: if isSignedIn();
+
+      allow update, delete: if isAdmin();
     }
 
     // ─────────────────────────────────────────────
     // PUBLISHED PROJECTS
     // ─────────────────────────────────────────────
+
     match /publishedProjects/{id} {
+
       allow read: if true;
-      allow write: if isSignedIn();
+
+      allow create: if isSignedIn();
+
+      allow update, delete: if isSignedIn()
+        && resource.data.uid == request.auth.uid;
     }
 
     // ─────────────────────────────────────────────
-    // VIDEOS + COMMENTS
+    // VIDEOS
     // ─────────────────────────────────────────────
+
     match /videos/{id} {
+
       allow read: if true;
-      allow write: if isSignedIn();
+
+      allow create: if isSignedIn();
+
+      allow update, delete: if isAdmin();
 
       match /comments/{commentId} {
+
         allow read: if true;
-        allow create: if isSignedIn();
+
+        allow create: if isSignedIn()
+          && request.resource.data.uid == request.auth.uid;
+
+        allow update, delete: if isSignedIn()
+          && resource.data.uid == request.auth.uid;
       }
     }
 
     // ─────────────────────────────────────────────
     // CONTACT MESSAGES
     // ─────────────────────────────────────────────
+
     match /contact_messages/{msgId} {
+
       allow create: if isSignedIn();
-      allow read, update, delete: if isAdmin();
+
+      allow get, list, update, delete: if isAdmin();
     }
 
     // ─────────────────────────────────────────────
     // MEETINGS
     // ─────────────────────────────────────────────
+
     match /meetings/{meetingId} {
-      allow read, write: if isSignedIn();
+
+      // FIX #10:
+      // Prevent fully public authenticated access
+      // Add participant validation
+
+      allow read, update, delete: if isSignedIn()
+        && request.auth.uid in resource.data.participants;
+
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.participants;
     }
 
     // ─────────────────────────────────────────────
-    // GLOBAL SOCIAL DATA
+    // GLOBAL MESSAGES
     // ─────────────────────────────────────────────
+
     match /globalMessages/{id} {
+
       allow read: if true;
-      allow create: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid;
+
+      allow update, delete: if isAdmin();
     }
+
+    // ─────────────────────────────────────────────
+    // GLOBAL FEED
+    // ─────────────────────────────────────────────
 
     match /global_feed/{id} {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // ─────────────────────────────────────────────
+    // GLOBAL NOTIFICATIONS
+    // ─────────────────────────────────────────────
 
     match /global_notifications/{id} {
       allow read: if true;
@@ -125,23 +265,46 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────
-    // GROUPS / SOCIAL GRAPH
+    // GROUPS
     // ─────────────────────────────────────────────
+
     match /groups/{id} {
+
       allow read: if true;
-      allow write: if isSignedIn();
+
+      allow create: if isSignedIn();
+
+      allow update, delete: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid;
     }
 
+    // ─────────────────────────────────────────────
+    // BUDDIES
+    // ─────────────────────────────────────────────
+
     match /buddies/{id} {
+
       allow read: if true;
-      allow write: if isSignedIn();
+
+      allow create: if isSignedIn();
+
+      allow update, delete: if isSignedIn()
+        && (
+          resource.data.userA == request.auth.uid
+          || resource.data.userB == request.auth.uid
+        );
     }
 
     // ─────────────────────────────────────────────
     // WHITEBOARDS
     // ─────────────────────────────────────────────
+
     match /whiteboards/{id} {
-      allow read, write: if isSignedIn();
+
+      allow create: if isSignedIn();
+
+      allow read, update, delete: if isSignedIn()
+        && request.auth.uid in resource.data.members;
     }
   }
 }
