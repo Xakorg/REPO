@@ -3,268 +3,263 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ─────────────────────────────────────────────
-    // HELPERS
-    // ─────────────────────────────────────────────
-
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isOwner(userId) {
-      return isSignedIn()
-        && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     function isAdmin() {
       return isSignedIn()
-        && exists(
-          /databases/$(database)/documents/admins/$(request.auth.uid)
-        );
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    function hasValidUid() {
-      return request.resource.data.uid is string
+    function requestUidMatches() {
+      return isSignedIn()
+        && request.resource.data.uid is string
         && request.resource.data.uid == request.auth.uid;
     }
 
-    function resourceOwned() {
-      return resource.data.uid is string
+    function resourceUidMatches() {
+      return isSignedIn()
+        && resource.data.uid is string
         && resource.data.uid == request.auth.uid;
     }
 
-    // ─────────────────────────────────────────────
-    // USERS
-    // ─────────────────────────────────────────────
+    function requestOwnerIdMatches() {
+      return isSignedIn()
+        && request.resource.data.ownerId is string
+        && request.resource.data.ownerId == request.auth.uid;
+    }
+
+    function resourceOwnerIdMatches() {
+      return isSignedIn()
+        && resource.data.ownerId is string
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+    function zoneOwned(zoneId) {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/dns_zones/$(zoneId)).data.ownerId == request.auth.uid;
+    }
+
+    function authEmail() {
+      return isSignedIn() && request.auth.token.email is string
+        ? request.auth.token.email
+        : "";
+    }
 
     match /users/{userId} {
-
-      allow read: if isOwner(userId);
-
-      allow create: if isOwner(userId);
-
-      allow update: if isOwner(userId);
-
-      allow delete: if isOwner(userId);
-
-      // ─────────────────────────────────────────
-      // NOTIFICATIONS
-      // ─────────────────────────────────────────
+      allow get, list: if isSignedIn();
+      allow create: if isOwner(userId)
+        && request.resource.data.id == request.auth.uid;
+      allow update, delete: if isOwner(userId) || isAdmin();
 
       match /notifications/{docId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isSignedIn();
+        allow update, delete: if isOwner(userId) || isAdmin();
+      }
 
-        // Simplified rules prevent query ambiguity
-
-        allow read: if isOwner(userId);
-
-        allow create: if isOwner(userId)
-          && hasValidUid();
-
-        allow update, delete: if isOwner(userId)
-          && resourceOwned();
+      match /{document=**} {
+        allow read, write: if isOwner(userId) || isAdmin();
       }
     }
 
-    // ─────────────────────────────────────────────
-    // ADMINS
-    // ─────────────────────────────────────────────
-
     match /admins/{userId} {
-
-      allow get: if isAdmin();
-
-      allow list: if false;
-
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
       allow create, update, delete: if isAdmin();
     }
-
-    // ─────────────────────────────────────────────
-    // SYSTEM STATS
-    // ─────────────────────────────────────────────
 
     match /system_stats/{id} {
       allow read: if true;
     }
 
-    // ─────────────────────────────────────────────
-    // LEADERBOARD
-    // ─────────────────────────────────────────────
+    match /system/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /system_apps/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
 
     match /leaderboard/{id} {
-
       allow read: if true;
-
-      allow create, update: if isSignedIn()
-        && hasValidUid();
-
+      allow create: if requestUidMatches();
+      allow update: if resourceUidMatches() && requestUidMatches();
       allow delete: if isAdmin();
     }
 
-    // ─────────────────────────────────────────────
-    // NEWS
-    // ─────────────────────────────────────────────
-
     match /news/{id} {
-
       allow read: if true;
-
       allow write: if isAdmin();
     }
 
-    // ─────────────────────────────────────────────
-    // INDEXED SITES
-    // ─────────────────────────────────────────────
-
     match /indexedSites/{id} {
-
       allow read: if true;
-
-      allow create: if isSignedIn();
-
-      allow update, delete: if isAdmin();
+      allow create: if requestOwnerIdMatches();
+      allow update: if isAdmin() || (resourceOwnerIdMatches() && requestOwnerIdMatches());
+      allow delete: if isAdmin() || resourceOwnerIdMatches();
     }
-
-    // ─────────────────────────────────────────────
-    // PUBLISHED PROJECTS
-    // ─────────────────────────────────────────────
 
     match /publishedProjects/{id} {
-
       allow read: if true;
-
-      allow create: if isSignedIn()
-        && hasValidUid();
-
-      allow update, delete: if isSignedIn()
-        && resourceOwned();
+      allow create: if requestUidMatches();
+      allow update: if isAdmin() || (resourceUidMatches() && requestUidMatches());
+      allow delete: if isAdmin() || resourceUidMatches();
     }
 
-    // ─────────────────────────────────────────────
-    // VIDEOS
-    // ─────────────────────────────────────────────
-
     match /videos/{id} {
-
       allow read: if true;
-
       allow create: if isSignedIn();
-
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAdmin()
+        || (isSignedIn()
+          && resource.data.authorId is string
+          && resource.data.authorId == request.auth.uid);
 
       match /comments/{commentId} {
-
         allow read: if true;
-
         allow create: if isSignedIn()
-          && hasValidUid();
-
-        allow update, delete: if isSignedIn()
-          && resourceOwned();
+          && request.resource.data.userId is string
+          && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAdmin()
+          || (isSignedIn()
+            && resource.data.userId is string
+            && resource.data.userId == request.auth.uid);
       }
     }
 
-    // ─────────────────────────────────────────────
-    // CONTACT MESSAGES
-    // ─────────────────────────────────────────────
-
     match /contact_messages/{msgId} {
-
-      allow create: if isSignedIn();
-
+      allow create: if true;
       allow get, list, update, delete: if isAdmin();
     }
 
-    // ─────────────────────────────────────────────
-    // MEETINGS
-    // ─────────────────────────────────────────────
-
     match /meetings/{meetingId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if isAdmin()
+        || (isSignedIn()
+          && resource.data.hostId is string
+          && resource.data.hostId == request.auth.uid);
 
-      allow read, update, delete: if isSignedIn()
-        && request.auth.uid in resource.data.participants;
+      match /offerCandidates/{candidateId} {
+        allow read, write: if isSignedIn();
+      }
 
-      allow create: if isSignedIn()
-        && request.auth.uid in request.resource.data.participants;
+      match /answerCandidates/{candidateId} {
+        allow read, write: if isSignedIn();
+      }
     }
 
-    // ─────────────────────────────────────────────
-    // GLOBAL MESSAGES
-    // ─────────────────────────────────────────────
-
     match /globalMessages/{id} {
-
       allow read: if true;
-
       allow create: if isSignedIn()
-        && hasValidUid();
-
+        && request.resource.data.senderId is string
+        && request.resource.data.senderId == request.auth.uid;
       allow update, delete: if isAdmin();
     }
 
-    // ─────────────────────────────────────────────
-    // GLOBAL FEED
-    // ─────────────────────────────────────────────
-
     match /global_feed/{id} {
-
       allow read: if true;
-
       allow write: if isAdmin();
     }
-
-    // ─────────────────────────────────────────────
-    // GLOBAL NOTIFICATIONS
-    // ─────────────────────────────────────────────
 
     match /global_notifications/{id} {
-
       allow read: if true;
-
       allow write: if isAdmin();
     }
 
-    // ─────────────────────────────────────────────
-    // GROUPS
-    // ─────────────────────────────────────────────
-
     match /groups/{id} {
-
       allow read: if true;
-
       allow create: if isSignedIn();
-
-      allow update, delete: if isSignedIn()
-        && resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isAdmin() || resourceOwnerIdMatches();
     }
-
-    // ─────────────────────────────────────────────
-    // BUDDIES
-    // ─────────────────────────────────────────────
 
     match /buddies/{id} {
-
       allow read: if true;
-
-      allow create: if isSignedIn();
-
-      allow update, delete: if isSignedIn()
-        && (
-          resource.data.userA == request.auth.uid
-          || resource.data.userB == request.auth.uid
-        );
+      allow create: if requestOwnerIdMatches();
+      allow update: if isAdmin() || (resourceOwnerIdMatches() && requestOwnerIdMatches());
+      allow delete: if isAdmin() || resourceOwnerIdMatches();
     }
 
-    // ─────────────────────────────────────────────
-    // WHITEBOARDS
-    // ─────────────────────────────────────────────
-
     match /whiteboards/{id} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if isAdmin()
+        || (isSignedIn()
+          && resource.data.ownerId is string
+          && resource.data.ownerId == request.auth.uid);
+    }
 
+    match /reports/{id} {
+      allow create: if isSignedIn()
+        && request.resource.data.reporterId is string
+        && request.resource.data.reporterId == request.auth.uid;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /emails/{id} {
+      allow read: if isSignedIn()
+        && (
+          (resource.data.senderEmail is string && resource.data.senderEmail == authEmail())
+          || (resource.data.recipientList is list && authEmail() in resource.data.recipientList)
+        );
+      allow create: if isSignedIn()
+        && request.resource.data.senderUserId is string
+        && request.resource.data.senderUserId == request.auth.uid
+        && request.resource.data.senderEmail is string
+        && request.resource.data.senderEmail == authEmail();
+      allow update, delete: if isAdmin()
+        || (isSignedIn()
+          && resource.data.senderUserId is string
+          && resource.data.senderUserId == request.auth.uid);
+    }
+
+    match /business_units/{id} {
+      allow read: if isAdmin() || isOwner(id);
+      allow create, update: if isAdmin() || (isOwner(id) && requestOwnerIdMatches());
+      allow delete: if isAdmin() || isOwner(id);
+    }
+
+    match /dns_zones/{zoneId} {
+      allow read: if isAdmin() || resourceOwnerIdMatches();
+      allow create: if requestOwnerIdMatches();
+      allow update: if isAdmin() || (resourceOwnerIdMatches() && requestOwnerIdMatches());
+      allow delete: if isAdmin() || resourceOwnerIdMatches();
+
+      match /records/{recordId} {
+        allow read, write: if isAdmin() || zoneOwned(zoneId);
+      }
+    }
+
+    match /classrooms/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.teacherId is string
+        && request.resource.data.teacherId == request.auth.uid;
+      allow update, delete: if isAdmin()
+        || (isSignedIn()
+          && resource.data.teacherId is string
+          && resource.data.teacherId == request.auth.uid);
+    }
+
+    match /public_pics/{id} {
+      allow read: if true;
       allow create: if isSignedIn();
+      allow update, delete: if isAdmin()
+        || resourceOwnerIdMatches()
+        || resourceUidMatches();
+    }
 
-      allow read, update, delete: if isSignedIn()
-        && request.auth.uid in resource.data.members;
+    match /chat/{channelId}/messages/{messageId} {
+      allow read, create: if isSignedIn();
+      allow update, delete: if isAdmin()
+        || (isSignedIn()
+          && resource.data.senderId is string
+          && resource.data.senderId == request.auth.uid);
     }
   }
 }
-
