@@ -53,6 +53,7 @@ const APPS = [
   { name: "Mail", icon: Mail, href: "/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
   { name: "Drive", icon: HardDrive, href: "/drive", color: "text-amber-500", bg: "bg-amber-500/10" },
   { name: "Games", icon: Gamepad2, href: "/games", color: "text-purple-400", bg: "bg-purple-500/10" },
+  { name: "XakCode", icon: Code2, href: "/xakcode", color: "text-sky-400", bg: "bg-sky-500/10" },
   { name: "Meet", icon: VideoIcon, href: "/meet", color: "text-rose-400", bg: "bg-rose-400/10" },
   { name: "Translate", icon: Zap, href: "/translate", color: "text-blue-300", bg: "bg-blue-300/10" },
   { name: "Calculator", icon: Calculator, href: "/calculator", color: "text-zinc-400", bg: "bg-zinc-400/10" },

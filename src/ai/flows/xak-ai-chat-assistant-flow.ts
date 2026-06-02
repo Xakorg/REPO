@@ -6,6 +6,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {anthropic} from '@genkit-ai/anthropic';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 const MessageSchema = z.object({
   role: z.enum(['user', 'model', 'system']),
@@ -26,15 +28,21 @@ const ChatOutputSchema = z.object({
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
-/**
- * Internal helper to get Firestore on the server.
- */
-async function getDb() {
-  const { getFirestore } = await import('firebase/firestore');
-  const { initializeApp, getApps } = await import('firebase/app');
-  const { firebaseConfig } = await import('@/firebase/config');
-  const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
-  return getFirestore(app);
+function hasUsableUserId(userId?: string) {
+  return typeof userId === 'string' && userId.trim().length > 0;
+}
+
+async function notifyUser(userId: string, title: string, message: string) {
+  const { FieldValue } = await import('firebase-admin/firestore');
+  const db = getAdminDb();
+
+  await db.collection('users').doc(userId).collection('notifications').add({
+    title,
+    message,
+    type: 'system',
+    read: false,
+    timestamp: FieldValue.serverTimestamp(),
+  });
 }
 
 // Tool to create a document
@@ -50,23 +58,21 @@ const createDocument = ai.defineTool(
     outputSchema: z.string(),
   },
   async (input) => {
-    const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
-    const db = await getDb();
-    
-    await addDoc(collection(db, "users", input.userId, "suite_docs"), {
+    const { FieldValue } = await import('firebase-admin/firestore');
+    const db = getAdminDb();
+
+    if (!hasUsableUserId(input.userId)) {
+      return 'Sign in to let Xak AI create documents in your account.';
+    }
+
+    await db.collection('users').doc(input.userId).collection('suite_docs').add({
       title: input.title,
       content: input.content,
-      updatedAt: serverTimestamp(),
-      createdAt: serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
-    await addDoc(collection(db, "users", input.userId, "notifications"), {
-      title: "Document Created",
-      message: `Xak AI created "${input.title}" in your Suite.`,
-      type: 'system',
-      read: false,
-      timestamp: serverTimestamp()
-    });
+    await notifyUser(input.userId, 'Document Created', `Xak AI created "${input.title}" in your Suite.`);
 
     return `Successfully created a new document titled "${input.title}".`;
   }
@@ -84,23 +90,21 @@ const createGoal = ai.defineTool(
     outputSchema: z.string(),
   },
   async (input) => {
-    const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
-    const db = await getDb();
+    const { FieldValue } = await import('firebase-admin/firestore');
+    const db = getAdminDb();
 
-    await addDoc(collection(db, "users", input.userId, "goals"), {
+    if (!hasUsableUserId(input.userId)) {
+      return 'Sign in to let Xak AI add tasks to your account.';
+    }
+
+    await db.collection('users').doc(input.userId).collection('goals').add({
       title: input.title,
       completed: false,
       createdAt: new Date().toISOString(),
-      timestamp: serverTimestamp()
+      timestamp: FieldValue.serverTimestamp(),
     });
 
-    await addDoc(collection(db, "users", input.userId, "notifications"), {
-      title: "New Task",
-      message: `Task "${input.title}" has been added to your list.`,
-      type: 'quest',
-      read: false,
-      timestamp: serverTimestamp()
-    });
+    await notifyUser(input.userId, 'New Task', `Task "${input.title}" has been added to your list.`);
 
     return `Task "${input.title}" added.`;
   }
@@ -119,24 +123,22 @@ const createFile = ai.defineTool(
     outputSchema: z.string(),
   },
   async (input) => {
-    const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
-    const db = await getDb();
-    
-    await addDoc(collection(db, "users", input.userId, "drive_files"), {
+    const { FieldValue } = await import('firebase-admin/firestore');
+    const db = getAdminDb();
+
+    if (!hasUsableUserId(input.userId)) {
+      return 'Sign in to let Xak AI save generated files to your account.';
+    }
+
+    await db.collection('users').doc(input.userId).collection('drive_files').add({
       name: input.fileName,
       size: (input.content.length / 1024).toFixed(2) + " KB",
       type: 'text/plain',
       url: "#",
-      timestamp: serverTimestamp()
+      timestamp: FieldValue.serverTimestamp(),
     });
 
-    await addDoc(collection(db, "users", input.userId, "notifications"), {
-      title: "File Generated",
-      message: `File "${input.fileName}" has been saved to your Drive.`,
-      type: 'system',
-      read: false,
-      timestamp: serverTimestamp()
-    });
+    await notifyUser(input.userId, 'File Generated', `File "${input.fileName}" has been saved to your Drive.`);
 
     return `File "${input.fileName}" has been generated and saved.`;
   }
@@ -154,6 +156,7 @@ const chatFlow = ai.defineFlow(
   },
   async input => {
     let retries = 3;
+    const signedIn = hasUsableUserId(input.userId);
     const systemPrompt = input.specialization === 'games' 
       ? `You are Xak, the professional developer for Xakteir Studio. You help users build apps and extensions.
 
@@ -164,7 +167,8 @@ CRITICAL GUIDELINES:
 - ALWAYS wrap code in triple backticks with the language name.
 - When asked to build an app, provide the complete HTML/CSS/JS in a single block for instant preview.
 - You remember every detail of this conversation.
-- Use the userId: ${input.userId || 'guest'} for all tool calls.`
+- The current user is ${signedIn ? `signed in with ID ${input.userId}` : 'not signed in'}.
+- Only use tools that save data when the user is signed in.`
       : `You are Xak AI, the professional assistant for the Xakteir platform. You help users manage data, write code, and organize tasks.
 
 CRITICAL GUIDELINES:
@@ -173,28 +177,20 @@ CRITICAL GUIDELINES:
 - Use a professional, direct, and natural tone.
 - ALWAYS wrap code in triple backticks.
 - You remember previous context in this session.
-- You can create documents, tasks, and files. Use the userId: ${input.userId || 'guest'} for all tool calls.`;
+- The current user is ${signedIn ? `signed in with ID ${input.userId}` : 'not signed in'}.
+- You can create documents, tasks, and files only when the user is signed in.`;
 
     while (retries > 0) {
       try {
         const {output} = await ai.generate({
-          model: 'googleai/gemini-2.5-flash',
+          model: anthropic.model('claude-sonnet-4-5'),
           system: systemPrompt,
           messages: [
             ...(input.history || []),
             { role: 'user', content: [{ text: input.message }] }
           ],
-          tools: [createDocument, createGoal, createFile],
+          tools: signedIn ? [createDocument, createGoal, createFile] : [],
           output: { schema: ChatOutputSchema },
-          config: {
-            safetySettings: [
-              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_NONE' },
-            ],
-          }
         });
 
         if (!output) {
@@ -202,10 +198,21 @@ CRITICAL GUIDELINES:
         }
         return output;
       } catch (error: any) {
+        const message = String(error?.message || '');
         retries--;
-        if ((error?.message?.includes('503') || error?.message?.includes('UNAVAILABLE')) && retries > 0) {
+        if ((message.includes('503') || message.includes('UNAVAILABLE')) && retries > 0) {
           await new Promise(resolve => setTimeout(resolve, 2000));
           continue;
+        }
+        if (message.includes('API key') || message.includes('ANTHROPIC_API_KEY')) {
+          return {
+            response: "Xak AI is not configured yet. Add a valid Anthropic API key in the server environment, then try again.",
+          };
+        }
+        if (message.includes('Could not load the default credentials')) {
+          return {
+            response: "Xak AI can answer chat, but account-saving tools need Firebase admin credentials in the server environment.",
+          };
         }
         if (retries === 0) {
           return { response: "The system is currently busy. Please try again in a moment." };

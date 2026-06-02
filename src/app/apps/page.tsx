@@ -43,6 +43,7 @@ const ALL_APPS = [
   { name: "Mail", description: "Email service for members.", icon: Mail, color: "text-blue-400", href: "/mail", features: ["Inbox", "Direct"] },
   { name: "Drive", description: "Cloud storage for your files.", icon: HardDrive, color: "text-amber-500", href: "/drive", features: ["Secure", "Storage"] },
   { name: "Games", description: "Play built-in and community games.", icon: Gamepad2, color: "text-purple-400", href: "/games", features: ["Arcade", "Multiplayer"] },
+  { name: "XakCode", description: "AI-powered IDE with project hosting and deployment controls.", icon: Code2, color: "text-sky-400", href: "/xakcode", features: ["IDE", "AI", "Hosting"] },
   { name: "Videos", description: "Share and watch community videos.", icon: Video, color: "text-rose-400", href: "/xakview", features: ["Video", "Creator"] },
   { name: "Forms", description: "Build surveys and forms.", icon: ClipboardList, color: "text-blue-500", href: "/forms", features: ["Builder", "Data"] },
   { name: "Art Studio", description: "Generate images with AI.", icon: Palette, color: "text-rose-500", href: "/art", features: ["AI Art", "Creative"] },

@@ -56,7 +56,7 @@ const navigation = [
   { name: "Learn", href: "/learn", icon: GraduationCap },
   { name: "Art Studio", href: "/art", icon: Palette },
   { name: "Photos", icon: ImageIcon, href: "/pics" },
-  { name: "Studio IDE", icon: Code2, href: "/games/studio" },
+  { name: "XakCode", icon: Code2, href: "/xakcode" },
   { name: "Meet", href: "/meet", icon: VideoIcon },
   { name: "Notes", href: "/notes", icon: FileText },
   { name: "Translate", icon: Languages, href: "/translate" },

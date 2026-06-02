@@ -62,6 +62,7 @@ export function CommandCenter() {
     { name: "Xakteir Suite", type: "App", icon: FileText, href: "/suite" },
     { name: "Games", type: "App", icon: Gamepad2, href: "/games" },
     { name: "Xak AI", type: "App", icon: Zap, href: "/ai-chat" },
+    { name: "XakCode", type: "App", icon: FileText, href: "/xakcode" },
   ].filter(r => r.name.toLowerCase().includes(queryInput.toLowerCase()));
 
   const handleNavigate = (href: string) => {

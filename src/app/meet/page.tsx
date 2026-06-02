@@ -38,7 +38,8 @@ import {
   collection, 
   addDoc, 
   getDoc, 
-  updateDoc 
+  updateDoc,
+  type Unsubscribe,
 } from "firebase/firestore";
 
 const servers = {
@@ -67,13 +68,39 @@ export default function XakMeetPage() {
   const pc = useRef<RTCPeerConnection | null>(null);
   const localStream = useRef<MediaStream | null>(null);
   const remoteStream = useRef<MediaStream | null>(null);
+  const meetingUnsubscribers = useRef<Unsubscribe[]>([]);
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
+  useEffect(() => {
+    if (localVideoRef.current && localStream.current) {
+      localVideoRef.current.srcObject = localStream.current;
+    }
+    if (remoteVideoRef.current && remoteStream.current) {
+      remoteVideoRef.current.srcObject = remoteStream.current;
+    }
+  }, [mode]);
+
+  const clearMeetingListeners = () => {
+    meetingUnsubscribers.current.forEach(unsubscribe => unsubscribe());
+    meetingUnsubscribers.current = [];
+  };
+
+  const cleanupMedia = () => {
+    clearMeetingListeners();
+    localStream.current?.getTracks().forEach(track => track.stop());
+    remoteStream.current?.getTracks().forEach(track => track.stop());
+    pc.current?.close();
+    localStream.current = null;
+    remoteStream.current = null;
+    pc.current = null;
+  };
+
   const setupWebRTC = async () => {
+    cleanupMedia();
     pc.current = new RTCPeerConnection(servers);
     localStream.current = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     remoteStream.current = new MediaStream();
@@ -86,7 +113,10 @@ export default function XakMeetPage() {
 
     pc.current.ontrack = (event) => {
       event.streams[0].getTracks().forEach((track) => {
-        remoteStream.current?.addTrack(track);
+        const alreadyAdded = remoteStream.current?.getTracks().some(existing => existing.id === track.id);
+        if (!alreadyAdded) {
+          remoteStream.current?.addTrack(track);
+        }
       });
     };
 
@@ -110,7 +140,7 @@ export default function XakMeetPage() {
       if (pc.current) {
         pc.current.onicecandidate = (event) => {
           if (event.candidate) {
-            addDoc(offerCandidates, event.candidate.toJSON());
+            void addDoc(offerCandidates, event.candidate.toJSON());
           }
         };
 
@@ -135,23 +165,31 @@ export default function XakMeetPage() {
           }]
         });
 
-        onSnapshot(callDoc, (snapshot) => {
+        setParticipants([
+          {
+            id: user.uid,
+            name: user.displayName?.replace(/^@+/, "") || "Host",
+            photo: user.photoURL || "",
+          }
+        ]);
+
+        meetingUnsubscribers.current.push(onSnapshot(callDoc, (snapshot) => {
           const data = snapshot.data();
           if (data?.participants) setParticipants(data.participants);
           if (!pc.current?.currentRemoteDescription && data?.answer) {
             const answerDescription = new RTCSessionDescription(data.answer);
-            pc.current?.setRemoteDescription(answerDescription);
+            void pc.current?.setRemoteDescription(answerDescription);
           }
-        });
+        }));
 
-        onSnapshot(answerCandidates, (snapshot) => {
+        meetingUnsubscribers.current.push(onSnapshot(answerCandidates, (snapshot) => {
           snapshot.docChanges().forEach((change) => {
             if (change.type === 'added') {
               const data = change.doc.data();
-              pc.current?.addIceCandidate(new RTCIceCandidate(data));
+              void pc.current?.addIceCandidate(new RTCIceCandidate(data));
             }
           });
-        });
+        }));
       }
 
       setMode('meeting');
@@ -176,7 +214,7 @@ export default function XakMeetPage() {
       if (pc.current) {
         pc.current.onicecandidate = (event) => {
           if (event.candidate) {
-            addDoc(answerCandidates, event.candidate.toJSON());
+            void addDoc(answerCandidates, event.candidate.toJSON());
           }
         };
 
@@ -206,19 +244,19 @@ export default function XakMeetPage() {
           participants: [...(callData.participants || []), newParticipant]
         });
 
-        onSnapshot(callDoc, (snapshot) => {
+        meetingUnsubscribers.current.push(onSnapshot(callDoc, (snapshot) => {
           const data = snapshot.data();
           if (data?.participants) setParticipants(data.participants);
-        });
+        }));
 
-        onSnapshot(offerCandidates, (snapshot) => {
+        meetingUnsubscribers.current.push(onSnapshot(offerCandidates, (snapshot) => {
           snapshot.docChanges().forEach((change) => {
             if (change.type === 'added') {
-              let data = change.doc.data();
-              pc.current?.addIceCandidate(new RTCIceCandidate(data));
+              const data = change.doc.data();
+              void pc.current?.addIceCandidate(new RTCIceCandidate(data));
             }
           });
-        });
+        }));
       }
 
       setMode('meeting');
@@ -232,15 +270,19 @@ export default function XakMeetPage() {
   };
 
   const endMeeting = () => {
-    localStream.current?.getTracks().forEach(t => t.stop());
-    remoteStream.current?.getTracks().forEach(t => t.stop());
-    pc.current?.close();
+    cleanupMedia();
     setMode('lobby');
     setRoomCode("");
     setCustomRoomId("");
     setParticipants([]);
     toast({ title: "Meeting Terminated" });
   };
+
+  useEffect(() => {
+    return () => {
+      cleanupMedia();
+    };
+  }, []);
 
   if (!mounted) return null;
 

@@ -150,6 +150,7 @@ export default function XakChatPage() {
   const [chatInput, setChatInput] = useState("");
   const [rightPanel, setRightPanel] = useState<'members' | 'extensions' | 'files'>('members');
   const [mounted, setMounted] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
@@ -180,18 +181,32 @@ export default function XakChatPage() {
 
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!chatInput.trim() || !user || !firestore) return;
+    if (!chatInput.trim() || !user || !firestore || isSending) return;
 
-    const content = chatInput;
+    const content = chatInput.trim();
     setChatInput("");
+    setIsSending(true);
 
-    addDocumentNonBlocking(collection(firestore, "chat", activeTarget.id, "messages"), {
-      content,
-      senderId: user.uid,
-      senderName: user.displayName?.replace(/^@+/, "") || "Member",
-      senderPhoto: user.photoURL || "",
-      timestamp: serverTimestamp()
-    });
+    try {
+      await addDocumentNonBlocking(collection(firestore, "chat", activeTarget.id, "messages"), {
+        content,
+        senderId: user.uid,
+        senderName: user.displayName?.replace(/^@+/, "") || "Member",
+        senderPhoto: user.photoURL || "",
+        channelId: activeTarget.id,
+        channelName: activeTarget.name,
+        timestamp: serverTimestamp()
+      });
+    } catch (error) {
+      setChatInput(content);
+      toast({
+        variant: "destructive",
+        title: "Message failed",
+        description: "Chat could not send your message right now."
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleCatchUp = () => {

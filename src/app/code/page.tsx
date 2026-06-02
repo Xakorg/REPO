@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { 
   Code2, 
   Terminal, 
@@ -140,12 +140,24 @@ export default function XakCodePage() {
     }
   };
 
-  const handleZipUpload = () => {
+  const handleProjectImport = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
     setUploadingZip(true);
     setTimeout(() => {
       setUploadingZip(false);
-      toast({ title: "Zip Shard Received", description: "Analyzing legacy logic for AI upgrade..." });
-      setPrompt("This is an uploaded zip project. Please refactor it into high-fidelity Next.js code.");
+      const hasDirectoryImport = files.some(file => file.webkitRelativePath);
+      const sampleNames = files.slice(0, 5).map(file => file.webkitRelativePath || file.name).join(", ");
+      toast({
+        title: hasDirectoryImport ? "Folder Imported" : "Archive Imported",
+        description: `Loaded ${files.length} file${files.length === 1 ? "" : "s"} into XakCode.`,
+      });
+      setPrompt(
+        `I imported a project with ${files.length} files. Sample paths: ${sampleNames}. ` +
+        `Help me review the structure, suggest improvements, and prepare it for hosting on a custom domain.`
+      );
+      event.target.value = "";
     }, 2000);
   };
 
@@ -185,7 +197,7 @@ export default function XakCodePage() {
       </div>
       <h2 className="text-6xl font-black uppercase italic tracking-tighter">Architect Entry</h2>
       <p className="text-muted-foreground font-bold uppercase tracking-widest max-w-sm">Sign in to initialize your neural code library and hosting suite.</p>
-      <Link href="/auth"><Button className="bg-primary hover:bg-primary/90 h-16 px-16 rounded-[2rem] font-black uppercase text-xs">Authorize Link</Button></Link>
+      <Link href="/auth"><Button className="bg-primary hover:bg-primary/90 h-16 px-16 rounded-[2rem] font-black uppercase text-xs">Sign In</Button></Link>
     </div>
   );
 
@@ -205,10 +217,10 @@ export default function XakCodePage() {
           <div className="flex gap-2">
              <Button onClick={() => setIsNewModalOpen(true)} variant="outline" className="h-10 px-4 rounded-xl border-white/10 text-[9px] font-black uppercase tracking-widest hover:bg-white/5"><Plus className="w-4 h-4 mr-2" /> New Shard</Button>
              <label className="cursor-pointer">
-                <Button variant="outline" className="h-10 px-4 rounded-xl border-white/10 text-[9px] font-black uppercase tracking-widest hover:bg-white/5 pointer-events-none" disabled={uploadingZip}>
-                   {uploadingZip ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />} Import Zip
+                  <Button variant="outline" className="h-10 px-4 rounded-xl border-white/10 text-[9px] font-black uppercase tracking-widest hover:bg-white/5 pointer-events-none" disabled={uploadingZip}>
+                   {uploadingZip ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />} Import Folder or Zip
                 </Button>
-                <input type="file" className="hidden" accept=".zip" onChange={handleZipUpload} />
+                <input type="file" className="hidden" accept=".zip" multiple onChange={handleProjectImport} webkitdirectory="" />
              </label>
           </div>
         </div>
@@ -360,13 +372,13 @@ export default function XakCodePage() {
                            <div className="w-12 h-12 rounded-2xl bg-sky-600 flex items-center justify-center"><Globe className="w-6 h-6 text-white" /></div>
                            <h3 className="text-xl font-black uppercase italic">Custom Domain</h3>
                         </div>
-                        <p className="text-xs text-muted-foreground font-medium italic">Map your professional identity to this neural shard.</p>
+                        <p className="text-xs text-muted-foreground font-medium italic">Map your project to a real custom domain. Using a `www.` domain is recommended.</p>
                         <div className="space-y-4">
                            <div className="flex gap-2">
                               <Input 
                                 value={customDomain}
                                 onChange={(e) => setCustomDomain(e.target.value)}
-                                placeholder="my-app.com" 
+                                placeholder="www.my-app.com" 
                                 className="bg-secondary/30 h-12 rounded-xl border-white/10 font-bold" 
                               />
                               <Button onClick={handleCustomDomain} disabled={!customDomain.trim()} className="bg-sky-600 rounded-xl h-12 px-6 font-black uppercase text-[10px]">Verify</Button>
