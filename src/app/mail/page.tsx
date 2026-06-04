@@ -122,20 +122,6 @@ export default function MailPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-            <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-2xl text-foreground p-10 bg-zinc-950">
-              <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic">Compose</DialogTitle></DialogHeader>
-              <div className="space-y-6 py-4">
-                <Input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="To: name@email.com" className="bg-secondary/30 h-12 rounded-xl" />
-                <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" className="bg-secondary/30 h-12 rounded-xl" />
-                <Textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Type message..." className="bg-secondary/30 rounded-2xl min-h-[250px] p-6 text-lg italic" />
-              </div>
-              <DialogFooter>
-                <Button disabled={isSending} onClick={handleSend} className="h-14 px-12 bg-primary rounded-xl font-black uppercase text-xs">
-                  {isSending ? <Loader2 className="animate-spin" /> : "Send"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
 
           <ScrollArea className="flex-1">
              <div className="space-y-1">
