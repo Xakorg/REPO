@@ -26,7 +26,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useFirestore, useUser, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
+import { useFirestore, useUser, useAuth, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
 import { collection, doc, query, limit, orderBy, serverTimestamp } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -37,6 +37,7 @@ export default function AdminDashboardPage() {
   const { user } = useUser();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const auth = useAuth();
 
   const [mounted, setMounted] = useState(false);
   const [userToManage, setUserToManage] = useState<any>(null);
@@ -150,6 +151,45 @@ export default function AdminDashboardPage() {
       </div>
     );
   }
+
+  // Admin tools: seed and remove user without terminal
+  const [seedCount, setSeedCount] = useState(1000);
+  const [seedImages, setSeedImages] = useState(500);
+  const [seedDryRun, setSeedDryRun] = useState(true);
+  const [seedRunning, setSeedRunning] = useState(false);
+
+  const [removeId, setRemoveId] = useState('');
+  const [removeDryRun, setRemoveDryRun] = useState(true);
+  const [removeRunning, setRemoveRunning] = useState(false);
+
+  const callAdminApi = async (path: string, payload: any) => {
+    if (!auth || !user) return { ok: false, error: 'not-auth' };
+    const token = await auth.currentUser.getIdToken(/* forceRefresh */ true);
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload)
+    });
+    return res.json();
+  };
+
+  const runSeed = async () => {
+    setSeedRunning(true);
+    try {
+      const res = await callAdminApi('/api/admin/seed', { count: Number(seedCount), images: Number(seedImages), dryRun: !!seedDryRun });
+      toast({ title: res.ok ? 'Seed completed' : 'Seed failed', description: JSON.stringify(res) });
+    } catch (e) { toast({ variant: 'destructive', title: 'Seed failed' }); }
+    setSeedRunning(false);
+  };
+
+  const runRemove = async () => {
+    setRemoveRunning(true);
+    try {
+      const res = await callAdminApi('/api/admin/remove-user', { identifier: removeId, execute: !removeDryRun });
+      toast({ title: res.ok ? 'Remove scan completed' : 'Remove failed', description: JSON.stringify(res) });
+    } catch (e) { toast({ variant: 'destructive', title: 'Remove failed' }); }
+    setRemoveRunning(false);
+  };
 
   return (
     <div className="max-w-7xl mx-auto py-16 space-y-16 animate-fade-in px-6">
@@ -276,6 +316,28 @@ export default function AdminDashboardPage() {
            </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Admin quick tools: seed and remove */}
+      <div className="max-w-6xl mx-auto py-12 space-y-8">
+        <Card className="p-6">
+          <h2 className="text-2xl font-black mb-4">Seed Search Index (server-side)</h2>
+          <div className="flex items-center gap-4">
+            <Input type="number" value={seedCount} onChange={(e) => setSeedCount(Number(e.target.value))} className="w-48" />
+            <Input type="number" value={seedImages} onChange={(e) => setSeedImages(Number(e.target.value))} className="w-48" />
+            <label className="flex items-center gap-2 text-white"><input type="checkbox" checked={seedDryRun} onChange={(e) => setSeedDryRun(e.target.checked)} /> Dry-run</label>
+            <Button onClick={runSeed} disabled={seedRunning}>{seedRunning ? 'Running...' : 'Run Seed'}</Button>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="text-2xl font-black mb-4">Remove / Anonymize User References</h2>
+          <div className="flex items-center gap-4">
+            <Input value={removeId} onChange={(e) => setRemoveId(e.target.value)} placeholder="username or exact display name" className="w-96" />
+            <label className="flex items-center gap-2 text-white"><input type="checkbox" checked={removeDryRun} onChange={(e) => setRemoveDryRun(e.target.checked)} /> Dry-run</label>
+            <Button onClick={runRemove} disabled={removeRunning}>{removeRunning ? 'Running...' : 'Scan/Run'}</Button>
+          </div>
+        </Card>
+      </div>
 
       <Dialog open={!!replyTarget} onOpenChange={() => setReplyTarget(null)}>
          <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-2xl text-white p-10 bg-zinc-950">
