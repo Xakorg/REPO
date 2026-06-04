@@ -166,11 +166,26 @@ export default function XakCodePage() {
     setIsDeploying(true);
     setTimeout(async () => {
       await updateDoc(doc(firestore, "users", user.uid, "code_projects", activeProject.id), {
-        "deployment.status": 'live',
+        "deployment.status": 'published',
         "deployment.liveAt": serverTimestamp()
       });
+
+      // Create a published_projects record for discovery and provenance
+      try {
+        await addDoc(collection(firestore, "published_projects"), {
+          projectId: activeProject.id,
+          ownerId: user.uid,
+          name: activeProject.name,
+          domain: activeProject.deployment?.domain || `${(activeProject.name || 'project').toLowerCase().replace(/\s+/g, '-')}.xakteir.app`,
+          publishedAt: serverTimestamp(),
+          status: 'published'
+        });
+      } catch (e) {
+        // non-fatal
+      }
+
       setIsDeploying(false);
-      toast({ title: "Unit Deployed!", description: `Live at ${activeProject.deployment?.domain || 'the Hub'}` });
+      toast({ title: "Unit Published!", description: `Live at ${activeProject.deployment?.domain || 'the Hub'}` });
     }, 3000);
   };
 
@@ -245,9 +260,9 @@ export default function XakCodePage() {
             <span className={cn("w-2 h-2 rounded-full animate-pulse", activeProject?.deployment?.status === 'live' ? "bg-green-500" : "bg-amber-500")} />
             <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{activeProject?.name || "System Online"}</span>
           </div>
-          <Button onClick={handleDeploy} disabled={isDeploying || !activeProject} className="bg-primary hover:bg-primary/90 h-10 rounded-xl px-8 font-black uppercase text-xs tracking-widest text-white shadow-xl border-b-4 border-primary/20 active:border-b-0 active:translate-y-1 transition-all">
-             {isDeploying ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Rocket className="w-4 h-4 mr-2" /> Host Unit</>}
-          </Button>
+           <Button onClick={handleDeploy} disabled={isDeploying || !activeProject} className="bg-primary hover:bg-primary/90 h-10 rounded-xl px-8 font-black uppercase text-xs tracking-widest text-white shadow-xl border-b-4 border-primary/20 active:border-b-0 active:translate-y-1 transition-all">
+             {isDeploying ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Rocket className="w-4 h-4 mr-2" /> PUBLISH</>}
+           </Button>
         </div>
       </header>
 
@@ -430,7 +445,7 @@ export default function XakCodePage() {
                            <p className="text-sm text-muted-foreground font-medium italic leading-relaxed max-w-lg">Push your colourful logic directly to the Hub's anycast network. Global SSL and Edge caching enabled by default.</p>
                         </div>
                         <Button onClick={handleDeploy} disabled={isDeploying} className="h-20 px-16 bg-primary hover:bg-primary/90 text-white rounded-[2rem] font-black text-lg uppercase italic shadow-2xl border-b-8 border-primary/20 active:border-b-0 active:translate-y-1 transition-all">
-                           {isDeploying ? <Loader2 className="w-8 h-8 animate-spin" /> : "DEPLOY UNIT"}
+                            {isDeploying ? <Loader2 className="w-8 h-8 animate-spin" /> : "PUBLISH"}
                         </Button>
                      </div>
                   </Card>

@@ -102,12 +102,21 @@ export default function MailPage() {
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       <div className="flex-1 flex p-6 gap-6 overflow-hidden">
         <div className="w-80 flex flex-col space-y-6">
-          <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full bg-primary h-16 rounded-3xl font-black uppercase text-xs italic shadow-xl">
-                <Plus className="w-5 h-5 mr-3" /> New Message
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
+              <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full bg-primary h-16 rounded-3xl font-black uppercase text-xs italic shadow-xl">
+                    <Plus className="w-5 h-5 mr-3" /> New Message
+                  </Button>
+                </DialogTrigger>
+              </Dialog>
+
+              <Button onClick={() => { if (user) window.location.href = `/api/gmail/oauth/start?uid=${user.uid}`; }} className="w-40 bg-blue-600 h-16 rounded-3xl font-black uppercase text-xs italic shadow-xl">
+                <MailIcon className="w-4 h-4 mr-2" /> Connect Gmail
               </Button>
-            </DialogTrigger>
+            </div>
+          </div>
             <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-2xl text-foreground p-10 bg-zinc-950">
               <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic">Compose</DialogTitle></DialogHeader>
               <div className="space-y-6 py-4">
