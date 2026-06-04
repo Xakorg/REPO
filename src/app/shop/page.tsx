@@ -269,7 +269,7 @@ export default function ShopPage() {
                 
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full h-16 rounded-[2rem] border-white/10 font-black uppercase text-xs tracking-widest text-muted-foreground hover:text-white">
+                ``   <Button variant="outline" className="w-full h-16 rounded-[2rem] border-white/10 font-black uppercase text-xs tracking-widest text-muted-foreground hover:text-white">
                       <Gift className="w-4 h-4 mr-3" /> Gift to Friend
                     </Button>
                   </DialogTrigger>
