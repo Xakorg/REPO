@@ -68,16 +68,16 @@ export default function XakMeetPage() {
   const [connectionState, setConnectionState] = useState<ConnectionState>("new");
   const [remoteTracksVersion, setRemoteTracksVersion] = useState(0);
 
-  const pc = useRef<RTCPeerConnection | null>(null);
-  const iceBuffer = useRef<IceCandidateBuffer | null>(null);
+  const pcMap = useRef<Record<string, RTCPeerConnection>>({});
+  const iceBuffers = useRef<Record<string, IceCandidateBuffer>>({});
   const localStream = useRef<MediaStream | null>(null);
-  const remoteStream = useRef<MediaStream | null>(null);
+  const remoteStreams = useRef<Record<string, MediaStream>>({});
   const meetingUnsubscribers = useRef<Unsubscribe[]>([]);
   const activeMeetingId = useRef<string | null>(null);
   const isHost = useRef(false);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null); // fallback single remote for legacy display
 
   useEffect(() => {
     setMounted(true);
@@ -88,9 +88,14 @@ export default function XakMeetPage() {
       localVideoRef.current.srcObject = localStream.current;
       void localVideoRef.current.play().catch(() => {});
     }
-    if (remoteVideoRef.current && remoteStream.current) {
-      remoteVideoRef.current.srcObject = remoteStream.current;
-      void remoteVideoRef.current.play().catch(() => {});
+    // bind fallback remote video to the first remote stream (if any)
+    if (remoteVideoRef.current) {
+      const keys = Object.keys(remoteStreams.current);
+      const s = keys.length ? remoteStreams.current[keys[0]] : null;
+      if (s) {
+        remoteVideoRef.current.srcObject = s;
+        void remoteVideoRef.current.play().catch(() => {});
+      }
     }
   }, []);
 
@@ -103,16 +108,58 @@ export default function XakMeetPage() {
     meetingUnsubscribers.current = [];
   };
 
+  const sendSignal = async (meetingId: string, payload: any) => {
+    if (!firestore) return;
+    const callDoc = doc(firestore, "meetings", meetingId);
+    const signals = collection(callDoc, "signals");
+    try {
+      await addDoc(signals, payload);
+    } catch (e) {
+      console.warn("Failed to send signal", e);
+    }
+  };
+
+  const createOfferTo = async (meetingId: string, targetId: string) => {
+    if (!user || !firestore) return;
+    const peer = ensurePeerFor(targetId);
+    const callDoc = doc(firestore, "meetings", meetingId);
+    const signals = collection(callDoc, "signals");
+
+    peer.onicecandidate = (event) => {
+      if (event.candidate) {
+        void addDoc(signals, {
+          from: user.uid,
+          to: targetId,
+          type: "ice",
+          candidate: event.candidate.toJSON(),
+          ts: Date.now(),
+        });
+      }
+    };
+
+    const offer = await peer.createOffer();
+    await peer.setLocalDescription(offer);
+
+    await addDoc(signals, {
+      from: user.uid,
+      to: targetId,
+      type: "offer",
+      sdp: offer.sdp,
+      sdpType: offer.type,
+      ts: Date.now(),
+    });
+  };
+
   const cleanupMedia = () => {
     clearMeetingListeners();
     localStream.current?.getTracks().forEach((track) => track.stop());
-    remoteStream.current?.getTracks().forEach((track) => track.stop());
-    pc.current?.close();
-    iceBuffer.current?.reset();
+    Object.values(remoteStreams.current).forEach((ms) => ms.getTracks().forEach((t) => t.stop()));
+    Object.values(pcMap.current).forEach((p) => p.close());
+    Object.values(iceBuffers.current).forEach((b) => b.reset());
     localStream.current = null;
-    remoteStream.current = null;
-    pc.current = null;
-    iceBuffer.current = null;
+    remoteStreams.current = {};
+    pcMap.current = {};
+    iceBuffers.current = {};
     activeMeetingId.current = null;
     isHost.current = false;
     setConnectionState("new");
@@ -136,6 +183,30 @@ export default function XakMeetPage() {
         });
       }
     };
+  };
+
+  const ensurePeerFor = (id: string) => {
+    if (pcMap.current[id]) return pcMap.current[id];
+    const peer = new RTCPeerConnection(getIceServers());
+    pcMap.current[id] = peer;
+    iceBuffers.current[id] = new IceCandidateBuffer(peer);
+    attachConnectionHandlers(peer);
+
+    // create a remote stream slot
+    remoteStreams.current[id] = new MediaStream();
+
+    peer.ontrack = (event) => {
+      event.streams[0]?.getTracks().forEach((track) => {
+        const exists = remoteStreams.current[id].getTracks().some((t) => t.id === track.id);
+        if (!exists) remoteStreams.current[id].addTrack(track);
+      });
+      setRemoteTracksVersion((v) => v + 1);
+    };
+
+    // add local tracks
+    localStream.current?.getTracks().forEach((t) => peer.addTrack(t, localStream.current!));
+
+    return peer;
   };
 
   const setupWebRTC = async () => {
@@ -177,13 +248,9 @@ export default function XakMeetPage() {
   const deleteMeetingRoom = async (meetingId: string) => {
     if (!firestore) return;
     const callDoc = doc(firestore, "meetings", meetingId);
-    const [offerSnap, answerSnap] = await Promise.all([
-      getDocs(collection(callDoc, "offerCandidates")),
-      getDocs(collection(callDoc, "answerCandidates")),
-    ]);
-    await Promise.all([
-      ...offerSnap.docs.map((d) => deleteDoc(d.ref)),
-      ...answerSnap.docs.map((d) => deleteDoc(d.ref)),
+    const signalsSnap = await getDocs(collection(callDoc, "signals"));
+    await Promise.all([...
+      signalsSnap.docs.map((d) => deleteDoc(d.ref)),
       deleteDoc(callDoc),
     ]);
   };
@@ -219,28 +286,9 @@ export default function XakMeetPage() {
         Math.random().toString(36).substring(2, 8).toUpperCase();
       const callDoc = doc(firestore, "meetings", meetingId);
       const existing = await getDoc(callDoc);
-      if (existing.exists() && existing.data()?.offer) {
+      if (existing.exists()) {
         throw new Error("Room ID already in use. Pick another code.");
       }
-
-      const offerCandidates = collection(callDoc, "offerCandidates");
-      const answerCandidates = collection(callDoc, "answerCandidates");
-
-      setRoomCode(meetingId);
-      activeMeetingId.current = meetingId;
-      isHost.current = true;
-
-      const peer = pc.current!;
-      const buffer = iceBuffer.current!;
-
-      peer.onicecandidate = (event) => {
-        if (event.candidate) {
-          void addDoc(offerCandidates, event.candidate.toJSON());
-        }
-      };
-
-      const offerDescription = await peer.createOffer();
-      await peer.setLocalDescription(offerDescription);
 
       const hostParticipant: Participant = {
         id: user.uid,
@@ -249,7 +297,6 @@ export default function XakMeetPage() {
       };
 
       await setDoc(callDoc, {
-        offer: { sdp: offerDescription.sdp, type: offerDescription.type },
         createdAt: new Date().toISOString(),
         hostId: user.uid,
         hostName: hostParticipant.name,
@@ -258,27 +305,78 @@ export default function XakMeetPage() {
         participants: [hostParticipant],
       });
 
+      setRoomCode(meetingId);
+      activeMeetingId.current = meetingId;
+      isHost.current = true;
       setParticipants([hostParticipant]);
 
+      // Watch for participants and signals
       meetingUnsubscribers.current.push(
         onSnapshot(callDoc, (snapshot) => {
           const data = snapshot.data();
           if (data?.participants) setParticipants(data.participants as Participant[]);
 
-          if (!peer.currentRemoteDescription && data?.answer) {
-            void (async () => {
-              await peer.setRemoteDescription(new RTCSessionDescription(data.answer));
-              buffer.markReady();
-            })();
-          }
+          // create offers to any newly seen participants
+          const ids: string[] = data?.participantIds || [];
+          ids.forEach((pid) => {
+            if (pid === user.uid) return;
+            if (!pcMap.current[pid]) {
+              void createOfferTo(meetingId, pid).catch((e) => console.warn(e));
+            }
+          });
         })
       );
 
+      const signals = collection(callDoc, "signals");
       meetingUnsubscribers.current.push(
-        onSnapshot(answerCandidates, (snapshot) => {
+        onSnapshot(signals, (snapshot) => {
           snapshot.docChanges().forEach((change) => {
-            if (change.type === "added") {
-              void buffer.add(change.doc.data() as RTCIceCandidateInit);
+            if (change.type !== "added") return;
+            const data = change.doc.data() as any;
+            if (!data || data.to !== user.uid) return;
+
+            const fromId = data.from as string;
+            const type = data.type as string;
+
+            if (type === "offer") {
+              // received an offer targeted to me
+              (async () => {
+                const peer = ensurePeerFor(fromId);
+                peer.onicecandidate = (event) => {
+                  if (event.candidate) {
+                    void addDoc(signals, {
+                      from: user.uid,
+                      to: fromId,
+                      type: "ice",
+                      candidate: event.candidate.toJSON(),
+                      ts: Date.now(),
+                    });
+                  }
+                };
+
+                await peer.setRemoteDescription(new RTCSessionDescription({ type: data.sdpType, sdp: data.sdp }));
+                iceBuffers.current[fromId].markReady();
+                const answer = await peer.createAnswer();
+                await peer.setLocalDescription(answer);
+
+                await addDoc(signals, {
+                  from: user.uid,
+                  to: fromId,
+                  type: "answer",
+                  sdp: answer.sdp,
+                  sdpType: answer.type,
+                  ts: Date.now(),
+                });
+              })();
+            } else if (type === "answer") {
+              const peer = pcMap.current[fromId];
+              if (peer) {
+                void peer.setRemoteDescription(new RTCSessionDescription({ type: data.sdpType, sdp: data.sdp }));
+                iceBuffers.current[fromId].markReady();
+              }
+            } else if (type === "ice") {
+              const buf = iceBuffers.current[fromId];
+              if (buf) void buf.add(data.candidate as RTCIceCandidateInit);
             }
           });
         })
@@ -304,35 +402,14 @@ export default function XakMeetPage() {
 
       const meetingId = roomCode.trim().toUpperCase();
       const callDoc = doc(firestore, "meetings", meetingId);
-      const offerCandidates = collection(callDoc, "offerCandidates");
-      const answerCandidates = collection(callDoc, "answerCandidates");
-
       const snap = await getDoc(callDoc);
       const callData = snap.data();
-      if (!callData?.offer) throw new Error("Room not found or meeting has ended.");
+      if (!callData) throw new Error("Room not found or meeting has ended.");
 
       const participantIds: string[] = callData.participantIds || [];
       if (participantIds.includes(user.uid)) {
         throw new Error("You are already in this room from another tab.");
       }
-      if (callData.answer && participantIds.length >= 2) {
-        throw new Error("This room is full (1:1 calls only).");
-      }
-
-      const peer = pc.current!;
-      const buffer = iceBuffer.current!;
-
-      peer.onicecandidate = (event) => {
-        if (event.candidate) {
-          void addDoc(answerCandidates, event.candidate.toJSON());
-        }
-      };
-
-      await peer.setRemoteDescription(new RTCSessionDescription(callData.offer));
-      buffer.markReady();
-
-      const answerDescription = await peer.createAnswer();
-      await peer.setLocalDescription(answerDescription);
 
       const newParticipant: Participant = {
         id: user.uid,
@@ -341,7 +418,6 @@ export default function XakMeetPage() {
       };
 
       await updateDoc(callDoc, {
-        answer: { type: answerDescription.type, sdp: answerDescription.sdp },
         participantIds: [...participantIds, user.uid],
         participants: [...(callData.participants || []), newParticipant],
       });
@@ -349,28 +425,74 @@ export default function XakMeetPage() {
       activeMeetingId.current = meetingId;
       isHost.current = false;
       setRoomCode(meetingId);
+      setParticipants([...(callData.participants || []), newParticipant]);
 
+      // Listen for changes and signals
       meetingUnsubscribers.current.push(
         onSnapshot(callDoc, (snapshot) => {
           const data = snapshot.data();
           if (data?.participants) setParticipants(data.participants as Participant[]);
+          // if new participants appear, wait for offers via signals
         })
       );
 
+      const signals = collection(callDoc, "signals");
       meetingUnsubscribers.current.push(
-        onSnapshot(offerCandidates, (snapshot) => {
+        onSnapshot(signals, (snapshot) => {
           snapshot.docChanges().forEach((change) => {
-            if (change.type === "added") {
-              void buffer.add(change.doc.data() as RTCIceCandidateInit);
+            if (change.type !== "added") return;
+            const data = change.doc.data() as any;
+            if (!data || data.to !== user.uid) return;
+
+            const fromId = data.from as string;
+            const type = data.type as string;
+
+            if (type === "offer") {
+              (async () => {
+                const peer = ensurePeerFor(fromId);
+                peer.onicecandidate = (event) => {
+                  if (event.candidate) {
+                    void addDoc(signals, {
+                      from: user.uid,
+                      to: fromId,
+                      type: "ice",
+                      candidate: event.candidate.toJSON(),
+                      ts: Date.now(),
+                    });
+                  }
+                };
+
+                await peer.setRemoteDescription(new RTCSessionDescription({ type: data.sdpType, sdp: data.sdp }));
+                iceBuffers.current[fromId].markReady();
+                const answer = await peer.createAnswer();
+                await peer.setLocalDescription(answer);
+
+                await addDoc(signals, {
+                  from: user.uid,
+                  to: fromId,
+                  type: "answer",
+                  sdp: answer.sdp,
+                  sdpType: answer.type,
+                  ts: Date.now(),
+                });
+              })();
+            } else if (type === "answer") {
+              const peer = pcMap.current[fromId];
+              if (peer) {
+                void peer.setRemoteDescription(new RTCSessionDescription({ type: data.sdpType, sdp: data.sdp }));
+                iceBuffers.current[fromId].markReady();
+              }
+            } else if (type === "ice") {
+              const buf = iceBuffers.current[fromId];
+              if (buf) void buf.add(data.candidate as RTCIceCandidateInit);
             }
           });
         })
       );
 
-      setParticipants([...(callData.participants || []), newParticipant]);
       setMode("meeting");
       setConnectionState("connecting");
-      toast({ title: "Joined meeting", description: "Waiting for media link…" });
+      toast({ title: "Joined meeting", description: "Waiting for media links…" });
     } catch (e) {
       cleanupMedia();
       const description = e instanceof Error ? e.message : "Could not connect to room.";
@@ -405,6 +527,19 @@ export default function XakMeetPage() {
         await deleteMeetingRoom(meetingId);
       } catch (e) {
         console.warn("Failed to delete meeting room:", e);
+      }
+    } else if (!host && meetingId && firestore && user) {
+      try {
+        const callDoc = doc(firestore, "meetings", meetingId);
+        const snap = await getDoc(callDoc);
+        const data = snap.data() || {};
+        const ids: string[] = data.participantIds || [];
+        const parts: Participant[] = data.participants || [];
+        const newIds = ids.filter((i) => i !== user.uid);
+        const newParts = parts.filter((p) => p.id !== user.uid);
+        await updateDoc(callDoc, { participantIds: newIds, participants: newParts });
+      } catch (e) {
+        console.warn("Failed to leave meeting:", e);
       }
     }
     setMode("lobby");
@@ -573,9 +708,11 @@ export default function XakMeetPage() {
             </div>
             <div className="flex items-center gap-4">
               <Button
-                onClick={() => {
-                  navigator.clipboard.writeText(roomCode);
-                  toast({ title: "Room ID copied" });
+                onClick={async () => {
+                  const { copyToClipboard } = await import('@/lib/clipboard');
+                  const ok = await copyToClipboard(roomCode);
+                  if (ok) toast({ title: "Room ID copied" });
+                  else toast({ variant: 'destructive', title: 'Copy Failed' });
                 }}
                 variant="ghost"
                 className="h-10 px-4 bg-white/5 border border-white/10 rounded-xl text-[8px] font-black uppercase tracking-widest text-white"
@@ -614,22 +751,42 @@ export default function XakMeetPage() {
                 </div>
               </div>
 
-              <div className="rounded-[3rem] border-8 border-white/5 bg-zinc-950 overflow-hidden relative shadow-2xl">
-                <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover bg-zinc-900" />
-                {connectionState !== "connected" && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/80">
-                    <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+              <div className="space-y-4">
+                {participants
+                  .filter((p) => p.id !== user.uid)
+                  .map((p) => (
+                    <div key={p.id} className="rounded-[1.2rem] border-4 border-white/5 bg-zinc-950 overflow-hidden relative shadow-2xl">
+                      <video
+                        autoPlay
+                        playsInline
+                        muted={false}
+                        ref={(el) => {
+                          if (!el) return;
+                          const s = remoteStreams.current[p.id];
+                          if (s) {
+                            el.srcObject = s;
+                            void el.play().catch(() => {});
+                          }
+                        }}
+                        className="w-full h-44 object-cover bg-zinc-900"
+                      />
+                      <div className="absolute bottom-3 left-3 px-4 py-2 bg-black/60 backdrop-blur-xl rounded-[1rem] border border-white/10 flex items-center gap-2 shadow-2xl">
+                        <div className={cn("w-2 h-2 rounded-full", connectionState === "connected" ? "bg-blue-500" : "bg-amber-500")} />
+                        <span className="text-[10px] font-black uppercase italic tracking-widest text-white">{p.name}</span>
+                      </div>
+                    </div>
+                  ))}
+                {/* fallback single remote */}
+                {participants.filter((p) => p.id !== user.uid).length === 0 && (
+                  <div className="rounded-[3rem] border-8 border-white/5 bg-zinc-950 overflow-hidden relative shadow-2xl">
+                    <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover bg-zinc-900" />
+                    {connectionState !== "connected" && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/80">
+                        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+                      </div>
+                    )}
                   </div>
                 )}
-                <div className="absolute bottom-6 left-6 px-6 py-3 bg-black/60 backdrop-blur-xl rounded-[1.5rem] border border-white/10 flex items-center gap-3 shadow-2xl">
-                  <div
-                    className={cn(
-                      "w-2 h-2 rounded-full",
-                      connectionState === "connected" ? "bg-blue-500 animate-pulse" : "bg-amber-500"
-                    )}
-                  />
-                  <span className="text-[10px] font-black uppercase italic tracking-widest text-white">Peer</span>
-                </div>
               </div>
             </div>
 

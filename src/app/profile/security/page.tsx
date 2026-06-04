@@ -219,7 +219,7 @@ export default function SecuritySettingsPage() {
                                </div>
                             </div>
                             <div className="flex gap-3">
-                               <Button variant="ghost" size="icon" onClick={() => { navigator.clipboard.writeText(item.password); toast({ title: "Copied!" }); }} className="h-11 w-11 hover:bg-white/10"><Copy className="w-4 h-4" /></Button>
+                               <Button variant="ghost" size="icon" onClick={async () => { const { copyToClipboard } = await import('@/lib/clipboard'); const ok = await copyToClipboard(item.password || ''); if (ok) toast({ title: "Copied!" }); else toast({ variant: 'destructive', title: 'Copy Failed' }); }} className="h-11 w-11 hover:bg-white/10"><Copy className="w-4 h-4" /></Button>
                                <Button onClick={() => setShowPasswordId(showPasswordId === item.id ? null : item.id)} variant="ghost" size="icon" className="h-11 w-11 hover:bg-white/10">
                                   {showPasswordId === item.id ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                </Button>

@@ -120,7 +120,7 @@ export default function XakLinkPage() {
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      <Button variant="outline" size="icon" onClick={() => { navigator.clipboard.writeText(`xak.io/${link.slug}`); toast({ title: "Slug Copied" }); }} className="rounded-xl border-white/10 hover:bg-white/5"><Copy className="w-4 h-4" /></Button>
+                      <Button variant="outline" size="icon" onClick={async () => { const { copyToClipboard } = await import('@/lib/clipboard'); const ok = await copyToClipboard(`xak.io/${link.slug}`); if (ok) toast({ title: "Slug Copied" }); else toast({ variant: 'destructive', title: 'Copy Failed' }); }} className="rounded-xl border-white/10 hover:bg-white/5"><Copy className="w-4 h-4" /></Button>
                       <Button variant="outline" size="icon" onClick={() => handleDelete(link.id)} className="rounded-xl border-white/10 hover:bg-destructive/10 text-destructive"><Trash2 className="w-4 h-4" /></Button>
                     </div>
                   </div>

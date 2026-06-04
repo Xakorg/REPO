@@ -17,7 +17,7 @@ export type CodeArchitectInput = z.infer<typeof CodeArchitectInputSchema>;
 const CodeArchitectOutputSchema = z.object({
   code: z.string().describe('The generated code or configuration.'),
   explanation: z.string().describe('Detailed explanation of the architecture.'),
-  capacity: z.string().describe('The simulated neural processing capacity used (e.g. "4.2B Nodes").'),
+  capacity: z.string().describe('The simulated processing capacity used (e.g. "4.2B units").'),
 });
 export type CodeArchitectOutput = z.infer<typeof CodeArchitectOutputSchema>;
 
@@ -29,13 +29,19 @@ const architectPrompt = ai.definePrompt({
   name: 'codeArchitectPrompt',
   input: {schema: CodeArchitectInputSchema},
   output: {schema: CodeArchitectOutputSchema},
-  prompt: `You are the XakCode Neural Architect. Your capacity exceeds 100 billion lines of concurrent code generation.
-You provide enterprise-grade, high-fidelity code structures that mirror Firebase, AWS, and GCP standards.
+  prompt: `You are the XakCode Design Assistant. You provide enterprise-grade, high-fidelity code structures and architecture guidance that align with Firebase, AWS, and GCP standards.
 
 Context: {{{context}}}
 Request: {{{prompt}}}
 
-Generate a professional solution including code, architecture explanation, and neural capacity stats.`,
+Produce a clear, actionable solution. Include:
+- A brief architecture explanation.
+- A filesystem layout with sample files.
+- Relevant code snippets in language-appropriate code blocks.
+- Unit or integration test examples where applicable.
+- Estimated processing or resource needs.
+
+Prefer concise, copy-pasteable code examples and label files clearly. Do not use marketing jargon.`,
 });
 
 const codeArchitectFlow = ai.defineFlow(

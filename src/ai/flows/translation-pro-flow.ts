@@ -30,7 +30,7 @@ const translationPrompt = ai.definePrompt({
   name: 'translationProPrompt',
   input: {schema: TranslationInputSchema},
   output: {schema: TranslationOutputSchema},
-  prompt: `You are the Xakteir Neural Translator. Your goal is to provide 100% accurate, high-fidelity translations.
+  prompt: `You are the Xakteir Translator. Your goal is to provide 100% accurate, high-fidelity translations.
 
 {{#if photoDataUri}}
   ACT AS OCR: Analyze this image and extract the text written in it.

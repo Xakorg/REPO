@@ -158,7 +158,7 @@ export default function XakChatPage() {
   const messagesQuery = useMemoFirebase(() => {
     if (!firestore || !user || !activeTarget) return null;
     return query(
-      collection(firestore, "chat", activeTarget.id, "messages"),
+      collection(firestore, "chats", activeTarget.id, "messages"),
       orderBy("timestamp", "asc"),
       limit(100)
     );
@@ -188,7 +188,7 @@ export default function XakChatPage() {
     setIsSending(true);
 
     try {
-      await addDocumentNonBlocking(collection(firestore, "chat", activeTarget.id, "messages"), {
+      await addDocumentNonBlocking(collection(firestore, "chats", activeTarget.id, "messages"), {
         content,
         senderId: user.uid,
         senderName: user.displayName?.replace(/^@+/, "") || "Member",

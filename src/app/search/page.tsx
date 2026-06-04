@@ -16,6 +16,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { aiPoweredWebSearch } from "@/ai/flows/ai-powered-web-search-flow";
+import defaultSites from '@/lib/defaultSites';
 import { useSearchParams, useRouter } from "next/navigation";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, limit } from "firebase/firestore";
@@ -67,6 +68,40 @@ function SearchContent() {
   }, [firestore]);
 
   const { data: indexedSites, isLoading: isIndexLoading } = useCollection(indexQuery);
+
+  // Always include defaultSites alongside Firestore indexedSites, but only show
+  // results that match the user's query. Deduplicate by URL and cap at 100.
+  const combinedSites = (() => {
+    const docs = indexedSites || [];
+    const docSites = (docs || []).map((d: any) => ({
+      url: d.url,
+      title: d.title || d.url,
+      description: d.description || '',
+    }));
+    const merged = [...docSites, ...defaultSites];
+    const seen = new Set<string>();
+    const dedup: any[] = [];
+    for (const s of merged) {
+      if (!s?.url) continue;
+      const key = s.url.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      dedup.push(s);
+      if (dedup.length >= 100) break;
+    }
+    return dedup;
+  })();
+
+  const filteredSites = (queryInput || '').trim()
+    ? combinedSites.filter((s: any) => {
+        const q = (queryInput || '').toLowerCase();
+        return (
+          (s.title && s.title.toLowerCase().includes(q)) ||
+          (s.url && s.url.toLowerCase().includes(q)) ||
+          (s.description && s.description.toLowerCase().includes(q))
+        );
+      }).slice(0, 100)
+    : [];
 
   return (
     <div className="min-h-screen animate-fade-in flex flex-col relative bg-white">
@@ -140,12 +175,12 @@ function SearchContent() {
                   </div>
                 ))}
               </div>
-            ) : indexedSites?.length ? (
-              indexedSites.map((site, i) => (
+            ) : filteredSites?.length ? (
+              filteredSites.map((site: any, i: number) => (
                 <div key={i} className="group animate-in fade-in slide-in-from-bottom-2">
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
-                      <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center text-[8px] font-bold text-zinc-500 uppercase">{site.url?.[8]}</div>
+                      <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center text-[8px] font-bold text-zinc-500 uppercase">{site.url?.[8] || site.url?.charAt(8)}</div>
                       <span className="text-xs text-zinc-500 truncate">{site.url}</span>
                     </div>
                     <a href={site.url} target="_blank" rel="noopener noreferrer" className="text-xl font-medium text-blue-700 group-hover:underline leading-tight">

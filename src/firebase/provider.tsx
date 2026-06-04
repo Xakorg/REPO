@@ -4,7 +4,7 @@ import React, { DependencyList, createContext, useContext, ReactNode, useMemo, u
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 import { FirebaseStorage } from 'firebase/storage';
-import { Auth, User, onAuthStateChanged } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, onIdTokenChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
 
 interface FirebaseProviderProps {
@@ -81,9 +81,10 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
 
-    const unsubscribe = onAuthStateChanged(
+    const unsubAuth = onAuthStateChanged(
       auth,
       (firebaseUser) => { // Auth state determined
+        console.log('FirebaseProvider: onAuthStateChanged ->', firebaseUser ? firebaseUser.uid : 'signed-out');
         setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
       },
       (error) => { // Auth listener error
@@ -91,7 +92,13 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         setUserAuthState({ user: null, isUserLoading: false, userError: error });
       }
     );
-    return () => unsubscribe(); // Cleanup
+
+    // Listen for token changes so we can detect revocation/refresh issues
+    const unsubToken = onIdTokenChanged(auth, (userWithToken) => {
+      console.log('FirebaseProvider: onIdTokenChanged ->', userWithToken ? userWithToken.uid : 'no-token');
+    });
+
+    return () => { unsubAuth(); unsubToken(); };
   }, [auth]); // Depends on the auth instance
 
   // Memoize the context value

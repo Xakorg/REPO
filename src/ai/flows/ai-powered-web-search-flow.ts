@@ -30,6 +30,8 @@ const searchPrompt = ai.definePrompt({
 
 User Query: {{{query}}}
 
+When relevant, prioritize trustworthy, well-known web sources. If you would normally consult an index, prefer these default sites if they are applicable: google.com, duckduckgo.com, bing.com, youtube.com, wikipedia.org, stackoverflow.com, reddit.com, poki.com, friv.com, itch.io.
+
 Answer the user directly in a professional and friendly tone. Keep your response concise and easy to read. DO NOT use jargon like "logic shards" or "neural sync." Speak in plain English.`,
 });
 

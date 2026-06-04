@@ -16,11 +16,12 @@ import {
   signInWithPopup,
   sendPasswordResetEmail
 } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, getDocs, collection, query, where } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Lock, AtSign, ArrowRight, Sparkles, ShieldCheck, Chrome, HelpCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isOffensive } from "@/lib/username";
 
 type AuthStep = 'email' | 'password' | 'verify-2fa' | 'forgot' | 'terms';
 
@@ -30,6 +31,7 @@ export default function AuthPage() {
   const [step, setStep] = useState<AuthStep>('email');
   
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [agreed, setAgreed] = useState(false);
@@ -40,6 +42,8 @@ export default function AuthPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  
+  
 
   useEffect(() => {
     setMounted(true);
@@ -63,17 +67,19 @@ export default function AuthPage() {
         const user = result.user;
         const userDoc = await getDoc(doc(firestore, "users", user.uid));
         if (!userDoc.exists()) {
+          const derived = user.email?.split('@')[0] || "user";
+          const finalUsername = isOffensive(derived) ? `user_${user.uid.slice(0,6)}` : derived;
           await setDoc(doc(firestore, "users", user.uid), {
             id: user.uid,
-            username: user.email?.split('@')[0],
+            username: finalUsername,
             email: user.email?.toLowerCase(),
-            displayName: user.displayName || user.email?.split('@')[0],
+            displayName: user.displayName || finalUsername,
             registrationDateTime: new Date().toISOString(),
             role: 'user',
             currencyBalance: 1000,
             agreedToTerms: true,
             twoFactorEnabled: false,
-            photoURL: user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`
+            photoURL: user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${finalUsername}`
           });
         }
         toast({ title: "Signed In", description: `Welcome, ${user.displayName}!` });
@@ -122,27 +128,48 @@ export default function AuthPage() {
     }
 
     setIsLoading(true);
+    // Validate username choice
+    const chosen = username?.trim() || email.split('@')[0];
+    if (isOffensive(chosen)) {
+      setIsLoading(false);
+      toast({ variant: "destructive", title: "Invalid Username", description: "That username is not allowed. Please choose another." });
+      return;
+    }
+
+    // check for username collision
+    try {
+      const q = query(collection(firestore, "users"), where("username", "==", chosen));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        setIsLoading(false);
+        toast({ variant: "destructive", title: "Username Taken", description: "That username is already in use. Please pick a different one." });
+        return;
+      }
+    } catch (e) {
+      // ignore query errors and continue
+    }
+
     // Non-blocking signup call
     createUserWithEmailAndPassword(auth, email, password)
       .then(async (userCredential) => {
         const user = userCredential.user;
-        const username = email.split('@')[0];
-        
-        await updateProfile(user, { displayName: username });
+        const finalUsername = chosen;
+
+        await updateProfile(user, { displayName: finalUsername });
         await setDoc(doc(firestore, "users", user.uid), {
           id: user.uid,
-          username: username,
+          username: finalUsername,
           email: email.toLowerCase(),
-          displayName: username,
+          displayName: finalUsername,
           registrationDateTime: new Date().toISOString(),
           role: 'user',
           currencyBalance: 1000,
           agreedToTerms: true,
           twoFactorEnabled: false,
-          photoURL: `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`
+          photoURL: `https://api.dicebear.com/7.x/bottts/svg?seed=${finalUsername}`
         });
-        
-        toast({ title: "Account Created", description: `Welcome, ${username}!` });
+
+        toast({ title: "Account Created", description: `Welcome, ${finalUsername}!` });
         // Redirect handled by useEffect
       })
       .catch((error) => {
@@ -260,6 +287,10 @@ export default function AuthPage() {
                   <div className="space-y-4">
                     <div className="relative">
                       <AtSign className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+                      <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Choose a username" className="bg-secondary/30 border-white/5 pl-14 h-16 rounded-[1.5rem] font-bold" />
+                    </div>
+                    <div className="relative">
+                      <AtSign className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
                       <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address" className="bg-secondary/30 border-white/5 pl-14 h-16 rounded-[1.5rem] font-bold" />
                     </div>
                     <div className="relative">
@@ -271,7 +302,7 @@ export default function AuthPage() {
                       <label htmlFor="agreed" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Agree to Terms of Service</label>
                     </div>
                   </div>
-                  <Button type="submit" disabled={isLoading || !agreed || !email || !password} className="w-full bg-primary h-20 rounded-[2rem] font-black uppercase text-xs tracking-widest text-white shadow-xl">Create Account</Button>
+                  <Button type="submit" disabled={isLoading || !agreed || !email || !password || !username} className="w-full bg-primary h-20 rounded-[2rem] font-black uppercase text-xs tracking-widest text-white shadow-xl">Create Account</Button>
                 </form>
               )}
             </div>

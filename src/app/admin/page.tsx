@@ -174,7 +174,7 @@ export default function AdminDashboardPage() {
                  <div className="divide-y divide-white/5">
                     {isLoadingSupport ? (
                       <div className="py-20 flex justify-center"><Loader2 className="animate-spin w-12 h-12 text-primary opacity-20" /></div>
-                    ) : supportMessages?.length === 0 ? (
+                    ) : (!supportMessages || supportMessages.length === 0) ? (
                       <div className="py-40 text-center opacity-20 font-black uppercase tracking-widest">No support messages yet</div>
                     ) : (
                       supportMessages.map(msg => (

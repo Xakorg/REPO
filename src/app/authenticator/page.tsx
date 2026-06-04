@@ -145,9 +145,11 @@ export default function XakteirAuthPage() {
     } catch (e) { toast({ variant: "destructive", title: "Sync Failed" }); }
   };
 
-  const handleCopy = (code: string) => {
-    navigator.clipboard.writeText(code);
-    toast({ title: "Copied!", description: "High-fidelity code in buffer." });
+  const handleCopy = async (code: string) => {
+    const { copyToClipboard } = await import('@/lib/clipboard');
+    const ok = await copyToClipboard(code);
+    if (ok) toast({ title: "Copied!", description: "High-fidelity code in buffer." });
+    else toast({ variant: 'destructive', title: 'Copy Failed', description: 'Clipboard not available.' });
   };
 
   const activeAccount = useMemo(() => accounts?.find(a => a.id === activeAccountId) || accounts?.[0], [accounts, activeAccountId]);

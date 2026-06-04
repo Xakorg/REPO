@@ -26,6 +26,7 @@ import {
   Layout,
   PlusCircle
 } from "lucide-react";
+import { ArrowRight, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -332,10 +333,10 @@ export default function WhiteboardPage() {
             </div>
          </div>
          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4 bg-white/5 px-6 py-2 rounded-xl border border-white/10">
+               <div className="flex items-center gap-4 bg-white/5 px-6 py-2 rounded-xl border border-white/10">
                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Code:</span>
                <span className="text-sm font-black text-white tracking-widest select-all">{boardData?.code}</span>
-               <button onClick={() => { navigator.clipboard.writeText(boardData?.code); toast({ title: "Code Copied" }); }} className="text-muted-foreground hover:text-white transition-colors"><Copy className="w-4 h-4" /></button>
+               <button onClick={async () => { const ok = await import("@/lib/clipboard").then(m => m.copyToClipboard(boardData?.code || '')); if (ok) toast({ title: "Code Copied" }); else toast({ variant: 'destructive', title: 'Copy Failed' }); }} className="text-muted-foreground hover:text-white transition-colors"><Copy className="w-4 h-4" /></button>
             </div>
             <Button onClick={() => setElements([])} variant="ghost" className="h-10 px-6 rounded-xl border border-white/5 text-[9px] font-black uppercase text-rose-500 hover:bg-rose-500/10">Clear Canvas</Button>
          </div>

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { chatWithXakAI } from "@/ai/flows/xak-ai-chat-assistant-flow";
 import { cn } from "@/lib/utils";
+import { copyToClipboard } from "@/lib/clipboard";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
@@ -31,11 +32,15 @@ function FormattedContent({ content }: { content: string }) {
   const { toast } = useToast();
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
-  const handleCopy = (text: string, id: number) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    toast({ title: "Copied" });
-    setTimeout(() => setCopiedId(null), 2000);
+  const handleCopy = async (text: string, id: number) => {
+    const ok = await copyToClipboard(text);
+    if (ok) {
+      setCopiedId(id);
+      toast({ title: "Copied" });
+      setTimeout(() => setCopiedId(null), 2000);
+    } else {
+      toast({ variant: 'destructive', title: 'Copy Failed', description: 'Your browser may not support clipboard operations.' });
+    }
   };
 
   const parts = content.split(/(```[\s\S]*?```)/g);

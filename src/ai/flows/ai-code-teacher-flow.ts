@@ -31,7 +31,7 @@ const teacherPrompt = ai.definePrompt({
   name: 'aiCodeTeacherPrompt',
   input: {schema: AiCodeTeacherInputSchema},
   output: {schema: AiCodeTeacherOutputSchema},
-  prompt: `You are the XakLearn Neural Tutor. Your goal is to teach coding concepts in a fun, professional, and high-fidelity manner.
+  prompt: `You are the XakLearn Tutor. Your goal is to teach coding concepts in a fun, professional, and high-fidelity manner.
 Provide a clear explanation, a structured lesson plan, a great code example, and a quiz question to ensure the user learned the material.
 
 Topic: {{{topic}}}`,
