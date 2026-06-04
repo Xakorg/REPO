@@ -6,7 +6,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {anthropic} from '@genkit-ai/anthropic';
+import {googleAI} from '@genkit-ai/google-genai';
 import { getAdminDb } from '@/lib/firebase-admin';
 
 const MessageSchema = z.object({
@@ -204,9 +204,9 @@ CRITICAL GUIDELINES:
           await new Promise(resolve => setTimeout(resolve, 2000));
           continue;
         }
-        if (message.includes('API key') || message.includes('ANTHROPIC_API_KEY')) {
+        if (message.includes('API key') || message.includes('GOOGLE_API_KEY')) {
           return {
-            response: "Xak AI is not configured yet. Add a valid Anthropic API key in the server environment, then try again.",
+            response: "Xak AI is not configured yet. Add GOOGLE_API_KEY in the server environment, then try again.",
           };
         }
         if (message.includes('Could not load the default credentials')) {

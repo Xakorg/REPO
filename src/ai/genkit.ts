@@ -1,16 +1,16 @@
 import 'server-only';
 import {genkit, z} from 'genkit';
-import {anthropic} from '@genkit-ai/anthropic';
+import {googleAI} from '@genkit-ai/google-genai';
 
 /**
- * Genkit initialization using Anthropic plugin.
+ * Genkit initialization using Google AI plugin.
  * Strictly isolated for server-side authority.
  */
 export const ai = genkit({
   plugins: [
-    anthropic(),
+    googleAI(),
   ],
-  model: anthropic.model('claude-sonnet-4-5'),
+  model: googleAI.model('gemini-2.5-flash'),
 });
 
 export {z};
