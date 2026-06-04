@@ -50,7 +50,7 @@ const navigation = [
   { name: "Xak AI", href: "/ai-chat", icon: MessageSquare },
   { name: "XakView", href: "/xakview", icon: Video },
   { name: "Games", href: "/games", icon: Gamepad2 },
-  { name: "Buddy Online", href: "/buddy", icon: Ghost },
+  { name: "Buddy", href: "/buddy", icon: User },
   { name: "Maps", href: "/map", icon: Map },
   { name: "Social Space", href: "/social", icon: Users },
   { name: "Learn", href: "/learn", icon: GraduationCap },
@@ -58,6 +58,9 @@ const navigation = [
   { name: "Photos", icon: ImageIcon, href: "/pics" },
   { name: "XakCode", icon: Code2, href: "/xakcode" },
   { name: "Meet", href: "/meet", icon: VideoIcon },
+  { name: "Contacts", href: "/contacts", icon: Users },
+  { name: "Tasks", href: "/tasks", icon: Calendar },
+  { name: "XakConsole", href: "/xakconsole", icon: Code2 },
   { name: "Notes", href: "/notes", icon: FileText },
   { name: "Translate", icon: Languages, href: "/translate" },
   { name: "Safe", icon: Lock, href: "/vault" },
@@ -75,11 +78,11 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col w-64 h-screen border-r bg-card/30 backdrop-blur-xl">
+    <div className="flex flex-col w-48 h-screen border-r bg-card/30 backdrop-blur-xl">
       <div className="p-6">
         <Link href="/" className="flex items-center gap-2 group">
-          <GlitchLogo className="scale-50" />
-          <span className="text-xl font-bold tracking-tighter text-white italic uppercase">Xakteir</span>
+          <GlitchLogo className="scale-40" />
+          <span className="text-lg font-bold tracking-tighter text-white italic uppercase">Xakteir</span>
         </Link>
       </div>
 
