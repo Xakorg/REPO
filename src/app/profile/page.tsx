@@ -56,6 +56,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
 
   const [description, setDescription] = useState("");
+  const [displayName, setDisplayName] = useState<string | null>(user?.displayName || null);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -83,6 +84,7 @@ export default function ProfilePage() {
     if (userData) {
       setDescription(userData.description || "");
       setAvatarUrl(userData.photoURL || user?.photoURL || "");
+      setDisplayName(userData.displayName || user?.displayName || null);
     }
   }, [userData, user]);
 
@@ -124,6 +126,14 @@ export default function ProfilePage() {
       description,
       updatedAt: serverTimestamp()
     });
+    if (displayName && displayName !== user.displayName) {
+      try {
+        updateProfile(auth.currentUser!, { displayName });
+        updateDocumentNonBlocking(doc(firestore, "users", user.uid), { displayName });
+      } catch (e) {
+        // ignore updateProfile errors here; non-blocking update already queued
+      }
+    }
     toast({ title: "Settings Saved" });
     setIsUpdating(false);
   };
@@ -204,6 +214,24 @@ export default function ProfilePage() {
                   placeholder="About you..."
                   className="rounded-3xl bg-zinc-900/50 border-white/5 min-h-[160px] p-8 text-lg font-medium italic text-white"
                 />
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 ml-4">Display Name</label>
+                <div className="flex gap-4">
+                  <Input
+                    value={displayName || ''}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Your display name"
+                    className="h-14 rounded-2xl bg-zinc-900/50 border-white/5 pl-4 text-sm font-bold text-white/80"
+                  />
+                  <Button onClick={() => {
+                    if (!displayName) return;
+                    updateProperty('displayName', displayName);
+                    try { updateProfile(auth.currentUser!, { displayName }); } catch(e) {}
+                    toast({ title: 'Display name updated' });
+                  }} className="h-14 px-6 rounded-2xl bg-primary font-black uppercase text-xs">Change</Button>
+                </div>
               </div>
 
               <div className="space-y-4">

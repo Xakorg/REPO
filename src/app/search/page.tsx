@@ -30,6 +30,7 @@ function SearchContent() {
   const [queryInput, setQueryInput] = useState(initialQuery);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
+  const [images, setImages] = useState<Array<{title:string, thumb?:string, page?:string}>>([]);
   const firestore = useFirestore();
 
   const handleSearch = useCallback(async (searchQuery?: string) => {
@@ -47,6 +48,17 @@ function SearchContent() {
       const response = await aiPoweredWebSearch({ query: target });
       if (response && response.answer) {
         setAiResult(response.answer);
+      }
+      // fetch images from our server-side Wikimedia proxy
+      try {
+        const imgRes = await fetch(`/api/search-images?q=${encodeURIComponent(target)}`);
+        if (imgRes.ok) {
+          const json = await imgRes.json();
+          setImages(json.images || []);
+        }
+      } catch (e) {
+        console.error('Image fetch failed', e);
+        setImages([]);
       }
     } catch (err) {
       console.error("AI Search Error:", err);
@@ -68,6 +80,11 @@ function SearchContent() {
   }, [firestore]);
 
   const { data: indexedSites, isLoading: isIndexLoading } = useCollection(indexQuery);
+  const usersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'users'), limit(200));
+  }, [firestore]);
+  const { data: userDocs } = useCollection(usersQuery);
 
   // Always include defaultSites alongside Firestore indexedSites, but only show
   // results that match the user's query. Deduplicate by URL and cap at 100.
@@ -102,6 +119,17 @@ function SearchContent() {
         );
       }).slice(0, 100)
     : [];
+
+  const matchedUsers = (() => {
+    if (!userDocs || !(queryInput || '').trim()) return [];
+    const q = (queryInput || '').toLowerCase();
+    return userDocs.filter((u: any) => {
+      const name = (u.displayName || u.name || '').toLowerCase();
+      const email = (u.email || '').toLowerCase();
+      const username = (u.username || '').toLowerCase();
+      return name.includes(q) || email.includes(q) || username.includes(q);
+    }).slice(0, 20);
+  })();
 
   return (
     <div className="min-h-screen animate-fade-in flex flex-col relative bg-white">
@@ -151,13 +179,35 @@ function SearchContent() {
                 <Sparkles className="w-3.5 h-3.5 text-purple-500" />
                 <span className="text-[10px] font-black uppercase tracking-widest italic">AI Quick Response</span>
               </div>
-              <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-3xl relative overflow-hidden shadow-sm">
+              <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-3xl relative overflow-hidden shadow-sm flex gap-6">
                 {isAiLoading ? (
                   <div className="flex items-center gap-4 italic text-zinc-400 font-medium">
                     <Loader2 className="w-4 h-4 animate-spin" /> Researching answer...
                   </div>
                 ) : (
-                  <p className="text-base leading-relaxed text-zinc-800 font-medium italic whitespace-pre-wrap">{aiResult}</p>
+                  <div className="flex-1">
+                    <p className="text-base leading-relaxed text-zinc-800 font-medium italic whitespace-pre-wrap">{aiResult}</p>
+                    {images?.[0]?.thumb && (
+                      <div className="mt-4 flex items-center gap-4">
+                        <img src={images[0].thumb} alt={images[0].title} className="w-28 h-28 object-cover rounded-lg shadow-md" />
+                        <div>
+                          <div className="text-sm font-bold">{images[0].title}</div>
+                          <a href={images[0].page} target="_blank" rel="noreferrer" className="text-xs text-blue-600">Source</a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Image gallery */}
+                {images && images.length > 1 && (
+                  <div className="w-48 grid grid-cols-2 gap-2">
+                    {images.slice(1,5).map((img, idx) => (
+                      <a key={idx} href={img.page} target="_blank" rel="noreferrer" className="block">
+                        <img src={img.thumb} alt={img.title} className="w-full h-20 object-cover rounded-md" />
+                      </a>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
@@ -165,6 +215,20 @@ function SearchContent() {
 
           {/* Search Result List */}
           <div className="space-y-10 pb-20 max-w-3xl">
+            {matchedUsers.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-black uppercase tracking-wider text-zinc-500">People</h3>
+                {matchedUsers.map((u: any) => (
+                  <div key={u.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-zinc-50">
+                    <img src={u.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.id}`} className="w-10 h-10 rounded-full object-cover" />
+                    <div>
+                      <div className="font-bold text-zinc-900">{u.displayName || u.name || 'User'}</div>
+                      <div className="text-xs text-zinc-500">{u.username || u.email || ''}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {isIndexLoading ? (
               <div className="space-y-10">
                 {[1, 2, 3].map(i => (
