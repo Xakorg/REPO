@@ -50,6 +50,13 @@ export default function AdminDashboardPage() {
   const [replyMessage, setReplyMessage] = useState("");
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [seedCount, setSeedCount] = useState(1000);
+  const [seedImages, setSeedImages] = useState(500);
+  const [seedDryRun, setSeedDryRun] = useState(true);
+  const [seedRunning, setSeedRunning] = useState(false);
+  const [removeId, setRemoveId] = useState('');
+  const [removeDryRun, setRemoveDryRun] = useState(true);
+  const [removeRunning, setRemoveRunning] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -121,6 +128,7 @@ export default function AdminDashboardPage() {
     setIsBroadcasting(true);
     try {
       await addDocumentNonBlocking(collection(firestore, "globalMessages"), {
+        uid: user.uid,
         title: broadcast.title.trim(),
         content: broadcast.content.trim(),
         author: user.uid,
@@ -152,19 +160,10 @@ export default function AdminDashboardPage() {
     );
   }
 
-  // Admin tools: seed and remove user without terminal
-  const [seedCount, setSeedCount] = useState(1000);
-  const [seedImages, setSeedImages] = useState(500);
-  const [seedDryRun, setSeedDryRun] = useState(true);
-  const [seedRunning, setSeedRunning] = useState(false);
-
-  const [removeId, setRemoveId] = useState('');
-  const [removeDryRun, setRemoveDryRun] = useState(true);
-  const [removeRunning, setRemoveRunning] = useState(false);
-
   const callAdminApi = async (path: string, payload: any) => {
-    if (!auth || !user) return { ok: false, error: 'not-auth' };
-    const token = await auth.currentUser.getIdToken(/* forceRefresh */ true);
+    const currentUser = auth?.currentUser;
+    if (!currentUser || !user) return { ok: false, error: 'not-auth' };
+    const token = await currentUser.getIdToken(/* forceRefresh */ true);
     const res = await fetch(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

@@ -140,6 +140,8 @@ const EXTENSIONS = [
   { id: 'games', name: "Mini Games", icon: Gamepad2, desc: "Drop-in social activities.", href: "/games" },
 ];
 
+const PUBLIC_CHANNEL_IDS = new Set(["general", "announcements", "logic-lab", "design", "market"]);
+
 export default function XakChatPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -154,14 +156,6 @@ export default function XakChatPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
-
-  const messagesQuery = useMemoFirebase(() => {
-    if (!firestore || !activeTarget) return null;
-    // We intentionally avoid listing messages unless we verify the caller
-    // has permission (is a participant, the chat is public, or user is admin).
-    return null; // replaced by messagesQueryBelow after permission check
-  }, [firestore, user, activeTarget]);
-
 
   // --- Permission-checked messages subscription ---
   const chatDocRef = useMemoFirebase(() => {
@@ -179,6 +173,7 @@ export default function XakChatPage() {
   const { data: adminRole } = useDoc(adminRoleRef);
 
   const allowedToReadMessages = !!(
+    PUBLIC_CHANNEL_IDS.has(activeTarget?.id) ||
     chatDoc?.public === true ||
     (user && Array.isArray(chatDoc?.participants) && chatDoc.participants.includes(user.uid)) ||
     !!adminRole

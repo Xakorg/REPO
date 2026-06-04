@@ -283,7 +283,7 @@ function SearchContent() {
                 ))}
               </div>
             ) : Object.keys(filteredGroupedSites).length ? (
-              Object.entries(filteredGroupedSites).map(([host, sites]) => (
+              (Object.entries(filteredGroupedSites) as [string, any[]][]).map(([host, sites]) => (
                 <div key={host} className="group animate-in fade-in slide-in-from-bottom-2">
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-1 justify-between">

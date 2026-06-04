@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import admin from 'firebase-admin';
 
+const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
+
 function initAdmin() {
   if (admin.apps && admin.apps.length) return;
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
@@ -23,6 +25,7 @@ async function verifyAdminToken(req: Request) {
   const idToken = auth.split(' ')[1];
   const decoded = await admin.auth().verifyIdToken(idToken);
   const uid = decoded.uid;
+  if (decoded.email && SUPER_ADMIN_EMAILS.includes(decoded.email.toLowerCase())) return uid;
   const adminDoc = await admin.firestore().doc(`admins/${uid}`).get();
   if (!adminDoc.exists) throw new Error('Not an admin');
   return uid;

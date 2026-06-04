@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import admin from 'firebase-admin';
 
+const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
+
 function initAdmin() {
   if (admin.apps && admin.apps.length) return;
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
@@ -23,19 +25,20 @@ async function verifyAdminToken(req: Request) {
   const idToken = auth.split(' ')[1];
   const decoded = await admin.auth().verifyIdToken(idToken);
   const uid = decoded.uid;
+  if (decoded.email && SUPER_ADMIN_EMAILS.includes(decoded.email.toLowerCase())) return uid;
   const adminDoc = await admin.firestore().doc(`admins/${uid}`).get();
   if (!adminDoc.exists) throw new Error('Not an admin');
   return uid;
 }
 
-async function scanAndAnonymize(db, collectionName, identifier, execute) {
+async function scanAndAnonymize(db: FirebaseFirestore.Firestore, collectionName: string, identifier: string, execute: boolean) {
   const colRef = db.collection(collectionName);
   const byAuthorId = await colRef.where('authorId', '==', identifier).get();
   const byAuthor = await colRef.where('author', '==', identifier).get();
-  const matches = [];
+  const matches: Array<{ id: string; ref: FirebaseFirestore.DocumentReference }> = [];
   byAuthorId.forEach(d => matches.push({ id: d.id, ref: d.ref }));
   byAuthor.forEach(d => { if (!matches.some(m => m.id === d.id)) matches.push({ id: d.id, ref: d.ref }); });
-  const results = [];
+  const results: string[] = [];
   for (const m of matches) {
     results.push(`${collectionName}/${m.id}`);
     if (execute) {
@@ -60,7 +63,7 @@ export async function POST(req: Request) {
 
   const db = admin.firestore();
   const collections = ['globalMessages','social','posts','videos','chats','comments'];
-  const summary = {};
+  const summary: Record<string, number> = {};
 
   for (const c of collections) {
     try {

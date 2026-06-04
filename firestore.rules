@@ -18,9 +18,34 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn()
-        && exists(
-          /databases/$(database)/documents/admins/$(request.auth.uid)
+        && (
+          request.auth.token.email in ["admin@xakteir.com", "admin2@xakteir.com"]
+          || exists(
+            /databases/$(database)/documents/admins/$(request.auth.uid)
+          )
         );
+    }
+
+    function isPublicChatId(chatId) {
+      return chatId in ["general", "announcements", "logic-lab", "design", "market"];
+    }
+
+    function chatExists(chatId) {
+      return exists(/databases/$(database)/documents/chats/$(chatId));
+    }
+
+    function isPublicChat(chatId) {
+      return isPublicChatId(chatId)
+        || (
+          chatExists(chatId)
+          && get(/databases/$(database)/documents/chats/$(chatId)).data.public == true
+        );
+    }
+
+    function isChatParticipant(chatId) {
+      return isSignedIn()
+        && chatExists(chatId)
+        && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
     }
 
     function hasValidUid() {
@@ -52,7 +77,8 @@ service cloud.firestore {
         allow list, get: if isOwner(userId);
 
         allow create: if isOwner(userId)
-          && hasValidUid();
+          && hasValidUid()
+          || isAdmin();
 
         allow update, delete: if isOwner(userId)
           && resourceOwned();
@@ -75,7 +101,7 @@ service cloud.firestore {
 
     match /admins/{userId} {
 
-      allow get: if isAdmin();
+      allow get: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
 
       allow list: if false;
 
@@ -133,6 +159,13 @@ service cloud.firestore {
       allow create: if isSignedIn();
 
       allow update, delete: if isAdmin();
+    }
+
+    match /searchImages/{id} {
+
+      allow read: if true;
+
+      allow write: if isAdmin();
     }
 
     // ─────────────────────────────────────────────
@@ -290,25 +323,20 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.auth.uid in request.resource.data.participants;
 
       // Get a single chat if it's public or the caller is a participant
-      allow get: if resource.data.public == true || (isSignedIn() && request.auth.uid in resource.data.participants);
+      allow get: if isPublicChat(chatId) || isChatParticipant(chatId) || isAdmin();
 
       // List chats only when the client query includes array-contains with the caller's uid,
       // or when listing public channels (client must filter accordingly).
-      allow list: if (
-        // allow queries that explicitly ask for chats where participants array-contains the caller
-        (isSignedIn() && request.query.where('participants', 'array-contains', request.auth.uid))
-        // OR allow listing public chats (client should filter by public==true)
-        || (request.query.where('public', '==', true))
-      );
+      allow list: if isAdmin();
 
       // Allow updates/deletes only for participants
-      allow update, delete: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow update, delete: if isChatParticipant(chatId) || isAdmin();
 
       match /messages/{messageId} {
         // Read/list messages for this chat if the chat is public, the caller is a participant, or an admin
         allow get, list: if (
-          get(/databases/$(database)/documents/chats/$(chatId)).data.public == true
-          || (isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants)
+          isPublicChat(chatId)
+          || isChatParticipant(chatId)
           || isAdmin()
         );
 
@@ -320,8 +348,8 @@ service cloud.firestore {
           || (
             request.auth.uid == request.resource.data.senderId
             && (
-              get(/databases/$(database)/documents/chats/$(chatId)).data.public == true
-              || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+              isPublicChat(chatId)
+              || isChatParticipant(chatId)
             )
           )
         );
