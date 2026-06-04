@@ -74,9 +74,10 @@ function SearchContent() {
     }
   }, [initialQuery, handleSearch]);
 
+  // Increase indexedSites fetch for larger result sets (client-side pagination recommended)
   const indexQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "indexedSites"), limit(20));
+    return query(collection(firestore, "indexedSites"), limit(10000));
   }, [firestore]);
 
   const { data: indexedSites, isLoading: isIndexLoading } = useCollection(indexQuery);
@@ -85,6 +86,13 @@ function SearchContent() {
     return query(collection(firestore, 'users'), limit(200));
   }, [firestore]);
   const { data: userDocs } = useCollection(usersQuery);
+
+  // Fetch a large set of images for search results (use seeding script to populate)
+  const imagesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'searchImages'), limit(5000));
+  }, [firestore]);
+  const { data: searchImages } = useCollection(imagesQuery);
 
   // Always include defaultSites alongside Firestore indexedSites, but only show
   // results that match the user's query. Deduplicate by URL and cap at 100.
@@ -107,6 +115,41 @@ function SearchContent() {
       if (dedup.length >= 100) break;
     }
     return dedup;
+  })();
+
+  // Group sites by host for Google-like grouped results
+  const groupedSites = (() => {
+    const groups: Record<string, any[]> = {};
+    for (const s of combinedSites) {
+      try {
+        const u = new URL(s.url);
+        const host = u.hostname.replace(/^www\./, '');
+        groups[host] = groups[host] || [];
+        groups[host].push(s);
+      } catch (e) {
+        groups['misc'] = groups['misc'] || [];
+        groups['misc'].push(s);
+      }
+    }
+    return groups;
+  })();
+
+  const filteredGroupedSites = (queryInput || '').trim()
+    ? Object.fromEntries(Object.entries(groupedSites).map(([host, sites]) => [host, sites.filter((s: any) => {
+        const q = (queryInput || '').toLowerCase();
+        return (s.title && s.title.toLowerCase().includes(q)) || (s.url && s.url.toLowerCase().includes(q)) || (s.description && s.description.toLowerCase().includes(q));
+    })]).filter(([,sites]) => sites.length > 0))
+    : groupedSites;
+
+  // Map images by a simple host/key heuristic so results can show multiple images grouped
+  const imagesByKey = (() => {
+    const map: Record<string, any[]> = {};
+    (searchImages || []).forEach((img: any) => {
+      const key = (img.source || 'pics').toString();
+      map[key] = map[key] || [];
+      map[key].push(img);
+    });
+    return map;
   })();
 
   const filteredSites = (queryInput || '').trim()
@@ -239,20 +282,53 @@ function SearchContent() {
                   </div>
                 ))}
               </div>
-            ) : filteredSites?.length ? (
-              filteredSites.map((site: any, i: number) => (
-                <div key={i} className="group animate-in fade-in slide-in-from-bottom-2">
+            ) : Object.keys(filteredGroupedSites).length ? (
+              Object.entries(filteredGroupedSites).map(([host, sites]) => (
+                <div key={host} className="group animate-in fade-in slide-in-from-bottom-2">
                   <div className="flex flex-col">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center text-[8px] font-bold text-zinc-500 uppercase">{site.url?.[8] || site.url?.charAt(8)}</div>
-                      <span className="text-xs text-zinc-500 truncate">{site.url}</span>
+                    <div className="flex items-center gap-2 mb-1 justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-500 uppercase">{host[0]}</div>
+                        <span className="text-sm font-bold text-zinc-700">{host}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-zinc-500">
+                        {/* quick grouped links heuristic for common hosts */}
+                        {host.includes('google') && (
+                          <>
+                            <a className="px-2 py-1 hover:underline" href={`https://www.${host}/drive`} target="_blank" rel="noreferrer">Drive</a>
+                            <a className="px-2 py-1 hover:underline" href={`https://www.${host}/search`} target="_blank" rel="noreferrer">Search</a>
+                            <a className="px-2 py-1 hover:underline" href={`https://www.${host}/maps`} target="_blank" rel="noreferrer">Maps</a>
+                          </>
+                        )}
+                        {host.includes('wikipedia') && (
+                          <a className="px-2 py-1 hover:underline" href={`https://${host}`} target="_blank" rel="noreferrer">Wiki</a>
+                        )}
+                      </div>
                     </div>
-                    <a href={site.url} target="_blank" rel="noopener noreferrer" className="text-xl font-medium text-blue-700 group-hover:underline leading-tight">
-                      {site.title}
+
+                    {/* Primary site preview (first site) */}
+                    <a href={sites[0].url} target="_blank" rel="noopener noreferrer" className="text-xl font-medium text-blue-700 group-hover:underline leading-tight">
+                      {sites[0].title}
                     </a>
-                    <p className="text-sm text-zinc-600 leading-relaxed mt-1 italic opacity-80">
-                      {site.description}
-                    </p>
+                    <p className="text-sm text-zinc-600 leading-relaxed mt-1 italic opacity-80">{sites[0].description}</p>
+
+                    {/* Additional grouped links */}
+                    <div className="mt-3 grid grid-cols-3 gap-3">
+                      {sites.slice(1,7).map((s: any, idx: number) => (
+                        <a key={idx} href={s.url} target="_blank" rel="noreferrer" className="text-sm text-zinc-700 hover:underline">{s.title}</a>
+                      ))}
+                    </div>
+
+                    {/* Show related images for this host if available */}
+                    {imagesByKey[host] && imagesByKey[host].length > 0 && (
+                      <div className="mt-4 grid grid-cols-4 gap-2">
+                        {imagesByKey[host].slice(0,8).map((img: any, ii: number) => (
+                          <a key={ii} href={img.page || img.source || '#'} target="_blank" rel="noreferrer" className="block">
+                            <img src={img.thumb} alt={img.title} className="w-full h-20 object-cover rounded-md" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
