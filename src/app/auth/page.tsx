@@ -114,7 +114,7 @@ export default function AuthPage() {
       });
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth || !firestore || !agreed) return;
 
