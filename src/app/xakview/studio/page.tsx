@@ -36,7 +36,10 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useStorage, addDocumentNonBlocking } from "@/firebase";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { serverTimestamp } from "firebase/firestore";
+import { chatWithXakAI } from "@/ai/flows/xak-ai-chat-assistant-flow";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 
 export default function XakViewStudio() {
@@ -46,6 +49,9 @@ export default function XakViewStudio() {
   
   const [activeTab, setActiveTab] = useState<'analytics' | 'edit'>('analytics');
   const [isRecording, setIsRecording] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -56,6 +62,7 @@ export default function XakViewStudio() {
   }, [firestore, user]);
 
   const { data: myVideos, isLoading } = useCollection(myVideosQuery);
+  const storage = useStorage();
 
   const stats = useMemo(() => {
     if (!myVideos) return { views: 0, time: 0, reach: 0 };
@@ -86,6 +93,39 @@ export default function XakViewStudio() {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
+  };
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || !user || !firestore || !storage) return;
+    setIsUploading(true);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const storageRef = ref(storage, `xakview/${user.uid}/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on('state_changed',
+          (snap) => setUploadProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
+          (err) => { setIsUploading(false); setUploadProgress(0); toast({ variant: 'destructive', title: 'Upload failed' }); reject(err); },
+          async () => {
+            const url = await getDownloadURL(uploadTask.snapshot.ref);
+            await addDocumentNonBlocking(collection(firestore, 'videos'), {
+              title: file.name,
+              authorId: user.uid,
+              url,
+              storagePath: uploadTask.snapshot.ref.fullPath,
+              size: file.size,
+              type: file.type || 'video/mp4',
+              timestamp: serverTimestamp(),
+            });
+            resolve();
+          }
+        );
+      });
+    }
+    setIsUploading(false);
+    setUploadProgress(0);
+    toast({ title: 'Upload Complete' });
   };
 
   return (
@@ -182,15 +222,22 @@ export default function XakViewStudio() {
                 <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-none mb-4">Studio Ready</h3>
                 <p className="text-sm text-zinc-500 font-bold uppercase tracking-[0.5em] mb-12 italic">Hardware Acceleration: Active</p>
                 <div className="flex gap-6">
-                   <Button onClick={startRecording} size="lg" className="h-20 px-12 bg-rose-600 hover:bg-rose-500 text-white rounded-[1.8rem] font-black text-xl uppercase tracking-widest shadow-2xl transition-all active:scale-95 border-b-8 border-rose-800 active:border-b-0">
+                  <Button onClick={startRecording} size="lg" className="h-20 px-12 bg-rose-600 hover:bg-rose-500 text-white rounded-[1.8rem] font-black text-xl uppercase tracking-widest shadow-2xl transition-all active:scale-95 border-b-8 border-rose-800 active:border-b-0">
                      <Radio className="w-8 h-8 mr-4 animate-pulse" /> START CAPTURE
                    </Button>
-                   <Button variant="outline" className="h-20 px-12 rounded-[1.8rem] border-4 border-white/10 text-white font-black text-xl uppercase tracking-widest hover:bg-white/5 transition-all">
-                     <Upload className="w-8 h-8 mr-4" /> Import Shard
-                   </Button>
+                     <input ref={fileInputRef} type="file" className="hidden" multiple accept="video/*" onChange={(e) => handleFileUpload(e.target.files)} />
+                     <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="h-20 px-12 rounded-[1.8rem] border-4 border-white/10 text-white font-black text-xl uppercase tracking-widest hover:bg-white/5 transition-all">
+                       <Upload className="w-8 h-8 mr-4" /> Import Shard
+                     </Button>
                 </div>
               </div>
             )}
+
+              {isUploading && (
+                <div className="absolute bottom-10 left-10 bg-black/60 p-4 rounded-lg z-40">
+                  <div className="text-[12px] font-black uppercase">Uploading... {uploadProgress}%</div>
+                </div>
+              )}
 
             {isRecording && (
               <div className="absolute top-10 left-10 flex items-center gap-6 bg-red-600 px-8 py-4 rounded-[2rem] shadow-2xl animate-pulse z-30 border-4 border-white/20">
@@ -218,7 +265,17 @@ export default function XakViewStudio() {
                    <h4 className="text-xl font-black text-white uppercase italic tracking-tighter">AI Master</h4>
                 </div>
                 <p className="text-xs text-zinc-400 font-medium leading-relaxed italic">Let Xak AI synthesize your raw capture into a high-fidelity Hub broadcast.</p>
-                <Button className="w-full h-14 bg-rose-600 rounded-2xl font-black text-[10px] uppercase shadow-xl">Synthesize Transmission</Button>
+                <Button onClick={async () => {
+                  if (!user) { toast({ variant: 'destructive', title: 'Sign in required' }); return; }
+                  try {
+                    const prompt = `Generate a short title, description, and 5 tags for a user video capture. Keep it punchy.`;
+                    const res = await chatWithXakAI({ message: prompt, userId: user.uid });
+                    const aiOutput = res.response;
+                    toast({ title: 'AI Synthesis Complete', description: aiOutput });
+                  } catch (err) {
+                    toast({ variant: 'destructive', title: 'Xak AI failed' });
+                  }
+                }} className="w-full h-14 bg-rose-600 rounded-2xl font-black text-[10px] uppercase shadow-xl">Synthesize Transmission</Button>
              </Card>
           </aside>
         </main>
