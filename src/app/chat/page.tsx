@@ -162,7 +162,6 @@ export default function XakChatPage() {
     return null; // replaced by messagesQueryBelow after permission check
   }, [firestore, user, activeTarget]);
 
-  const { data: messages, isLoading: isMessagesLoading } = useCollection(messagesQuery);
 
   // --- Permission-checked messages subscription ---
   const chatDocRef = useMemoFirebase(() => {
@@ -195,7 +194,7 @@ export default function XakChatPage() {
   }, [firestore, allowedToReadMessages, activeTarget]);
 
   // Replace messages subscription with the permission-checked one
-  const { data: messages: messagesChecked, isLoading: isMessagesLoadingChecked } = useCollection(messagesQueryBelow);
+  const { data: messagesChecked, isLoading: isMessagesLoadingChecked } = useCollection(messagesQueryBelow);
 
   // Use the permission-checked results for rendering
   const effectiveMessages = messagesChecked;
@@ -409,14 +408,14 @@ export default function XakChatPage() {
 
         <ScrollArea className="flex-1 p-8" ref={scrollRef}>
            <div className="max-w-5xl mx-auto space-y-8 pb-20">
-              {isMessagesLoading ? (
+              {effectiveIsMessagesLoading ? (
                 <div className="flex justify-center p-20"><Loader2 className="w-10 h-10 animate-spin text-primary opacity-20" /></div>
-              ) : messages?.length === 0 ? (
+              ) : effectiveMessages?.length === 0 ? (
                 <div className="py-40 text-center space-y-6 opacity-20 italic">
                    <MessageCircle className="w-16 h-16 mx-auto" />
                    <p className="text-sm font-black uppercase tracking-[0.4em]">Initialize Conversation</p>
                 </div>
-              ) : messages?.map((msg) => (
+              ) : effectiveMessages?.map((msg) => (
                 <div key={msg.id} className={cn("flex gap-5", msg.senderId === user.uid && "flex-row-reverse")}>
                    <Avatar className="w-11 h-11 rounded-[1.1rem] border-2 border-white/5 shrink-0"><AvatarFallback className="bg-primary/20 text-primary font-black text-xs">{msg.senderName?.[0]}</AvatarFallback></Avatar>
                    <div className={cn("flex flex-col space-y-1.5 max-w-[70%]", msg.senderId === user.uid && "items-end")}>
