@@ -102,21 +102,26 @@ export default function MailPage() {
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       <div className="flex-1 flex p-6 gap-6 overflow-hidden">
         <div className="w-80 flex flex-col space-y-6">
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-3">
-              <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
-                <DialogTrigger asChild>
-                  <Button className="w-full bg-primary h-16 rounded-3xl font-black uppercase text-xs italic shadow-xl">
-                    <Plus className="w-5 h-5 mr-3" /> New Message
-                  </Button>
-                </DialogTrigger>
-              </Dialog>
-
-              <Button onClick={() => { if (user) window.location.href = `/api/gmail/oauth/start?uid=${user.uid}`; }} className="w-40 bg-blue-600 h-16 rounded-3xl font-black uppercase text-xs italic shadow-xl">
-                <MailIcon className="w-4 h-4 mr-2" /> Connect Gmail
+          <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full bg-primary h-16 rounded-3xl font-black uppercase text-xs italic shadow-xl">
+                <Plus className="w-5 h-5 mr-3" /> New Message
               </Button>
-            </div>
-          </div>
+            </DialogTrigger>
+            <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-2xl text-foreground p-10 bg-zinc-950">
+              <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic">Compose</DialogTitle></DialogHeader>
+              <div className="space-y-6 py-4">
+                <Input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="To: name@email.com" className="bg-secondary/30 h-12 rounded-xl" />
+                <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" className="bg-secondary/30 h-12 rounded-xl" />
+                <Textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Type message..." className="bg-secondary/30 rounded-2xl min-h-[250px] p-6 text-lg italic" />
+              </div>
+              <DialogFooter>
+                <Button disabled={isSending} onClick={handleSend} className="h-14 px-12 bg-primary rounded-xl font-black uppercase text-xs">
+                  {isSending ? <Loader2 className="animate-spin" /> : "Send"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
             <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-2xl text-foreground p-10 bg-zinc-950">
               <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic">Compose</DialogTitle></DialogHeader>
               <div className="space-y-6 py-4">
