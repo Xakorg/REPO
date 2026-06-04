@@ -48,6 +48,7 @@ export default function AdminDashboardPage() {
   const [replyTarget, setReplyTarget] = useState<any>(null);
   const [replyMessage, setReplyMessage] = useState("");
   const [isSendingReply, setIsSendingReply] = useState(false);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -111,6 +112,25 @@ export default function AdminDashboardPage() {
       toast({ variant: "destructive", title: "Failed to send reply" });
     } finally {
       setIsSendingReply(false);
+    }
+  };
+
+  const handleSendBroadcast = async () => {
+    if (!firestore || !user || !broadcast.title.trim() || !broadcast.content.trim()) return;
+    setIsBroadcasting(true);
+    try {
+      await addDocumentNonBlocking(collection(firestore, "globalMessages"), {
+        title: broadcast.title.trim(),
+        content: broadcast.content.trim(),
+        author: user.uid,
+        timestamp: serverTimestamp(),
+      });
+      toast({ title: "Broadcast queued" });
+      setBroadcast({ title: "", content: "" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Broadcast failed" });
+    } finally {
+      setIsBroadcasting(false);
     }
   };
 
@@ -249,7 +269,9 @@ export default function AdminDashboardPage() {
               <div className="space-y-8">
                  <Input value={broadcast.title} onChange={(e) => setBroadcast({...broadcast, title: e.target.value})} placeholder="Headline..." className="h-16 bg-secondary/30 rounded-2xl font-bold italic text-white" />
                  <textarea value={broadcast.content} onChange={(e) => setBroadcast({...broadcast, content: e.target.value})} placeholder="Content..." className="min-h-[250px] w-full bg-secondary/30 rounded-3xl p-8 italic border-white/10 text-white" />
-                 <Button disabled={!broadcast.title} className="w-full h-20 bg-primary rounded-3xl font-black uppercase text-xl shadow-2xl border-b-8 border-primary/20 text-white">SEND BROADCAST</Button>
+                 <Button disabled={!broadcast.title || isBroadcasting} onClick={handleSendBroadcast} className="w-full h-20 bg-primary rounded-3xl font-black uppercase text-xl shadow-2xl border-b-8 border-primary/20 text-white">
+                   {isBroadcasting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}SEND BROADCAST
+                 </Button>
               </div>
            </Card>
         </TabsContent>

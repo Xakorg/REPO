@@ -72,6 +72,10 @@ export default function XakMeetPage() {
   const iceBuffers = useRef<Record<string, IceCandidateBuffer>>({});
   const localStream = useRef<MediaStream | null>(null);
   const remoteStreams = useRef<Record<string, MediaStream>>({});
+  // Single-peer helpers (legacy/fallback)
+  const pc = useRef<RTCPeerConnection | null>(null);
+  const iceBuffer = useRef<IceCandidateBuffer | null>(null);
+  const remoteStream = useRef<MediaStream | null>(null);
   const meetingUnsubscribers = useRef<Unsubscribe[]>([]);
   const activeMeetingId = useRef<string | null>(null);
   const isHost = useRef(false);
@@ -156,6 +160,18 @@ export default function XakMeetPage() {
     Object.values(remoteStreams.current).forEach((ms) => ms.getTracks().forEach((t) => t.stop()));
     Object.values(pcMap.current).forEach((p) => p.close());
     Object.values(iceBuffers.current).forEach((b) => b.reset());
+    if (pc.current) {
+      try { pc.current.close(); } catch (e) {}
+      pc.current = null;
+    }
+    if (iceBuffer.current) {
+      try { iceBuffer.current.reset(); } catch (e) {}
+      iceBuffer.current = null;
+    }
+    if (remoteStream.current) {
+      try { remoteStream.current.getTracks().forEach((t) => t.stop()); } catch (e) {}
+      remoteStream.current = null;
+    }
     localStream.current = null;
     remoteStreams.current = {};
     pcMap.current = {};

@@ -39,7 +39,8 @@ service cloud.firestore {
 
     match /users/{userId} {
 
-      allow read, write: if isOwner(userId);
+      // Owners or admins may read/write user documents
+      allow read, write: if isOwner(userId) || isAdmin();
 
       // ─────────────────────────────────────────
       // NOTIFICATIONS
@@ -87,6 +88,13 @@ service cloud.firestore {
 
     match /system_stats/{id} {
       allow read: if true;
+    }
+
+    // System configuration (app-level settings)
+    match /system/{id} {
+      // Allow admins to read/write system config; allow read for all to simplify app UIs.
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // ─────────────────────────────────────────────
