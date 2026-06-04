@@ -21,7 +21,12 @@ import {
   Gift, 
   Eye,
   CheckCircle2,
-  Users
+  Users,
+  Hat,
+  PartyPopper,
+  Ghost,
+  Skull,
+  Bot
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
@@ -39,6 +44,32 @@ const SHOP_ITEMS = [
   { id: 4, name: "Electric Blue Plate", category: "Name Plates", type: 'nameplate', key: 'blue', price: 300, color: "text-blue-400", bg: "bg-blue-400/10", rarity: "Rare", description: "A vibrant cyan signature for your profile." },
   { id: 5, name: "Gold Elite Tag", category: "Name Plates", type: 'nameplate', key: 'gold', price: 850, color: "text-amber-500", bg: "bg-amber-500/10", rarity: "Legendary", description: "The standard of excellence in the multiverse." },
   { id: 6, name: "Space Cat Orbit", category: "Decorations", type: 'decor', key: 'cat', price: 1500, color: "text-rose-500", bg: "bg-rose-500/10", rarity: "Mythic", description: "An animated cat that orbits your identity." },
+  
+  // New Hats
+  { id: 7, name: "Classic Top Hat", category: "Hats", type: 'hat', key: 'tophat', price: 500, color: "text-zinc-300", bg: "bg-zinc-500/10", rarity: "Rare", description: "A sophisticated black top hat for the distinguished member." },
+  { id: 8, name: "Royal Crown", category: "Hats", type: 'hat', key: 'crown', price: 2000, color: "text-amber-400", bg: "bg-amber-500/10", rarity: "Mythic", description: "A golden crown studded with precious gems. Rule the Hub." },
+  { id: 9, name: "Wizard Hat", category: "Hats", type: 'hat', key: 'wizard', price: 800, color: "text-purple-400", bg: "bg-purple-500/10", rarity: "Epic", description: "A mystical purple hat imbued with arcane power." },
+  { id: 10, name: "Party Hat", category: "Hats", type: 'hat', key: 'party', price: 200, color: "text-pink-400", bg: "bg-pink-500/10", rarity: "Common", description: "A colorful cone hat for celebrations." },
+  { id: 11, name: "Cowboy Hat", category: "Hats", type: 'hat', key: 'cowboy', price: 450, color: "text-amber-700", bg: "bg-amber-700/10", rarity: "Rare", description: "A rugged western hat for the bold adventurer." },
+  { id: 12, name: "Halo", category: "Hats", type: 'hat', key: 'halo', price: 1500, color: "text-yellow-300", bg: "bg-yellow-500/10", rarity: "Legendary", description: "A divine golden halo that floats above your head." },
+  { id: 13, name: "Devil Horns", category: "Hats", type: 'hat', key: 'horns', price: 1200, color: "text-red-500", bg: "bg-red-500/10", rarity: "Epic", description: "Dark crimson horns for the mischievous troublemaker." },
+  { id: 14, name: "Baseball Cap", category: "Hats", type: 'hat', key: 'cap', price: 150, color: "text-blue-500", bg: "bg-blue-500/10", rarity: "Common", description: "A casual cap worn backwards for that cool vibe." },
+  { id: 15, name: "Viking Helmet", category: "Hats", type: 'hat', key: 'viking', price: 900, color: "text-gray-400", bg: "bg-gray-500/10", rarity: "Epic", description: "A battle-worn helmet with mighty horns." },
+  { id: 16, name: "Chef Hat", category: "Hats", type: 'hat', key: 'chef', price: 350, color: "text-white", bg: "bg-white/10", rarity: "Uncommon", description: "A tall white toque for the culinary master." },
+  
+  // More Auras
+  { id: 17, name: "Cosmic Void Aura", category: "Auras", type: 'aura', key: 'cosmic', price: 1800, color: "text-purple-600", bg: "bg-purple-600/10", rarity: "Mythic", description: "The essence of the cosmos swirls around you." },
+  { id: 18, name: "Fire Aura", category: "Auras", type: 'aura', key: 'fire', price: 700, color: "text-orange-500", bg: "bg-orange-500/10", rarity: "Epic", description: "Blazing flames dance around your avatar." },
+  { id: 19, name: "Ice Aura", category: "Auras", type: 'aura', key: 'ice', price: 700, color: "text-cyan-400", bg: "bg-cyan-500/10", rarity: "Epic", description: "Crystalline ice particles orbit your presence." },
+  
+  // More Nameplates
+  { id: 20, name: "Pro Nameplate", category: "Name Plates", type: 'nameplate', key: 'pro', price: 1200, color: "text-purple-400", bg: "bg-purple-500/10", rarity: "Legendary", description: "A gradient nameplate that shifts between purple and pink." },
+  { id: 21, name: "Rainbow Plate", category: "Name Plates", type: 'nameplate', key: 'rainbow', price: 2500, color: "text-pink-500", bg: "bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10", rarity: "Mythic", description: "A nameplate that cycles through all colors of the rainbow." },
+  
+  // More Decorations
+  { id: 22, name: "Star Trail", category: "Decorations", type: 'decor', key: 'stars', price: 800, color: "text-yellow-400", bg: "bg-yellow-500/10", rarity: "Epic", description: "Tiny stars trail behind your cursor." },
+  { id: 23, name: "Lightning Bolt", category: "Decorations", type: 'decor', key: 'lightning', price: 600, color: "text-yellow-500", bg: "bg-yellow-500/10", rarity: "Rare", description: "Electric bolts crackle around your profile." },
+  { id: 24, name: "Cherry Blossom", category: "Decorations", type: 'decor', key: 'sakura', price: 1000, color: "text-pink-300", bg: "bg-pink-300/10", rarity: "Legendary", description: "Delicate pink petals float around you." },
 ];
 
 export default function ShopPage() {
@@ -122,7 +153,7 @@ export default function ShopPage() {
     }
   };
 
-  const categories = ["All", "Auras", "Name Plates", "Decorations"];
+  const categories = ["All", "Auras", "Name Plates", "Hats", "Decorations"];
 
   return (
     <div className="max-w-[1600px] mx-auto space-y-12 py-12 animate-fade-in pb-32 px-6">
@@ -177,7 +208,13 @@ export default function ShopPage() {
               <Card key={item.id} onClick={() => setSelectedItem(item)} className={cn("glass-card cursor-pointer rounded-[4rem] overflow-hidden border-4 transition-all duration-500 group", selectedItem.id === item.id ? "border-primary shadow-[0_0_80px_rgba(var(--primary),0.4)] scale-[1.02]" : "border-white/5 hover:border-white/20")}>
                 <div className={cn("h-64 flex items-center justify-center relative overflow-hidden", item.bg)}>
                   <div className="absolute inset-0 arcade-grid opacity-10" />
-                  <User className={cn("w-24 h-24 transition-transform duration-700 group-hover:scale-125", item.color)} />
+                  <div className={cn("w-24 h-24 flex items-center justify-center transition-transform duration-700 group-hover:scale-125", item.color)}>
+                {item.type === 'hat' ? <Hat className="w-24 h-24" /> : 
+                 item.type === 'decor' ? <Sparkles className="w-24 h-24" /> :
+                 item.type === 'aura' ? <Flame className="w-24 h-24" /> :
+                 item.type === 'nameplate' ? <User className="w-24 h-24" /> :
+                 <User className="w-24 h-24" />}
+              </div>
                   <Badge className="absolute top-8 right-8 bg-black/60 border-none text-[10px] font-black uppercase">{item.rarity}</Badge>
                 </div>
                 <CardContent className="p-12">

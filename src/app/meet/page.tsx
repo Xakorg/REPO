@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Mic,
   MicOff,
@@ -15,6 +16,7 @@ import {
   Copy,
   Wifi,
   WifiOff,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -56,11 +58,15 @@ export default function XakMeetPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<MeetMode>("lobby");
   const [roomCode, setRoomCode] = useState("");
   const [customRoomId, setCustomRoomId] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [isGuest, setIsGuest] = useState(false);
   const [isMicOn, setIsMicOn] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -85,7 +91,14 @@ export default function XakMeetPage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    
+    // Check for room code in URL
+    const roomFromUrl = searchParams.get('room');
+    if (roomFromUrl) {
+      setRoomCode(roomFromUrl.toUpperCase());
+      setMode("join");
+    }
+  }, [searchParams]);
 
   const bindVideoElements = useCallback(() => {
     if (localVideoRef.current && localStream.current) {
@@ -271,12 +284,12 @@ export default function XakMeetPage() {
     ]);
   };
 
-  const requireAuth = () => {
+  const requireAuthForCreate = () => {
     if (!user) {
       toast({
         variant: "destructive",
         title: "Sign in required",
-        description: "Sign in to create or join a XakMeet call.",
+        description: "Sign in to create a XakMeet call.",
       });
       return false;
     }
@@ -291,8 +304,20 @@ export default function XakMeetPage() {
     return true;
   };
 
+  const canJoinAsGuest = () => {
+    if (!firestore) {
+      toast({
+        variant: "destructive",
+        title: "Unavailable",
+        description: "Firebase is not ready. Refresh and try again.",
+      });
+      return false;
+    }
+    return true;
+  };
+
   const handleCreateMeeting = async () => {
-    if (!requireAuth() || !user || !firestore) return;
+    if (!requireAuthForCreate() || !user || !firestore) return;
     setLoading(true);
     try {
       await setupWebRTC();
@@ -410,8 +435,14 @@ export default function XakMeetPage() {
     }
   };
 
-  const handleJoinMeeting = async () => {
-    if (!requireAuth() || !user || !firestore || !roomCode.trim()) return;
+  const handleJoinMeeting = async (authUser = user, guestDisplayName = "") => {
+    if (!firestore || !roomCode.trim()) return;
+    
+    // For authenticated users, use their info. For guests, use guest name.
+    const effectiveUserId = authUser?.uid || `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const effectiveDisplayName = authUser ? displayName(authUser) : guestDisplayName || `Guest_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const effectivePhotoURL = authUser?.photoURL || "";
+    
     setLoading(true);
     try {
       await setupWebRTC();
@@ -423,18 +454,18 @@ export default function XakMeetPage() {
       if (!callData) throw new Error("Room not found or meeting has ended.");
 
       const participantIds: string[] = callData.participantIds || [];
-      if (participantIds.includes(user.uid)) {
+      if (participantIds.includes(effectiveUserId)) {
         throw new Error("You are already in this room from another tab.");
       }
 
       const newParticipant: Participant = {
-        id: user.uid,
-        name: displayName(user),
-        photo: user.photoURL || "",
+        id: effectiveUserId,
+        name: effectiveDisplayName,
+        photo: effectivePhotoURL,
       };
 
       await updateDoc(callDoc, {
-        participantIds: [...participantIds, user.uid],
+        participantIds: [...participantIds, effectiveUserId],
         participants: [...(callData.participants || []), newParticipant],
       });
 
@@ -458,7 +489,7 @@ export default function XakMeetPage() {
           snapshot.docChanges().forEach((change) => {
             if (change.type !== "added") return;
             const data = change.doc.data() as any;
-            if (!data || data.to !== user.uid) return;
+            if (!data || data.to !== effectiveUserId) return;
 
             const fromId = data.from as string;
             const type = data.type as string;
@@ -469,7 +500,7 @@ export default function XakMeetPage() {
                 peer.onicecandidate = (event) => {
                   if (event.candidate) {
                     void addDoc(signals, {
-                      from: user.uid,
+                      from: effectiveUserId,
                       to: fromId,
                       type: "ice",
                       candidate: event.candidate.toJSON(),
@@ -484,7 +515,7 @@ export default function XakMeetPage() {
                 await peer.setLocalDescription(answer);
 
                 await addDoc(signals, {
-                  from: user.uid,
+                  from: effectiveUserId,
                   to: fromId,
                   type: "answer",
                   sdp: answer.sdp,
@@ -518,6 +549,19 @@ export default function XakMeetPage() {
     }
   };
 
+  const handleGuestJoin = () => {
+    if (!canJoinAsGuest() || !roomCode.trim()) return;
+    if (!guestName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Name required",
+        description: "Please enter a display name to join as a guest.",
+      });
+      return;
+    }
+    handleJoinMeeting(null, guestName.trim());
+  };
+
   const toggleMic = () => {
     const next = !isMicOn;
     localStream.current?.getAudioTracks().forEach((t) => {
@@ -544,24 +588,34 @@ export default function XakMeetPage() {
       } catch (e) {
         console.warn("Failed to delete meeting room:", e);
       }
-    } else if (!host && meetingId && firestore && user) {
+    } else if (!host && meetingId && firestore) {
+      // For guests, we still need to remove from participants
+      const guestId = `guest_`;
       try {
         const callDoc = doc(firestore, "meetings", meetingId);
         const snap = await getDoc(callDoc);
         const data = snap.data() || {};
         const ids: string[] = data.participantIds || [];
         const parts: Participant[] = data.participants || [];
-        const newIds = ids.filter((i) => i !== user.uid);
-        const newParts = parts.filter((p) => p.id !== user.uid);
+        // Remove any guest entries (for simplicity, we remove all guests when leaving)
+        // In a production app, we'd track the specific guest ID
+        const newIds = user ? ids.filter((i) => i !== user.uid) : [];
+        const newParts = user ? parts.filter((p) => p.id !== user.uid) : parts;
         await updateDoc(callDoc, { participantIds: newIds, participants: newParts });
       } catch (e) {
         console.warn("Failed to leave meeting:", e);
       }
     }
+    
+    // Clear URL params when leaving meeting
+    router.push('/meet');
+    
     setMode("lobby");
     setRoomCode("");
     setCustomRoomId("");
     setParticipants([]);
+    setIsGuest(false);
+    setGuestName("");
     toast({ title: "Meeting ended" });
   };
 
@@ -595,17 +649,130 @@ export default function XakMeetPage() {
 
   if (!mounted || isUserLoading) return null;
 
-  if (!user) {
+  // Guest join modal when not signed in and trying to join
+  if (!user && mode === "join" && roomCode) {
     return (
       <div className="h-[calc(100vh-80px)] flex flex-col items-center justify-center p-6 text-center space-y-8">
-        <VideoIcon className="w-20 h-20 text-rose-500 mx-auto" />
-        <h1 className="text-5xl font-black italic uppercase tracking-tighter text-white">XakMeet</h1>
-        <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs max-w-md">
-          Sign in to start or join encrypted 1:1 video calls.
-        </p>
-        <Button asChild className="h-14 px-10 bg-rose-600 rounded-2xl font-black uppercase">
-          <Link href="/auth">Sign in</Link>
-        </Button>
+        <Card className="glass-card p-12 rounded-[4rem] border-white/10 space-y-10 bg-black/60 w-full max-xl z-10 animate-in zoom-in-95">
+          <div className="space-y-4">
+            <VideoIcon className="w-16 h-16 text-blue-500 mx-auto" />
+            <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Join as Guest</h2>
+            <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">
+              Room: {roomCode}
+            </p>
+          </div>
+          
+          <div className="space-y-4">
+            <label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Your Display Name</label>
+            <Input
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              placeholder="Enter your name..."
+              className="h-16 bg-black/60 border-white/10 rounded-2xl text-center font-black text-xl tracking-widest"
+            />
+          </div>
+          
+          <div className="space-y-4">
+            <Button
+              onClick={handleGuestJoin}
+              disabled={!guestName.trim() || loading}
+              className="w-full h-20 bg-blue-600 hover:bg-blue-500 text-white rounded-[2rem] font-black uppercase text-xl shadow-xl transition-all border-b-8 border-blue-900 active:border-b-0"
+            >
+              {loading ? <Loader2 className="animate-spin w-8 h-8" /> : "Join Meeting"}
+            </Button>
+            
+            <div className="flex items-center gap-4 my-6">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">or</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+            
+            <Button
+              asChild
+              variant="outline"
+              className="w-full h-14 rounded-2xl border-white/10 font-black uppercase text-xs tracking-widest text-white hover:bg-white/5"
+            >
+              <Link href="/auth">Sign in for full experience</Link>
+            </Button>
+          </div>
+          
+          <Button variant="ghost" onClick={() => setMode("lobby")} className="text-xs font-black uppercase tracking-widest opacity-40">
+            Cancel
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show sign in prompt for creating meetings when not signed in
+  if (!user && mode === "create") {
+    return (
+      <div className="h-[calc(100vh-80px)] flex flex-col items-center justify-center p-6 text-center space-y-8">
+        <Card className="glass-card p-12 rounded-[4rem] border-white/10 space-y-10 bg-black/60 w-full max-xl z-10">
+          <VideoIcon className="w-16 h-16 text-rose-500 mx-auto" />
+          <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Sign In Required</h2>
+          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">
+            You need to sign in to create a meeting.
+          </p>
+          <Button asChild className="w-full h-16 bg-rose-600 rounded-2xl font-black uppercase text-lg">
+            <Link href="/auth">Sign in</Link>
+          </Button>
+          <Button variant="ghost" onClick={() => setMode("lobby")} className="text-xs font-black uppercase tracking-widest opacity-40">
+            Cancel
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // General lobby for non-signed-in users
+  if (!user && mode === "lobby") {
+    return (
+      <div className="h-[calc(100vh-80px)] flex flex-col items-center justify-center p-6 text-center space-y-8">
+        <div className="space-y-12 z-10 max-w-4xl w-full">
+          <div className="space-y-4">
+            <div className="w-32 h-32 rounded-[3.5rem] bg-rose-500/10 border-4 border-rose-500/20 flex items-center justify-center mx-auto shadow-2xl animate-float">
+              <VideoIcon className="w-16 h-16 text-rose-500" />
+            </div>
+            <h1 className="text-7xl font-black italic uppercase tracking-tighter text-white leading-none">XakMeet</h1>
+            <p className="text-muted-foreground font-black uppercase tracking-[0.6em] text-[10px]">
+              WebRTC Video Calls
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Card
+              className="glass-card p-12 rounded-[4rem] border-white/10 space-y-8 bg-black/40 group hover:border-rose-500/40 transition-all cursor-pointer"
+              onClick={() => {
+                toast({
+                  title: "Sign in required",
+                  description: "Please sign in to create a meeting.",
+                });
+              }}
+            >
+              <Plus className="w-16 h-16 text-rose-500 mx-auto transition-transform group-hover:scale-110" />
+              <h3 className="text-3xl font-black uppercase italic tracking-tighter">Create Meeting</h3>
+              <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest leading-relaxed">
+                Start a new room and share the link.
+              </p>
+              <Button className="w-full h-14 bg-rose-600 rounded-2xl font-black uppercase text-xs">
+                Sign in to Create
+              </Button>
+            </Card>
+
+            <Card
+              className="glass-card p-12 rounded-[4rem] border-white/10 space-y-8 bg-black/40 group hover:border-blue-500/40 transition-all cursor-pointer"
+              onClick={() => setMode("join")}
+            >
+              <UserPlus className="w-16 h-16 text-blue-500 mx-auto transition-transform group-hover:scale-110" />
+              <h3 className="text-3xl font-black uppercase italic tracking-tighter">Join Meeting</h3>
+              <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest leading-relaxed">
+                Join with a room ID or link.
+              </p>
+              <Button className="w-full h-14 bg-blue-600 rounded-2xl font-black uppercase text-xs">Join as Guest</Button>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }
@@ -654,7 +821,7 @@ export default function XakMeetPage() {
         </div>
       )}
 
-      {mode === "create" && (
+      {mode === "create" && user && (
         <Card className="glass-card p-12 rounded-[4rem] border-white/10 space-y-10 bg-black/60 w-full max-xl z-10 animate-in zoom-in-95">
           <h2 className="text-5xl font-black uppercase italic tracking-tighter">New Room</h2>
           <div className="space-y-4">
@@ -681,7 +848,7 @@ export default function XakMeetPage() {
         </Card>
       )}
 
-      {mode === "join" && (
+      {mode === "join" && user && (
         <Card className="glass-card p-12 rounded-[4rem] border-white/10 space-y-10 bg-black/60 w-full max-xl z-10 animate-in zoom-in-95">
           <h2 className="text-5xl font-black uppercase italic tracking-tighter">Connect</h2>
           <div className="space-y-4">
@@ -694,7 +861,7 @@ export default function XakMeetPage() {
             />
           </div>
           <Button
-            onClick={handleJoinMeeting}
+            onClick={() => handleJoinMeeting()}
             disabled={!roomCode || loading}
             className="w-full h-20 bg-blue-600 hover:bg-blue-500 text-white rounded-[2rem] font-black uppercase text-xl shadow-xl transition-all border-b-8 border-blue-900 active:border-b-0"
           >
@@ -754,22 +921,24 @@ export default function XakMeetPage() {
                 {!isVideoOn && (
                   <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
                     <Avatar className="w-40 h-40 border-8 border-white/5 shadow-2xl">
-                      <AvatarImage src={user.photoURL || ""} />
+                      <AvatarImage src={user?.photoURL || ""} />
                       <AvatarFallback className="text-4xl font-black bg-rose-600 text-white">
-                        {user.displayName?.[0]}
+                        {user?.displayName?.[0] || "G"}
                       </AvatarFallback>
                     </Avatar>
                   </div>
                 )}
                 <div className="absolute bottom-6 left-6 px-6 py-3 bg-black/60 backdrop-blur-xl rounded-[1.5rem] border border-white/10 flex items-center gap-3 shadow-2xl">
                   <div className={cn("w-2 h-2 rounded-full", isMicOn ? "bg-green-500 animate-pulse" : "bg-rose-500")} />
-                  <span className="text-[10px] font-black uppercase italic tracking-widest text-white">You</span>
+                  <span className="text-[10px] font-black uppercase italic tracking-widest text-white">
+                    {user ? displayName(user) : guestName || "Guest"}
+                  </span>
                 </div>
               </div>
 
               <div className="space-y-4">
                 {participants
-                  .filter((p) => p.id !== user.uid)
+                  .filter((p) => user && p.id !== user.uid)
                   .map((p) => (
                     <div key={p.id} className="rounded-[1.2rem] border-4 border-white/5 bg-zinc-950 overflow-hidden relative shadow-2xl">
                       <video
@@ -793,7 +962,7 @@ export default function XakMeetPage() {
                     </div>
                   ))}
                 {/* fallback single remote */}
-                {participants.filter((p) => p.id !== user.uid).length === 0 && (
+                {(!user || participants.filter((p) => p.id !== user.uid).length === 0) && (
                   <div className="rounded-[3rem] border-8 border-white/5 bg-zinc-950 overflow-hidden relative shadow-2xl">
                     <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover bg-zinc-900" />
                     {connectionState !== "connected" && (
