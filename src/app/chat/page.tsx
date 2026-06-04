@@ -63,7 +63,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { useUser, useFirestore, useCollection, useMemoFirebase, useStorage } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useStorage, useDoc } from "@/firebase";
 import { collection, serverTimestamp, query, orderBy, limit, doc, where, addDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useToast } from "@/hooks/use-toast";
@@ -156,15 +156,50 @@ export default function XakChatPage() {
   useEffect(() => { setMounted(true); }, []);
 
   const messagesQuery = useMemoFirebase(() => {
-    if (!firestore || !user || !activeTarget) return null;
+    if (!firestore || !activeTarget) return null;
+    // We intentionally avoid listing messages unless we verify the caller
+    // has permission (is a participant, the chat is public, or user is admin).
+    return null; // replaced by messagesQueryBelow after permission check
+  }, [firestore, user, activeTarget]);
+
+  const { data: messages, isLoading: isMessagesLoading } = useCollection(messagesQuery);
+
+  // --- Permission-checked messages subscription ---
+  const chatDocRef = useMemoFirebase(() => {
+    if (!firestore || !activeTarget) return null;
+    return doc(firestore, "chats", activeTarget.id);
+  }, [firestore, activeTarget]);
+
+  const { data: chatDoc } = useDoc(chatDocRef);
+
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "admins", user.uid);
+  }, [firestore, user]);
+
+  const { data: adminRole } = useDoc(adminRoleRef);
+
+  const allowedToReadMessages = !!(
+    chatDoc?.public === true ||
+    (user && Array.isArray(chatDoc?.participants) && chatDoc.participants.includes(user.uid)) ||
+    !!adminRole
+  );
+
+  const messagesQueryBelow = useMemoFirebase(() => {
+    if (!firestore || !allowedToReadMessages || !activeTarget) return null;
     return query(
       collection(firestore, "chats", activeTarget.id, "messages"),
       orderBy("timestamp", "asc"),
       limit(100)
     );
-  }, [firestore, user, activeTarget]);
+  }, [firestore, allowedToReadMessages, activeTarget]);
 
-  const { data: messages, isLoading: isMessagesLoading } = useCollection(messagesQuery);
+  // Replace messages subscription with the permission-checked one
+  const { data: messages: messagesChecked, isLoading: isMessagesLoadingChecked } = useCollection(messagesQueryBelow);
+
+  // Use the permission-checked results for rendering
+  const effectiveMessages = messagesChecked;
+  const effectiveIsMessagesLoading = isMessagesLoadingChecked;
 
   const usersQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -177,7 +212,7 @@ export default function XakChatPage() {
       const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (viewport) viewport.scrollTop = viewport.scrollHeight;
     }
-  }, [messages]);
+  }, [effectiveMessages]);
 
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
