@@ -30,16 +30,17 @@ import {
   Maximize,
   Minimize
 } from "lucide-react";
+import { Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useUser, useAuth, useMemoFirebase, useFirestore, useCollection } from "@/firebase";
+import { useUser, useAuth, useMemoFirebase, useFirestore, useCollection, useDoc } from "@/firebase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { signOut } from "firebase/auth";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, doc } from "firebase/firestore";
 import { triggerCommandCenter } from "@/components/CommandCenter";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
@@ -89,6 +90,17 @@ export function Header() {
 
   const filteredApps = APPS.filter(app => app.name.toLowerCase().includes(appSearch.toLowerCase()));
   const cleanDisplayName = user?.displayName?.replace(/^@+/, "") || "User";
+
+  const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
+
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "admins", user.uid);
+  }, [firestore, user]);
+
+  const { data: adminRole } = useDoc(adminRoleRef);
+  const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email?.toLowerCase() || "");
+  const isAdmin = isSuperAdmin || !!adminRole;
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -217,6 +229,12 @@ export function Header() {
                 </ScrollArea>
               </PopoverContent>
             </Popover>
+          )}
+
+          {isAdmin && (
+            <Button onClick={() => router.push('/admin')} variant="ghost" size="icon" className="w-12 h-12 bg-zinc-900/60 border-2 border-white/10 rounded-2xl relative group shadow-xl">
+              <Crown className="w-6 h-6 text-yellow-400" />
+            </Button>
           )}
 
           {user ? (
