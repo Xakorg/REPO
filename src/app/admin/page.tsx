@@ -136,6 +136,7 @@ export default function AdminDashboardPage() {
         content: broadcast.content.trim(),
         author: user.uid,
         timestamp: serverTimestamp(),
+        type: "broadcast"
       });
       toast({ title: "Broadcast queued" });
       setBroadcast({ title: "", content: "" });

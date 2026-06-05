@@ -16,7 +16,7 @@ import {
 import { useRouter } from "next/navigation";
 import { GlitchLogo } from "@/components/ui/glitch-logo";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
-import { doc, updateDoc, serverTimestamp, query, collection, orderBy, limit } from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp, query, collection, orderBy, limit, where } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -68,9 +68,18 @@ function XakteirDashboard() {
 
   const feedQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "globalMessages"), orderBy("timestamp", "desc"), limit(10));
+    return query(collection(firestore, "globalMessages"), where("type", "==", "broadcast"), limit(50));
   }, [firestore]);
   const { data: feedItems, isLoading: feedLoading } = useCollection(feedQuery);
+
+  const sortedFeedItems = useMemo(() => {
+    if (!feedItems) return [];
+    return [...feedItems].sort((a: any, b: any) => {
+      const tsA = a.timestamp?.seconds || 0;
+      const tsB = b.timestamp?.seconds || 0;
+      return tsB - tsA;
+    });
+  }, [feedItems]);
 
   const isSuperAdmin = useMemo(() => SUPER_ADMIN_EMAILS.includes(user?.email?.toLowerCase() || ""), [user]);
   const needsMigration = useMemo(() => !!(user?.email?.toLowerCase().endsWith("@xakteir.com") && !userData?.personalEmail && !isSuperAdmin), [user, userData, isSuperAdmin]);
@@ -142,13 +151,13 @@ function XakteirDashboard() {
             </div>
             {feedLoading ? (
               <div className="py-16 flex justify-center"><Loader2 className="animate-spin text-primary opacity-20 w-12 h-12" /></div>
-            ) : !feedItems?.length ? (
+            ) : !sortedFeedItems?.length ? (
               <div className="text-center py-20 border-4 border-dashed border-white/5 rounded-3xl opacity-20">
                  <p className="text-[11px] font-black uppercase tracking-[1em] italic">No updates</p>
               </div>
             ) : (
               <div className="space-y-4 md:space-y-6">
-                {feedItems.slice(0, 3).map(item => (
+                {sortedFeedItems.slice(0, 3).map(item => (
                   <div key={item.id} className="p-6 bg-white/5 rounded-[1.8rem] md:rounded-[2.2rem] border-2 border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all group cursor-pointer shadow-xl">
                     <h3 className="text-xs md:text-lg font-black text-white uppercase italic group-hover:text-primary transition-colors leading-tight">{item.title}</h3>
                     <p className="text-[9px] md:text-xs text-white/40 mt-2 line-clamp-1 italic font-medium tracking-wide">{item.content}</p>

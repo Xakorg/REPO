@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import { 
   Hash, 
   Home, 
