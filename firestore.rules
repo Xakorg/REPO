@@ -325,6 +325,23 @@ service cloud.firestore {
     }
     
     // ─────────────────────────────────────────────
+    // EMAILS
+    // ─────────────────────────────────────────────
+    match /emails/{emailId} {
+      allow read: if isSignedIn() && (
+        resource.data.senderUserId == request.auth.uid
+        || request.auth.token.email == resource.data.senderEmail
+        || request.auth.token.email in resource.data.recipientList
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.senderUserId == request.auth.uid
+      );
+      allow update, delete: if isSignedIn() && (
+        resource.data.senderUserId == request.auth.uid
+      );
+    }
+
+    // ─────────────────────────────────────────────
     // CHAT ROOMS
     // Robust rules for chats and messages:
     // - Users can create chats only if they're included in the participants array

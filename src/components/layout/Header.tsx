@@ -28,7 +28,9 @@ import {
   Presentation,
   Menu,
   Maximize,
-  Minimize
+  Minimize,
+  Calendar as CalendarIcon,
+  Image as ImageIcon
 } from "lucide-react";
 import { Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,6 +58,10 @@ const APPS = [
   { name: "Drive", icon: HardDrive, href: "/drive", color: "text-amber-500", bg: "bg-amber-500/10" },
   { name: "Games", icon: Gamepad2, href: "/games", color: "text-purple-400", bg: "bg-purple-500/10" },
   { name: "XakCode", icon: Code2, href: "/xakcode", color: "text-sky-400", bg: "bg-sky-500/10" },
+  { name: "XakView", icon: Video, href: "/xakview", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Xakteir Plan", icon: CalendarIcon, href: "/calendar", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "XakPicks", icon: ImageIcon, href: "/pics", color: "text-pink-500", bg: "bg-pink-500/10" },
+  { name: "Classroom", icon: GraduationCap, href: "/classroom", color: "text-indigo-400", bg: "bg-indigo-400/10" },
   { name: "Meet", icon: VideoIcon, href: "/meet", color: "text-rose-400", bg: "bg-rose-400/10" },
   { name: "Translate", icon: Zap, href: "/translate", color: "text-blue-300", bg: "bg-blue-300/10" },
   { name: "Calculator", icon: Calculator, href: "/calculator", color: "text-zinc-400", bg: "bg-zinc-400/10" },

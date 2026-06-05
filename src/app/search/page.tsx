@@ -28,6 +28,105 @@ import { cn } from "@/lib/utils";
 
 type SearchCategory = "all" | "sites" | "images" | "people";
 
+const LOCAL_DEFINITIONS: Record<string, { title: string, definition: string, type: string, image?: string, facts?: Record<string, string> }> = {
+  "snake": {
+    title: "Snake",
+    definition: "A snake is a hostile animal that is a long, legless, carnivorous reptile of the suborder Serpentes. Characterized by their lack of limbs, snakes have highly flexible jaws that allow them to swallow prey much larger than their head. They are found on every continent except Antarctica.",
+    type: "Reptile / Vertebrate",
+    image: "https://images.unsplash.com/photo-1531386151447-fd762e78f99e?w=600&auto=format&fit=crop&q=80",
+    facts: {
+      "Scientific Name": "Serpentes",
+      "Class": "Reptilia",
+      "Diet": "Carnivore",
+      "Key Feature": "Limbless body, flexible jaws"
+    }
+  },
+  "cat": {
+    title: "Cat",
+    definition: "The cat is a small domesticated carnivorous mammal. It is the only domesticated species in the family Felidae and is often referred to as the domestic cat to distinguish it from the wild members of the family.",
+    type: "Mammal / Feline",
+    image: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop&q=80",
+    facts: {
+      "Scientific Name": "Felis catus",
+      "Lifespan": "12 – 15 years",
+      "Sleep duration": "12 – 16 hours/day",
+      "Family": "Felidae"
+    }
+  },
+  "dog": {
+    title: "Dog",
+    definition: "The dog is a domesticated descendant of the wolf. They were the first species to be domesticated by humans, over 15,000 years ago. Dogs have been bred for various behaviors, sensory capabilities, and physical attributes.",
+    type: "Mammal / Canine",
+    image: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80",
+    facts: {
+      "Scientific Name": "Canis lupus familiaris",
+      "Lifespan": "10 – 13 years",
+      "Speed": "Up to 30 mph (run)",
+      "Family": "Canidae"
+    }
+  },
+  "html": {
+    title: "HTML",
+    definition: "HyperText Markup Language (HTML) is the standard markup language for documents designed to be displayed in a web browser. It is assisted by technologies such as Cascading Style Sheets (CSS) and scripting languages such as JavaScript.",
+    type: "Web Standard",
+    image: "https://images.unsplash.com/photo-1618401471353-b98aedd07871?w=600&auto=format&fit=crop&q=80",
+    facts: {
+      "Initial Release": "1993",
+      "Developed by": "WHATWG & W3C",
+      "Type of Format": "Document file format",
+      "Filename Extension": ".html, .htm"
+    }
+  },
+  "javascript": {
+    title: "JavaScript",
+    definition: "JavaScript, often abbreviated as JS, is a programming language that is one of the core technologies of the World Wide Web, alongside HTML and CSS. As of 2026, over 98% of websites use JavaScript on the client side for webpage behavior.",
+    type: "Programming Language",
+    image: "https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?w=600&auto=format&fit=crop&q=80",
+    facts: {
+      "First Released": "December 4, 1995",
+      "Designed by": "Brendan Eich",
+      "Typing Discipline": "Dynamic, weak",
+      "Filename Extensions": ".js, .mjs, .cjs"
+    }
+  },
+  "react": {
+    title: "React",
+    definition: "React is a free and open-source front-end JavaScript library for building user interfaces based on components. It is maintained by Meta and a community of individual developers and companies.",
+    type: "UI Library",
+    image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&auto=format&fit=crop&q=80",
+    facts: {
+      "Initial Release": "May 29, 2013",
+      "Developed by": "Meta (Facebook)",
+      "License": "MIT License",
+      "Platform": "Web, Mobile (React Native)"
+    }
+  },
+  "roblox": {
+    title: "Roblox",
+    definition: "Roblox is a massive multiplayer online game platform and game creation system. It allows users to program games using Lua and play games designed by other members of the community.",
+    type: "Gaming Platform / Game Engine",
+    image: "https://images.unsplash.com/photo-1605901309584-818e25960a8f?w=600&auto=format&fit=crop&q=80",
+    facts: {
+      "Initial Release": "September 1, 2006",
+      "Engine": "Luau (Lua variant)",
+      "Platforms": "Windows, macOS, iOS, Android, Xbox",
+      "Founder(s)": "David Baszucki, Erik Cassel"
+    }
+  },
+  "rocket league": {
+    title: "Rocket League",
+    definition: "Rocket League is a vehicular soccer video game developed and published by Psyonix. It features rocket-powered cars playing soccer, which creates a highly competitive physics-based sport.",
+    type: "Video Game",
+    image: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=600&auto=format&fit=crop&q=80",
+    facts: {
+      "Release Date": "July 7, 2015",
+      "Developer": "Psyonix",
+      "Genre": "Sports, vehicular soccer",
+      "Modes": "Single-player, multiplayer"
+    }
+  }
+};
+
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -181,6 +280,13 @@ function SearchContent() {
     }
     return dedup;
   })();
+
+  // Find matched definition
+  const queryLower = (queryInput || "").toLowerCase().trim();
+  const matchedDefKey = Object.keys(LOCAL_DEFINITIONS).find(key => 
+    queryLower === key || queryLower.includes(key)
+  );
+  const matchedDefinition = matchedDefKey ? LOCAL_DEFINITIONS[matchedDefKey] : null;
 
   // Filter sites matching the query
   const filteredSites = (queryInput || '').trim()
@@ -510,6 +616,48 @@ function SearchContent() {
             {/* Category: SITES / ALL website listings */}
             {(activeCategory === "all" || activeCategory === "sites") && (
               <div className="space-y-8">
+                {/* Knowledge Graph Card / Definition Panel */}
+                {matchedDefinition && (
+                  <Card className="p-8 bg-zinc-900/30 border-2 border-rose-500/30 rounded-[3rem] shadow-[0_20px_50px_rgba(244,63,94,0.15)] relative overflow-hidden flex flex-col md:flex-row gap-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-transparent pointer-events-none" />
+                    {matchedDefinition.image && (
+                      <div className="w-full md:w-60 h-44 rounded-2xl overflow-hidden shrink-0 border border-white/10 relative">
+                        <img 
+                          src={matchedDefinition.image} 
+                          alt={matchedDefinition.title} 
+                          className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" 
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 space-y-4 relative z-10">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-2">
+                            <Sparkles className="w-3.5 h-3.5" /> Encyclopedia Definition
+                          </div>
+                          <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter mt-1">{matchedDefinition.title}</h2>
+                        </div>
+                        <span className="px-3 py-1 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[9px] font-black uppercase tracking-widest rounded-full shrink-0">
+                          {matchedDefinition.type}
+                        </span>
+                      </div>
+                      <p className="text-base text-zinc-300 leading-relaxed font-medium">
+                        {matchedDefinition.definition}
+                      </p>
+                      {matchedDefinition.facts && (
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-800/80">
+                          {Object.entries(matchedDefinition.facts).map(([key, val]) => (
+                            <div key={key}>
+                              <div className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">{key}</div>
+                              <div className="text-sm font-bold text-zinc-200 mt-0.5">{val}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                )}
+
                 {isIndexLoading ? (
                   <div className="space-y-10">
                     {[1, 2, 3].map(i => (

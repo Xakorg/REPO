@@ -9,7 +9,8 @@ import {
   Loader2, 
   Plus, 
   Brain,
-  ShieldAlert
+  ShieldAlert,
+  X
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,12 @@ export default function DirectMessagePage() {
   const [chatInput, setChatInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [dmChatId, setDmChatId] = useState<string | null>(null);
+
+  // GIF Picker states
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [gifSearch, setGifSearch] = useState("");
+  const [gifs, setGifs] = useState<string[]>([]);
+  const [loadingGifs, setLoadingGifs] = useState(false);
 
   // 1. Query the users collection to find the user matching personName (username)
   const recipientQuery = useMemoFirebase(() => {
@@ -100,6 +107,31 @@ export default function DirectMessagePage() {
     }
   }, [messages]);
 
+  // Fetch Gifs from GIPHY
+  const fetchGifs = async (queryStr: string) => {
+    setLoadingGifs(true);
+    try {
+      const endpoint = queryStr.trim() 
+        ? `https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=${encodeURIComponent(queryStr)}&limit=12`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=dc6zaTOxFJmzC&limit=12`;
+      const res = await fetch(endpoint);
+      const data = await res.json();
+      if (data.data) {
+        setGifs(data.data.map((g: any) => g.images.fixed_height.url));
+      }
+    } catch(e) {
+      console.error("Giphy API error", e);
+    } finally {
+      setLoadingGifs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showGifPicker) {
+      fetchGifs(gifSearch);
+    }
+  }, [showGifPicker, gifSearch]);
+
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!chatInput.trim() || !user || !firestore || !dmChatId || isSending) return;
@@ -114,7 +146,7 @@ export default function DirectMessagePage() {
         senderId: user.uid,
         senderName: user.displayName?.replace(/^@+/, "") || "Member",
         senderPhoto: user.photoURL || "",
-        senderHat: currentUserData?.hat || null, // Attach equipped hat
+        senderHat: currentUserData?.hat || null,
         channelId: dmChatId,
         channelName: `DM with ${friendUser?.displayName || personName}`,
         timestamp: serverTimestamp()
@@ -129,6 +161,35 @@ export default function DirectMessagePage() {
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleSendGif = async (gifUrl: string) => {
+    if (!user || !firestore || !dmChatId) return;
+    try {
+      await addDocumentNonBlocking(collection(firestore, "chats", dmChatId, "messages"), {
+        content: gifUrl,
+        senderId: user.uid,
+        senderName: user.displayName?.replace(/^@+/, "") || "Member",
+        senderPhoto: user.photoURL || "",
+        senderHat: currentUserData?.hat || null,
+        channelId: dmChatId,
+        channelName: `DM with ${friendUser?.displayName || personName}`,
+        timestamp: serverTimestamp()
+      });
+    } catch (error) {
+      toast({ variant: "destructive", title: "GIF transmission failed" });
+    }
+  };
+
+  const isImageUrl = (url: string) => {
+    return typeof url === 'string' && (
+      url.startsWith('http') && (
+        url.match(/\.(jpeg|jpg|gif|png|webp)/i) != null || 
+        url.includes('giphy.com/media/') || 
+        url.includes('media.giphy.com/') || 
+        url.includes('tenor.com/')
+      )
+    );
   };
 
   if (!user) return null;
@@ -147,7 +208,7 @@ export default function DirectMessagePage() {
         <div className="w-24 h-24 rounded-[2.5rem] bg-rose-500/10 border-4 border-rose-500/20 flex items-center justify-center mx-auto shadow-2xl animate-float">
           <ShieldAlert className="w-12 h-12 text-rose-500" />
         </div>
-        <div className="space-y-3">
+        <div className="space-y-3 text-left">
           <h2 className="text-3xl font-black uppercase italic text-white">Member Not Found</h2>
           <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest max-w-sm mx-auto leading-relaxed">
             Could not resolve the username @{personName} in the Xakteir Registry.
@@ -171,7 +232,7 @@ export default function DirectMessagePage() {
                   <AvatarFallback className="bg-primary text-xs font-black">{friendDisplayName[0]}</AvatarFallback>
                </Avatar>
             </div>
-            <div>
+            <div className="text-left">
                <h3 className="text-sm font-black italic uppercase tracking-tighter truncate leading-none text-white">{friendDisplayName}</h3>
                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Direct Message</span>
             </div>
@@ -191,7 +252,7 @@ export default function DirectMessagePage() {
             ) : (
               messages.map((msg) => (
                 <div key={msg.id} className={cn("flex gap-5", msg.senderId === user.uid && "flex-row-reverse")}>
-                   <div className="relative shrink-0">
+                   <div className="relative shrink-0 text-left">
                      <RenderHat hatKey={msg.senderHat} />
                      <Avatar className="w-11 h-11 rounded-[1.1rem] border-2 border-white/5 bg-zinc-900">
                         <AvatarImage src={msg.senderPhoto} className="object-cover" />
@@ -200,8 +261,12 @@ export default function DirectMessagePage() {
                    </div>
                    <div className={cn("flex flex-col space-y-1.5 max-w-[70%]", msg.senderId === user.uid && "items-end")}>
                       <span className="text-[9px] font-black uppercase italic tracking-widest px-2 text-white/60">{msg.senderName}</span>
-                      <div className={cn("p-5 rounded-[1.8rem] shadow-2xl border transition-all italic text-sm font-medium leading-relaxed", msg.senderId === user.uid ? "bg-primary text-white border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none text-foreground/90")}>
-                         {msg.content}
+                      <div className={cn("p-5 rounded-[1.8rem] shadow-2xl border transition-all italic text-sm font-medium leading-relaxed text-left", msg.senderId === user.uid ? "bg-primary text-white border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none text-foreground/90")}>
+                         {isImageUrl(msg.content) ? (
+                           <img src={msg.content} alt="gif" className="rounded-2xl max-w-full max-h-60 object-contain border border-white/10" />
+                         ) : (
+                           msg.content
+                         )}
                       </div>
                    </div>
                 </div>
@@ -210,11 +275,51 @@ export default function DirectMessagePage() {
          </div>
       </ScrollArea>
 
+      {/* Giphy search popover */}
+      {showGifPicker && (
+        <div className="absolute bottom-24 left-6 right-6 md:left-auto md:right-8 max-w-sm w-full bg-[#0a0a15] border-2 border-white/10 rounded-[2rem] p-4 shadow-[0_25px_60px_rgba(0,0,0,0.8)] z-50 flex flex-col space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-[9px] font-black uppercase tracking-widest text-primary">GIF Search Shard</span>
+            <button onClick={() => setShowGifPicker(false)} className="text-white/40 hover:text-white"><X className="w-4 h-4" /></button>
+          </div>
+          <Input 
+            value={gifSearch}
+            onChange={(e) => setGifSearch(e.target.value)}
+            placeholder="Search Giphy..." 
+            className="bg-black border-white/10 text-xs text-white" 
+          />
+          <div className="grid grid-cols-3 gap-1.5 max-h-48 overflow-y-auto pr-1">
+            {loadingGifs ? (
+              <div className="col-span-3 py-10 text-center"><Loader2 className="w-5 h-5 animate-spin text-primary mx-auto opacity-35" /></div>
+            ) : gifs.length === 0 ? (
+              <p className="col-span-3 py-10 text-center text-white/20 italic text-[10px]">No GIFs resolved</p>
+            ) : gifs.map((gUrl, idx) => (
+              <img 
+                key={idx} 
+                src={gUrl} 
+                alt="gif result"
+                onClick={() => {
+                  handleSendGif(gUrl);
+                  setShowGifPicker(false);
+                }}
+                className="rounded-xl h-14 w-full object-cover cursor-pointer hover:scale-105 border border-white/5 hover:border-primary transition-all" 
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* INPUT BAR */}
       <div className="p-4 md:p-6 bg-zinc-950 border-t border-white/5 shrink-0 z-20">
          <form onSubmit={(e) => handleSend(e)} className="max-w-5xl mx-auto flex items-end gap-3 md:gap-4">
-            <div className="flex-1 bg-black/40 border-2 border-white/10 rounded-[1.8rem] p-2 md:p-3 flex items-center gap-3 md:gap-4">
-               <button type="button" className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"><Plus className="w-4 h-4 md:w-5 md:h-5" /></button>
+            <div className="flex-1 bg-black/40 border-2 border-white/10 rounded-[1.8rem] p-2 md:p-3 flex items-center gap-3 md:gap-4 relative">
+               <button 
+                  type="button" 
+                  onClick={() => setShowGifPicker(!showGifPicker)} 
+                  className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-black text-white/40 hover:text-white transition-all shrink-0"
+               >
+                 GIF
+               </button>
                <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={`Message @${friendDisplayName}...`} className="border-none bg-transparent focus-visible:ring-0 text-white text-sm italic placeholder:text-white/20" />
                <button type="button" className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"><Smile className="w-4 h-4 md:w-5 md:h-5" /></button>
             </div>
