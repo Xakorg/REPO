@@ -21,7 +21,8 @@ import {
   PlusCircle, 
   UserPlus, 
   MessageCircle,
-  Inbox
+  Inbox,
+  Loader2
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -35,6 +36,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@
 import { collection, query, where, doc, addDoc, serverTimestamp, getDocs, limit, orderBy } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { RenderHat } from "@/components/RenderHat";
+import { Card } from "@/components/ui/card";
 
 const SERVERS = [
   { id: 'home', name: 'Home', icon: Home, color: 'bg-primary', href: '/chat' },

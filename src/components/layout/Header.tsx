@@ -130,7 +130,7 @@ export function Header() {
           <Input value={appSearch} onChange={(e) => setAppSearch(e.target.value)} placeholder="Search apps..." className="h-9 w-36 rounded-xl bg-secondary/30 border-white/10 pl-9 text-[9px] font-black italic" />
         </div>
       </div>
-      <ScrollArea className="flex-1 max-h-[380px]">
+      <div className="flex-1 max-h-[380px] overflow-y-auto pr-1">
         <div className="p-5 grid grid-cols-3 gap-3">
           {filteredApps.map(app => (
             <button 
@@ -146,7 +146,7 @@ export function Header() {
             </button>
           ))}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 

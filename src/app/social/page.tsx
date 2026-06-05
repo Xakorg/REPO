@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -72,6 +72,10 @@ export default function XakSocialPage() {
   }, [firestore, user]);
 
   const { data: allUsers, isLoading: isLoadingUsers } = useCollection(usersQuery);
+
+  const visibleUsers = useMemo(() => {
+    return allUsers?.filter(u => !u.isHidden) || [];
+  }, [allUsers]);
 
   const followingQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -189,7 +193,7 @@ export default function XakSocialPage() {
         <TabsList className="bg-secondary/30 p-2 rounded-[2.5rem] h-18 gap-4 border-4 border-white/10 shadow-xl w-full max-w-4xl mx-auto">
           <TabsTrigger value="feed" className="flex-1 rounded-[1.5rem] h-full font-black uppercase text-[9px] tracking-widest data-[state=active]:bg-primary transition-all"><MessageSquare className="w-4 h-4 mr-2" /> Global Feed</TabsTrigger>
           <TabsTrigger value="groups" className="flex-1 rounded-[1.5rem] h-full font-black uppercase text-[9px] tracking-widest data-[state=active]:bg-primary transition-all"><LayoutGrid className="w-4 h-4 mr-2" /> Groups</TabsTrigger>
-          <TabsTrigger value="members" className="flex-1 rounded-[1.5rem] h-full font-black uppercase text-[9px] tracking-widest data-[state=active]:bg-primary transition-all"><Users className="w-4 h-4 mr-2" /> Members ({allUsers?.length || 0})</TabsTrigger>
+          <TabsTrigger value="members" className="flex-1 rounded-[1.5rem] h-full font-black uppercase text-[9px] tracking-widest data-[state=active]:bg-primary transition-all"><Users className="w-4 h-4 mr-2" /> Members ({visibleUsers.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="feed" className="animate-in slide-in-from-bottom-4 duration-700">
@@ -285,9 +289,9 @@ export default function XakSocialPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {isLoadingUsers ? (
               <div className="col-span-full py-32 flex justify-center"><Loader2 className="animate-spin w-12 h-12 text-primary opacity-20" /></div>
-            ) : allUsers?.length === 0 ? (
+            ) : visibleUsers.length === 0 ? (
                 <div className="col-span-full py-32 text-center opacity-20 italic font-black uppercase tracking-[0.4em]">No members in registry</div>
-            ) : allUsers?.map(u => (
+            ) : visibleUsers.map(u => (
                 <Card key={u.id} className="glass-card rounded-[2.5rem] p-8 border-white/5 flex flex-col items-center text-center gap-6 group hover:border-primary/20 transition-all text-foreground bg-black/20">
                   <div className={cn("relative rounded-full p-1.5 transition-all duration-500", u.aura && `aura-${u.aura}`)}>
                     <Avatar className="w-24 h-24 rounded-full border-4 border-primary/20 shadow-xl group-hover:scale-105 transition-transform cursor-pointer" onClick={() => setSelectedMember(u)}>
