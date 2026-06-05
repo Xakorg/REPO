@@ -80,49 +80,9 @@ export default function XakteirPlanPage() {
 
   const { data: dbGoals, isLoading } = useCollection(goalsQuery);
 
-  // Fallback goals if Firestore is empty to give a rich dashboard out-of-the-box
-  const defaultGoals: Goal[] = useMemo(() => {
-    const today = new Date();
-    const futureDate1 = new Date();
-    futureDate1.setDate(today.getDate() + 2);
-    const futureDate2 = new Date();
-    futureDate2.setDate(today.getDate() + 5);
-
-    return [
-      {
-        id: "default-1",
-        title: "Finish Xakteir Hub Upgrades",
-        description: "Deploy the new search engines, classroom portal, and photo albums to production.",
-        targetDate: format(futureDate1, "yyyy-MM-dd"),
-        category: "work",
-        milestones: [
-          { id: "m1", title: "Build search definition card", completed: true },
-          { id: "m2", title: "Implement YouTube badge embeds", completed: true },
-          { id: "m3", title: "Design Xakteir Plan calendar goals", completed: false }
-        ],
-        progress: 66
-      },
-      {
-        id: "default-2",
-        title: "Complete 10K Run Training",
-        description: "Consistency is key. Do speed training and tempo runs this week.",
-        targetDate: format(futureDate2, "yyyy-MM-dd"),
-        category: "health",
-        milestones: [
-          { id: "m4", title: "Interval run 5x800m", completed: true },
-          { id: "m5", title: "5 mile tempo run", completed: false },
-          { id: "m6", title: "Weekend long run 6.2 miles", completed: false }
-        ],
-        progress: 33
-      }
-    ];
-  }, []);
-
   const goals = useMemo(() => {
-    const list = dbGoals || [];
-    if (list.length === 0) return defaultGoals;
-    return list as Goal[];
-  }, [dbGoals, defaultGoals]);
+    return (dbGoals || []) as Goal[];
+  }, [dbGoals]);
 
   // Generate calendar days (including trailing days of previous/next weeks)
   const days = useMemo(() => {
@@ -366,80 +326,88 @@ export default function XakteirPlanPage() {
             <span className="text-[9px] font-black uppercase text-zinc-500 tracking-widest">{goals.length} node(s)</span>
           </header>
 
-          <ScrollArea className="h-[750px] pr-2">
+          <div className="h-[750px] overflow-y-auto pr-2">
             <div className="space-y-6 pb-20">
-              {goals.map((g) => {
-                const cfg = CATEGORY_COLORS[g.category] || CATEGORY_COLORS.work;
-                return (
-                  <Card key={g.id} className="p-6 bg-black/40 border border-white/5 rounded-2xl space-y-4 hover:border-amber-500/20 transition-colors">
-                    <div className="flex justify-between items-start gap-4">
-                      <div>
-                        <span className={cn("px-2.5 py-0.5 rounded text-[8px] font-black uppercase border", cfg.bg, cfg.border, cfg.text)}>
-                          {g.category}
-                        </span>
-                        <h4 className="text-sm font-black text-white uppercase italic tracking-tight mt-2">{g.title}</h4>
-                        <p className="text-[10px] text-zinc-400 font-medium leading-relaxed italic mt-1">{g.description}</p>
+              {goals.length === 0 ? (
+                <div className="py-20 text-center opacity-25 space-y-4">
+                  <CalendarIcon className="w-16 h-16 mx-auto text-amber-500 animate-pulse" />
+                  <p className="text-sm font-black uppercase tracking-widest text-zinc-400">No active goals set</p>
+                  <p className="text-[10px] font-bold text-zinc-500 uppercase">Click "Set Goal" above to register a milestone node.</p>
+                </div>
+              ) : (
+                goals.map((g) => {
+                  const cfg = CATEGORY_COLORS[g.category] || CATEGORY_COLORS.work;
+                  return (
+                    <Card key={g.id} className="p-6 bg-black/40 border border-white/5 rounded-2xl space-y-4 hover:border-amber-500/20 transition-colors">
+                      <div className="flex justify-between items-start gap-4">
+                        <div>
+                          <span className={cn("px-2.5 py-0.5 rounded text-[8px] font-black uppercase border", cfg.bg, cfg.border, cfg.text)}>
+                            {g.category}
+                          </span>
+                          <h4 className="text-sm font-black text-white uppercase italic tracking-tight mt-2">{g.title}</h4>
+                          <p className="text-[10px] text-zinc-400 font-medium leading-relaxed italic mt-1">{g.description}</p>
+                        </div>
+                        
+                        {/* Delete icon */}
+                        <button 
+                          onClick={() => handleDeleteGoal(g.id)}
+                          className="text-zinc-600 hover:text-rose-500 transition-colors p-1 rounded hover:bg-white/5"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                      
-                      {/* Delete icon */}
-                      <button 
-                        onClick={() => handleDeleteGoal(g.id)}
-                        className="text-zinc-600 hover:text-rose-500 transition-colors p-1 rounded hover:bg-white/5"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
 
-                    {/* Progress slider bar */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[8px] font-black text-zinc-500 uppercase">
-                        <span>Milestone Progress</span>
-                        <span className="text-amber-500">{g.progress}%</span>
-                      </div>
-                      <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-amber-500 transition-all duration-500" 
-                          style={{ width: `${g.progress}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Milestones checklists */}
-                    {g.milestones && g.milestones.length > 0 && (
-                      <div className="pt-2 border-t border-white/5 space-y-2">
-                        <div className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Milestone Checklist</div>
-                        <div className="space-y-1.5">
-                          {g.milestones.map((m) => (
-                            <div 
-                              key={m.id} 
-                              onClick={() => handleToggleMilestone(g, m.id)}
-                              className="flex items-center gap-2 cursor-pointer group/item select-none text-[11px] font-bold text-zinc-300 hover:text-white"
-                            >
-                              <div className={cn(
-                                "w-4.5 h-4.5 rounded flex items-center justify-center border transition-all",
-                                m.completed 
-                                  ? "bg-amber-500/20 border-amber-500 text-amber-500" 
-                                  : "border-white/10 group-hover/item:border-amber-500/40"
-                              )}>
-                                {m.completed && <CheckCircle2 className="w-3.5 h-3.5" />}
-                              </div>
-                              <span className={cn(m.completed && "line-through text-zinc-500 italic")}>
-                                {m.title}
-                              </span>
-                            </div>
-                          ))}
+                      {/* Progress slider bar */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[8px] font-black text-zinc-500 uppercase">
+                          <span>Milestone Progress</span>
+                          <span className="text-amber-500">{g.progress}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-amber-500 transition-all duration-500" 
+                            style={{ width: `${g.progress}%` }}
+                          />
                         </div>
                       </div>
-                    )}
 
-                    <div className="text-[8px] font-black uppercase text-zinc-500 flex items-center gap-1.5 justify-end">
-                      <Clock className="w-3 h-3 text-amber-500" /> Target: {g.targetDate}
-                    </div>
-                  </Card>
-                );
-              })}
+                      {/* Milestones checklists */}
+                      {g.milestones && g.milestones.length > 0 && (
+                        <div className="pt-2 border-t border-white/5 space-y-2">
+                          <div className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Milestone Checklist</div>
+                          <div className="space-y-1.5">
+                            {g.milestones.map((m) => (
+                              <div 
+                                key={m.id} 
+                                onClick={() => handleToggleMilestone(g, m.id)}
+                                className="flex items-center gap-2 cursor-pointer group/item select-none text-[11px] font-bold text-zinc-300 hover:text-white"
+                              >
+                                <div className={cn(
+                                  "w-4.5 h-4.5 rounded flex items-center justify-center border transition-all",
+                                  m.completed 
+                                    ? "bg-amber-500/20 border-amber-500 text-amber-500" 
+                                    : "border-white/10 group-hover/item:border-amber-500/40"
+                                )}>
+                                  {m.completed && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                </div>
+                                <span className={cn(m.completed && "line-through text-zinc-500 italic")}>
+                                  {m.title}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="text-[8px] font-black uppercase text-zinc-500 flex items-center gap-1.5 justify-end">
+                        <Clock className="w-3 h-3 text-amber-500" /> Target: {g.targetDate}
+                      </div>
+                    </Card>
+                  );
+                })
+              )}
             </div>
-          </ScrollArea>
+          </div>
         </aside>
       </div>
     </div>

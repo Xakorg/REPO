@@ -68,29 +68,9 @@ export default function ClassAssignmentsPage({
   }, [firestore, classId]);
   const { data: dbAssignments } = useCollection(assignmentsQuery);
 
-  // Fallback demo assignments
-  const fallbackAssignments: Assignment[] = useMemo(() => [
-    {
-      id: "demo-a1",
-      title: "Quantum Architecture Shards Essay",
-      description: "Analyze how microkernel designs handle multi-threaded telemetry streams in the Xakteir Hub. Write a 500-word summary.",
-      dueDate: "2026-06-15",
-      points: 100
-    },
-    {
-      id: "demo-a2",
-      title: "Neural Network Math Lab",
-      description: "Solve backpropagation mathematical layers for nodes defined in Chapter 5. Upload your logic formulas.",
-      dueDate: "2026-06-20",
-      points: 50
-    }
-  ], []);
-
   const assignments = useMemo(() => {
-    const list = dbAssignments || [];
-    if (list.length === 0) return fallbackAssignments;
-    return list as Assignment[];
-  }, [dbAssignments, fallbackAssignments]);
+    return (dbAssignments || []) as Assignment[];
+  }, [dbAssignments]);
 
   // Query my submissions for students
   const mySubmissionsQuery = useMemoFirebase(() => {

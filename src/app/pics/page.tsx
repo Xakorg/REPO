@@ -48,83 +48,7 @@ interface Pic {
   timestamp?: any;
 }
 
-const DEFAULT_ALBUMS: Album[] = [
-  {
-    id: "album-neon",
-    name: "Neon Grid",
-    description: "Cyberpunk urban landscapes, terminal logs, and glowing arcade lights.",
-    coverImage: "https://images.unsplash.com/photo-1515621061946-eff1c2a352bd?w=600&auto=format&fit=crop&q=80"
-  },
-  {
-    id: "album-cosmos",
-    name: "Cosmic Hub",
-    description: "Ethereal nebulas, galaxy dust, and exploration vehicles.",
-    coverImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80"
-  },
-  {
-    id: "album-synth",
-    name: "Synth Shards",
-    description: "Abstract render nodes, digital geometries, and high-contrast lines.",
-    coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80"
-  }
-];
-
-const DEFAULT_PICS: Pic[] = [
-  {
-    id: "pic-1",
-    url: "https://images.unsplash.com/photo-1515621061946-eff1c2a352bd?w=800&auto=format&fit=crop&q=80",
-    title: "Synth City Overdrive",
-    likes: 42,
-    albumId: "album-neon",
-    authorId: "admin",
-    authorName: "Hub Architect"
-  },
-  {
-    id: "pic-2",
-    url: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800&auto=format&fit=crop&q=80",
-    title: "Cyber Arcade Lounge",
-    likes: 28,
-    albumId: "album-neon",
-    authorId: "admin",
-    authorName: "Hub Architect"
-  },
-  {
-    id: "pic-3",
-    url: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80",
-    title: "Quantum Nebula Dust",
-    likes: 85,
-    albumId: "album-cosmos",
-    authorId: "admin",
-    authorName: "Hub Architect"
-  },
-  {
-    id: "pic-4",
-    url: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=800&auto=format&fit=crop&q=80",
-    title: "Orbital Command Ship",
-    likes: 56,
-    albumId: "album-cosmos",
-    authorId: "admin",
-    authorName: "Hub Architect"
-  },
-  {
-    id: "pic-5",
-    url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
-    title: "Parametric Fluid Shards",
-    likes: 19,
-    albumId: "album-synth",
-    authorId: "admin",
-    authorName: "Hub Architect"
-  },
-  {
-    id: "pic-6",
-    url: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=800&auto=format&fit=crop&q=80",
-    title: "Glassmorphic Grid Nodes",
-    likes: 31,
-    albumId: "album-synth",
-    authorId: "admin",
-    authorName: "Hub Architect"
-  }
-];
+// No default mock datasets
 
 export default function XakPicsPage() {
   const { user } = useUser();
@@ -147,7 +71,7 @@ export default function XakPicsPage() {
   // Upload picture state
   const [picTitle, setPicTitle] = useState("");
   const [picUrl, setPicUrl] = useState("");
-  const [picAlbumId, setPicAlbumId] = useState("album-neon");
+  const [picAlbumId, setPicAlbumId] = useState("");
   const [isPublishOpen, setIsPublishOpen] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -160,10 +84,9 @@ export default function XakPicsPage() {
 
   const { data: dbPics, isLoading } = useCollection(picsQuery);
 
-  // Combine database pics with default preloaded shards
+  // Combine database pics
   const pics = useMemo(() => {
-    const list = dbPics || [];
-    return [...list, ...DEFAULT_PICS] as Pic[];
+    return (dbPics || []) as Pic[];
   }, [dbPics]);
 
   // Fetch albums from Firestore
@@ -175,9 +98,14 @@ export default function XakPicsPage() {
   const { data: dbAlbums } = useCollection(albumsQuery);
 
   const albums = useMemo(() => {
-    const list = dbAlbums || [];
-    return [...DEFAULT_ALBUMS, ...list] as Album[];
+    return (dbAlbums || []) as Album[];
   }, [dbAlbums]);
+
+  useEffect(() => {
+    if (albums.length > 0 && !picAlbumId) {
+      setPicAlbumId(albums[0].id);
+    }
+  }, [albums, picAlbumId]);
 
   // Filtered pictures based on album selection
   const filteredPics = useMemo(() => {
@@ -435,32 +363,40 @@ export default function XakPicsPage() {
 
         {/* Albums Tab */}
         {activeTab === "albums" && !selectedAlbumId && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {albums.map((album) => {
-              const albumCount = pics.filter(p => p.albumId === album.id).length;
-              return (
-                <Card 
-                  key={album.id}
-                  onClick={() => { setSelectedAlbumId(album.id); setActiveTab("feed"); }}
-                  className="glass-card rounded-[3rem] overflow-hidden border-4 border-white/10 hover:border-pink-500/40 hover:-translate-y-2 transition-all duration-300 bg-zinc-950/40 shadow-2xl cursor-pointer group"
-                >
-                  <div className="relative h-60 bg-black overflow-hidden">
-                    <img 
-                      src={album.coverImage} 
-                      alt="Cover" 
-                      className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-                    <div className="absolute bottom-6 left-6 right-6 space-y-2">
-                      <Badge className="bg-pink-600 text-white font-black text-[8px] uppercase tracking-widest px-3 py-1 border-none">{albumCount} Shards</Badge>
-                      <h3 className="text-3xl font-black uppercase italic tracking-tighter text-white">{album.name}</h3>
-                      <p className="text-xs text-zinc-300 font-medium leading-relaxed italic">{album.description}</p>
+          albums.length === 0 ? (
+            <div className="py-20 text-center opacity-20 space-y-8 w-full col-span-3">
+              <FolderOpen className="w-32 h-32 mx-auto animate-float text-pink-500" />
+              <p className="text-xl font-black uppercase tracking-[0.5em] text-white">No Albums Created</p>
+              <p className="text-xs font-bold text-muted-foreground uppercase">Create your first album node above to organize your shards.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+              {albums.map((album) => {
+                const albumCount = pics.filter(p => p.albumId === album.id).length;
+                return (
+                  <Card 
+                    key={album.id}
+                    onClick={() => { setSelectedAlbumId(album.id); setActiveTab("feed"); }}
+                    className="glass-card rounded-[3rem] overflow-hidden border-4 border-white/10 hover:border-pink-500/40 hover:-translate-y-2 transition-all duration-300 bg-zinc-950/40 shadow-2xl cursor-pointer group"
+                  >
+                    <div className="relative h-60 bg-black overflow-hidden">
+                      <img 
+                        src={album.coverImage} 
+                        alt="Cover" 
+                        className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                      <div className="absolute bottom-6 left-6 right-6 space-y-2">
+                        <Badge className="bg-pink-600 text-white font-black text-[8px] uppercase tracking-widest px-3 py-1 border-none">{albumCount} Shards</Badge>
+                        <h3 className="text-3xl font-black uppercase italic tracking-tighter text-white">{album.name}</h3>
+                        <p className="text-xs text-zinc-300 font-medium leading-relaxed italic">{album.description}</p>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )
         )}
       </div>
 

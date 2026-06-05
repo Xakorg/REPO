@@ -328,13 +328,15 @@ export default function XakCodePage() {
       });
 
       try {
-        await setDoc(doc(firestore, "published_projects", activeProject.id), {
+        await setDoc(doc(firestore, "publishedProjects", activeProject.id), {
           projectId: activeProject.id,
           ownerId: user.uid,
+          ownerName: user.displayName?.replace(/^@+/, "") || "Member",
           name: activeProject.name,
           domain: activeProject.deployment?.customDomain || activeProject.deployment?.domain || `${(activeProject.name || 'project').toLowerCase().replace(/\s+/g, '-')}.xakteir.app`,
           publishedAt: serverTimestamp(),
-          status: 'published'
+          status: 'published',
+          files: projectFiles
         });
       } catch (e) {}
 
@@ -388,7 +390,7 @@ export default function XakCodePage() {
         });
 
         try {
-          await setDoc(doc(firestore, "published_projects", activeProject.id), {
+          await setDoc(doc(firestore, "publishedProjects", activeProject.id), {
             domain: domain,
             isVerified: true
           }, { merge: true });

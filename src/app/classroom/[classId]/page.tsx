@@ -49,19 +49,8 @@ export default function ClassHomePage({
   const { data: dbAnnouncements, isLoading: loadingAnnouncements } = useCollection(announcementsQuery);
 
   const announcements = useMemo(() => {
-    const list = dbAnnouncements || [];
-    if (list.length === 0) {
-      return [
-        {
-          id: "demo-a1",
-          authorName: classroom?.teacherName || "Instructor Alpha",
-          text: "Welcome to the new study session! Make sure to check the Assignments tab for homework uploads.",
-          timestamp: { seconds: Date.now() / 1000 - 3600 }
-        }
-      ];
-    }
-    return list;
-  }, [dbAnnouncements, classroom]);
+    return dbAnnouncements || [];
+  }, [dbAnnouncements]);
 
   const handlePostAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,6 +103,12 @@ export default function ClassHomePage({
         <div className="space-y-6">
           {loadingAnnouncements ? (
             <div className="py-10 flex justify-center"><Loader2 className="animate-spin text-primary" /></div>
+          ) : announcements.length === 0 ? (
+            <div className="py-20 text-center opacity-25 space-y-4 border border-dashed border-white/5 rounded-3xl">
+              <Megaphone className="w-12 h-12 mx-auto text-primary animate-pulse" />
+              <p className="text-sm font-black uppercase tracking-widest text-zinc-400">No announcements posted</p>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase">Your class stream is currently quiet.</p>
+            </div>
           ) : announcements.map((ann: any) => (
             <Card key={ann.id} className="p-6 bg-black/40 border border-white/5 rounded-2xl space-y-4">
               <div className="flex items-center gap-3">
