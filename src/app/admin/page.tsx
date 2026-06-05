@@ -63,22 +63,22 @@ export default function AdminDashboardPage() {
   const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email?.toLowerCase() || "");
 
   const adminRoleRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!mounted || !firestore || !user) return null;
     return doc(firestore, "admins", user.uid);
-  }, [firestore, user]);
+  }, [mounted, firestore, user]);
 
   const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminRoleRef);
   const hasAccess = isSuperAdmin || !!adminRole;
 
   const usersQuery = useMemoFirebase(() => {
-    if (!firestore || !hasAccess) return null;
+    if (!mounted || !firestore || !hasAccess) return null;
     return query(collection(firestore, "users"), limit(100));
-  }, [firestore, hasAccess]);
+  }, [mounted, firestore, hasAccess]);
 
   const contactMessagesQuery = useMemoFirebase(() => {
-    if (!firestore || !hasAccess) return null;
+    if (!mounted || !firestore || !hasAccess) return null;
     return query(collection(firestore, "contact_messages"), orderBy("timestamp", "desc"), limit(50));
-  }, [firestore, hasAccess]);
+  }, [mounted, firestore, hasAccess]);
 
   const { data: allUsers, isLoading: isLoadingUsers } = useCollection(usersQuery);
   const { data: supportMessages, isLoading: isLoadingSupport } = useCollection(contactMessagesQuery);
@@ -191,19 +191,19 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-16 space-y-16 animate-fade-in px-6">
-      <header className="flex flex-col md:flex-row justify-between items-center gap-10 glass-card p-12 rounded-[4.5rem] border-white/20 shadow-2xl relative overflow-hidden text-white">
+    <div className="max-w-7xl mx-auto py-8 md:py-16 space-y-8 md:space-y-16 animate-fade-in px-4 md:px-6">
+      <header className="flex flex-col md:flex-row justify-between items-center gap-6 md:gap-10 glass-card p-6 md:p-12 rounded-[2rem] md:rounded-[4.5rem] border-white/20 shadow-2xl relative overflow-hidden text-white">
         <div className="absolute top-0 right-0 p-12 opacity-5 animate-float hidden md:block">
           <ShieldCheck className="w-80 h-80 -rotate-12 text-primary" />
         </div>
         <div className="relative z-10 w-full">
-          <div className="flex items-center gap-10 mb-4">
-            <div className="w-24 h-24 rounded-[3rem] bg-primary/10 flex items-center justify-center border-4 border-primary/20">
-              <ShieldCheck className="w-14 h-14 text-primary" />
+          <div className="flex items-center gap-4 md:gap-10 mb-4">
+            <div className="w-16 h-16 md:w-24 md:h-24 rounded-[2rem] md:rounded-[3rem] bg-primary/10 flex items-center justify-center border-4 border-primary/20 shrink-0">
+              <ShieldCheck className="w-8 h-8 md:w-14 md:h-14 text-primary" />
             </div>
             <div>
-              <h1 className="text-8xl font-black text-white tracking-tighter uppercase italic leading-none">Admin</h1>
-              <p className="text-primary font-black uppercase tracking-[0.5em] text-[10px] mt-6 flex items-center gap-3">
+              <h1 className="text-4xl md:text-8xl font-black text-white tracking-tighter uppercase italic leading-none">Admin</h1>
+              <p className="text-primary font-black uppercase tracking-[0.5em] text-[10px] mt-2 md:mt-6 flex items-center gap-3">
                 <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.8)]" /> System Authorized
               </p>
             </div>
@@ -211,23 +211,23 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      <Tabs defaultValue="support" className="space-y-16">
-        <TabsList className="bg-secondary/30 p-2 rounded-[3rem] h-24 gap-4 border-4 border-white/10 shadow-xl w-full max-w-4xl mx-auto overflow-hidden">
-          <TabsTrigger value="support" className="flex-1 rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
-            <MessageSquare className="w-4 h-4 mr-2" /> Support
+      <Tabs defaultValue="support" className="space-y-8 md:space-y-16">
+        <TabsList className="bg-secondary/30 p-1 md:p-2 rounded-[1.5rem] md:rounded-[3rem] h-16 md:h-24 gap-2 md:gap-4 border-4 border-white/10 shadow-xl w-full max-w-4xl mx-auto overflow-hidden">
+          <TabsTrigger value="support" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
+            <MessageSquare className="w-4 h-4 mr-2 hidden sm:inline" /> Support
           </TabsTrigger>
-          <TabsTrigger value="users" className="flex-1 rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
-            <Users className="w-4 h-4 mr-2" /> Members
+          <TabsTrigger value="users" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
+            <Users className="w-4 h-4 mr-2 hidden sm:inline" /> Members
           </TabsTrigger>
-          <TabsTrigger value="broadcast" className="flex-1 rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
-            <Radio className="w-4 h-4 mr-2" /> Broadcast
+          <TabsTrigger value="broadcast" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
+            <Radio className="w-4 h-4 mr-2 hidden sm:inline" /> Broadcast
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="support" className="animate-in slide-in-from-bottom-8">
-           <Card className="glass-card rounded-[4rem] border-white/20 overflow-hidden shadow-2xl bg-black/40">
-              <div className="p-12 border-b-4 border-white/10 bg-white/5">
-                 <h2 className="text-5xl font-black uppercase italic tracking-tighter text-white">Support Registry</h2>
+           <Card className="glass-card rounded-[2rem] md:rounded-[4rem] border-white/20 overflow-hidden shadow-2xl bg-black/40">
+              <div className="p-6 md:p-12 border-b-4 border-white/10 bg-white/5">
+                 <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">Support Registry</h2>
               </div>
               <ScrollArea className="h-[600px]">
                  <div className="divide-y divide-white/5">
@@ -237,18 +237,18 @@ export default function AdminDashboardPage() {
                       <div className="py-40 text-center opacity-20 font-black uppercase tracking-widest">No support messages yet</div>
                     ) : (
                       supportMessages.map(msg => (
-                        <div key={msg.id} className="p-10 hover:bg-white/5 transition-all flex items-start justify-between group">
-                           <div className="space-y-4 text-white">
-                              <div className="flex items-center gap-4">
+                        <div key={msg.id} className="p-6 md:p-10 hover:bg-white/5 transition-all flex flex-col md:flex-row md:items-start justify-between gap-4 group">
+                           <div className="space-y-4 text-white flex-1">
+                              <div className="flex flex-wrap items-center gap-4">
                                  <Badge className="bg-primary/20 text-primary border-none font-black text-[9px] px-4 py-1 uppercase">{msg.xakId}</Badge>
                                  <span className="text-[9px] font-black text-muted-foreground uppercase opacity-40">{msg.timestamp?.seconds ? new Date(msg.timestamp.seconds * 1000).toLocaleString() : '...'}</span>
                                  {msg.status === 'replied' && <Badge className="bg-green-600 text-white border-none font-black text-[9px] px-4 uppercase">Replied</Badge>}
                               </div>
-                              <p className="text-xl font-medium italic text-foreground max-w-3xl leading-relaxed text-white">{msg.message}</p>
+                              <p className="text-lg md:text-xl font-medium italic text-foreground max-w-3xl leading-relaxed text-white">{msg.message}</p>
                            </div>
-                           <div className="flex gap-3">
-                              <Button onClick={() => setReplyTarget(msg)} variant="outline" className="rounded-xl h-12 px-6 font-black uppercase text-[10px] tracking-widest hover:bg-primary hover:text-white transition-all border-white/10 text-white"><Reply className="w-4 h-4 mr-2" /> Reply</Button>
-                              <Button onClick={() => deleteDocumentNonBlocking(doc(firestore!, "contact_messages", msg.id))} variant="ghost" size="icon" className="h-12 w-12 rounded-xl text-rose-500 hover:bg-rose-500/10"><Trash2 className="w-5 h-5" /></Button>
+                           <div className="flex gap-3 shrink-0">
+                              <Button onClick={() => setReplyTarget(msg)} variant="outline" className="rounded-xl h-10 md:h-12 px-4 md:px-6 font-black uppercase text-[10px] tracking-widest hover:bg-primary hover:text-white transition-all border-white/10 text-white"><Reply className="w-4 h-4 mr-2" /> Reply</Button>
+                              <Button onClick={() => deleteDocumentNonBlocking(doc(firestore!, "contact_messages", msg.id))} variant="ghost" size="icon" className="h-10 w-10 md:h-12 md:w-12 rounded-xl text-rose-500 hover:bg-rose-500/10"><Trash2 className="w-5 h-5" /></Button>
                            </div>
                         </div>
                       ))
@@ -259,9 +259,9 @@ export default function AdminDashboardPage() {
         </TabsContent>
 
         <TabsContent value="users" className="animate-in slide-in-from-bottom-8">
-          <Card className="glass-card rounded-[4rem] border-white/20 overflow-hidden shadow-2xl bg-black/40">
-            <div className="p-12 border-b-4 border-white/10 bg-white/5">
-              <h2 className="text-5xl font-black uppercase italic tracking-tighter text-white">Member Registry</h2>
+          <Card className="glass-card rounded-[2rem] md:rounded-[4rem] border-white/20 overflow-hidden shadow-2xl bg-black/40">
+            <div className="p-6 md:p-12 border-b-4 border-white/10 bg-white/5">
+              <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">Member Registry</h2>
             </div>
             <div className="overflow-x-auto">
               <Table>
@@ -300,9 +300,9 @@ export default function AdminDashboardPage() {
         </TabsContent>
 
         <TabsContent value="broadcast" className="animate-in slide-in-from-bottom-8">
-           <Card className="max-w-3xl mx-auto glass-card rounded-[4rem] p-16 border-white/10 shadow-2xl space-y-12 bg-black/40">
+           <Card className="max-w-3xl mx-auto glass-card rounded-[2rem] md:rounded-[4rem] p-6 md:p-16 border-white/10 shadow-2xl space-y-6 md:space-y-12 bg-black/40">
               <header className="text-center space-y-4">
-                 <h2 className="text-5xl font-black uppercase italic tracking-tighter text-white">Global Alert</h2>
+                 <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">Global Alert</h2>
                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.4em]">Broadcast to all members</p>
               </header>
               <div className="space-y-8">

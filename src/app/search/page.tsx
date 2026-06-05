@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect, Suspense, useCallback } from "react";
+import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
@@ -12,7 +11,11 @@ import {
   BadgeCheck,
   Globe,
   Settings,
-  MoreVertical,
+  Image as ImageIcon,
+  Users,
+  List,
+  History,
+  Trash2,
   ExternalLink
 } from "lucide-react";
 import { aiPoweredWebSearch } from "@/ai/flows/ai-powered-web-search-flow";
@@ -21,6 +24,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, limit } from "firebase/firestore";
 import { cn } from "@/lib/utils";
+
+type SearchCategory = "all" | "sites" | "images" | "people";
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -31,16 +36,65 @@ function SearchContent() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [images, setImages] = useState<Array<{title:string, thumb?:string, page?:string}>>([]);
+  const [activeCategory, setActiveCategory] = useState<SearchCategory>("all");
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const firestore = useFirestore();
 
+  // Load search history from localStorage on mount
+  useEffect(() => {
+    try {
+      const history = localStorage.getItem("xaksearch_history");
+      if (history) {
+        setSearchHistory(JSON.parse(history));
+      }
+    } catch (e) {
+      console.warn("Could not load search history", e);
+    }
+  }, []);
+
+  // Save query to search history
+  const saveToHistory = useCallback((queryToSave: string) => {
+    if (!queryToSave.trim()) return;
+    setSearchHistory((prev) => {
+      const filtered = prev.filter((q) => q.toLowerCase() !== queryToSave.trim().toLowerCase());
+      const updated = [queryToSave.trim(), ...filtered].slice(0, 5);
+      try {
+        localStorage.setItem("xaksearch_history", JSON.stringify(updated));
+      } catch (e) {
+        console.warn("Could not save search history", e);
+      }
+      return updated;
+    });
+  }, []);
+
+  // Delete item from search history
+  const deleteFromHistory = (e: React.MouseEvent, itemToDelete: string) => {
+    e.stopPropagation();
+    setSearchHistory((prev) => {
+      const updated = prev.filter((q) => q !== itemToDelete);
+      try {
+        localStorage.setItem("xaksearch_history", JSON.stringify(updated));
+      } catch (e) {
+        console.warn("Could not delete from search history", e);
+      }
+      return updated;
+    });
+  };
+
   const handleSearch = useCallback(async (searchQuery?: string) => {
-    const target = searchQuery || queryInput;
+    const target = searchQuery !== undefined ? searchQuery : queryInput;
     if (!target.trim()) return;
 
     // Decouple UI state
     setAiResult(null);
     setIsAiLoading(true);
+    setShowDropdown(false);
     
+    // Save to history
+    saveToHistory(target);
+
     // Traditional link results will load via the firestore query below
     router.push(`/search?q=${encodeURIComponent(target.trim())}`, { scroll: false });
 
@@ -49,7 +103,7 @@ function SearchContent() {
       if (response && response.answer) {
         setAiResult(response.answer);
       }
-      // fetch images from our server-side Wikimedia proxy
+      // Fetch images from Wikimedia proxy
       try {
         const imgRes = await fetch(`/api/search-images?q=${encodeURIComponent(target)}`);
         if (imgRes.ok) {
@@ -65,7 +119,7 @@ function SearchContent() {
     } finally {
       setIsAiLoading(false);
     }
-  }, [queryInput, router]);
+  }, [queryInput, router, saveToHistory]);
 
   useEffect(() => {
     if (initialQuery) {
@@ -74,28 +128,38 @@ function SearchContent() {
     }
   }, [initialQuery, handleSearch]);
 
-  // Increase indexedSites fetch for larger result sets (client-side pagination recommended)
+  // Click outside to close history/suggestion dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fetch Firestore indexedSites and users
   const indexQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "indexedSites"), limit(10000));
   }, [firestore]);
 
   const { data: indexedSites, isLoading: isIndexLoading } = useCollection(indexQuery);
+  
   const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'users'), limit(200));
   }, [firestore]);
   const { data: userDocs } = useCollection(usersQuery);
 
-  // Fetch a large set of images for search results (use seeding script to populate)
   const imagesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'searchImages'), limit(5000));
   }, [firestore]);
   const { data: searchImages } = useCollection(imagesQuery);
 
-  // Always include defaultSites alongside Firestore indexedSites, but only show
-  // results that match the user's query. Deduplicate by URL and cap at 100.
+  // Combine Firestore indexedSites with defaultSites, deduplicate, and search match
   const combinedSites = (() => {
     const docs = indexedSites || [];
     const docSites = (docs || []).map((d: any) => ({
@@ -112,15 +176,27 @@ function SearchContent() {
       if (seen.has(key)) continue;
       seen.add(key);
       dedup.push(s);
-      if (dedup.length >= 100) break;
+      if (dedup.length >= 150) break;
     }
     return dedup;
   })();
 
-  // Group sites by host for Google-like grouped results
+  // Filter sites matching the query
+  const filteredSites = (queryInput || '').trim()
+    ? combinedSites.filter((s: any) => {
+        const q = (queryInput || '').toLowerCase();
+        return (
+          (s.title && s.title.toLowerCase().includes(q)) ||
+          (s.url && s.url.toLowerCase().includes(q)) ||
+          (s.description && s.description.toLowerCase().includes(q))
+        );
+      })
+    : combinedSites;
+
+  // Group sites by host for visual separation
   const groupedSites = (() => {
     const groups: Record<string, any[]> = {};
-    for (const s of combinedSites) {
+    for (const s of filteredSites) {
       try {
         const u = new URL(s.url);
         const host = u.hostname.replace(/^www\./, '');
@@ -134,35 +210,7 @@ function SearchContent() {
     return groups;
   })();
 
-  const filteredGroupedSites = (queryInput || '').trim()
-    ? Object.fromEntries(Object.entries(groupedSites).map(([host, sites]) => [host, sites.filter((s: any) => {
-        const q = (queryInput || '').toLowerCase();
-        return (s.title && s.title.toLowerCase().includes(q)) || (s.url && s.url.toLowerCase().includes(q)) || (s.description && s.description.toLowerCase().includes(q));
-    })]).filter(([,sites]) => sites.length > 0))
-    : groupedSites;
-
-  // Map images by a simple host/key heuristic so results can show multiple images grouped
-  const imagesByKey = (() => {
-    const map: Record<string, any[]> = {};
-    (searchImages || []).forEach((img: any) => {
-      const key = (img.source || 'pics').toString();
-      map[key] = map[key] || [];
-      map[key].push(img);
-    });
-    return map;
-  })();
-
-  const filteredSites = (queryInput || '').trim()
-    ? combinedSites.filter((s: any) => {
-        const q = (queryInput || '').toLowerCase();
-        return (
-          (s.title && s.title.toLowerCase().includes(q)) ||
-          (s.url && s.url.toLowerCase().includes(q)) ||
-          (s.description && s.description.toLowerCase().includes(q))
-        );
-      }).slice(0, 100)
-    : [];
-
+  // Match users
   const matchedUsers = (() => {
     if (!userDocs || !(queryInput || '').trim()) return [];
     const q = (queryInput || '').toLowerCase();
@@ -174,168 +222,362 @@ function SearchContent() {
     }).slice(0, 20);
   })();
 
+  // Suggestion list logic
+  const getSuggestions = () => {
+    const term = queryInput.trim().toLowerCase();
+    if (!term) return [];
+    
+    const matched: string[] = [];
+    // Search sites titles
+    combinedSites.forEach((site: any) => {
+      if (site.title && site.title.toLowerCase().includes(term) && !matched.includes(site.title)) {
+        matched.push(site.title);
+      }
+    });
+    // Search users
+    if (userDocs) {
+      userDocs.forEach((u: any) => {
+        const name = u.displayName || u.name;
+        if (name && name.toLowerCase().includes(term) && !matched.includes(name)) {
+          matched.push(name);
+        }
+      });
+    }
+    return matched.slice(0, 5);
+  };
+
+  const suggestions = getSuggestions();
+
   return (
-    <div className="min-h-screen animate-fade-in flex flex-col relative bg-white">
-      {/* Google Style Header */}
-      <div className="sticky top-0 z-50 bg-white border-b border-zinc-200 px-8 py-4 flex flex-col md:flex-row items-center gap-6">
-        <div 
-          onClick={() => router.push('/')} 
-          className="cursor-pointer flex items-center gap-2 pr-6 md:border-r border-zinc-200"
-        >
-          <span className="text-3xl font-black tracking-tighter uppercase italic text-zinc-900">Xakteir</span>
-          <BadgeCheck className="w-6 h-6 text-blue-500 fill-current" />
+    <div className="min-h-screen animate-fade-in flex flex-col relative bg-zinc-950 text-white selection:bg-rose-500/30 selection:text-rose-200">
+      <div className="absolute inset-0 arcade-grid opacity-[0.03] pointer-events-none" />
+
+      {/* Modern Neon Google Style Header */}
+      <div className="sticky top-0 z-50 bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 px-6 py-4 flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row items-center gap-6 w-full max-w-7xl mx-auto">
+          {/* Logo */}
+          <div 
+            onClick={() => router.push('/')} 
+            className="cursor-pointer flex items-center gap-2 pr-6 md:border-r border-zinc-800 shrink-0"
+          >
+            <span className="text-3xl font-black tracking-tighter uppercase italic text-white hover:text-rose-500 transition-colors">
+              Xakteir
+            </span>
+            <BadgeCheck className="w-6 h-6 text-rose-500 fill-current animate-pulse" />
+          </div>
+
+          {/* Search Box + Autocomplete suggestions overlay */}
+          <div className="flex-1 w-full max-w-3xl relative" ref={dropdownRef}>
+            <form 
+              onSubmit={(e) => { e.preventDefault(); handleSearch(); }} 
+              className="relative group w-full"
+            >
+              <Input 
+                value={queryInput}
+                onChange={(e) => {
+                  setQueryInput(e.target.value);
+                  setShowDropdown(true);
+                }}
+                onFocus={() => setShowDropdown(true)}
+                placeholder="Search anything..." 
+                className="h-12 w-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 focus:border-rose-500/50 hover:shadow-lg rounded-2xl pl-11 pr-12 text-sm tracking-wide text-white transition-all outline-none"
+              />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              {queryInput && (
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setQueryInput("");
+                    setShowDropdown(false);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </form>
+
+            {/* Dropdown Suggestions & History */}
+            {showDropdown && (suggestions.length > 0 || searchHistory.length > 0) && (
+              <Card className="absolute top-[calc(100%+8px)] left-0 w-full bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-2 z-[999] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                {/* Suggestions List */}
+                {suggestions.map((item, idx) => (
+                  <div
+                    key={`sug-${idx}`}
+                    onClick={() => {
+                      setQueryInput(item);
+                      void handleSearch(item);
+                    }}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-xl cursor-pointer transition-colors text-sm font-bold text-zinc-200"
+                  >
+                    <Search className="w-4 h-4 text-rose-500 shrink-0" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+
+                {/* Search History Divider */}
+                {suggestions.length > 0 && searchHistory.length > 0 && (
+                  <div className="h-px bg-zinc-800 my-1 mx-2" />
+                )}
+
+                {/* History List */}
+                {searchHistory.map((item, idx) => (
+                  <div
+                    key={`hist-${idx}`}
+                    onClick={() => {
+                      setQueryInput(item);
+                      void handleSearch(item);
+                    }}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-zinc-800 rounded-xl cursor-pointer transition-colors text-sm font-bold text-zinc-400 group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <History className="w-4 h-4 text-zinc-600 shrink-0" />
+                      <span>{item}</span>
+                    </div>
+                    <button 
+                      onClick={(e) => deleteFromHistory(e, item)}
+                      className="text-zinc-600 hover:text-rose-500 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </Card>
+            )}
+          </div>
+
+          <div className="hidden md:flex items-center gap-4 ml-auto">
+            <Button variant="ghost" size="icon" className="rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white">
+              <Settings className="w-5 h-5" />
+            </Button>
+            <div className="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center font-black text-xs">U</div>
+          </div>
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="flex-1 max-w-3xl relative group">
-          <Input 
-            value={queryInput}
-            onChange={(e) => setQueryInput(e.target.value)}
-            placeholder="Search anything..." 
-            className="h-11 w-full bg-white border border-zinc-200 hover:border-zinc-300 hover:shadow-md focus:border-blue-500 focus:shadow-md rounded-full pl-11 pr-12 text-base transition-all outline-none text-zinc-900"
-          />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-          {queryInput && (
-            <button 
-              type="button" 
-              onClick={() => setQueryInput("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </form>
-
-        <div className="hidden md:flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Settings className="w-5 h-5 text-zinc-400" />
+        {/* Filter Navigation Tabs */}
+        <div className="flex items-center gap-2 max-w-7xl mx-auto w-full border-t border-zinc-800/40 pt-2 shrink-0 md:pl-44">
+          <Button
+            variant="ghost"
+            onClick={() => setActiveCategory("all")}
+            className={cn(
+              "h-9 px-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all",
+              activeCategory === "all" ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/10" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+            )}
+          >
+            <List className="w-3.5 h-3.5" /> All
           </Button>
-          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-xs">U</div>
+
+          <Button
+            variant="ghost"
+            onClick={() => setActiveCategory("sites")}
+            className={cn(
+              "h-9 px-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all",
+              activeCategory === "sites" ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/10" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+            )}
+          >
+            <Globe className="w-3.5 h-3.5" /> Websites
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={() => setActiveCategory("images")}
+            className={cn(
+              "h-9 px-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all",
+              activeCategory === "images" ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/10" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+            )}
+          >
+            <ImageIcon className="w-3.5 h-3.5" /> Images
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={() => setActiveCategory("people")}
+            className={cn(
+              "h-9 px-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all",
+              activeCategory === "people" ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/10" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+            )}
+          >
+            <Users className="w-3.5 h-3.5" /> People
+          </Button>
         </div>
       </div>
 
-      <div className="flex-1 bg-white">
-        <main className="max-w-5xl px-8 md:px-32 py-8 space-y-10 text-zinc-900">
-          {/* AI Quick Response Section */}
-          {(isAiLoading || aiResult) && (
+      {/* Main Content Area */}
+      <div className="flex-1 bg-zinc-950">
+        <main className="max-w-7xl mx-auto px-6 md:pl-52 py-8 space-y-10">
+          {/* AI Quick Response Section (Only on "All" category) */}
+          {activeCategory === "all" && (isAiLoading || aiResult) && (
             <div className="space-y-4 animate-in slide-in-from-top-2 duration-500 max-w-3xl">
-              <div className="flex items-center gap-2 text-zinc-400">
-                <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+              <div className="flex items-center gap-2 text-zinc-500">
+                <Sparkles className="w-3.5 h-3.5 text-rose-500" />
                 <span className="text-[10px] font-black uppercase tracking-widest italic">AI Quick Response</span>
               </div>
-              <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-3xl relative overflow-hidden shadow-sm flex gap-6">
+              <Card className="p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-3xl relative overflow-hidden shadow-2xl flex flex-col md:flex-row gap-6">
                 {isAiLoading ? (
                   <div className="flex items-center gap-4 italic text-zinc-400 font-medium">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Researching answer...
+                    <Loader2 className="w-4 h-4 animate-spin text-rose-500" /> Researching answer...
                   </div>
                 ) : (
                   <div className="flex-1">
-                    <p className="text-base leading-relaxed text-zinc-800 font-medium italic whitespace-pre-wrap">{aiResult}</p>
+                    <p className="text-base leading-relaxed text-zinc-200 font-medium italic whitespace-pre-wrap">
+                      {aiResult}
+                    </p>
                     {images?.[0]?.thumb && (
-                      <div className="mt-4 flex items-center gap-4">
-                        <img src={images[0].thumb} alt={images[0].title} className="w-28 h-28 object-cover rounded-lg shadow-md" />
+                      <div className="mt-4 flex items-center gap-4 bg-black/30 p-3 rounded-2xl border border-white/5 max-w-md">
+                        <img src={images[0].thumb} alt={images[0].title} className="w-20 h-20 object-cover rounded-xl shadow-md border border-white/10" />
                         <div>
-                          <div className="text-sm font-bold">{images[0].title}</div>
-                          <a href={images[0].page} target="_blank" rel="noreferrer" className="text-xs text-blue-600">Source</a>
+                          <div className="text-sm font-bold text-white truncate w-48">{images[0].title}</div>
+                          <a 
+                            href={images[0].page} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="text-xs text-rose-400 hover:underline inline-flex items-center gap-1 mt-1 font-bold uppercase tracking-wider"
+                          >
+                            Source <ExternalLink className="w-3 h-3" />
+                          </a>
                         </div>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* Image gallery */}
+                {/* AI related Image gallery */}
                 {images && images.length > 1 && (
-                  <div className="w-48 grid grid-cols-2 gap-2">
+                  <div className="w-full md:w-48 grid grid-cols-4 md:grid-cols-2 gap-2">
                     {images.slice(1,5).map((img, idx) => (
-                      <a key={idx} href={img.page} target="_blank" rel="noreferrer" className="block">
-                        <img src={img.thumb} alt={img.title} className="w-full h-20 object-cover rounded-md" />
+                      <a key={idx} href={img.page} target="_blank" rel="noreferrer" className="block relative group overflow-hidden rounded-xl border border-white/10">
+                        <img src={img.thumb} alt={img.title} className="w-full h-20 object-cover group-hover:scale-110 transition-transform duration-300" />
                       </a>
                     ))}
                   </div>
                 )}
-              </div>
+              </Card>
             </div>
           )}
 
-          {/* Search Result List */}
+          {/* Results Lists */}
           <div className="space-y-10 pb-20 max-w-3xl">
-            {matchedUsers.length > 0 && (
+            {/* Category: PEOPLE */}
+            {(activeCategory === "all" || activeCategory === "people") && matchedUsers.length > 0 && (
               <div className="space-y-4">
-                <h3 className="text-sm font-black uppercase tracking-wider text-zinc-500">People</h3>
-                {matchedUsers.map((u: any) => (
-                  <div key={u.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-zinc-50">
-                    <img src={u.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.id}`} className="w-10 h-10 rounded-full object-cover" />
-                    <div>
-                      <div className="font-bold text-zinc-900">{u.displayName || u.name || 'User'}</div>
-                      <div className="text-xs text-zinc-500">{u.username || u.email || ''}</div>
-                    </div>
-                  </div>
-                ))}
+                <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 pl-1">Matching People</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {matchedUsers.map((u: any) => (
+                    <Card key={u.id} className="flex items-center gap-4 p-4 rounded-2xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 transition-all">
+                      <img 
+                        src={u.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.id}`} 
+                        className="w-12 h-12 rounded-xl object-cover border border-white/10" 
+                        alt={u.displayName || u.name}
+                      />
+                      <div className="truncate">
+                        <div className="font-bold text-white text-sm">{u.displayName || u.name || 'User'}</div>
+                        <div className="text-xs text-zinc-500 truncate">{u.username || u.email || ''}</div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
               </div>
             )}
-            {isIndexLoading ? (
-              <div className="space-y-10">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="space-y-2 animate-pulse">
-                    <div className="h-3 bg-zinc-100 rounded w-40" />
-                    <div className="h-5 bg-zinc-100 rounded w-80" />
-                    <div className="h-3 bg-zinc-100 rounded w-96" />
+
+            {/* Category: IMAGES */}
+            {activeCategory === "images" && (
+              <div className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 pl-1">Image Directory</h3>
+                {images.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {images.map((img, idx) => (
+                      <Card key={idx} className="overflow-hidden border border-zinc-800 bg-zinc-900/30 group hover:border-zinc-700 transition-all rounded-2xl">
+                        <a href={img.page} target="_blank" rel="noreferrer" className="block relative aspect-square">
+                          <img src={img.thumb} alt={img.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        </a>
+                        <div className="p-3 text-xs font-black text-zinc-300 truncate uppercase tracking-widest bg-zinc-950/80">
+                          {img.title}
+                        </div>
+                      </Card>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <div className="py-20 text-center opacity-30">
+                    <ImageIcon className="w-12 h-12 mx-auto mb-4 text-zinc-500" />
+                    <p className="text-xs font-black uppercase tracking-widest text-zinc-500">No images matched</p>
+                  </div>
+                )}
               </div>
-            ) : Object.keys(filteredGroupedSites).length ? (
-              (Object.entries(filteredGroupedSites) as [string, any[]][]).map(([host, sites]) => (
-                <div key={host} className="group animate-in fade-in slide-in-from-bottom-2">
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2 mb-1 justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-500 uppercase">{host[0]}</div>
-                        <span className="text-sm font-bold text-zinc-700">{host}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-zinc-500">
-                        {/* quick grouped links heuristic for common hosts */}
-                        {host.includes('google') && (
-                          <>
-                            <a className="px-2 py-1 hover:underline" href={`https://www.${host}/drive`} target="_blank" rel="noreferrer">Drive</a>
-                            <a className="px-2 py-1 hover:underline" href={`https://www.${host}/search`} target="_blank" rel="noreferrer">Search</a>
-                            <a className="px-2 py-1 hover:underline" href={`https://www.${host}/maps`} target="_blank" rel="noreferrer">Maps</a>
-                          </>
-                        )}
-                        {host.includes('wikipedia') && (
-                          <a className="px-2 py-1 hover:underline" href={`https://${host}`} target="_blank" rel="noreferrer">Wiki</a>
-                        )}
-                      </div>
-                    </div>
+            )}
 
-                    {/* Primary site preview (first site) */}
-                    <a href={sites[0].url} target="_blank" rel="noopener noreferrer" className="text-xl font-medium text-blue-700 group-hover:underline leading-tight">
-                      {sites[0].title}
-                    </a>
-                    <p className="text-sm text-zinc-600 leading-relaxed mt-1 italic opacity-80">{sites[0].description}</p>
-
-                    {/* Additional grouped links */}
-                    <div className="mt-3 grid grid-cols-3 gap-3">
-                      {sites.slice(1,7).map((s: any, idx: number) => (
-                        <a key={idx} href={s.url} target="_blank" rel="noreferrer" className="text-sm text-zinc-700 hover:underline">{s.title}</a>
-                      ))}
-                    </div>
-
-                    {/* Show related images for this host if available */}
-                    {imagesByKey[host] && imagesByKey[host].length > 0 && (
-                      <div className="mt-4 grid grid-cols-4 gap-2">
-                        {imagesByKey[host].slice(0,8).map((img: any, ii: number) => (
-                          <a key={ii} href={img.page || img.source || '#'} target="_blank" rel="noreferrer" className="block">
-                            <img src={img.thumb} alt={img.title} className="w-full h-20 object-cover rounded-md" />
-                          </a>
-                        ))}
+            {/* Category: SITES / ALL website listings */}
+            {(activeCategory === "all" || activeCategory === "sites") && (
+              <div className="space-y-8">
+                {isIndexLoading ? (
+                  <div className="space-y-10">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="space-y-2 animate-pulse">
+                        <div className="h-3 bg-zinc-900 rounded w-40" />
+                        <div className="h-5 bg-zinc-900 rounded w-80" />
+                        <div className="h-3 bg-zinc-900 rounded w-96" />
                       </div>
-                    )}
+                    ))}
                   </div>
-                </div>
-              ))
-            ) : !isAiLoading && (
-              <div className="py-24 text-center opacity-30 space-y-6">
-                <Globe className="w-12 h-12 mx-auto mb-4 text-zinc-300" />
-                <p className="text-sm font-black uppercase tracking-[0.4em] text-zinc-400">No results in index</p>
+                ) : Object.keys(groupedSites).length ? (
+                  (Object.entries(groupedSites) as [string, any[]][]).map(([host, sites]) => (
+                    <Card key={host} className="p-6 border border-zinc-900 bg-zinc-900/10 hover:border-zinc-800/80 rounded-[2rem] transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
+                      <div className="flex flex-col">
+                        {/* Domain favicon and title info */}
+                        <div className="flex items-center justify-between mb-3 border-b border-zinc-800/40 pb-3">
+                          <div className="flex items-center gap-3">
+                            <img 
+                              src={`https://www.google.com/s2/favicons?domain=${host}&sz=32`} 
+                              alt={host} 
+                              onError={(e) => {
+                                // fallback to host initials letter block if favicon fails
+                                e.currentTarget.style.display = 'none';
+                              }}
+                              className="w-6 h-6 rounded-md bg-zinc-800"
+                            />
+                            <div className="w-6 h-6 rounded-md bg-zinc-800 flex items-center justify-center text-[10px] font-black text-zinc-400 uppercase tracking-widest shrink-0 font-sans" style={{ display: 'none' }}>
+                              {host[0]}
+                            </div>
+                            <span className="text-xs font-bold text-zinc-400 tracking-wider">{host}</span>
+                          </div>
+                          <div className="text-[10px] font-black uppercase text-zinc-600 tracking-widest">Web Result</div>
+                        </div>
+
+                        {/* Primary link header */}
+                        <a 
+                          href={sites[0].url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-lg font-black text-rose-400 hover:text-rose-300 hover:underline leading-snug transition-colors"
+                        >
+                          {sites[0].title}
+                        </a>
+                        <p className="text-sm text-zinc-400 leading-relaxed mt-2 font-bold opacity-80">{sites[0].description}</p>
+
+                        {/* Additional sub-links inside the same host */}
+                        {sites.length > 1 && (
+                          <div className="mt-4 pt-4 border-t border-zinc-800/45 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {sites.slice(1, 5).map((s: any, idx: number) => (
+                              <a 
+                                key={idx} 
+                                href={s.url} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="text-xs text-zinc-300 hover:text-rose-400 hover:underline font-bold tracking-wide flex items-center gap-1.5"
+                              >
+                                <span>•</span> {s.title}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="py-24 text-center opacity-30 space-y-6">
+                    <Globe className="w-12 h-12 mx-auto mb-4 text-zinc-500" />
+                    <p className="text-xs font-black uppercase tracking-[0.4em] text-zinc-500">No results found in index</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -347,7 +589,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-white"><Loader2 className="animate-spin text-zinc-200" /></div>}>
+    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-zinc-950"><Loader2 className="animate-spin text-rose-500 w-8 h-8" /></div>}>
       <SearchContent />
     </Suspense>
   );

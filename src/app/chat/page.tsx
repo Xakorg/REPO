@@ -303,7 +303,7 @@ export default function XakChatPage() {
   return (
     <div className="h-[calc(100vh-80px)] flex overflow-hidden animate-fade-in text-white relative">
       {/* 1. SERVER RAIL */}
-      <aside className="w-20 bg-[#05030d] border-r border-white/5 flex flex-col items-center py-6 gap-4 z-30">
+      <aside className="hidden md:flex w-20 bg-[#05030d] border-r border-white/5 flex-col items-center py-6 gap-4 z-30">
         {SERVERS.map(s => (
           <button 
             key={s.id}
@@ -327,7 +327,7 @@ export default function XakChatPage() {
       </aside>
 
       {/* 2. CHANNEL SIDEBAR */}
-      <aside className="w-64 bg-[#0a0a15] border-r border-white/5 flex flex-col z-20">
+      <aside className="hidden md:flex w-64 bg-[#0a0a15] border-r border-white/5 flex-col z-20">
         <header className="h-16 border-b border-white/5 px-6 flex items-center justify-between shadow-xl">
            <h2 className="text-sm font-black uppercase italic tracking-tighter text-white">Xakteir Hub</h2>
            <ChevronDown className="w-4 h-4 text-white/40" />
@@ -381,21 +381,77 @@ export default function XakChatPage() {
 
       {/* 3. MAIN CHAT AREA */}
       <main className="flex-1 flex flex-col bg-zinc-950 relative overflow-hidden">
-        <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-black/20 backdrop-blur-xl z-20 shadow-lg">
+        <header className="h-16 border-b border-white/5 flex items-center justify-between px-4 md:px-8 bg-black/20 backdrop-blur-xl z-20 shadow-lg">
            <div className="flex items-center gap-4">
+              {/* Mobile Sidebar Trigger */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-white/5 rounded-xl">
+                    <Menu className="w-6 h-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-80 bg-[#0a0a15] border-r border-white/5 flex text-white z-[3000]">
+                  {/* Server Rail */}
+                  <div className="w-20 bg-[#05030d] border-r border-white/5 flex flex-col items-center py-6 gap-4">
+                    {SERVERS.map(s => (
+                      <button 
+                        key={s.id}
+                        onClick={() => { setActiveServer(s.id); }}
+                        className={cn(
+                          "w-12 h-12 rounded-[1.2rem] flex items-center justify-center transition-all duration-300 relative group",
+                          activeServer === s.id ? "bg-primary text-black rounded-[0.8rem]" : "bg-white/5 text-white/40 hover:bg-primary hover:text-black hover:rounded-[0.8rem]"
+                        )}
+                      >
+                        <s.icon className="w-6 h-6" />
+                      </button>
+                    ))}
+                  </div>
+                  {/* Channel Sidebar */}
+                  <div className="flex-1 flex flex-col bg-[#0a0a15] text-white">
+                    <header className="h-16 border-b border-white/5 px-6 flex items-center justify-between">
+                       <h2 className="text-sm font-black uppercase italic tracking-tighter">Xakteir Hub</h2>
+                    </header>
+                    <ScrollArea className="flex-1">
+                      <div className="p-4 space-y-8">
+                         <div className="space-y-1">
+                            <p className="px-2 text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-3 flex items-center justify-between">
+                              Broadcasts
+                            </p>
+                            <button onClick={() => setActiveTarget({ id: 'announcements', name: 'Announcements', type: 'channel' })} className={cn("w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-all", activeTarget.id === 'announcements' ? "bg-primary/20 text-white font-bold" : "text-white/40 hover:bg-white/5")}><Radio className="w-4 h-4 text-rose-500" /> announcements</button>
+                         </div>
+                         <div className="space-y-1">
+                            <p className="px-2 text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-3 flex items-center justify-between">
+                              Text Channels
+                            </p>
+                            {['general', 'logic-lab', 'design', 'market'].map(name => (
+                              <button 
+                                key={name} 
+                                onClick={() => setActiveTarget({ id: name, name, type: 'channel' })} 
+                                className={cn("w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-all", activeTarget.id === name ? "bg-primary/20 text-white font-bold" : "text-white/40 hover:bg-white/5")}
+                              >
+                                <Hash className="w-4 h-4 opacity-40" /> {name}
+                              </button>
+                            ))}
+                         </div>
+                      </div>
+                    </ScrollArea>
+                  </div>
+                </SheetContent>
+              </Sheet>
+
               <Hash className="w-5 h-5 text-primary" />
               <h3 className="text-xl font-black italic uppercase tracking-tighter truncate">{activeTarget.name}</h3>
            </div>
-           <div className="flex items-center gap-6">
-              <Button onClick={handleCatchUp} variant="ghost" className="h-9 px-4 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-[9px] font-black uppercase tracking-widest gap-2">
+           <div className="flex items-center gap-4 md:gap-6">
+              <Button onClick={handleCatchUp} variant="ghost" className="h-9 px-4 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-[9px] font-black uppercase tracking-widest gap-2 hidden sm:flex">
                  <Brain className="w-3.5 h-3.5" /> Catch Me Up
               </Button>
-              <div className="flex gap-4 border-l border-white/5 pl-6">
-                 <button className="text-white/40 hover:text-white transition-colors"><Pin className="w-5 h-5" /></button>
-                 <button className="text-white/40 hover:text-white transition-colors"><Users className="w-5 h-5" /></button>
-                 <div className="relative">
+              <div className="flex items-center gap-4 border-l border-white/5 pl-4 md:pl-6">
+                 <button className="text-white/40 hover:text-white transition-colors hidden sm:block"><Pin className="w-5 h-5" /></button>
+                 <button className="text-white/40 hover:text-white transition-colors hidden sm:block"><Users className="w-5 h-5" /></button>
+                 <div className="relative w-32 sm:w-48">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20" />
-                    <Input placeholder="Search messages..." className="h-9 bg-black/40 border-none rounded-xl pl-9 text-[10px] font-bold w-48" />
+                    <Input placeholder="Search..." className="h-9 bg-black/40 border-none rounded-xl pl-9 text-[10px] font-bold w-full" />
                  </div>
               </div>
            </div>
@@ -424,20 +480,20 @@ export default function XakChatPage() {
            </div>
         </ScrollArea>
 
-        <div className="p-6 bg-zinc-950 border-t border-white/5 z-20">
-           <form onSubmit={(e) => handleSend(e)} className="max-w-5xl mx-auto flex items-end gap-4">
-              <div className="flex-1 bg-black/40 border-2 border-white/10 rounded-[1.8rem] p-3 flex items-center gap-4">
-                 <button type="button" className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"><Plus className="w-5 h-5" /></button>
-                 <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Type a message..." className="border-none bg-transparent focus-visible:ring-0 text-white text-sm italic" />
-                 <button type="button" className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"><Smile className="w-5 h-5" /></button>
-              </div>
-              <Button type="submit" size="icon" className="h-16 w-16 bg-primary rounded-[1.5rem] shadow-2xl active:scale-90 flex items-center justify-center"><Send className="w-6 h-6 text-white" /></Button>
-           </form>
-        </div>
+         <div className="p-4 md:p-6 bg-zinc-950 border-t border-white/5 z-20">
+            <form onSubmit={(e) => handleSend(e)} className="max-w-5xl mx-auto flex items-end gap-3 md:gap-4">
+               <div className="flex-1 bg-black/40 border-2 border-white/10 rounded-[1.8rem] p-2 md:p-3 flex items-center gap-3 md:gap-4">
+                  <button type="button" className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"><Plus className="w-4 h-4 md:w-5 md:h-5" /></button>
+                  <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Type a message..." className="border-none bg-transparent focus-visible:ring-0 text-white text-sm italic" />
+                  <button type="button" className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"><Smile className="w-4 h-4 md:w-5 md:h-5" /></button>
+               </div>
+               <Button type="submit" size="icon" className="h-12 w-12 md:h-16 md:w-16 bg-primary rounded-[1rem] md:rounded-[1.5rem] shadow-2xl active:scale-90 flex items-center justify-center shrink-0"><Send className="w-5 h-5 md:w-6 md:h-6 text-white" /></Button>
+            </form>
+         </div>
       </main>
 
       {/* 4. RIGHT SIDEBAR (MEMBERS & EXTENSIONS) */}
-      <aside className="w-72 bg-[#0a0a15] border-l border-white/5 flex flex-col z-20">
+      <aside className="hidden xl:flex w-72 bg-[#0a0a15] border-l border-white/5 flex-col z-20">
          <Tabs value={rightPanel} onValueChange={(v: any) => setRightPanel(v)} className="h-full flex flex-col">
             <TabsList className="h-14 bg-black/40 border-b border-white/5 rounded-none p-1 gap-1">
                <TabsTrigger value="members" className="flex-1 rounded-lg text-[9px] font-black uppercase tracking-widest"><Users className="w-3.5 h-3.5 mr-2" /> Members</TabsTrigger>

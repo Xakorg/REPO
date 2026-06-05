@@ -102,7 +102,7 @@ export default function AppsPage() {
                         ))}
                       </div>
                       {!isLocked && (
-                        <div className="flex items-center text-primary font-black text-[10px] md:text-sm uppercase tracking-[0.2em] gap-2 md:gap-3 opacity-0 md:opacity-0 group-hover:opacity-100 transition-all">
+                        <div className="flex items-center text-primary font-black text-[10px] md:text-sm uppercase tracking-[0.2em] gap-2 md:gap-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all">
                           <span className="flex items-center gap-2">Launch <ArrowRight className="w-4 h-4 md:w-5 md:h-5" /></span>
                         </div>
                       )}

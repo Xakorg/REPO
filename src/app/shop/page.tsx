@@ -22,7 +22,6 @@ import {
   Eye,
   CheckCircle2,
   Users,
-  Hat,
   PartyPopper,
   Ghost,
   Skull,
@@ -209,8 +208,8 @@ export default function ShopPage() {
                 <div className={cn("h-64 flex items-center justify-center relative overflow-hidden", item.bg)}>
                   <div className="absolute inset-0 arcade-grid opacity-10" />
                   <div className={cn("w-24 h-24 flex items-center justify-center transition-transform duration-700 group-hover:scale-125", item.color)}>
-                {item.type === 'hat' ? <Hat className="w-24 h-24" /> : 
-                 item.type === 'decor' ? <Sparkles className="w-24 h-24" /> :
+                 {item.type === 'hat' ? <Crown className="w-24 h-24" /> : 
+                  item.type === 'decor' ? <Sparkles className="w-24 h-24" /> :
                  item.type === 'aura' ? <Flame className="w-24 h-24" /> :
                  item.type === 'nameplate' ? <User className="w-24 h-24" /> :
                  <User className="w-24 h-24" />}
@@ -269,7 +268,7 @@ export default function ShopPage() {
                 
                 <Dialog>
                   <DialogTrigger asChild>
-                ``   <Button variant="outline" className="w-full h-16 rounded-[2rem] border-white/10 font-black uppercase text-xs tracking-widest text-muted-foreground hover:text-white">
+                    <Button variant="outline" className="w-full h-16 rounded-[2rem] border-white/10 font-black uppercase text-xs tracking-widest text-muted-foreground hover:text-white">
                       <Gift className="w-4 h-4 mr-3" /> Gift to Friend
                     </Button>
                   </DialogTrigger>
