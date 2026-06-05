@@ -21,7 +21,8 @@ import {
   Save,
   ChevronLeft,
   X,
-  Play
+  Play,
+  Printer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -46,12 +47,57 @@ export default function XakteirSuitePage() {
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [embedUrlInput, setEmbedUrlInput] = useState("");
 
   // Slides States
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [isPresenting, setIsPresenting] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  // Dynamic Google Fonts and Printing Style Inject
+  useEffect(() => {
+    setMounted(true);
+    const fontLink = document.createElement("link");
+    fontLink.rel = "stylesheet";
+    fontLink.href = "https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Fira+Code:wght@500&family=Lora:ital,wght@0,500;1,500&family=Outfit:wght@400;900&display=swap";
+    document.head.appendChild(fontLink);
+    return () => {
+      try {
+        document.head.removeChild(fontLink);
+      } catch (e) {}
+    };
+  }, []);
+
+  // Listen to fullscreen changes to reset isPresenting when exiting native fullscreen
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setIsPresenting(false);
+      }
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const getEmbedUrl = (url: string) => {
+    if (!url) return "";
+    const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(reg);
+    return match ? `https://www.youtube.com/embed/${match[1]}` : url;
+  };
+
+  const startPresenting = () => {
+    setIsPresenting(true);
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+  };
+
+  const stopPresenting = () => {
+    setIsPresenting(false);
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
 
   // Fetch Documents
   const docsQuery = useMemoFirebase(() => {
@@ -104,6 +150,16 @@ export default function XakteirSuitePage() {
     setIsSaving(true);
     updateDocumentNonBlocking(activeDocRef, {
       content,
+      updatedAt: serverTimestamp()
+    });
+    setTimeout(() => setIsSaving(false), 500);
+  };
+
+  const handleUpdateStyle = (styleFields: { fontFamily?: string; fontSize?: string; margins?: string; embeds?: string[] }) => {
+    if (!activeDocRef) return;
+    setIsSaving(true);
+    updateDocumentNonBlocking(activeDocRef, {
+      ...styleFields,
       updatedAt: serverTimestamp()
     });
     setTimeout(() => setIsSaving(false), 500);
@@ -173,7 +229,7 @@ export default function XakteirSuitePage() {
       } else if (e.key === 'ArrowLeft') {
         setActiveSlideIndex(p => Math.max(0, p - 1));
       } else if (e.key === 'Escape') {
-        setIsPresenting(false);
+        stopPresenting();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -317,43 +373,255 @@ export default function XakteirSuitePage() {
           <div className="absolute inset-0 arcade-grid opacity-5 pointer-events-none" />
           
           {activeApp === 'write' && (
-            <div className="h-12 border-b border-white/5 bg-zinc-900/50 flex items-center px-10 gap-8 z-20">
-              <div className="flex items-center gap-2 pr-6 border-r border-white/10">
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5"><Bold className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5"><Italic className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5"><Underline className="w-4 h-4" /></Button>
+            <div className="h-12 border-b border-white/5 bg-zinc-900/50 flex items-center px-6 gap-4 z-20 overflow-x-auto no-print">
+              <div className="flex items-center gap-1 pr-4 border-r border-white/10 shrink-0">
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5 text-white"><Bold className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5 text-white"><Italic className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5 text-white"><Underline className="w-4 h-4" /></Button>
               </div>
-              <div className="flex items-center gap-2 pr-6 border-r border-white/10">
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5"><AlignLeft className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5"><AlignCenter className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5"><AlignRight className="w-4 h-4" /></Button>
+              
+              {/* Font Family selector */}
+              <div className="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0">
+                <span className="text-[8px] font-black uppercase text-zinc-500">Font:</span>
+                <select
+                  value={activeDoc?.fontFamily || "Inter"}
+                  onChange={(e) => handleUpdateStyle({ fontFamily: e.target.value })}
+                  className="bg-zinc-900 border border-white/10 rounded-lg text-[10px] font-bold p-1 text-white outline-none"
+                >
+                  <option value="Inter">Inter (Sans)</option>
+                  <option value="Lora">Lora (Serif)</option>
+                  <option value="Fira Code">Fira Code (Mono)</option>
+                  <option value="Dancing Script">Dancing Script</option>
+                  <option value="Arial">Arial</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                </select>
               </div>
+
+              {/* Font Size selector */}
+              <div className="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0">
+                <span className="text-[8px] font-black uppercase text-zinc-500">Size:</span>
+                <select
+                  value={activeDoc?.fontSize || "16px"}
+                  onChange={(e) => handleUpdateStyle({ fontSize: e.target.value })}
+                  className="bg-zinc-900 border border-white/10 rounded-lg text-[10px] font-bold p-1 text-white outline-none"
+                >
+                  <option value="12px">12px</option>
+                  <option value="14px">14px</option>
+                  <option value="16px">16px</option>
+                  <option value="18px">18px</option>
+                  <option value="20px">20px</option>
+                  <option value="24px">24px</option>
+                  <option value="30px">30px</option>
+                  <option value="36px">36px</option>
+                </select>
+              </div>
+
+              {/* Margins selector */}
+              <div className="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0">
+                <span className="text-[8px] font-black uppercase text-zinc-500">Margins:</span>
+                <select
+                  value={activeDoc?.margins || "1in"}
+                  onChange={(e) => handleUpdateStyle({ margins: e.target.value })}
+                  className="bg-zinc-900 border border-white/10 rounded-lg text-[10px] font-bold p-1 text-white outline-none"
+                >
+                  <option value="0in">No Margin</option>
+                  <option value="0.5in">Narrow (0.5")</option>
+                  <option value="1in">Normal (1")</option>
+                  <option value="1.5in">Wide (1.5")</option>
+                </select>
+              </div>
+
+              {/* Web Embed form */}
+              <div className="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0">
+                <span className="text-[8px] font-black uppercase text-zinc-500">Embed:</span>
+                <Input
+                  placeholder="Paste URL (video/website)..."
+                  value={embedUrlInput}
+                  onChange={(e) => setEmbedUrlInput(e.target.value)}
+                  className="h-7 w-44 bg-zinc-900 border-white/10 text-[9px] font-bold text-white rounded-lg px-2"
+                />
+                <Button
+                  onClick={() => {
+                    if (!embedUrlInput.trim()) return;
+                    const currentEmbeds = activeDoc?.embeds || [];
+                    handleUpdateStyle({ embeds: [...currentEmbeds, embedUrlInput.trim()] });
+                    setEmbedUrlInput("");
+                    toast({ title: "Media Embedded!" });
+                  }}
+                  className="h-7 px-3 text-[9px] font-black uppercase bg-primary text-black rounded-lg"
+                >
+                  Embed
+                </Button>
+              </div>
+
+              {/* Print Button */}
+              <Button
+                onClick={() => window.print()}
+                className="h-8 px-4 text-[9px] font-black uppercase bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg flex items-center gap-2 ml-auto shrink-0"
+              >
+                <Printer className="w-3.5 h-3.5" /> Print
+              </Button>
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar flex justify-center p-8">
+          <div className="flex-1 overflow-y-auto custom-scrollbar flex justify-center p-8 print-no-padding">
+            <style dangerouslySetInnerHTML={{ __html: `
+              @media print {
+                body, html, #__next, [data-reactroot] {
+                  background: white !important;
+                  color: black !important;
+                  height: auto !important;
+                  overflow: visible !important;
+                }
+                header, aside, .no-print, button, nav, select, input, .h-12, .border-b, .no-print-important {
+                  display: none !important;
+                  visibility: hidden !important;
+                }
+                main, .flex-1, .custom-scrollbar, .p-8, .print-no-padding {
+                  overflow: visible !important;
+                  height: auto !important;
+                  display: block !important;
+                  padding: 0 !important;
+                  margin: 0 !important;
+                  background: transparent !important;
+                }
+                .card-root-print {
+                  border: none !important;
+                  box-shadow: none !important;
+                  background: white !important;
+                  color: black !important;
+                  margin: 0 !important;
+                  padding: 0 !important;
+                  width: 100% !important;
+                  max-width: 100% !important;
+                  border-radius: 0 !important;
+                  min-height: 0 !important;
+                }
+                #print-area {
+                  position: absolute;
+                  left: 0;
+                  top: 0;
+                  width: 100% !important;
+                  max-width: 100% !important;
+                  margin: 0 !important;
+                  border: none !important;
+                  box-shadow: none !important;
+                  background: white !important;
+                  color: black !important;
+                  display: block !important;
+                  visibility: visible !important;
+                  padding: 0.5in !important;
+                }
+                #print-area * {
+                  visibility: visible !important;
+                  color: black !important;
+                }
+                .print-title {
+                  font-size: 32pt !important;
+                  font-weight: 900 !important;
+                  margin-bottom: 20px !important;
+                  color: black !important;
+                  border: none !important;
+                  background: transparent !important;
+                  padding: 0 !important;
+                }
+                .print-content {
+                  display: none !important;
+                }
+                .print-only-block {
+                  display: block !important;
+                  font-size: 14pt !important;
+                  line-height: 1.6 !important;
+                  white-space: pre-wrap !important;
+                  color: black !important;
+                  background: transparent !important;
+                }
+              }
+            `}} />
             <Card className={cn(
-              "w-full max-w-5xl rounded-[3.5rem] border-4 border-white/10 shadow-2xl min-h-[650px] relative transition-all duration-700 flex flex-col overflow-hidden",
+              "card-root-print w-full max-w-5xl rounded-[3.5rem] border-4 border-white/10 shadow-2xl min-h-[650px] relative transition-all duration-700 flex flex-col overflow-hidden",
               activeApp === 'sheet' || activeApp === 'slide' ? "bg-zinc-950 text-white" : "bg-white text-zinc-900 shadow-[0_50px_100px_rgba(0,0,0,0.4)]"
             )}>
               {/* WRITE DOCS APP */}
               {activeApp === 'write' && (
-                <div className="flex-1 flex flex-col p-12 md:p-20 space-y-10 animate-in fade-in slide-in-from-bottom-4">
+                <div id="print-area" className="flex-1 flex flex-col p-12 md:p-20 space-y-10 animate-in fade-in slide-in-from-bottom-4">
                   {activeDoc ? (
                     <>
                       <Input 
                         value={activeDoc.title}
                         onChange={(e) => handleUpdateTitle(e.target.value)}
                         placeholder="Untitled Document" 
-                        className="bg-transparent border-none text-4xl md:text-6xl font-black uppercase italic p-0 h-auto focus-visible:ring-0 text-current tracking-tighter"
+                        className="print-title bg-transparent border-none text-4xl md:text-6xl font-black uppercase italic p-0 h-auto focus-visible:ring-0 text-current tracking-tighter"
                       />
-                      <div className="h-1 bg-zinc-100 rounded-full w-full" />
-                      <textarea 
-                        value={activeDoc.content}
-                        onChange={(e) => handleUpdateContent(e.target.value)}
-                        placeholder="Start typing..." 
-                        className="flex-1 bg-transparent border-none text-xl md:text-2xl font-medium leading-relaxed italic placeholder:opacity-20 outline-none resize-none custom-scrollbar"
-                      />
+                      <div className="h-1 bg-zinc-100 rounded-full w-full no-print" />
+                      
+                      <div className="flex-1 flex flex-col relative">
+                        <textarea 
+                          value={activeDoc.content || ""}
+                          onChange={(e) => handleUpdateContent(e.target.value)}
+                          placeholder="Start typing..." 
+                          className="print-content flex-1 bg-transparent border-none outline-none resize-none custom-scrollbar text-current"
+                          style={{
+                            fontFamily: activeDoc.fontFamily || "Inter",
+                            fontSize: activeDoc.fontSize || "16px",
+                            padding: activeDoc.margins || "0.5in",
+                            lineHeight: "1.6",
+                            width: "100%",
+                            height: "100%",
+                            minHeight: "400px"
+                          }}
+                        />
+                        {/* Hidden except during printing, mirrors textarea content */}
+                        <div 
+                          className="print-only-block font-medium italic"
+                          style={{
+                            display: "none",
+                            fontFamily: activeDoc.fontFamily || "Inter",
+                            fontSize: activeDoc.fontSize || "16px",
+                            padding: activeDoc.margins || "0.5in",
+                            lineHeight: "1.6",
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word"
+                          }}
+                        >
+                          {activeDoc.content || ""}
+                        </div>
+                      </div>
+
+                      {/* Embeds container */}
+                      {activeDoc.embeds && activeDoc.embeds.length > 0 && (
+                        <div className="space-y-4 pt-6 border-t border-zinc-100 no-print">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Embedded Websites & Videos</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {activeDoc.embeds.map((emb: string, idx: number) => {
+                              const isYoutube = emb.includes("youtube.com") || emb.includes("youtu.be");
+                              let embedUrl = emb;
+                              if (isYoutube) {
+                                const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+                                const match = emb.match(reg);
+                                if (match) {
+                                  embedUrl = `https://www.youtube.com/embed/${match[1]}`;
+                                }
+                              }
+                              return (
+                                <div key={idx} className="relative group rounded-2xl overflow-hidden border border-zinc-200 aspect-video shadow-md">
+                                  <iframe src={embedUrl} className="w-full h-full border-none bg-white" allowFullScreen />
+                                  <button
+                                    onClick={() => {
+                                      const updated = activeDoc.embeds.filter((_: any, i: number) => i !== idx);
+                                      handleUpdateStyle({ embeds: updated });
+                                    }}
+                                    className="absolute top-2 right-2 bg-rose-600 hover:bg-rose-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <div className="flex-1 flex flex-col items-center justify-center opacity-10">
@@ -443,9 +711,11 @@ export default function XakteirSuitePage() {
                             <option value="content">Content Slide</option>
                             <option value="split">Two Column</option>
                             <option value="image">Full Image</option>
+                            <option value="video">YouTube Video</option>
+                            <option value="website">Embed Website</option>
                           </select>
                         </div>
-                        <Button onClick={() => setIsPresenting(true)} className="h-8 px-4 bg-primary text-black rounded-lg text-[9px] font-black uppercase tracking-widest"><Play className="w-3.5 h-3.5 mr-1.5" /> Present</Button>
+                        <Button onClick={startPresenting} className="h-8 px-4 bg-primary text-black rounded-lg text-[9px] font-black uppercase tracking-widest"><Play className="w-3.5 h-3.5 mr-1.5" /> Present</Button>
                       </div>
 
                       {/* Canvas (Visual Preview of current slide) */}
@@ -488,6 +758,34 @@ export default function XakteirSuitePage() {
                             </div>
                           </div>
                         )}
+
+                        {parsedSlides[activeSlideIndex]?.layout === 'video' && (
+                          <div className="h-full w-full flex flex-col relative z-10">
+                            {parsedSlides[activeSlideIndex]?.videoUrl ? (
+                              <iframe 
+                                src={getEmbedUrl(parsedSlides[activeSlideIndex].videoUrl)} 
+                                className="absolute inset-0 w-full h-full rounded-xl border-none bg-black" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            ) : (
+                              <div className="absolute inset-0 bg-white/5 rounded-xl border border-dashed border-white/10 flex items-center justify-center text-xs text-white/30 uppercase font-black">No Video URL Set</div>
+                            )}
+                          </div>
+                        )}
+
+                        {parsedSlides[activeSlideIndex]?.layout === 'website' && (
+                          <div className="h-full w-full flex flex-col relative z-10">
+                            {parsedSlides[activeSlideIndex]?.websiteUrl ? (
+                              <iframe 
+                                src={parsedSlides[activeSlideIndex].websiteUrl} 
+                                className="absolute inset-0 w-full h-full rounded-xl bg-white border-none"
+                              />
+                            ) : (
+                              <div className="absolute inset-0 bg-white/5 rounded-xl border border-dashed border-white/10 flex items-center justify-center text-xs text-white/30 uppercase font-black">No Website URL Set</div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Edit Fields (Inputs to change fields) */}
@@ -519,6 +817,26 @@ export default function XakteirSuitePage() {
                                 value={parsedSlides[activeSlideIndex]?.imageUrl || ''} 
                                 onChange={(e) => updateCurrentSlide({ imageUrl: e.target.value })} 
                                 placeholder="https://example.com/image.jpg" 
+                                className="bg-black/40 border-white/15 text-xs text-white font-bold" 
+                              />
+                            </div>
+                          ) : parsedSlides[activeSlideIndex]?.layout === 'video' ? (
+                            <div className="space-y-1">
+                              <label className="text-[8px] font-black uppercase text-white/40 ml-2">YouTube Video URL</label>
+                              <Input 
+                                value={parsedSlides[activeSlideIndex]?.videoUrl || ''} 
+                                onChange={(e) => updateCurrentSlide({ videoUrl: e.target.value })} 
+                                placeholder="https://www.youtube.com/watch?v=..." 
+                                className="bg-black/40 border-white/15 text-xs text-white font-bold" 
+                              />
+                            </div>
+                          ) : parsedSlides[activeSlideIndex]?.layout === 'website' ? (
+                            <div className="space-y-1">
+                              <label className="text-[8px] font-black uppercase text-white/40 ml-2">Website URL</label>
+                              <Input 
+                                value={parsedSlides[activeSlideIndex]?.websiteUrl || ''} 
+                                onChange={(e) => updateCurrentSlide({ websiteUrl: e.target.value })} 
+                                placeholder="https://example.com" 
                                 className="bg-black/40 border-white/15 text-xs text-white font-bold" 
                               />
                             </div>
@@ -581,7 +899,7 @@ export default function XakteirSuitePage() {
           <div className="absolute inset-0 arcade-grid opacity-10 pointer-events-none" />
           
           <Button 
-            onClick={() => setIsPresenting(false)} 
+            onClick={stopPresenting} 
             variant="ghost" 
             size="icon" 
             className="absolute top-6 right-6 h-12 w-12 rounded-full bg-white/5 text-white hover:bg-rose-600 hover:text-white transition-all z-[999]"
@@ -625,6 +943,34 @@ export default function XakteirSuitePage() {
                 <div className="absolute bottom-6 left-6 bg-black/90 p-4 rounded-xl border border-white/5 max-w-md">
                   <h3 className="text-base font-black uppercase text-white truncate">{parsedSlides[activeSlideIndex]?.title}</h3>
                 </div>
+              </div>
+            )}
+
+            {parsedSlides[activeSlideIndex]?.layout === 'video' && (
+              <div className="h-full w-full flex flex-col relative animate-in zoom-in-95 duration-500">
+                {parsedSlides[activeSlideIndex]?.videoUrl ? (
+                  <iframe 
+                    src={getEmbedUrl(parsedSlides[activeSlideIndex].videoUrl)} 
+                    className="absolute inset-0 w-full h-full rounded-2xl border-none bg-black" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-white/5 rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-sm text-white/30 uppercase font-black">No Video URL Set</div>
+                )}
+              </div>
+            )}
+
+            {parsedSlides[activeSlideIndex]?.layout === 'website' && (
+              <div className="h-full w-full flex flex-col relative animate-in zoom-in-95 duration-500">
+                {parsedSlides[activeSlideIndex]?.websiteUrl ? (
+                  <iframe 
+                    src={parsedSlides[activeSlideIndex].websiteUrl} 
+                    className="absolute inset-0 w-full h-full rounded-2xl bg-white border-none"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-white/5 rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-sm text-white/30 uppercase font-black">No Website URL Set</div>
+                )}
               </div>
             )}
           </div>

@@ -41,6 +41,41 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+const INVIDIOUS_INSTANCES = [
+  "https://yewtu.be",
+  "https://invidious.flokinet.to",
+  "https://invidious.nerdvpn.de",
+  "https://iv.melmac.space",
+  "https://invidious.projectsegfaut.im"
+];
+
+const searchYoutubeVideos = async (queryText: string) => {
+  for (const instance of INVIDIOUS_INSTANCES) {
+    try {
+      const res = await fetch(`${instance}/api/v1/search?q=${encodeURIComponent(queryText)}&type=video`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        return data.map((item: any) => ({
+          id: `yt_${item.videoId}`,
+          youtubeId: item.videoId,
+          title: item.title,
+          author: item.author || "YouTube Creator",
+          authorId: "youtube_" + (item.author ? item.author.replace(/\s+/g, "").toLowerCase() : "creator"),
+          authorPhoto: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(item.author || item.videoId)}`,
+          views: item.viewCount || Math.floor(Math.random() * 500000) + 50000,
+          likes: Math.floor((item.viewCount || 100000) * 0.05),
+          description: item.description || `YouTube video by ${item.author || "Creator"}.`,
+          isYoutube: true
+        }));
+      }
+    } catch (e) {
+      console.warn(`Failed YouTube search via ${instance}`, e);
+    }
+  }
+  return [];
+};
+
 export default function XakViewPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -53,6 +88,11 @@ export default function XakViewPage() {
   const [commentInput, setCommentInput] = useState("");
   const [isLiked, setIsLiked] = useState(false);
   const [liveChatInput, setLiveChatInput] = useState("");
+
+  const [youtubeImportInput, setYoutubeImportInput] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [youtubeVideos, setYoutubeVideos] = useState<any[]>([]);
+  const [isYTSearching, setIsYTSearching] = useState(false);
   
   const [liveChats, setLiveChats] = useState<Array<{ user: string, text: string }>>([
     { user: "SpecterX", text: "this stream is crazy fire!" },
@@ -62,6 +102,67 @@ export default function XakViewPage() {
   ]);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Debounced search for YouTube videos
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setYoutubeVideos([]);
+      return;
+    }
+    const delayDebounce = setTimeout(async () => {
+      setIsYTSearching(true);
+      const results = await searchYoutubeVideos(searchQuery);
+      setYoutubeVideos(results);
+      setIsYTSearching(false);
+    }, 800);
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
+
+  const handleImportYoutube = async (url: string) => {
+    if (!url || !firestore) return;
+    const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(reg);
+    if (!match) {
+      toast({ variant: "destructive", title: "Invalid Link", description: "Please enter a valid YouTube video URL." });
+      return;
+    }
+    const videoId = match[1];
+    setIsImporting(true);
+    try {
+      const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
+      const data = await res.json();
+      
+      await addDocumentNonBlocking(collection(firestore, "videos"), {
+        title: data.title || "YouTube Video",
+        youtubeId: videoId,
+        author: data.author_name || "YouTube Creator",
+        authorId: "youtube_" + (data.author_name ? data.author_name.replace(/\s+/g, "").toLowerCase() : "creator"),
+        authorPhoto: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(data.author_name || videoId)}`,
+        description: `YouTube video by ${data.author_name || "Creator"}. Imported to XakView.`,
+        views: Math.floor(Math.random() * 900000) + 100000,
+        likes: Math.floor(Math.random() * 50000) + 5000,
+        timestamp: serverTimestamp()
+      });
+      toast({ title: "Video Imported!", description: `"${data.title}" has been added to XakView.` });
+      setYoutubeImportInput("");
+    } catch (err) {
+      await addDocumentNonBlocking(collection(firestore, "videos"), {
+        title: "Imported YouTube Video",
+        youtubeId: videoId,
+        author: "YouTube Creator",
+        authorId: "youtube_creator",
+        authorPhoto: `https://api.dicebear.com/7.x/identicon/svg?seed=${videoId}`,
+        description: "YouTube Video imported into XakView.",
+        views: 45000,
+        likes: 2100,
+        timestamp: serverTimestamp()
+      });
+      toast({ title: "Imported with default metadata", description: "Direct YouTube Link import successful." });
+      setYoutubeImportInput("");
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   // Fetch videos from DB
   const videosQuery = useMemoFirebase(() => {
@@ -79,16 +180,26 @@ export default function XakViewPage() {
 
   const { data: dbCreators, isLoading: isCreatorsLoading } = useCollection(creatorsQuery);
 
-  // Filter videos based on search
+  // Filter videos based on search & merge dynamic YouTube results
   const filteredVideos = useMemo(() => {
-    const list = dbVideos || [];
-    if (!searchQuery.trim()) return list;
-    const q = searchQuery.toLowerCase();
-    return list.filter(v => 
-      v.title?.toLowerCase().includes(q) || 
-      v.description?.toLowerCase().includes(q)
-    );
-  }, [dbVideos, searchQuery]);
+    const localList = dbVideos || [];
+    let list = [...localList];
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(v => 
+        v.title?.toLowerCase().includes(q) || 
+        v.description?.toLowerCase().includes(q)
+      );
+    }
+    // Append unique youtube results
+    const combined = [...list];
+    youtubeVideos.forEach(yt => {
+      if (!combined.some(v => v.youtubeId === yt.youtubeId)) {
+        combined.push(yt);
+      }
+    });
+    return combined;
+  }, [dbVideos, searchQuery, youtubeVideos]);
 
   // Filter creators based on search
   const filteredCreators = useMemo(() => {
@@ -275,13 +386,34 @@ export default function XakViewPage() {
           </button>
         </div>
 
-        <div className="flex items-center gap-4 relative z-10 w-full md:w-auto">
+        <div className="flex flex-col md:flex-row items-center gap-4 relative z-10 w-full md:w-auto">
+          {/* YouTube Link Importer */}
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Input
+              value={youtubeImportInput}
+              onChange={(e) => setYoutubeImportInput(e.target.value)}
+              placeholder="Paste YouTube watch URL..."
+              className="bg-red-950/20 border-red-500/20 h-12 rounded-2xl px-4 text-xs font-bold focus:border-red-500/50 focus:ring-red-500 text-white min-w-[200px]"
+            />
+            <Button
+              onClick={() => handleImportYoutube(youtubeImportInput)}
+              disabled={isImporting || !youtubeImportInput.trim()}
+              className="h-12 px-4 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase shrink-0 border-none"
+            >
+              {isImporting ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : "Import"}
+            </Button>
+          </div>
+
           <div className="relative group shrink-0 w-64">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-rose-500 transition-colors" />
+            {isYTSearching ? (
+              <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-500 animate-spin" />
+            ) : (
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-rose-500 transition-colors" />
+            )}
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search multiverses..."
+              placeholder="Search youtube & local..."
               className="bg-black/60 border-white/10 h-12 rounded-2xl pl-10 pr-4 text-xs font-bold focus:border-rose-500/50 focus:ring-rose-500 uppercase text-white"
             />
           </div>

@@ -189,6 +189,14 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────
+    // FRIENDSHIPS (Real-Time Maps & Friend Locator)
+    // ─────────────────────────────────────────────
+
+    match /friendships/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // ─────────────────────────────────────────────
     // VIDEOS
     // ─────────────────────────────────────────────
 
