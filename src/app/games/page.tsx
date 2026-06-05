@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense, useMemo, useRef } from "react";
+import { useState, Suspense, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,73 +14,77 @@ import {
   Trophy, 
   Plus, 
   Loader2, 
-  Users, 
-  X,
-  Flame,
-  ChevronRight,
-  Code2,
-  Activity,
-  Target,
-  Palette,
-  Maximize,
-  Minimize
+  Flame, 
+  Code2, 
+  Activity, 
+  Target, 
+  Palette
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit, where } from "firebase/firestore";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
-
-// Games Components
-import { SnakeGame } from "./components/SnakeGame";
-import { MemoryGame } from "./components/MemoryGame";
-import { TicTacToeGame } from "./components/TicTacToeGame";
-import { Tunnel3DGame } from "./components/Tunnel3DGame";
-import { ClickerGame } from "./components/ClickerGame";
-import { Football3DGame } from "./components/Football3DGame";
-import { XbrGame } from "./components/XbrGame";
-import { BubbleGame } from "./components/BubbleGame";
-import { MathGame } from "./components/MathGame";
-import { ColorMatchGame } from "./components/ColorMatchGame";
-import { ReactionGame } from "./components/ReactionGame";
-import { WhackGame } from "./components/WhackGame";
-import { JumpGame } from "./components/JumpGame";
-import { DodgeGame } from "./components/DodgeGame";
 
 const CATEGORIES = ["Discovery", "Arcade", "Strategy", "Puzzle", "3D", "Sports"];
 
 const BUILT_IN_GAMES = [
   { id: 'xbr', name: 'XBR', type: 'Sports', icon: Flame, color: 'text-rose-500', featured: true, creator: 'xakteir' },
-  { id: 'football', name: 'Pro Football 3D', type: 'Sports', icon: Trophy, color: 'text-green-400', featured: true, creator: 'xakteir' },
+  { id: 'football3D', name: 'Pro Football 3D', type: 'Sports/3D', icon: Trophy, color: 'text-green-400', featured: true, creator: 'xakteir' },
   { id: 'jump', name: 'Void Runner', type: 'Arcade', icon: Zap, color: 'text-amber-500', creator: 'xakteir' },
   { id: 'math', name: 'Math Quest', type: 'Puzzle', icon: Code2, color: 'text-sky-400', creator: 'xakteir' },
   { id: 'dodge', name: 'Shard Dodge', type: 'Arcade', icon: Target, color: 'text-emerald-400', creator: 'xakteir' },
   { id: 'bubble', name: 'Bubble Pop', type: 'Arcade', icon: Sparkles, color: 'text-blue-500', creator: 'xakteir' },
   { id: 'whack', name: 'Whack Buddy', type: 'Arcade', icon: Activity, color: 'text-rose-400', creator: 'xakteir' },
   { id: 'reaction', name: 'Reaction Test', type: 'Puzzle', icon: Zap, color: 'text-yellow-400', creator: 'xakteir' },
-  { id: 'color', name: 'Color Rush', type: 'Puzzle', icon: Palette, color: 'text-indigo-400', creator: 'xakteir' },
+  { id: 'colorMatch', name: 'Color Rush', type: 'Puzzle', icon: Palette, color: 'text-indigo-400', creator: 'xakteir' },
   { id: 'snake', name: 'Snake Zone', type: 'Arcade', icon: Zap, color: 'text-green-500', creator: 'xakteir' },
   { id: 'memory', name: 'Memory Match', type: 'Puzzle', icon: Sparkles, color: 'text-blue-500', creator: 'xakteir' },
   { id: 'tictactoe', name: 'Magic Toe', type: 'Strategy', icon: StarIcon, color: 'text-purple-500', creator: 'xakteir' },
+  { id: 'aim', name: 'Aim Master', type: 'Strategy', icon: Target, color: 'text-red-500', creator: 'xakteir' },
+  { id: 'balance', name: 'Balance Ball', type: 'Strategy', icon: Activity, color: 'text-teal-400', creator: 'xakteir' },
+  { id: 'basketball', name: 'Street Hoop', type: 'Sports', icon: Trophy, color: 'text-orange-500', creator: 'xakteir' },
+  { id: 'breaker', name: 'Brick Breaker', type: 'Arcade', icon: Zap, color: 'text-indigo-500', creator: 'xakteir' },
+  { id: 'clickSpeed', name: 'Click Frenzy', type: 'Arcade', icon: Flame, color: 'text-yellow-500', creator: 'xakteir' },
+  { id: 'clicker', name: 'Pixel Clicker', type: 'Arcade', icon: Plus, color: 'text-lime-500', creator: 'xakteir' },
+  { id: 'connectFour', name: 'Connect Four', type: 'Strategy', icon: Sword, color: 'text-red-400', creator: 'xakteir' },
+  { id: 'drawing', name: 'Neon Canvas', type: 'Discovery', icon: Palette, color: 'text-pink-400', creator: 'xakteir' },
+  { id: 'fishing', name: 'Deep Sea Fisher', type: 'Discovery', icon: Sparkles, color: 'text-cyan-400', creator: 'xakteir' },
+  { id: 'flappy', name: 'Flappy Shard', type: 'Arcade', icon: Zap, color: 'text-yellow-400', creator: 'xakteir' },
+  { id: 'frogger', name: 'Road Crosser', type: 'Arcade', icon: Activity, color: 'text-green-400', creator: 'xakteir' },
+  { id: 'golf', name: 'Mini Golf', type: 'Sports', icon: Trophy, color: 'text-emerald-500', creator: 'xakteir' },
+  { id: 'gravity', name: 'Gravity Flip', type: 'Strategy', icon: Zap, color: 'text-fuchsia-500', creator: 'xakteir' },
+  { id: 'invaders', name: 'Space Defender', type: 'Arcade', icon: Sword, color: 'text-purple-400', creator: 'xakteir' },
+  { id: 'knife', name: 'Knife Throw', type: 'Arcade', icon: Target, color: 'text-gray-400', creator: 'xakteir' },
+  { id: 'match3', name: 'Shard Match 3', type: 'Puzzle', icon: Sparkles, color: 'text-rose-400', creator: 'xakteir' },
+  { id: 'maze', name: 'Neon Labyrinth', type: 'Puzzle', icon: Target, color: 'text-amber-600', creator: 'xakteir' },
+  { id: 'minesweeper', name: 'Logic Sweeper', type: 'Puzzle', icon: Code2, color: 'text-zinc-400', creator: 'xakteir' },
+  { id: 'paint', name: 'Glow Paint', type: 'Discovery', icon: Palette, color: 'text-violet-400', creator: 'xakteir' },
+  { id: 'parking', name: 'Jam Solver', type: 'Puzzle', icon: Activity, color: 'text-blue-600', creator: 'xakteir' },
+  { id: 'pinball', name: 'Neon Pinball', type: 'Arcade', icon: Flame, color: 'text-pink-500', creator: 'xakteir' },
+  { id: 'plinko', name: 'Plinko Board', type: 'Arcade', icon: Sparkles, color: 'text-emerald-400', creator: 'xakteir' },
+  { id: 'pong', name: 'Cyber Pong', type: 'Sports', icon: Trophy, color: 'text-slate-300', creator: 'xakteir' },
+  { id: 'rps', name: 'R-P-S Duel', type: 'Strategy', icon: Sword, color: 'text-orange-400', creator: 'xakteir' },
+  { id: 'sequence', name: 'Echo Simon', type: 'Puzzle', icon: Code2, color: 'text-teal-500', creator: 'xakteir' },
+  { id: 'spinWheel', name: 'Wheel of Luck', type: 'Discovery', icon: Sparkles, color: 'text-rose-400', creator: 'xakteir' },
+  { id: 'stack', name: 'Stacker Tower', type: 'Strategy', icon: Activity, color: 'text-indigo-400', creator: 'xakteir' },
+  { id: 'sudoku', name: 'Sudoku Mind', type: 'Puzzle', icon: Code2, color: 'text-sky-500', creator: 'xakteir' },
+  { id: 'towerDefense', name: 'Grid Sentry', type: 'Strategy', icon: Sword, color: 'text-amber-500', creator: 'xakteir' },
+  { id: 'trivia', name: 'Trivia Rush', type: 'Puzzle', icon: StarIcon, color: 'text-purple-400', creator: 'xakteir' },
+  { id: 'tunnel3D', name: 'Warp Speed 3D', type: 'Arcade/3D', icon: Zap, color: 'text-red-500', creator: 'xakteir' },
+  { id: 'twoZeroFourEight', name: '2048 Grid', type: 'Puzzle', icon: Trophy, color: 'text-yellow-600', creator: 'xakteir' },
+  { id: 'typing', name: 'Word Sprint', type: 'Discovery', icon: Code2, color: 'text-green-400', creator: 'xakteir' },
+  { id: 'word', name: 'Word Matrix', type: 'Puzzle', icon: StarIcon, color: 'text-blue-400', creator: 'xakteir' }
 ];
 
 function ArcadeHubContent() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const { toast } = useToast();
-  const searchParams = useSearchParams();
-  const initialPlay = searchParams.get('play');
+  const router = useRouter();
   
   const [activeCategory, setActiveCategory] = useState("Discovery");
-  const [playingGame, setPlayingGame] = useState<string | null>(initialPlay);
-  const [isLobbyActive, setIsLobbyActive] = useState(true);
   const [search, setSearch] = useState("");
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const gameContainerRef = useRef<HTMLDivElement>(null);
 
   const leaderboardQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -109,22 +113,9 @@ function ArcadeHubContent() {
   }, [communityGames]);
 
   const filteredGames = allGames.filter(g => 
-    (activeCategory === "Discovery" || g.type.includes(activeCategory)) &&
+    (activeCategory === "Discovery" || g.type.toLowerCase().includes(activeCategory.toLowerCase())) &&
     g.name.toLowerCase().includes(search.toLowerCase())
   );
-
-  const activeGameInfo = allGames.find(g => g.id === playingGame);
-
-  const handleToggleFullscreen = () => {
-    if (!gameContainerRef.current) return;
-    if (!document.fullscreenElement) {
-      gameContainerRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {
-        toast({ variant: "destructive", title: "Fullscreen failed" });
-      });
-    } else {
-      document.exitFullscreen().then(() => setIsFullscreen(false));
-    }
-  };
 
   return (
     <div className="space-y-16 animate-fade-in py-12 max-w-[1800px] mx-auto px-8 text-foreground pb-40">
@@ -176,7 +167,7 @@ function ArcadeHubContent() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {filteredGames.map(game => (
-              <Card key={game.id} onClick={() => { setPlayingGame(game.id); setIsLobbyActive(true); }} className="glass-card group hover:-translate-y-6 transition-all duration-500 rounded-[4rem] overflow-hidden border-4 border-white/10 shadow-[0_40px_80px_rgba(0,0,0,0.5)] flex flex-col cursor-pointer bg-zinc-950/40">
+              <Card key={game.id} onClick={() => { router.push(`/games/play/${game.id}`); }} className="glass-card group hover:-translate-y-6 transition-all duration-500 rounded-[4rem] overflow-hidden border-4 border-white/10 shadow-[0_40px_80px_rgba(0,0,0,0.5)] flex flex-col cursor-pointer bg-zinc-950/40">
                 <div className="aspect-[16/10] flex items-center justify-center relative overflow-hidden bg-black/60">
                   <game.icon className={cn("w-24 h-24 transition-transform duration-1000 group-hover:scale-150", game.color)} />
                   <div className="absolute inset-0 arcade-grid opacity-20" />
@@ -230,73 +221,6 @@ function ArcadeHubContent() {
           </Card>
         </aside>
       </div>
-
-      {playingGame && (
-        <div ref={gameContainerRef} className="fixed inset-0 z-[1000] bg-black animate-in fade-in duration-500 overflow-hidden flex flex-col">
-          <div className="absolute inset-0 arcade-grid opacity-10 pointer-events-none" />
-          {isLobbyActive ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-20 relative z-10">
-              <Button size="icon" variant="ghost" onClick={() => setPlayingGame(null)} className="absolute top-12 right-12 rounded-full h-20 w-20 bg-white/5 border-4 border-white/10 text-white hover:bg-rose-600 transition-all"><X className="w-10 h-10" /></Button>
-              <div className="space-y-12 animate-in zoom-in-95 duration-1000">
-                <div className={cn("w-64 h-64 md:w-80 md:h-80 rounded-[5rem] md:rounded-[7rem] mx-auto flex items-center justify-center border-8 border-white/20 shadow-[0_0_150px_rgba(var(--primary),0.3)] bg-zinc-900/50")}>
-                  {activeGameInfo && <activeGameInfo.icon className={cn("w-32 h-32 md:w-48 md:h-48 animate-float", activeGameInfo.color)} />}
-                </div>
-                <div className="space-y-6">
-                  <h2 className="text-7xl md:text-[10rem] font-black text-white uppercase italic tracking-tighter leading-none drop-shadow-[0_0_60px_rgba(255,255,255,0.4)]">{activeGameInfo?.name}</h2>
-                  <p className="text-muted-foreground font-black uppercase tracking-[1em] text-xs italic">Awaiting Player Synchronization...</p>
-                </div>
-                <Button onClick={() => setIsLobbyActive(false)} className="h-28 px-24 bg-primary hover:bg-primary/90 text-white rounded-[3.5rem] font-black text-3xl uppercase tracking-widest shadow-[0_40px_100px_rgba(var(--primary),0.6)] border-b-[16px] border-primary/20 active:border-b-0 active:translate-y-4 transition-all">START GAME</Button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col relative w-full h-full bg-transparent">
-              <div className="absolute top-10 right-10 z-[1100] flex gap-4">
-                 <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  onClick={handleToggleFullscreen} 
-                  className="rounded-full h-16 w-16 bg-black/60 backdrop-blur-xl border-4 border-white/10 hover:bg-primary transition-all shadow-2xl"
-                 >
-                    {isFullscreen ? <Minimize className="w-8 h-8" /> : <Maximize className="w-8 h-8" />}
-                 </Button>
-                 <Button size="icon" variant="ghost" onClick={() => setPlayingGame(null)} className="rounded-full h-16 w-16 bg-black/60 backdrop-blur-xl border-4 border-white/10 hover:bg-rose-600 transition-all shadow-2xl"><X className="w-8 h-8" /></Button>
-              </div>
-              <div className="flex-1 w-full h-full flex items-center justify-center p-0">
-                {(() => {
-                  const props = { onExit: () => setPlayingGame(null) };
-                  switch(playingGame) {
-                    case 'xbr': return <XbrGame {...props} />;
-                    case 'football': return <Football3DGame {...props} />;
-                    case 'snake': return <SnakeGame {...props} />;
-                    case 'memory': return <MemoryGame {...props} />;
-                    case 'tictactoe': return <TicTacToeGame {...props} />;
-                    case 'bubble': return <BubbleGame {...props} />;
-                    case 'math': return <MathGame {...props} />;
-                    case 'color': return <ColorMatchGame {...props} />;
-                    case 'reaction': return <ReactionGame {...props} />;
-                    case 'whack': return <WhackGame {...props} />;
-                    case 'jump': return <JumpGame {...props} />;
-                    case 'dodge': return <DodgeGame {...props} />;
-                    case 'clicker': return <ClickerGame {...props} />;
-                    default: return (
-                      <div className="text-center space-y-12 animate-in zoom-in-95">
-                         <div className="w-40 h-40 rounded-[3.5rem] bg-zinc-900 border-8 border-white/10 flex items-center justify-center mx-auto shadow-2xl">
-                            <Code2 className="w-20 h-20 text-primary" />
-                         </div>
-                         <div className="space-y-4">
-                           <h3 className="text-7xl font-black text-white uppercase italic tracking-tighter">Compiled App</h3>
-                           <p className="text-xl text-muted-foreground font-bold uppercase tracking-widest">Logic from creator: @{activeGameInfo?.creator}</p>
-                         </div>
-                         <Button onClick={() => setPlayingGame(null)} variant="outline" className="h-20 px-16 rounded-[2.5rem] border-8 border-white/10 font-black uppercase text-xs text-white hover:bg-white/10 transition-all">Return to Hub</Button>
-                      </div>
-                    );
-                  }
-                })()}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

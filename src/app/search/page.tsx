@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { 
   Search, 
   X,
@@ -215,6 +216,7 @@ function SearchContent() {
     if (!userDocs || !(queryInput || '').trim()) return [];
     const q = (queryInput || '').toLowerCase();
     return userDocs.filter((u: any) => {
+      if (u.isHidden) return false;
       const name = (u.displayName || u.name || '').toLowerCase();
       const email = (u.email || '').toLowerCase();
       const username = (u.username || '').toLowerCase();

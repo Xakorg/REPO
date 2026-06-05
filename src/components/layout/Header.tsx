@@ -43,6 +43,7 @@ import { signOut } from "firebase/auth";
 import { collection, query, where, doc } from "firebase/firestore";
 import { triggerCommandCenter } from "@/components/CommandCenter";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { RenderHat } from "@/components/RenderHat";
 
 const APPS = [
   { name: "Search", icon: SearchIcon, href: "/search", color: "text-blue-400", bg: "bg-blue-400/10" },
@@ -102,6 +103,12 @@ export function Header() {
   const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email?.toLowerCase() || "");
   const isAdmin = isSuperAdmin || !!adminRole;
 
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+  const { data: userData } = useDoc(userRef);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
@@ -116,25 +123,25 @@ export function Header() {
 
   const AppsList = () => (
     <div className="flex flex-col h-full bg-[#0a0a15] text-white">
-      <div className="p-8 border-b-2 border-white/10 flex items-center justify-between bg-black/40">
-        <h3 className="text-xl font-black uppercase italic tracking-tighter text-primary leading-none">Apps</h3>
+      <div className="p-5 border-b-2 border-white/10 flex items-center justify-between bg-black/40">
+        <h3 className="text-lg font-black uppercase italic tracking-tighter text-primary leading-none">Apps</h3>
         <div className="relative">
-          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input value={appSearch} onChange={(e) => setAppSearch(e.target.value)} placeholder="Search apps..." className="h-10 w-48 rounded-xl bg-secondary/30 border-white/10 pl-11 text-[10px] font-black italic" />
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input value={appSearch} onChange={(e) => setAppSearch(e.target.value)} placeholder="Search apps..." className="h-9 w-36 rounded-xl bg-secondary/30 border-white/10 pl-9 text-[9px] font-black italic" />
         </div>
       </div>
-      <ScrollArea className="flex-1">
-        <div className="p-8 grid grid-cols-3 gap-6">
+      <ScrollArea className="flex-1 max-h-[380px]">
+        <div className="p-5 grid grid-cols-3 gap-3">
           {filteredApps.map(app => (
             <button 
               key={app.name}
               onClick={() => { router.push(app.href); }} 
               className={cn(
-                "p-6 rounded-[2rem] flex flex-col items-center gap-4 transition-all hover:bg-white/5 hover:scale-105 group/btn border-4 border-transparent hover:border-white/5 shadow-xl", 
+                "p-3 rounded-2xl flex flex-col items-center gap-2 transition-all hover:bg-white/5 hover:scale-105 group/btn border-2 border-transparent hover:border-white/5 shadow-md", 
                 app.bg
               )}
             >
-              <app.icon className={cn("w-8 h-8", app.color)} />
+              <app.icon className={cn("w-6 h-6", app.color)} />
               <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover/btn:text-white truncate w-full text-center">{app.name}</span>
             </button>
           ))}
@@ -155,7 +162,7 @@ export function Header() {
                   <span className="text-[12px] font-black uppercase tracking-widest text-white/90">Apps</span>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[480px] p-0 glass-card rounded-[3rem] mt-6 border-4 border-white/10 overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.8)]" align="start">
+              <PopoverContent className="w-[360px] p-0 glass-card rounded-[2rem] mt-6 border-4 border-white/10 overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.8)]" align="start">
                 <AppsList />
               </PopoverContent>
             </Popover>
@@ -245,10 +252,13 @@ export function Header() {
                     <span className="text-[13px] font-black uppercase italic text-white group-hover:text-primary transition-colors">{cleanDisplayName}</span>
                     <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Active</span>
                   </div>
-                  <Avatar className="w-12 h-12 rounded-[1.2rem] bg-zinc-900 border-2 border-white/10 shadow-2xl transition-transform active:scale-95 group-hover:border-primary/50">
-                    <AvatarImage src={user.photoURL || ""} className="object-cover" />
-                    <AvatarFallback className="bg-primary text-white font-black text-xl">{cleanDisplayName?.[0]}</AvatarFallback>
-                  </Avatar>
+                  <div className="relative shrink-0">
+                    <RenderHat hatKey={userData?.hat} />
+                    <Avatar className="w-12 h-12 rounded-[1.2rem] bg-zinc-900 border-2 border-white/10 shadow-2xl transition-transform active:scale-95 group-hover:border-primary/50">
+                      <AvatarImage src={user.photoURL || ""} className="object-cover" />
+                      <AvatarFallback className="bg-primary text-white font-black text-xl">{cleanDisplayName?.[0]}</AvatarFallback>
+                    </Avatar>
+                  </div>
                 </div>
               </PopoverTrigger>
               <PopoverContent className="w-72 p-2 glass-card rounded-[2.5rem] mt-6 border-4 border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.8)] overflow-hidden" align="end">

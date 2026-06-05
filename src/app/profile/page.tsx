@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { RenderHat } from "@/components/RenderHat";
 
 const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
 
@@ -164,6 +165,7 @@ export default function ProfilePage() {
             "relative p-1 rounded-[2.5rem] transition-all duration-700 shadow-2xl bg-zinc-900",
             userData?.aura && userData.aura !== 'none' ? `aura-${userData.aura}` : ""
           )}>
+            <RenderHat hatKey={userData?.hat} />
             <div className="w-36 h-36 border-4 border-black/40 rounded-[2.2rem] overflow-hidden relative shadow-2xl">
               <Avatar className="w-full h-full rounded-none">
                 <AvatarImage src={avatarUrl} className="object-cover" />

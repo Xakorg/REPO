@@ -35,6 +35,7 @@ import { doc, updateDoc, increment, collection, query, limit, addDoc, serverTime
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { RenderHat } from "@/components/RenderHat";
 
 const SHOP_ITEMS = [
   { id: 1, name: "Neon Pulse Aura", category: "Auras", type: 'aura', key: 'neon', price: 450, color: "text-blue-500", bg: "bg-blue-500/10", rarity: "Epic", description: "A high-frequency rhythmic pulse around your avatar." },
@@ -132,6 +133,11 @@ export default function ShopPage() {
       // Deduct balance from sender
       await updateDoc(doc(firestore, "users", user.uid), {
         currencyBalance: increment(-selectedItem.price)
+      });
+
+      // Award item to recipient
+      await updateDoc(doc(firestore, "users", targetId), {
+        [selectedItem.type]: selectedItem.key
       });
 
       // Notify recipient
@@ -246,6 +252,7 @@ export default function ShopPage() {
                   )
                 )}>
                   {selectedItem.key === 'cat' && <div className="flying-cat">🐱</div>}
+                  <RenderHat hatKey={selectedItem.type === 'hat' ? selectedItem.key : userData?.hat} />
                   <Avatar className="w-48 h-48 border-[12px] border-background rounded-[4rem] shadow-2xl mx-auto overflow-hidden bg-secondary">
                     <AvatarImage src={user?.photoURL || ""} />
                     <AvatarFallback className="bg-primary text-6xl font-black text-white">{user?.displayName?.[0] || 'U'}</AvatarFallback>

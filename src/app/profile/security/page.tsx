@@ -32,7 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useAuth } from "@/firebase";
 import { collection, query, orderBy, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -40,14 +40,72 @@ import Link from "next/link";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { sendPasswordResetEmail, deleteUser } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 export default function SecuritySettingsPage() {
   const { user } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPasswordId, setShowPasswordId] = useState<string | null>(null);
+
+  const handleResetPassword = async () => {
+    if (!auth || !user?.email) return;
+    setIsUpdating(true);
+    try {
+      await sendPasswordResetEmail(auth, user.email);
+      toast({ title: "Password Reset Sent", description: `Check your inbox at ${user.email}.` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Reset Failed", description: e instanceof Error ? e.message : "Failed to send reset email." });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!auth?.currentUser || !firestore || !user) return;
+    const confirm = window.confirm("WARNING: This will permanently delete your account, files, and all associated data. Are you sure you want to proceed?");
+    if (!confirm) return;
+
+    setIsUpdating(true);
+    try {
+      const uid = user.uid;
+
+      // Delete Firestore records
+      await deleteDoc(doc(firestore, "users", uid));
+      try {
+        await deleteDoc(doc(firestore, "admins", uid));
+      } catch (e) {
+        console.warn("User was not admin, skipping admin delete");
+      }
+
+      // Try deleting auth account
+      await deleteUser(auth.currentUser);
+      toast({ title: "Account Deleted", description: "Your account has been deleted permanently." });
+      router.push("/");
+    } catch (e: any) {
+      console.error("Auth account deletion failed:", e);
+      if (e.code === "auth/requires-recent-login") {
+        toast({
+          variant: "destructive",
+          title: "Re-authentication Required",
+          description: "Please sign out, sign back in, and try deleting your account again.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Deletion Error",
+          description: e.message || "Could not delete auth credentials. Please try logging in again.",
+        });
+      }
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -184,10 +242,50 @@ export default function SecuritySettingsPage() {
                           </div>
                        </div>
                      ))}
-                  </div>
-               </Card>
-            </div>
-         </TabsContent>
+                   </div>
+                </Card>
+             </div>
+
+             <Card className="glass-card rounded-[3rem] p-10 border-rose-500/20 bg-rose-950/5 shadow-xl space-y-8 mt-8">
+                <div className="flex items-center gap-4">
+                   <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20 shadow-lg">
+                     <Trash2 className="w-6 h-6 text-rose-500" />
+                   </div>
+                   <div>
+                     <h3 className="text-xl font-black uppercase italic text-rose-400">Danger Zone</h3>
+                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Lifecycle Controls</p>
+                   </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                   <div className="p-6 rounded-2xl bg-white/5 border border-white/5 flex flex-col justify-between gap-6">
+                      <div>
+                         <h4 className="text-sm font-black uppercase text-white">Reset Password</h4>
+                         <p className="text-xs text-muted-foreground mt-2 italic font-medium leading-relaxed">Transmit a secure password reset link to your registered email.</p>
+                      </div>
+                      <Button 
+                         onClick={handleResetPassword}
+                         disabled={isUpdating}
+                         className="w-full bg-zinc-900 hover:bg-zinc-800 border border-white/10 h-12 rounded-xl text-xs font-black uppercase text-white transition-all"
+                      >
+                         Reset Password
+                      </Button>
+                   </div>
+                   <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/10 flex flex-col justify-between gap-6">
+                      <div>
+                         <h4 className="text-sm font-black uppercase text-rose-400">Delete Account</h4>
+                         <p className="text-xs text-muted-foreground mt-2 italic font-medium leading-relaxed">Deactivate profile records and permanently remove auth credentials.</p>
+                      </div>
+                      <Button 
+                         onClick={handleDeleteAccount}
+                         disabled={isUpdating}
+                         className="w-full bg-rose-600 hover:bg-rose-500 h-12 rounded-xl text-xs font-black uppercase text-white transition-all"
+                      >
+                         Delete Permanently
+                      </Button>
+                   </div>
+                </div>
+             </Card>
+          </TabsContent>
 
          <TabsContent value="vault" className="animate-in slide-in-from-right-4 h-[600px] flex flex-col">
             <header className="flex justify-between items-center mb-8">

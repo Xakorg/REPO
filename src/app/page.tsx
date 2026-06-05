@@ -68,7 +68,7 @@ function XakteirDashboard() {
 
   const feedQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "global_feed"), orderBy("timestamp", "desc"), limit(10));
+    return query(collection(firestore, "globalMessages"), orderBy("timestamp", "desc"), limit(10));
   }, [firestore]);
   const { data: feedItems, isLoading: feedLoading } = useCollection(feedQuery);
 

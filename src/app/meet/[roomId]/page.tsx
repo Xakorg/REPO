@@ -373,6 +373,11 @@ export default function MeetingRoomPage() {
       };
 
       if (!callData) {
+        // Guests cannot create rooms
+        if (!user) {
+          throw new Error("Meeting room not found or has ended. Guests can only join existing meetings. Please sign in to create a room.");
+        }
+        
         // Create the meeting if it doesn't exist (first joiner becomes host)
         await setDoc(callDoc, {
           createdAt: new Date().toISOString(),
@@ -558,6 +563,7 @@ export default function MeetingRoomPage() {
       toast({ title: "Joined meeting", description: `Room: ${meetingId}` });
     } catch (e) {
       cleanupMedia();
+      setGuestJoined(false);
       const description = e instanceof Error ? e.message : "Could not connect to room.";
       toast({ variant: "destructive", title: "Join error", description });
     } finally {

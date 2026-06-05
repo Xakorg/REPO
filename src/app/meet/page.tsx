@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Plus,
   Users,
@@ -96,23 +97,36 @@ export default function XakMeetLobbyPage() {
       {activeTab === "create" && (
         <Card className="glass-card p-12 rounded-[4rem] border-white/10 space-y-10 bg-zinc-950/60 w-full max-w-xl z-10 animate-in zoom-in-95 duration-300">
           <h2 className="text-5xl font-black uppercase italic tracking-tighter text-white">New Room</h2>
-          <div className="space-y-4 text-left">
-            <label className="text-[10px] font-black uppercase tracking-widest text-rose-500 pl-2">
-              Custom Room ID (optional)
-            </label>
-            <Input
-              value={customRoomId}
-              onChange={(e) => setCustomRoomId(e.target.value.toUpperCase())}
-              placeholder="E.G. CHAT-ROOM"
-              className="h-16 bg-black/60 border-white/10 rounded-2xl text-center font-black text-xl tracking-widest text-white focus:border-rose-500/50 focus:ring-0 transition-all"
-            />
-          </div>
-          <Button
-            onClick={handleCreateMeeting}
-            className="w-full h-20 bg-rose-600 hover:bg-rose-500 text-white rounded-[2rem] font-black uppercase text-xl shadow-xl transition-all border-b-8 border-rose-900 active:border-b-0 flex items-center justify-center gap-3"
-          >
-            Start call <ArrowRight className="w-6 h-6" />
-          </Button>
+          {!user ? (
+            <div className="space-y-6">
+              <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest leading-relaxed">
+                Sign in is required to create a new meeting room. Unauthenticated users can only join existing meetings.
+              </p>
+              <Button asChild className="w-full h-16 bg-rose-600 rounded-2xl font-black uppercase text-xs">
+                <Link href="/auth">Sign In to Create</Link>
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4 text-left">
+                <label className="text-[10px] font-black uppercase tracking-widest text-rose-500 pl-2">
+                  Custom Room ID (optional)
+                </label>
+                <Input
+                  value={customRoomId}
+                  onChange={(e) => setCustomRoomId(e.target.value.toUpperCase())}
+                  placeholder="E.G. CHAT-ROOM"
+                  className="h-16 bg-black/60 border-white/10 rounded-2xl text-center font-black text-xl tracking-widest text-white focus:border-rose-500/50 focus:ring-0 transition-all"
+                />
+              </div>
+              <Button
+                onClick={handleCreateMeeting}
+                className="w-full h-20 bg-rose-600 hover:bg-rose-500 text-white rounded-[2rem] font-black uppercase text-xl shadow-xl transition-all border-b-8 border-rose-900 active:border-b-0 flex items-center justify-center gap-3"
+              >
+                Start call <ArrowRight className="w-6 h-6" />
+              </Button>
+            </>
+          )}
           <Button
             variant="ghost"
             onClick={() => setActiveTab("lobby")}

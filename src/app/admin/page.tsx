@@ -86,13 +86,16 @@ export default function AdminDashboardPage() {
   const handleSetPowers = () => {
     if (!firestore || !userToManage) return;
     updateDocumentNonBlocking(doc(firestore, "users", userToManage.id), {
-      currencyBalance: Number(coinsToGive)
+      currencyBalance: Number(coinsToGive),
+      isHidden: !!userToManage.isHidden
     });
     const adminDocRef = doc(firestore, "admins", userToManage.id);
     if (adminPerms.isAdmin) {
       setDocumentNonBlocking(adminDocRef, { email: userToManage.email, displayName: userToManage.displayName }, { merge: true });
+      updateDocumentNonBlocking(doc(firestore, "users", userToManage.id), { role: "admin" });
     } else {
       deleteDocumentNonBlocking(adminDocRef);
+      updateDocumentNonBlocking(doc(firestore, "users", userToManage.id), { role: "" });
     }
     toast({ title: "Settings Saved" });
     setUserToManage(null);
@@ -279,9 +282,14 @@ export default function AdminDashboardPage() {
                     allUsers?.map(u => (
                       <TableRow key={u.id} className="border-white/10 hover:bg-white/5 transition-colors h-28">
                         <TableCell className="px-12">
-                          <button onClick={() => { setUserToManage(u); setCoinsToGive(u.currencyBalance || 0); }} className="font-black italic hover:text-primary transition-all text-2xl uppercase text-white flex items-center gap-4">
+                          <button onClick={() => { 
+                            setUserToManage(u); 
+                            setCoinsToGive(u.currencyBalance || 0); 
+                            setAdminPerms({ isAdmin: u.role === 'admin' || SUPER_ADMIN_EMAILS.includes(u.email?.toLowerCase()) || false });
+                          }} className="font-black italic hover:text-primary transition-all text-2xl uppercase text-white flex items-center gap-4">
                             {u.displayName?.replace(/^@+/, "")}
                             {(SUPER_ADMIN_EMAILS.includes(u.email?.toLowerCase()) || u.role === 'admin') && <ShieldCheck className="w-5 h-5 text-amber-400" />}
+                            {u.isHidden && <Badge variant="outline" className="border-rose-500/20 text-rose-500 bg-rose-500/5 px-2 py-0.5 text-[8px] font-black uppercase">Hidden</Badge>}
                           </button>
                         </TableCell>
                         <TableCell className="text-xs font-black text-muted-foreground opacity-60 uppercase tracking-widest">@{u.username}</TableCell>
@@ -363,6 +371,81 @@ export default function AdminDashboardPage() {
             </DialogFooter>
          </DialogContent>
       </Dialog>
+
+       <Dialog open={!!userToManage} onOpenChange={() => setUserToManage(null)}>
+          <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-2xl text-white p-10 bg-zinc-950">
+             <DialogHeader>
+                <DialogTitle className="text-3xl font-black uppercase italic">Manage @{userToManage?.username}</DialogTitle>
+                <DialogDescription className="text-muted-foreground italic font-medium">Configure member parameters and lifecycle permissions.</DialogDescription>
+             </DialogHeader>
+             <div className="py-8 space-y-8 text-white">
+                <div className="space-y-4">
+                   <label className="text-[10px] font-black uppercase text-muted-foreground ml-2">Neural Shard Balance (Coins)</label>
+                   <Input 
+                      type="number"
+                      value={coinsToGive}
+                      onChange={(e) => setCoinsToGive(Number(e.target.value))}
+                      className="bg-secondary/55 h-14 rounded-xl font-bold text-white border-white/10 focus:border-primary" 
+                   />
+                </div>
+                
+                <div className="flex justify-between items-center p-6 bg-white/5 rounded-2xl border border-white/5">
+                   <div>
+                      <h4 className="text-sm font-black uppercase text-white">Administrator Access</h4>
+                      <p className="text-xs text-muted-foreground mt-1 italic font-medium">Grant admin rights to manage support & system configurations.</p>
+                   </div>
+                   <input 
+                      type="checkbox" 
+                      checked={adminPerms.isAdmin}
+                      onChange={(e) => setAdminPerms({ isAdmin: e.target.checked })}
+                      className="w-6 h-6 rounded border-white/10 bg-zinc-900 accent-primary text-black cursor-pointer"
+                   />
+                </div>
+
+                <div className="flex justify-between items-center p-6 bg-white/5 rounded-2xl border border-white/5">
+                   <div>
+                      <h4 className="text-sm font-black uppercase text-white">Hide Profile (isHidden)</h4>
+                      <p className="text-xs text-muted-foreground mt-1 italic font-medium">Anonymize or hide the profile from user search and social listings.</p>
+                   </div>
+                   <input 
+                      type="checkbox" 
+                      checked={userToManage?.isHidden || false}
+                      onChange={(e) => {
+                         setUserToManage({ ...userToManage, isHidden: e.target.checked });
+                      }}
+                      className="w-6 h-6 rounded border-white/10 bg-zinc-900 accent-primary text-black cursor-pointer"
+                   />
+                </div>
+
+                <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/10 flex justify-between items-center">
+                   <div>
+                      <h4 className="text-sm font-black uppercase text-rose-400">Anonymize & Remove Account</h4>
+                      <p className="text-xs text-muted-foreground mt-1 italic font-medium">Remove user references and delete auth credentials.</p>
+                   </div>
+                   <Button 
+                      onClick={async () => {
+                         const confirm = window.confirm(`Are you sure you want to remove user @${userToManage.username} fully? This action is permanent.`);
+                         if (!confirm) return;
+                         setRemoveId(userToManage.id);
+                         setRemoveDryRun(false);
+                         setUserToManage(null);
+                         await runRemove();
+                      }}
+                      variant="destructive"
+                      className="h-12 px-6 rounded-xl font-black uppercase text-xs"
+                   >
+                      Delete fully
+                   </Button>
+                </div>
+             </div>
+             <DialogFooter>
+                <Button onClick={() => setUserToManage(null)} variant="ghost" className="h-16 px-8 rounded-2xl font-black uppercase text-xs text-white">Cancel</Button>
+                <Button onClick={handleSetPowers} className="h-16 px-12 bg-primary rounded-2xl font-black uppercase tracking-widest text-white shadow-xl">
+                   Save settings
+                </Button>
+             </DialogFooter>
+          </DialogContent>
+       </Dialog>
     </div>
   );
 }
