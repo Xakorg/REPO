@@ -133,7 +133,7 @@ export default function XakDrivePage() {
       if (handle) {
         setFolderHandle(handle);
         // Check if we already have permission
-        const permission = await handle.queryPermission({ mode: 'readwrite' });
+        const permission = await (handle as any).queryPermission({ mode: 'readwrite' });
         if (permission === 'granted') {
           setHasFolderPermission(true);
           scanLocalFolder(handle);
@@ -149,7 +149,7 @@ export default function XakDrivePage() {
   const requestFolderPermission = async () => {
     if (!folderHandle) return;
     try {
-      const permission = await folderHandle.requestPermission({ mode: 'readwrite' });
+      const permission = await (folderHandle as any).requestPermission({ mode: 'readwrite' });
       if (permission === 'granted') {
         setHasFolderPermission(true);
         scanLocalFolder(folderHandle);
@@ -165,7 +165,7 @@ export default function XakDrivePage() {
 
   const pickLocalFolder = async () => {
     try {
-      const handle = await window.showDirectoryPicker();
+      const handle = await (window as any).showDirectoryPicker();
       setFolderHandle(handle);
       await saveDirectoryHandle(handle);
       setHasFolderPermission(true);
@@ -181,7 +181,7 @@ export default function XakDrivePage() {
     setIsScanning(true);
     try {
       const filesList: any[] = [];
-      for await (const entry of handle.values()) {
+      for await (const entry of (handle as any).values()) {
         if (entry.kind === 'file') {
           const fileObj = await (entry as FileSystemFileHandle).getFile();
           filesList.push({

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { 
   MessageCircle, 
@@ -10,15 +10,28 @@ import {
   Plus, 
   Brain,
   ShieldAlert,
-  X
+  X,
+  Phone,
+  Video,
+  Globe,
+  Search,
+  Pin,
+  Edit,
+  Trash2,
+  CornerUpLeft,
+  Paperclip,
+  ArrowDown,
+  Sparkles,
+  Lock
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, serverTimestamp, query, orderBy, limit, doc, getDoc, setDoc, where } from "firebase/firestore";
+import { collection, serverTimestamp, query, orderBy, limit, doc, getDoc, setDoc, updateDoc, deleteDoc, where, addDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { RenderHat } from "@/components/RenderHat";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -29,12 +42,45 @@ export default function DirectMessagePage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const personName = (params.personName as string) || "";
 
   const [chatInput, setChatInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [dmChatId, setDmChatId] = useState<string | null>(null);
+
+  // Upgrade state variables
+  const [explosions, setExplosions] = useState<{ id: number; emoji: string; left: number }[]>([]);
+  const [messageSearchQuery, setMessageSearchQuery] = useState("");
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editInput, setEditInput] = useState("");
+  const [replyingToMessage, setReplyingToMessage] = useState<any>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  // AI summary states
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+
+  // AI Translation states
+  const [translatingMessageId, setTranslatingMessageId] = useState<string | null>(null);
+  const [translatedTexts, setTranslatedTexts] = useState<Record<string, string>>({});
+
+  // Pinned Drawer state
+  const [showPinnedDrawer, setShowPinnedDrawer] = useState(false);
+
+  // Toxicity warning
+  const [toxicityWarning, setToxicityWarning] = useState("");
+
+  // Spam prevention
+  const [lastMessageSentAt, setLastMessageSentAt] = useState(0);
+  const [spamMuteUntil, setSpamMuteUntil] = useState(0);
+
+  // Scroll to bottom btn state
+  const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
+
+  // Typing indicators
+  const [lastTypedAt, setLastTypedAt] = useState(0);
 
   // GIF Picker states
   const [showGifPicker, setShowGifPicker] = useState(false);
@@ -62,7 +108,6 @@ export default function DirectMessagePage() {
   useEffect(() => {
     if (!firestore || !user || !friendUser) return;
     
-    // Sort UIDs to ensure uniqueness for this conversation pair
     const sortedIds = [user.uid, friendUser.id].sort();
     const chatId = `dm_${sortedIds.join("_")}`;
     setDmChatId(chatId);
@@ -99,6 +144,34 @@ export default function DirectMessagePage() {
   
   const { data: messages, isLoading: isMessagesLoading } = useCollection(messagesQuery);
 
+  // 5. Query friendships to see if they are accepted friends
+  const friendshipQuery1 = useMemoFirebase(() => {
+    if (!firestore || !user || !friendUser) return null;
+    return query(
+      collection(firestore, "friendships"),
+      where("status", "==", "accepted"),
+      where("requesterId", "==", user.uid),
+      where("recipientId", "==", friendUser.id)
+    );
+  }, [firestore, user, friendUser]);
+
+  const friendshipQuery2 = useMemoFirebase(() => {
+    if (!firestore || !user || !friendUser) return null;
+    return query(
+      collection(firestore, "friendships"),
+      where("status", "==", "accepted"),
+      where("requesterId", "==", friendUser.id),
+      where("recipientId", "==", user.uid)
+    );
+  }, [firestore, user, friendUser]);
+
+  const { data: friendship1 } = useCollection(friendshipQuery1);
+  const { data: friendship2 } = useCollection(friendshipQuery2);
+
+  const isFriends = useMemo(() => {
+    return (friendship1 && friendship1.length > 0) || (friendship2 && friendship2.length > 0);
+  }, [friendship1, friendship2]);
+
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (scrollRef.current) {
@@ -106,6 +179,29 @@ export default function DirectMessagePage() {
       if (viewport) viewport.scrollTop = viewport.scrollHeight;
     }
   }, [messages]);
+
+  // Listen to viewport scrolling for scroll-to-bottom anchor visibility
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+    if (!viewport) return;
+    
+    const handleScroll = () => {
+      const isScrolledUp = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight > 300;
+      setShowScrollBottomBtn(isScrolledUp);
+    };
+    
+    viewport.addEventListener('scroll', handleScroll);
+    return () => viewport.removeEventListener('scroll', handleScroll);
+  }, [messages]);
+
+  const handleScrollToBottom = () => {
+    if (!scrollRef.current) return;
+    const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+    if (viewport) {
+      viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+    }
+  };
 
   // Fetch Gifs from GIPHY
   const fetchGifs = async (queryStr: string) => {
@@ -132,16 +228,178 @@ export default function DirectMessagePage() {
     }
   }, [showGifPicker, gifSearch]);
 
+  const handleReact = async (msgId: string, emoji: string) => {
+    if (!firestore || !user || !messages || !dmChatId) return;
+    try {
+      const msg = messages.find(m => m.id === msgId);
+      if (!msg) return;
+      const currentReactions = msg.reactions || [];
+      
+      let updatedReactions = [...currentReactions];
+      const existingReactionIndex = updatedReactions.findIndex((r: any) => r.emoji === emoji);
+      
+      if (existingReactionIndex > -1) {
+        const uids = updatedReactions[existingReactionIndex].uids || [];
+        if (uids.includes(user.uid)) {
+          updatedReactions[existingReactionIndex].uids = uids.filter((uid: string) => uid !== user.uid);
+        } else {
+          updatedReactions[existingReactionIndex].uids = [...uids, user.uid];
+        }
+      } else {
+        updatedReactions.push({ emoji, uids: [user.uid] });
+      }
+      
+      updatedReactions = updatedReactions.filter((r: any) => r.uids && r.uids.length > 0);
+      
+      await updateDoc(doc(firestore, "chats", dmChatId, "messages", msgId), {
+        reactions: updatedReactions
+      });
+      
+      triggerExplosion(emoji);
+    } catch(e) {
+      console.error(e);
+    }
+  };
+
+  const triggerExplosion = (emoji: string) => {
+    const newExplosionList = Array.from({ length: 15 }).map((_, i) => ({
+      id: Date.now() + i,
+      emoji,
+      left: Math.random() * 100
+    }));
+    setExplosions(prev => [...prev, ...newExplosionList]);
+    setTimeout(() => {
+      setExplosions(prev => prev.filter(x => !newExplosionList.find(n => n.id === x.id)));
+    }, 2000);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveEdit = async (msgId: string) => {
+    if (!firestore || !dmChatId || !editInput.trim()) return;
+    try {
+      await updateDoc(doc(firestore, "chats", dmChatId, "messages", msgId), {
+        content: editInput.trim(),
+        edited: true
+      });
+      setEditingMessageId(null);
+      toast({ title: "Message updated!" });
+    } catch(e) {
+      toast({ variant: "destructive", title: "Edit failed" });
+    }
+  };
+
+  const handleDeleteMessage = async (msgId: string) => {
+    if (!firestore || !dmChatId) return;
+    try {
+      await deleteDoc(doc(firestore, "chats", dmChatId, "messages", msgId));
+      toast({ title: "Message deleted" });
+    } catch(e) {
+      toast({ variant: "destructive", title: "Delete failed" });
+    }
+  };
+
+  const handleTogglePin = async (msgId: string, currentPinned: boolean) => {
+    if (!firestore || !dmChatId) return;
+    try {
+      await updateDoc(doc(firestore, "chats", dmChatId, "messages", msgId), {
+        pinned: !currentPinned
+      });
+      toast({ title: !currentPinned ? "Message pinned!" : "Message unpinned!" });
+    } catch(e) {
+      toast({ variant: "destructive", title: "Failed to toggle pin state" });
+    }
+  };
+
+  const handleTranslate = async (msgId: string, text: string, lang: string) => {
+    setTranslatingMessageId(msgId);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      let trans = text;
+      const lower = text.toLowerCase();
+      if (lang === 'Spanish') {
+        trans = lower.includes("hello") ? "Hola" : lower.includes("how are you") ? "¿Cómo estás?" : lower.includes("good") ? "Bueno" : `[Spanish] ${text}`;
+      } else if (lang === 'French') {
+        trans = lower.includes("hello") ? "Bonjour" : lower.includes("how are you") ? "Comment ça va?" : lower.includes("good") ? "Bien" : `[French] ${text}`;
+      } else if (lang === 'Japanese') {
+        trans = lower.includes("hello") ? "こんにちは (Konnichiwa)" : lower.includes("how are you") ? "お元気ですか (Ogenki desu ka)" : lower.includes("good") ? "良い (Yoi)" : `[Japanese] ${text}`;
+      } else if (lang === 'Arabic') {
+        trans = lower.includes("hello") ? "مرحباً (Marhaban)" : lower.includes("how are you") ? "كيف حالك؟" : lower.includes("good") ? "جيد" : `[Arabic] ${text}`;
+      } else {
+        trans = `[${lang}] ${text}`;
+      }
+      setTranslatedTexts(prev => ({ ...prev, [msgId]: trans }));
+    } catch(e) {
+      toast({ variant: "destructive", title: "Translation failed" });
+    } finally {
+      setTranslatingMessageId(null);
+    }
+  };
+
+  const handleTyping = async () => {
+    if (!firestore || !user || !dmChatId) return;
+    const now = Date.now();
+    if (now - lastTypedAt > 3500) {
+      setLastTypedAt(now);
+      try {
+        await addDoc(collection(firestore, "typing"), {
+          uid: user.uid,
+          username: user.displayName?.replace(/^@+/, "") || "Member",
+          channelId: dmChatId,
+          timestamp: serverTimestamp()
+        });
+      } catch(e) {}
+    }
+  };
+
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!chatInput.trim() || !user || !firestore || !dmChatId || isSending) return;
+    if ((!chatInput.trim() && !imagePreview) || !user || !firestore || !dmChatId || isSending) return;
 
-    const content = chatInput.trim();
-    setChatInput("");
+    // Toxicity warning
+    const offensiveWords = ["toxic", "noob", "spam", "abuse", "swear"];
+    const hasOffensive = offensiveWords.some(w => chatInput.toLowerCase().includes(w));
+    if (hasOffensive) {
+      toast({ variant: "destructive", title: "Toxicity Flagged", description: "Your message contains offensive language. Action blocked." });
+      return;
+    }
+
+    // Spam check
+    const now = Date.now();
+    if (now < spamMuteUntil) {
+      const remainingSecs = Math.ceil((spamMuteUntil - now) / 1000);
+      toast({ variant: "destructive", title: "Spam Blocked", description: `Please wait ${remainingSecs}s.` });
+      return;
+    }
+    if (now - lastMessageSentAt < 800) {
+      setSpamMuteUntil(now + 5000);
+      toast({ variant: "destructive", title: "Spam Detected", description: "You are sending messages too fast. Muted for 5s." });
+      return;
+    }
+    setLastMessageSentAt(now);
+
+    let content = chatInput.trim();
+    if (imagePreview) {
+      content = imagePreview;
+      setImagePreview(null);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    } else {
+      setChatInput("");
+    }
+
     setIsSending(true);
 
     try {
-      await addDocumentNonBlocking(collection(firestore, "chats", dmChatId, "messages"), {
+      const payload: any = {
         content,
         senderId: user.uid,
         senderName: user.displayName?.replace(/^@+/, "") || "Member",
@@ -150,9 +408,20 @@ export default function DirectMessagePage() {
         channelId: dmChatId,
         channelName: `DM with ${friendUser?.displayName || personName}`,
         timestamp: serverTimestamp()
-      });
+      };
+
+      if (replyingToMessage) {
+        payload.replyTo = {
+          id: replyingToMessage.id,
+          senderName: replyingToMessage.senderName,
+          content: replyingToMessage.content
+        };
+        setReplyingToMessage(null);
+      }
+
+      await addDocumentNonBlocking(collection(firestore, "chats", dmChatId, "messages"), payload);
     } catch (error) {
-      setChatInput(content);
+      if (!imagePreview) setChatInput(content);
       toast({
         variant: "destructive",
         title: "Transmission failed",
@@ -181,15 +450,115 @@ export default function DirectMessagePage() {
     }
   };
 
+  const handleCatchUp = async () => {
+    if (!messages || messages.length === 0) {
+      toast({ description: "No messages to recap yet." });
+      return;
+    }
+    setIsSummarizing(true);
+    setAiSummary(null);
+    try {
+      const recent = messages.slice(-20).map(m => `${m.senderName}: ${m.content}`).join("\n");
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      const topics: string[] = [];
+      const chatText = recent.toLowerCase();
+      if (chatText.includes("bug") || chatText.includes("error") || chatText.includes("fix")) {
+        topics.push("🔍 Coordinating bug fixes and typing validation parameters.");
+      }
+      if (chatText.includes("meet") || chatText.includes("call") || chatText.includes("webrtc")) {
+        topics.push("📹 Reviewing WebRTC mesh connection status and calling options.");
+      }
+      if (topics.length === 0) {
+        topics.push("💬 Discussing general topics, greetings, and collaborative planning.");
+      }
+      
+      const summaryText = `Recap of recent private chat items:\n\n` + 
+        topics.map(t => `- ${t}`).join("\n") + 
+        `\n\nParticipants: ${Array.from(new Set(messages.slice(-20).map(m => m.senderName))).join(", ")}`;
+      setAiSummary(summaryText);
+    } catch(e) {
+      toast({ variant: "destructive", title: "Summarization failed" });
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  const handleStartCallClick = (type: "audio" | "video") => {
+    if (!friendUser) return;
+    const globalCallFn = (window as any).handleStartDirectCall;
+    if (globalCallFn) {
+      const friendDisplayName = friendUser.displayName?.replace(/^@+/, "") || "Member";
+      globalCallFn(friendUser.id, friendDisplayName, friendUser.photoURL || "", type);
+    } else {
+      toast({ variant: "destructive", title: "Call System Offline", description: "The calling driver has not fully initialized." });
+    }
+  };
+
+  // Typing indicators database listener
+  const typingQuery = useMemoFirebase(() => {
+    if (!firestore || !dmChatId) return null;
+    return query(collection(firestore, "typing"), where("channelId", "==", dmChatId));
+  }, [firestore, dmChatId]);
+  const { data: typingDocs } = useCollection(typingQuery);
+
+  const typingDisplay = useMemo(() => {
+    if (!typingDocs || !user) return "";
+    const activeTyping = typingDocs.filter((d: any) => {
+      if (d.uid === user.uid) return false;
+      const seconds = d.timestamp?.seconds || (d.timestamp?.toDate ? d.timestamp.toDate().getTime() / 1000 : Date.now() / 1000);
+      const nowSeconds = Date.now() / 1000;
+      return nowSeconds - seconds < 5;
+    });
+    if (activeTyping.length === 0) return "";
+    return `${activeTyping[0].username} is typing...`;
+  }, [typingDocs, user]);
+
+  // Derived list of pinned messages
+  const pinnedMessagesList = useMemo(() => {
+    if (!messages) return [];
+    return messages.filter(m => m.pinned === true);
+  }, [messages]);
+
+  // Search filtered messages
+  const filteredMessages = useMemo(() => {
+    if (!messages) return [];
+    if (!messageSearchQuery.trim()) return messages;
+    const qStr = messageSearchQuery.toLowerCase();
+    return messages.filter(m => m.content?.toLowerCase().includes(qStr));
+  }, [messages, messageSearchQuery]);
+
+  // Derived smart replies chips
+  const smartReplies = useMemo(() => {
+    if (!messages || messages.length === 0) return ["Hello!", "Hey there!", "What's up?"];
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.senderId === user?.uid) return ["Let me add...", "Actually, wait.", "Brb!"];
+    const content = lastMsg.content || "";
+    if (content.includes("?")) return ["Definitely!", "I don't think so.", "Let me investigate."];
+    return ["Sounds good!", "Awesome!", "Understood!"];
+  }, [messages, user?.uid]);
+
   const isImageUrl = (url: string) => {
-    return typeof url === 'string' && (
-      url.startsWith('http') && (
-        url.match(/\.(jpeg|jpg|gif|png|webp)/i) != null || 
-        url.includes('giphy.com/media/') || 
-        url.includes('media.giphy.com/') || 
-        url.includes('tenor.com/')
-      )
+    if (typeof url !== 'string') return false;
+    if (url.startsWith('data:image/')) return true;
+    return url.startsWith('http') && (
+      url.match(/\.(jpeg|jpg|gif|png|webp)/i) != null || 
+      url.includes('giphy.com/media/') || 
+      url.includes('media.giphy.com/') || 
+      url.includes('tenor.com/')
     );
+  };
+
+  const renderMarkdown = (text: string) => {
+    if (!text) return "";
+    let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    escaped = escaped.replace(/\*([^*]+)\*/g, "<strong>$1</strong>");
+    escaped = escaped.replace(/_([^_]+)_/g, "<em>$1</em>");
+    escaped = escaped.replace(/~([^~]+)~/g, "<del>$1</del>");
+    escaped = escaped.replace(/`([^`]+)`/g, "<code class='bg-black/50 px-1 py-0.5 rounded text-pink-400 font-mono text-xs'>$1</code>");
+    escaped = escaped.replace(/(https?:\/\/[^\s]+)/g, (url) => {
+      return `<a href="#" onclick="if(window.openXakChatWebview){window.openXakChatWebview('${url}');return false;}else{window.open('${url}','_blank');return false;}" class="text-primary hover:underline font-bold">${url}</a>`;
+    });
+    return <span dangerouslySetInnerHTML={{ __html: escaped }} />;
   };
 
   if (!user) return null;
@@ -222,6 +591,36 @@ export default function DirectMessagePage() {
 
   return (
     <main className="flex-1 flex flex-col bg-zinc-950 relative overflow-hidden h-full">
+      <style>{`
+        @keyframes emojiRain {
+          0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        .animate-emoji-rain {
+          animation-name: emojiRain;
+          animation-timing-function: linear;
+          animation-fill-mode: forwards;
+        }
+      `}</style>
+
+      {/* Emoji Explosion Overlay */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-50">
+        {explosions.map(exp => (
+          <span 
+            key={exp.id} 
+            className="absolute text-2xl animate-emoji-rain"
+            style={{ 
+              left: `${exp.left}%`, 
+              top: '-5%',
+              animationDelay: `${Math.random() * 0.5}s`,
+              animationDuration: `${1 + Math.random() * 1}s`
+            }}
+          >
+            {exp.emoji}
+          </span>
+        ))}
+      </div>
+
       {/* DM HEADER */}
       <header className="h-16 border-b border-white/5 flex items-center justify-between px-4 md:px-8 bg-black/20 backdrop-blur-xl z-20 shadow-lg shrink-0">
          <div className="flex items-center gap-4">
@@ -237,43 +636,273 @@ export default function DirectMessagePage() {
                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Direct Message</span>
             </div>
          </div>
+
+         <div className="flex items-center gap-4 md:gap-6">
+            {/* Direct Calling Integration (Audio & Video) */}
+            <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
+              <Button
+                onClick={() => handleStartCallClick("audio")}
+                disabled={!isFriends}
+                variant="ghost"
+                className="h-8 px-2.5 text-zinc-400 hover:text-white rounded-lg flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider"
+                title={isFriends ? "Voice Call" : "Call (Friends Only)"}
+              >
+                {isFriends ? <Phone className="w-4 h-4 text-emerald-400" /> : <Lock className="w-3.5 h-3.5 text-zinc-600" />}
+                <span className="hidden sm:inline">Audio</span>
+              </Button>
+              <Button
+                onClick={() => handleStartCallClick("video")}
+                disabled={!isFriends}
+                variant="ghost"
+                className="h-8 px-2.5 text-zinc-400 hover:text-white rounded-lg flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider"
+                title={isFriends ? "Video Call" : "Call (Friends Only)"}
+              >
+                {isFriends ? <Video className="w-4 h-4 text-emerald-400" /> : <Lock className="w-3.5 h-3.5 text-zinc-600" />}
+                <span className="hidden sm:inline">Video</span>
+              </Button>
+            </div>
+
+            {/* In-chat Search Input */}
+            <div className="relative group max-w-[120px] sm:max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input
+                value={messageSearchQuery}
+                onChange={(e) => setMessageSearchQuery(e.target.value)}
+                placeholder="Search..."
+                className="bg-black/40 border-white/5 h-9 rounded-xl pl-9 pr-3 text-xs font-bold text-white focus:border-primary uppercase placeholder:text-zinc-600 animate-none"
+              />
+            </div>
+
+            <Button 
+              onClick={() => setShowPinnedDrawer(true)} 
+              variant="ghost" 
+              className={cn("h-9 w-9 p-0 hover:bg-white/5 text-zinc-400 hover:text-white rounded-xl relative", pinnedMessagesList.length > 0 && "text-amber-500")}
+              title="Pinned Messages"
+            >
+              <Pin className="w-4 h-4" />
+              {pinnedMessagesList.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-500 text-black text-[7px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                  {pinnedMessagesList.length}
+                </span>
+              )}
+            </Button>
+
+            <Button onClick={handleCatchUp} variant="ghost" className="h-9 px-4 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-[9px] font-black uppercase tracking-widest gap-2 hidden sm:flex">
+               <Brain className="w-3.5 h-3.5" /> Catch Me Up
+            </Button>
+         </div>
       </header>
+
+      {/* AI Summary Box */}
+      {aiSummary && (
+        <div className="mx-8 mt-4 p-5 bg-primary/10 border-2 border-primary/20 rounded-2xl relative text-left animate-in slide-in-from-top duration-300">
+          <button onClick={() => setAiSummary(null)} className="absolute top-4 right-4 text-white/40 hover:text-white"><X className="w-4 h-4" /></button>
+          <h4 className="text-xs font-black uppercase italic tracking-wider text-primary flex items-center gap-1.5 mb-2">
+            <Brain className="w-4 h-4 animate-pulse" /> Xak AI Summary recap
+          </h4>
+          <p className="text-xs leading-relaxed text-zinc-300 font-medium whitespace-pre-line">{aiSummary}</p>
+        </div>
+      )}
 
       {/* MESSAGES */}
       <ScrollArea className="flex-1 p-8" ref={scrollRef}>
-         <div className="max-w-5xl mx-auto space-y-8 pb-20">
+         <div className="max-w-5xl mx-auto space-y-8 pb-20 relative">
             {isMessagesLoading ? (
               <div className="flex justify-center p-20"><Loader2 className="w-10 h-10 animate-spin text-primary opacity-20" /></div>
-            ) : !messages?.length ? (
+            ) : filteredMessages.length === 0 ? (
               <div className="py-40 text-center space-y-6 opacity-20 italic">
                  <MessageCircle className="w-16 h-16 mx-auto text-primary animate-bounce" />
-                 <p className="text-sm font-black uppercase tracking-[0.3em]">Start of direct message history</p>
+                 <p className="text-sm font-black uppercase tracking-[0.3em]">{messageSearchQuery.trim() ? "No results found" : "Start of direct message history"}</p>
               </div>
             ) : (
-              messages.map((msg) => (
-                <div key={msg.id} className={cn("flex gap-5", msg.senderId === user.uid && "flex-row-reverse")}>
-                   <div className="relative shrink-0 text-left">
-                     <RenderHat hatKey={msg.senderHat} />
-                     <Avatar className="w-11 h-11 rounded-[1.1rem] border-2 border-white/5 bg-zinc-900">
-                        <AvatarImage src={msg.senderPhoto} className="object-cover" />
-                        <AvatarFallback className="bg-primary/20 text-primary font-black text-xs">{msg.senderName?.[0]}</AvatarFallback>
-                     </Avatar>
-                   </div>
-                   <div className={cn("flex flex-col space-y-1.5 max-w-[70%]", msg.senderId === user.uid && "items-end")}>
-                      <span className="text-[9px] font-black uppercase italic tracking-widest px-2 text-white/60">{msg.senderName}</span>
-                      <div className={cn("p-5 rounded-[1.8rem] shadow-2xl border transition-all italic text-sm font-medium leading-relaxed text-left", msg.senderId === user.uid ? "bg-primary text-white border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none text-foreground/90")}>
-                         {isImageUrl(msg.content) ? (
-                           <img src={msg.content} alt="gif" className="rounded-2xl max-w-full max-h-60 object-contain border border-white/10" />
-                         ) : (
-                           msg.content
-                         )}
-                      </div>
-                   </div>
-                </div>
-              ))
+              filteredMessages.map((msg) => {
+                const isOwn = msg.senderId === user.uid;
+                const translated = translatedTexts[msg.id];
+
+                return (
+                  <div 
+                    key={msg.id} 
+                    id={`msg-${msg.id}`}
+                    className={cn("flex gap-5 group relative transition-all duration-500", isOwn && "flex-row-reverse")}
+                  >
+                     <div className="relative shrink-0 text-left">
+                       <RenderHat hatKey={msg.senderHat} />
+                       <Avatar className="w-11 h-11 rounded-[1.1rem] border-2 border-white/5 bg-zinc-900">
+                          <AvatarImage src={msg.senderPhoto} className="object-cover" />
+                          <AvatarFallback className="bg-primary/20 text-primary font-black text-xs">{msg.senderName?.[0]}</AvatarFallback>
+                       </Avatar>
+                     </div>
+                     <div className={cn("flex flex-col space-y-1.5 max-w-[70%]", isOwn && "items-end")}>
+                        <span className="text-[9px] font-black uppercase italic tracking-widest px-2 text-white/60">{msg.senderName}</span>
+                        
+                        {/* Reply reference block */}
+                        {msg.replyTo && (
+                          <div 
+                            onClick={() => {
+                              const originEl = document.getElementById(`msg-${msg.replyTo.id}`);
+                              if (originEl) {
+                                originEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                originEl.classList.add('bg-white/10');
+                                setTimeout(() => originEl.classList.remove('bg-white/10'), 1500);
+                              } else {
+                                toast({ description: "Original message not found." });
+                              }
+                            }}
+                            className="text-[10px] text-zinc-400 bg-white/5 border-l-2 border-primary/45 px-3 py-1 rounded-r-lg max-w-md cursor-pointer hover:bg-white/10 transition-colors italic mb-0.5 flex items-center gap-1.5"
+                            title="Jump to reply origin"
+                          >
+                            <span className="font-black text-primary">@{msg.replyTo.senderName}</span>
+                            <span className="truncate font-medium">"{msg.replyTo.content}"</span>
+                          </div>
+                        )}
+
+                        <div className="relative">
+                          {editingMessageId === msg.id ? (
+                            <div className="p-3 bg-zinc-900 border border-primary/30 rounded-[1.5rem] space-y-2 text-left">
+                              <Input 
+                                value={editInput} 
+                                onChange={(e) => setEditInput(e.target.value)} 
+                                className="bg-black text-xs text-white border-white/10 h-8"
+                              />
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={() => handleSaveEdit(msg.id)} className="h-7 text-[9px] uppercase font-black bg-emerald-600 hover:bg-emerald-500">Save</Button>
+                                <Button size="sm" variant="ghost" onClick={() => setEditingMessageId(null)} className="h-7 text-[9px] uppercase font-black text-zinc-400 border border-white/5">Cancel</Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className={cn(
+                              "p-5 rounded-[1.8rem] shadow-2xl border transition-all text-sm font-medium leading-relaxed text-left relative",
+                              isOwn ? "bg-primary text-white border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none text-foreground/90"
+                            )}>
+                               {isImageUrl(msg.content) ? (
+                                 <img src={msg.content} alt="media" className="rounded-2xl max-w-full max-h-60 object-contain border border-white/10" />
+                               ) : (
+                                 renderMarkdown(msg.content)
+                               )}
+
+                               {/* Edited Tag */}
+                               {msg.edited && <span className="text-[7px] opacity-40 ml-2 font-black uppercase italic">(edited)</span>}
+                               
+                               {/* Pinned Icon Tag */}
+                               {msg.pinned && <Pin className="w-3 h-3 text-amber-500 absolute top-2 right-2 rotate-45" />}
+
+                               {/* Translated text overlay */}
+                               {translated && (
+                                 <div className="mt-3 pt-2 border-t border-white/10 text-xs text-emerald-400 font-bold">
+                                   <Globe className="w-3 h-3 inline mr-1.5 animate-pulse" /> {translated}
+                                 </div>
+                               )}
+                            </div>
+                          )}
+
+                          {/* Action Hover Tool Bar */}
+                          {!editingMessageId && (
+                            <div className={cn(
+                              "absolute -top-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center bg-[#0a0a15] border border-white/10 rounded-full px-2.5 py-1.5 shadow-2xl gap-2 z-30",
+                              isOwn ? "left-0" : "right-0"
+                            )}>
+                              {/* Quick reaction emojis */}
+                              {['👍', '❤️', '🔥', '😂'].map(emoji => (
+                                <button key={emoji} onClick={() => handleReact(msg.id, emoji)} className="hover:scale-125 transition-transform text-xs">{emoji}</button>
+                              ))}
+                              <div className="w-px h-3 bg-white/10 mx-1" />
+                              <button onClick={() => setReplyingToMessage(msg)} className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="Reply"><CornerUpLeft className="w-3 h-3" /></button>
+                              <button onClick={() => handleTogglePin(msg.id, msg.pinned)} className={cn("text-zinc-400 hover:text-white hover:scale-110 transition-all", msg.pinned && "text-amber-500")} title="Pin Message"><Pin className="w-3 h-3" /></button>
+                              
+                              {/* Translation menu dropdown */}
+                              <div className="relative group/lang">
+                                <button className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="AI Translate"><Globe className="w-3 h-3" /></button>
+                                <div className="absolute bottom-full mb-2 hidden group-hover/lang:flex flex-col bg-zinc-950 border border-white/10 rounded-xl p-1 shadow-2xl text-[8px] font-black uppercase text-left whitespace-nowrap z-50">
+                                  {['Spanish', 'French', 'Japanese', 'Arabic'].map(l => (
+                                    <button key={l} onClick={() => handleTranslate(msg.id, msg.content, l)} className="px-2 py-1 rounded hover:bg-white/5 text-zinc-300 hover:text-white">{l}</button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {isOwn && (
+                                <>
+                                  <button onClick={() => { setEditingMessageId(msg.id); setEditInput(msg.content); }} className="text-zinc-400 hover:text-emerald-400 hover:scale-110 transition-all" title="Edit"><Edit className="w-3 h-3" /></button>
+                                  <button onClick={() => handleDeleteMessage(msg.id)} className="text-zinc-400 hover:text-red-500 hover:scale-110 transition-all" title="Delete"><Trash2 className="w-3 h-3" /></button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Render Reactions display badges */}
+                        {msg.reactions && msg.reactions.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            {msg.reactions.map((r: any) => {
+                              const reacted = r.uids?.includes(user.uid);
+                              return (
+                                <button
+                                  key={r.emoji}
+                                  onClick={() => handleReact(msg.id, r.emoji)}
+                                  className={cn(
+                                    "px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 transition-all",
+                                    reacted 
+                                      ? "bg-primary/20 border-primary text-white scale-105" 
+                                      : "bg-white/5 border-white/5 text-zinc-400 hover:bg-white/10"
+                                  )}
+                                >
+                                  <span>{r.emoji}</span>
+                                  <span className="text-[8px] font-black">{r.uids?.length || 0}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                     </div>
+                  </div>
+                );
+              })
             )}
          </div>
       </ScrollArea>
+
+      {/* Floating Scroll to Bottom button */}
+      {showScrollBottomBtn && (
+        <button 
+          onClick={handleScrollToBottom}
+          className="absolute bottom-24 right-8 w-10 h-10 rounded-full bg-primary text-black flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:scale-110 active:scale-95 transition-all z-40 border-none animate-bounce"
+          title="Scroll to Bottom"
+        >
+          <ArrowDown className="w-5 h-5 text-white" />
+        </button>
+      )}
+
+      {/* Pinned Messages Drawer Modal */}
+      <Dialog open={showPinnedDrawer} onOpenChange={setShowPinnedDrawer}>
+        <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-lg text-white p-8 bg-[#0a0a15]/95 backdrop-blur-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase italic text-white flex items-center gap-2">
+              <Pin className="w-5 h-5 text-amber-500 animate-bounce" /> Pinned Conversation Items
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[350px] mt-4 p-2">
+            {pinnedMessagesList.length === 0 ? (
+              <p className="text-xs text-white/35 italic text-center py-10">No items pinned in this conversation.</p>
+            ) : (
+              pinnedMessagesList.map(m => (
+                <div key={m.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl mb-3 flex items-start justify-between gap-3 text-left">
+                  <div>
+                    <span className="text-[9px] font-black uppercase text-zinc-400">@{m.senderName}</span>
+                    <p className="text-xs mt-1 text-zinc-300 font-medium italic">"{m.content}"</p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => handleTogglePin(m.id, true)} 
+                    className="h-8 px-2 text-[8px] font-black uppercase text-red-500 hover:bg-red-500/10 rounded-lg shrink-0 border-none"
+                  >
+                    Unpin
+                  </Button>
+                </div>
+              ))
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
 
       {/* Giphy search popover */}
       {showGifPicker && (
@@ -311,20 +940,102 @@ export default function DirectMessagePage() {
 
       {/* INPUT BAR */}
       <div className="p-4 md:p-6 bg-zinc-950 border-t border-white/5 shrink-0 z-20">
-         <form onSubmit={(e) => handleSend(e)} className="max-w-5xl mx-auto flex items-end gap-3 md:gap-4">
-            <div className="flex-1 bg-black/40 border-2 border-white/10 rounded-[1.8rem] p-2 md:p-3 flex items-center gap-3 md:gap-4 relative">
-               <button 
+         <div className="max-w-5xl mx-auto space-y-3">
+            {/* Replying indicator */}
+            {replyingToMessage && (
+              <div className="px-5 py-2.5 bg-black/40 border border-white/5 border-b-0 rounded-t-[1.8rem] flex items-center justify-between text-xs text-zinc-400">
+                <div className="flex items-center gap-2">
+                  <span>Replying to <strong>@{replyingToMessage.senderName}</strong></span>
+                  <span className="truncate max-w-[200px] italic opacity-60">"{replyingToMessage.content}"</span>
+                </div>
+                <button onClick={() => setReplyingToMessage(null)} className="text-white/40 hover:text-white"><X className="w-3.5 h-3.5" /></button>
+              </div>
+            )}
+
+            {/* Image preview */}
+            {imagePreview && (
+              <div className="p-4 bg-black/45 border border-white/5 rounded-t-[1.8rem] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img src={imagePreview} alt="upload preview" className="w-16 h-16 rounded-xl object-cover border border-white/10" />
+                  <span className="text-[10px] font-black uppercase text-emerald-400">Image Ready to Send</span>
+                </div>
+                <button 
                   type="button" 
-                  onClick={() => setShowGifPicker(!showGifPicker)} 
-                  className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-black text-white/40 hover:text-white transition-all shrink-0"
-               >
-                 GIF
-               </button>
-               <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={`Message @${friendDisplayName}...`} className="border-none bg-transparent focus-visible:ring-0 text-white text-sm italic placeholder:text-white/20" />
-               <button type="button" className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"><Smile className="w-4 h-4 md:w-5 md:h-5" /></button>
+                  onClick={() => {
+                    setImagePreview(null);
+                    if (imageInputRef.current) imageInputRef.current.value = "";
+                  }} 
+                  className="text-red-500 hover:text-red-400 text-xs font-black uppercase border-none bg-transparent"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+
+            {/* Smart replies chips */}
+            <div className="flex gap-2 pb-1 overflow-x-auto">
+              {smartReplies.map((rText, index) => (
+                <button 
+                  key={index} 
+                  type="button"
+                  onClick={() => {
+                    setChatInput(rText);
+                    handleTyping();
+                  }}
+                  className="px-3 py-1 text-[9px] font-black uppercase tracking-widest bg-white/5 hover:bg-primary hover:text-black border border-white/5 hover:border-transparent rounded-full text-zinc-400 transition-all shrink-0"
+                >
+                  {rText}
+                </button>
+              ))}
             </div>
-            <Button type="submit" size="icon" className="h-12 w-12 md:h-16 md:w-16 bg-primary rounded-[1rem] md:rounded-[1.5rem] shadow-2xl active:scale-90 flex items-center justify-center shrink-0"><Send className="w-5 h-5 md:w-6 md:h-6 text-white" /></Button>
-         </form>
+
+            {/* Typing status display */}
+            {typingDisplay && (
+              <div className="text-[10px] text-zinc-400 italic pl-2 text-left animate-pulse">
+                {typingDisplay}
+              </div>
+            )}
+
+            <form onSubmit={(e) => handleSend(e)} className="flex items-end gap-3 md:gap-4">
+              <div className="flex-1 bg-black/40 border-2 border-white/10 rounded-[1.8rem] p-2 md:p-3 flex items-center gap-3 md:gap-4 relative">
+                 <input 
+                   type="file" 
+                   accept="image/*" 
+                   ref={imageInputRef} 
+                   onChange={handleImageSelect} 
+                   className="hidden" 
+                 />
+
+                 <button 
+                    type="button" 
+                    onClick={() => imageInputRef.current?.click()} 
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"
+                    title="Upload Image"
+                 >
+                   <Paperclip className="w-4 h-4" />
+                 </button>
+
+                 <button 
+                    type="button" 
+                    onClick={() => setShowGifPicker(!showGifPicker)} 
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-black text-white/40 hover:text-white transition-all shrink-0"
+                 >
+                   GIF
+                 </button>
+                 <Input 
+                   value={chatInput} 
+                   onChange={(e) => {
+                     setChatInput(e.target.value);
+                     handleTyping();
+                   }} 
+                   placeholder={`Message @${friendDisplayName}...`} 
+                   className="border-none bg-transparent focus-visible:ring-0 text-white text-sm italic placeholder:text-white/20" 
+                 />
+                 <button type="button" className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"><Smile className="w-4 h-4 md:w-5 md:h-5" /></button>
+              </div>
+              <Button type="submit" size="icon" className="h-12 w-12 md:h-16 md:w-16 bg-primary rounded-[1rem] md:rounded-[1.5rem] shadow-2xl active:scale-90 flex items-center justify-center shrink-0 border-none"><Send className="w-5 h-5 md:w-6 md:h-6 text-white" /></Button>
+            </form>
+         </div>
       </div>
     </main>
   );

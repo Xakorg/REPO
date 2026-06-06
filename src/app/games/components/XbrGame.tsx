@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore } from "@/firebase";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 const MAP_SIZE = 3000;
 const VIEWPORT_WIDTH = 800;
@@ -77,6 +78,7 @@ const RARITIES: Record<Rarity, { color: string, weight: number }> = {
 };
 
 export function XbrGame({ onExit }: { onExit: () => void }) {
+  const { toast } = useToast();
   const { user } = useUser();
   const [phase, setPhase] = useState<'jump' | 'combat' | 'finished'>('jump');
   const [player, setPlayer] = useState<Entity>({
@@ -114,7 +116,7 @@ export function XbrGame({ onExit }: { onExit: () => void }) {
       y: Math.random() * MAP_SIZE,
       hp: 100,
       maxHp: 100,
-      weapon: { type: 'AR', rarity: 'Common', damage: 10, fireRate: 500, color: 'text-zinc-400' },
+      weapon: { type: 'AR' as WeaponType, rarity: 'Common' as Rarity, damage: 10, fireRate: 500, color: 'text-zinc-400' },
       isBot: true,
       angle: Math.random() * Math.PI * 2,
       alive: true,

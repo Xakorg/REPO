@@ -109,7 +109,7 @@ export default function GamePlayPage() {
       ),
       ssr: false
     }
-  );
+  ) as any;
 
   return (
     <div ref={containerRef} className="fixed inset-0 z-[1000] bg-black overflow-hidden flex flex-col">

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Sword, Trophy, Shield, Coins, Zap, Heart, Crosshair } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 export function TowerDefenseGame({ onExit }: { onExit: () => void }) {
   const [money, setMoney] = useState(500);

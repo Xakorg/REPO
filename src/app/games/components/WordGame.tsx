@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Type } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 export function WordGame({ onExit }: { onExit: () => void }) {
+  const { toast } = useToast();
   const [word, setWord] = useState("HUB");
   const [guess, setGuess] = useState("");
 

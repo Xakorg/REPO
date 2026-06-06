@@ -18,7 +18,7 @@ const ChatInputSchema = z.object({
   message: z.string().describe("The user's current message."),
   history: z.array(MessageSchema).optional().describe("Previous chat history for memory."),
   userId: z.string().optional().describe('The ID of the current user if authenticated.'),
-  specialization: z.enum(['general', 'games']).default('general').describe('The focus area for Xak AI.'),
+  specialization: z.enum(['general', 'games']).default('general').optional().describe('The focus area for Xak AI.'),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -183,7 +183,7 @@ CRITICAL GUIDELINES:
     while (retries > 0) {
       try {
         const {output} = await ai.generate({
-          model: anthropic.model('claude-sonnet-4-5'),
+          model: googleAI.model('gemini-2.5-flash'),
           system: systemPrompt,
           messages: [
             ...(input.history || []),

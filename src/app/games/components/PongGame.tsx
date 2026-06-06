@@ -52,6 +52,7 @@ export function PongGame({ onExit }: { onExit: () => void }) {
       if (ballX > canvas.width) { setPlayerScore(s => s + 1); reset(); }
 
       function reset() {
+        if (!canvas) return;
         ballX = canvas.width / 2;
         ballY = canvas.height / 2;
         ballDX = -ballDX;

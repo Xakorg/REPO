@@ -205,7 +205,7 @@ function ArcadeHubContent() {
                   <div className="absolute inset-0 arcade-grid opacity-20" />
                   <div className="absolute top-8 left-8">
                     <Badge className="bg-black/80 backdrop-blur-xl border-2 border-white/10 text-[9px] font-black uppercase px-6 py-2 rounded-full shadow-2xl border-none">
-                      {game.isExternalConsole ? `Console / ${game.platform}` : `by ${game.creator}`}
+                      {game.isExternalConsole ? `Console / ${(game as any).platform}` : `by ${game.creator}`}
                     </Badge>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

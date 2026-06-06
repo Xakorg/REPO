@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, RefreshCcw, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export function SpinWheelGame({ onExit }: { onExit: () => void }) {
+  const { toast } = useToast();
   const [rot, setRot] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
 

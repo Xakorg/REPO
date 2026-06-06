@@ -55,7 +55,7 @@ export default function ClassroomPage() {
   // Query all classes joined by student
   const studentClassesQuery = useMemoFirebase(() => {
     if (!firestore || !user || role !== 'student') return null;
-    return query(collection(firestore, "classrooms"), where("students", "arrayContains", user.uid));
+    return query(collection(firestore, "classrooms"), where("students", "array-contains", user.uid));
   }, [firestore, user, role]);
   const { data: studentClasses } = useCollection(studentClassesQuery);
 
