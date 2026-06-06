@@ -53,26 +53,21 @@ const navigation = [
   { name: "Buddy", href: "/buddy", icon: User },
   { name: "Maps", href: "/map", icon: Map },
   { name: "Social Space", href: "/social", icon: Users },
-  { name: "Learn", href: "/learn", icon: GraduationCap },
   { name: "Xakteir Classroom", href: "/classroom", icon: GraduationCap },
   { name: "Art Studio", href: "/art", icon: Palette },
   { name: "XakPicks", icon: ImageIcon, href: "/pics" },
   { name: "XakCode", icon: Code2, href: "/xakcode" },
   { name: "Meet", href: "/meet", icon: VideoIcon },
-  { name: "Contacts", href: "/contacts", icon: Users },
   { name: "Tasks", href: "/tasks", icon: Calendar },
   { name: "XakConsole", href: "/xakconsole", icon: Code2 },
   { name: "Notes", href: "/notes", icon: FileText },
   { name: "Translate", icon: Languages, href: "/translate" },
-  { name: "Safe", icon: Lock, href: "/vault" },
   { name: "Marketplace", icon: ShoppingBag, href: "/shop" },
   { name: "Notifications", icon: Bell, href: "/notifications" },
-  { name: "Downloads", icon: Download, href: "/download" },
 ];
 
 const bottomNav = [
   { name: "Profile", href: "/profile", icon: User },
-  { name: "Admin Panel", href: "/admin", icon: ShieldAlert },
 ];
 
 export function AppSidebar() {

@@ -48,7 +48,6 @@ const ALL_APPS = [
   { name: "Xakteir Plan", description: "Plan calendar and define goals with tracking milestones.", icon: Calendar, color: "text-amber-500", href: "/calendar", features: ["Calendar", "Goals", "Milestones"] },
   { name: "XakPicks", description: "Share public photos and manage personal albums.", icon: ImageIcon, color: "text-pink-500", href: "/pics", features: ["Albums", "Photos", "Uploads"] },
   { name: "Xakteir Classroom", description: "Educational portal for assignments, submissions, and grades.", icon: GraduationCap, color: "text-indigo-400", href: "/classroom", features: ["Assignments", "Submissions", "Grades"] },
-  { name: "Forms", description: "Build surveys and forms.", icon: ClipboardList, color: "text-blue-500", href: "/forms", features: ["Builder", "Data"] },
   { name: "Art Studio", description: "Generate images with AI.", icon: Palette, color: "text-rose-500", href: "/art", features: ["AI Art", "Creative"] },
   { name: "Social", description: "Connect with the community.", icon: Users, color: "text-pink-500", href: "/social", features: ["Feed", "Profile"] },
   { name: "Calculator", description: "Math and logic tool.", icon: Calculator, color: "text-blue-500", href: "/calculator", features: ["Math", "History"] },
