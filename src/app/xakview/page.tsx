@@ -300,7 +300,7 @@ export default function XakViewPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
-  const [activeViewTab, setActiveViewTab] = useState<"videos" | "live" | "creators">("videos");
+  const [activeViewTab, setActiveViewTab] = useState<"videos" | "live" | "creators" | "history">("videos");
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedVideoState, setSelectedVideo] = useState<any>(null);
@@ -320,7 +320,23 @@ export default function XakViewPage() {
     { user: "NeonViper", text: "Insane mechanical plays here!" }
   ]);
 
+  const [watchHistory, setWatchHistory] = useState<any[]>([]);
+
   useEffect(() => { setMounted(true); }, []);
+
+  // Load history on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("xakview_watch_history");
+      if (saved) {
+        try {
+          setWatchHistory(JSON.parse(saved));
+        } catch (e) {
+          console.error("Failed to parse watch history", e);
+        }
+      }
+    }
+  }, []);
 
   // Debounced search for YouTube videos
   useEffect(() => {
@@ -441,6 +457,21 @@ export default function XakViewPage() {
   }, [dbCreators, searchQuery]);
 
   const activeVideo = selectedVideoState || filteredVideos?.[0];
+
+  // Add activeVideo to history when it changes
+  useEffect(() => {
+    if (!activeVideo || !activeVideo.id) return;
+    setWatchHistory(prev => {
+      if (prev.length > 0 && prev[0].id === activeVideo.id) return prev;
+      const filtered = prev.filter(v => v.id !== activeVideo.id);
+      const updated = [
+        { ...activeVideo, watchedAt: new Date().toISOString() },
+        ...filtered
+      ].slice(0, 50);
+      localStorage.setItem("xakview_watch_history", JSON.stringify(updated));
+      return updated;
+    });
+  }, [activeVideo?.id]);
 
   const commentsQuery = useMemoFirebase(() => {
     if (!firestore || !activeVideo) return null;
@@ -610,6 +641,15 @@ export default function XakViewPage() {
             )}
           >
             Creators
+          </button>
+          <button 
+            onClick={() => setActiveViewTab("history")}
+            className={cn(
+              "px-8 h-12 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+              activeViewTab === "history" ? "bg-rose-600 text-white shadow-lg shadow-rose-900/30" : "text-muted-foreground hover:bg-white/5"
+            )}
+          >
+            History
           </button>
         </div>
 
@@ -958,6 +998,73 @@ export default function XakViewPage() {
               })
             )}
           </div>
+        </div>
+      )}
+
+      {/* Watch History View */}
+      {activeViewTab === "history" && (
+        <div className="space-y-10">
+          <header className="flex justify-between items-center bg-black/40 p-10 rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden">
+            <div className="space-y-2 relative z-10">
+              <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white">Watch History</h2>
+              <p className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.5em]">Your Recently Watched Videos</p>
+            </div>
+            {watchHistory.length > 0 && (
+              <Button 
+                onClick={() => {
+                  setWatchHistory([]);
+                  localStorage.removeItem("xakview_watch_history");
+                  toast({ title: "History Cleared", description: "Your watch history has been wiped." });
+                }}
+                variant="outline" 
+                className="rounded-2xl border-white/10 h-12 px-6 font-black text-xs uppercase bg-white/5 hover:bg-rose-600 hover:text-white transition-all relative z-10"
+              >
+                Clear History
+              </Button>
+            )}
+          </header>
+
+          {watchHistory.length === 0 ? (
+            <div className="py-20 text-center opacity-25 space-y-4">
+              <Play className="w-16 h-16 mx-auto text-rose-500 animate-pulse" />
+              <p className="text-sm font-black uppercase tracking-widest text-zinc-400">No watch history yet</p>
+              <p className="text-xs font-bold text-zinc-500 uppercase">Start watching videos to see them here.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {watchHistory.map((video) => (
+                <Card 
+                  key={`${video.id}-${video.watchedAt}`} 
+                  onClick={() => {
+                    setSelectedVideo(video);
+                    setActiveViewTab("videos");
+                  }}
+                  className="glass-card rounded-[3rem] p-6 border-4 border-white/10 hover:border-rose-500/30 transition-all duration-300 flex flex-col justify-between bg-zinc-950/40 relative overflow-hidden group shadow-2xl cursor-pointer"
+                >
+                  <div className="relative aspect-video rounded-2xl overflow-hidden shadow-xl bg-black border border-white/5 mb-4">
+                    <Image 
+                      src={`https://picsum.photos/seed/${video.id}/400/225`} 
+                      alt="Thumb" 
+                      fill 
+                      className="object-cover group-hover:scale-110 transition-transform duration-700 opacity-60" 
+                    />
+                    {video.youtubeId && (
+                      <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-600 text-[8px] font-black uppercase rounded text-white z-20">YouTube</div>
+                    )}
+                  </div>
+                  <div className="space-y-2 py-1 flex-1 overflow-hidden">
+                    <h4 className="text-sm font-black text-zinc-200 line-clamp-2 uppercase italic tracking-tight group-hover:text-rose-500 transition-colors leading-tight">{video.title}</h4>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-[10px] font-black text-muted-foreground uppercase italic">@{video.author || "Member"}</p>
+                      <p className="text-[8px] font-bold text-muted-foreground uppercase opacity-40">
+                        Watched: {new Date(video.watchedAt).toLocaleTimeString()}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

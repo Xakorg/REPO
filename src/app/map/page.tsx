@@ -227,7 +227,7 @@ export default function XakteirMapsPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [location, setLocation] = useState<{lat: number, lon: number} | null>(null);
+  const [location, setLocation] = useState<{lat: number, lon: number, speed?: number | null} | null>(null);
   const [loading, setLoading] = useState(true);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);

@@ -95,6 +95,21 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   const [rolePermissions, setRolePermissions] = useState<string[]>(["sendMessages"]);
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
 
+  // Server Customization states & helper
+  const [serverIconUrl, setServerIconUrl] = useState("");
+  const [serverDescription, setServerDescription] = useState("");
+
+  const handleIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.files?.[0] || e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setServerIconUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
 
 
   useEffect(() => {
@@ -143,13 +158,13 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       dbServers.forEach(s => {
         const isOwner = s.ownerId === user?.uid;
         const isMember = s.members && s.members.includes(user?.uid);
-        const isPublic = !s.isPrivate;
         if (isOwner || isMember) {
           list.push({
             id: s.id,
             name: s.name,
             icon: Zap,
             color: s.iconColor || 'bg-zinc-700',
+            iconUrl: s.iconUrl || null,
             href: `/chat/s/${s.id}`
           });
         }
@@ -222,6 +237,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       setServerNameInput(serverDocData.name || "");
       setServerColorInput(serverDocData.iconColor || "bg-zinc-700");
       setServerIsPrivate(serverDocData.isPrivate || false);
+      setServerIconUrl(serverDocData.iconUrl || "");
+      setServerDescription(serverDocData.description || "");
     }
   }, [serverDocData]);
 
@@ -334,6 +351,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       const serverRef = await addDoc(collection(firestore, "servers"), {
         name: serverNameInput.trim(),
         iconColor: serverColorInput,
+        iconUrl: serverIconUrl,
+        description: serverDescription,
         ownerId: user.uid,
         isPrivate: serverIsPrivate,
         members: [user.uid],
@@ -346,6 +365,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       });
       toast({ title: "Server Created Successfully!" });
       setServerNameInput("");
+      setServerIconUrl("");
+      setServerDescription("");
       setServerIsPrivate(false);
       setShowCreateServerModal(false);
       router.push(`/chat/s/${serverRef.id}?c=general`);
@@ -394,12 +415,16 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             key={s.id}
             onClick={() => router.push(s.href)}
             className={cn(
-              "w-12 h-12 rounded-[1.2rem] flex items-center justify-center transition-all duration-300 relative group",
+              "w-12 h-12 rounded-[1.2rem] flex items-center justify-center transition-all duration-300 relative group overflow-hidden",
               activeServer === s.id ? "bg-primary text-black rounded-[0.8rem]" : "bg-white/5 text-white/40 hover:bg-primary hover:text-black hover:rounded-[0.8rem]",
-              s.id !== 'home' && s.id !== 'xakteir' && s.id !== 'gaming' && s.id !== 'dev' && s.id !== 'discover' ? `${s.color} hover:text-white` : ""
+              s.id !== 'home' && s.id !== 'xakteir' && s.id !== 'gaming' && s.id !== 'dev' && s.id !== 'discover' && !s.iconUrl ? `${s.color} hover:text-white` : ""
             )}
           >
-            <s.icon className="w-6 h-6" />
+            {s.iconUrl ? (
+              <img src={s.iconUrl} alt={s.name} className="w-full h-full object-cover transition-all" />
+            ) : (
+              <s.icon className="w-6 h-6" />
+            )}
             <div className="absolute left-full ml-4 px-3 py-1.5 bg-black/90 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
               {s.name}
             </div>
@@ -801,6 +826,46 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             </div>
 
             <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-white/40 ml-2">Server Description</label>
+              <Input 
+                value={serverDescription} 
+                onChange={(e) => setServerDescription(e.target.value)} 
+                placeholder="A community for coding and games" 
+                className="bg-[#0b0b14]/60 h-14 rounded-xl font-bold border-white/10 text-white focus:border-primary" 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-white/40 ml-2">Server Icon (Link or File Upload)</label>
+              <div className="flex gap-2">
+                <Input 
+                  value={serverIconUrl} 
+                  onChange={(e) => setServerIconUrl(e.target.value)} 
+                  placeholder="https://example.com/icon.png" 
+                  className="bg-[#0b0b14]/60 h-12 rounded-xl font-bold border-white/10 text-white focus:border-primary flex-1 text-xs" 
+                />
+                <div className="relative shrink-0">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleIconUpload} 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                  />
+                  <Button type="button" size="sm" className="h-12 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl px-4 text-[10px] uppercase font-black">
+                    Upload
+                  </Button>
+                </div>
+              </div>
+              {serverIconUrl && (
+                <div className="flex items-center gap-3 mt-2 p-2 bg-white/5 border border-white/10 rounded-xl">
+                  <img src={serverIconUrl} alt="preview" className="w-10 h-10 rounded-lg object-cover" />
+                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Icon Preview Loaded</span>
+                  <button type="button" onClick={() => setServerIconUrl("")} className="text-red-500 hover:text-red-400 text-[10px] font-bold uppercase ml-auto">Clear</button>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-white/40 ml-2">Server Access Privacy</label>
               <div className="flex bg-[#0b0b14]/60 p-1 rounded-xl border border-white/10">
                 <button
@@ -914,6 +979,46 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               </div>
 
               <div className="space-y-2 text-left">
+                <label className="text-[10px] font-black uppercase text-white/40 ml-2">Server Description</label>
+                <Input 
+                  value={serverDescription} 
+                  onChange={(e) => setServerDescription(e.target.value)} 
+                  placeholder="Server Description" 
+                  className="bg-[#0b0b14]/60 h-14 rounded-xl font-bold border-white/10 text-white focus:border-primary" 
+                />
+              </div>
+
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] font-black uppercase text-white/40 ml-2">Server Icon (Link or File Upload)</label>
+                <div className="flex gap-2">
+                  <Input 
+                    value={serverIconUrl} 
+                    onChange={(e) => setServerIconUrl(e.target.value)} 
+                    placeholder="https://example.com/icon.png" 
+                    className="bg-[#0b0b14]/60 h-12 rounded-xl font-bold border-white/10 text-white focus:border-primary flex-1 text-xs" 
+                  />
+                  <div className="relative shrink-0">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleIconUpload} 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                    />
+                    <Button type="button" size="sm" className="h-12 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl px-4 text-[10px] uppercase font-black">
+                      Upload
+                    </Button>
+                  </div>
+                </div>
+                {serverIconUrl && (
+                  <div className="flex items-center gap-3 mt-2 p-2 bg-white/5 border border-white/10 rounded-xl">
+                    <img src={serverIconUrl} alt="preview" className="w-10 h-10 rounded-lg object-cover" />
+                    <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Icon Preview Loaded</span>
+                    <button type="button" onClick={() => setServerIconUrl("")} className="text-red-500 hover:text-red-400 text-[10px] font-bold uppercase ml-auto">Clear</button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2 text-left">
                 <label className="text-[10px] font-black uppercase text-white/40 ml-2">Server Access Privacy</label>
                 <div className="flex bg-[#0b0b14]/60 p-1 rounded-xl border border-white/10">
                   <button
@@ -963,7 +1068,9 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                     await updateDoc(doc(firestore!, "servers", activeServer), {
                       name: serverNameInput.trim(),
                       isPrivate: serverIsPrivate,
-                      iconColor: serverColorInput
+                      iconColor: serverColorInput,
+                      iconUrl: serverIconUrl,
+                      description: serverDescription
                     });
                     toast({ title: "Server Settings Saved!" });
                   } catch (e) {

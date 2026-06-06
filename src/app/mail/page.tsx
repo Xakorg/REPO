@@ -21,7 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase";
-import { collection, query, where, addDoc, serverTimestamp, limit, getDocs, doc } from "firebase/firestore";
+import { collection, query, where, addDoc, serverTimestamp, limit, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,6 +43,60 @@ export default function MailPage() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [isSending, setIsSending] = useState(false);
+
+  const folders = useMemo(() => [
+    { name: 'Inbox', icon: Inbox },
+    { name: 'Starred', icon: Star },
+    { name: 'Sent', icon: Send },
+    { name: 'Trash', icon: Trash2 },
+  ], []);
+
+  const toggleStar = async (email: any) => {
+    if (!firestore || email.isGmail) return;
+    try {
+      const emailRef = doc(firestore, "emails", email.id);
+      await updateDoc(emailRef, { isStarred: !email.isStarred });
+      toast({ title: email.isStarred ? "Removed from Starred" : "Starred successfully" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Action failed" });
+    }
+  };
+
+  const moveToTrash = async (email: any) => {
+    if (!firestore || email.isGmail) return;
+    try {
+      const emailRef = doc(firestore, "emails", email.id);
+      await updateDoc(emailRef, { isDeleted: true });
+      setSelectedId(null);
+      toast({ title: "Moved to Trash" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Action failed" });
+    }
+  };
+
+  const restoreFromTrash = async (email: any) => {
+    if (!firestore || email.isGmail) return;
+    try {
+      const emailRef = doc(firestore, "emails", email.id);
+      await updateDoc(emailRef, { isDeleted: false });
+      setSelectedId(null);
+      toast({ title: "Email restored to Inbox" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Action failed" });
+    }
+  };
+
+  const deletePermanently = async (email: any) => {
+    if (!firestore || email.isGmail) return;
+    try {
+      const emailRef = doc(firestore, "emails", email.id);
+      await deleteDoc(emailRef);
+      setSelectedId(null);
+      toast({ title: "Permanently deleted" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Action failed" });
+    }
+  };
 
   // Gmail states
   const [mailMode, setMailMode] = useState<'xakteir' | 'gmail'>('xakteir');
@@ -87,6 +141,9 @@ export default function MailPage() {
     }
     if (folder === "Sent") {
       return rawEmails.filter(e => !e.isDeleted);
+    }
+    if (folder === "Trash") {
+      return rawEmails.filter(e => e.isDeleted);
     }
     return rawEmails.filter(e => !e.isDeleted);
   }, [rawEmails, folder]);
@@ -366,11 +423,22 @@ export default function MailPage() {
               <div className="flex-1 flex flex-col justify-end">
                 <p className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-2.5 ml-2">Folders</p>
                 <div className="space-y-1.5">
-                  {['Inbox', 'Sent', 'Starred'].map(f => (
-                    <button key={f} onClick={() => { setFolder(f); setSelectedId(null); }} className={cn("w-full flex items-center px-5 py-3.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all text-left", folder === f ? "bg-white/5 text-white" : "text-muted-foreground hover:bg-white/5")}>
-                      {f}
-                    </button>
-                  ))}
+                  {folders.map(f => {
+                    const FolderIcon = f.icon;
+                    return (
+                      <button 
+                        key={f.name} 
+                        onClick={() => { setFolder(f.name); setSelectedId(null); }} 
+                        className={cn(
+                          "w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all text-left border border-transparent", 
+                          folder === f.name ? "bg-white/5 text-white border-white/5" : "text-muted-foreground hover:bg-white/5"
+                        )}
+                      >
+                        <FolderIcon className="w-4 h-4 shrink-0 text-zinc-400" />
+                        <span>{f.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -432,19 +500,69 @@ export default function MailPage() {
           {/* Email Content Details */}
           <div className="flex-1 flex flex-col bg-[#0b0b14]/15">
              {selectedEmail ? (
-               <div className="p-12 space-y-10 animate-in fade-in h-full overflow-y-auto">
-                  <div className="space-y-4">
-                    <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-tight text-white">{selectedEmail.subject}</h2>
-                    <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                       <Avatar className="w-10 h-10 border border-white/10"><AvatarFallback className="bg-zinc-800 text-white font-black text-xs">M</AvatarFallback></Avatar>
-                       <div className="text-left">
-                         <p className="text-xs font-black text-white italic">{selectedEmail.senderName}</p>
-                         <p className="text-[9px] text-primary font-black uppercase tracking-wide">{selectedEmail.senderEmail}</p>
-                       </div>
+                <div className="p-12 space-y-10 animate-in fade-in h-full overflow-y-auto">
+                  <div className="flex justify-between items-start border-b border-white/5 pb-6 gap-6">
+                    <div className="space-y-4 flex-1">
+                      <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-tight text-white">{selectedEmail.subject}</h2>
+                      <div className="flex items-center gap-4">
+                         <Avatar className="w-10 h-10 border border-white/10"><AvatarFallback className="bg-zinc-800 text-white font-black text-xs">M</AvatarFallback></Avatar>
+                         <div className="text-left">
+                           <p className="text-xs font-black text-white italic">{selectedEmail.senderName}</p>
+                           <p className="text-[9px] text-primary font-black uppercase tracking-wide">{selectedEmail.senderEmail}</p>
+                         </div>
+                      </div>
                     </div>
+                    
+                    {/* Action buttons */}
+                    {!selectedEmail.isGmail && (
+                      <div className="flex gap-2 shrink-0">
+                        <Button 
+                          onClick={() => toggleStar(selectedEmail)} 
+                          variant="outline" 
+                          size="icon" 
+                          className={cn(
+                            "h-10 w-10 rounded-xl border border-white/10 transition-all", 
+                            selectedEmail.isStarred 
+                              ? "bg-amber-500/20 border-amber-500/30 text-amber-500 hover:bg-amber-500/30" 
+                              : "bg-white/5 text-white hover:bg-white/10"
+                          )}
+                        >
+                          <Star className={cn("w-4 h-4", selectedEmail.isStarred && "fill-current")} />
+                        </Button>
+                        
+                        {folder === "Trash" ? (
+                          <>
+                            <Button 
+                              onClick={() => restoreFromTrash(selectedEmail)} 
+                              variant="outline" 
+                              className="h-10 px-4 rounded-xl border-white/10 bg-white/5 text-xs font-bold uppercase hover:bg-emerald-600 hover:text-white"
+                            >
+                              Restore
+                            </Button>
+                            <Button 
+                              onClick={() => deletePermanently(selectedEmail)} 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-10 w-10 rounded-xl border-white/10 bg-white/5 text-rose-500 hover:bg-rose-600 hover:text-white"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <Button 
+                            onClick={() => moveToTrash(selectedEmail)} 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-10 w-10 rounded-xl border-white/10 bg-white/5 text-zinc-400 hover:bg-rose-600 hover:text-white"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-sm md:text-base leading-relaxed italic text-white/90 whitespace-pre-wrap">{selectedEmail.body}</div>
-               </div>
+                  <div className="text-sm md:text-base leading-relaxed italic text-white/90 whitespace-pre-wrap pt-4">{selectedEmail.body}</div>
+                </div>
              ) : (
                <div className="flex-1 flex flex-col items-center justify-center opacity-10 text-white">
                   <MailIcon className="w-24 h-24 text-white" />

@@ -62,7 +62,10 @@ export default function ServerChatPage() {
   const filteredDiscoverServers = useMemo(() => {
     if (!discoverSearch.trim()) return publicServers;
     const q = discoverSearch.toLowerCase();
-    return publicServers.filter((s: any) => s.name?.toLowerCase().includes(q));
+    return publicServers.filter((s: any) => 
+      s.name?.toLowerCase().includes(q) || 
+      s.description?.toLowerCase().includes(q)
+    );
   }, [publicServers, discoverSearch]);
 
   const handleJoinServer = async (serverId: string, currentMembers: string[]) => {
@@ -395,8 +398,12 @@ export default function ServerChatPage() {
                     <Card key={server.id} className="glass-card border-2 border-white/10 hover:border-emerald-500/40 rounded-[2.2rem] p-6 bg-zinc-950/40 flex flex-col justify-between shadow-2xl transition-all duration-300 hover:-translate-y-1 group">
                       <div className="space-y-4">
                         <div className="flex justify-between items-start">
-                          <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border border-white/10 group-hover:scale-105 transition-transform", server.iconColor || "bg-zinc-700")}>
-                            <MessageCircle className="w-6 h-6 text-white" />
+                          <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border border-white/10 group-hover:scale-105 transition-transform overflow-hidden", !server.iconUrl && (server.iconColor || "bg-zinc-700"))}>
+                            {server.iconUrl ? (
+                              <img src={server.iconUrl} alt={server.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <MessageCircle className="w-6 h-6 text-white" />
+                            )}
                           </div>
                           <Badge className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
                             {memberList.length} {memberList.length === 1 ? 'member' : 'members'}
@@ -405,7 +412,12 @@ export default function ServerChatPage() {
                         
                         <div className="space-y-2">
                           <h4 className="text-lg font-black uppercase italic tracking-tighter text-white truncate group-hover:text-emerald-400 transition-colors">{server.name}</h4>
-                          <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                          {server.description && (
+                            <p className="text-xs text-zinc-400 font-bold uppercase tracking-wide line-clamp-2 leading-relaxed text-left">
+                              {server.description}
+                            </p>
+                          )}
+                          <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest text-left">
                             Created by: {isOwner ? 'You (Owner)' : `User ${server.ownerId?.slice(0, 6)}`}
                           </p>
                         </div>
