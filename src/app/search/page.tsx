@@ -17,13 +17,20 @@ import {
   List,
   History,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  MessageCircle,
+  UserPlus,
+  UserCheck,
+  MapPin,
+  ChevronRight
 } from "lucide-react";
 import { aiPoweredWebSearch } from "@/ai/flows/ai-powered-web-search-flow";
 import defaultSites from '@/lib/defaultSites';
 import { useSearchParams, useRouter } from "next/navigation";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, limit } from "firebase/firestore";
+import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
+import { collection, query, limit, doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 type SearchCategory = "all" | "sites" | "images" | "people";
@@ -191,6 +198,69 @@ function SearchContent() {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const firestore = useFirestore();
+  const { user } = useUser();
+  const { toast } = useToast();
+
+  const followingQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, "users", user.uid, "following");
+  }, [firestore, user]);
+  const { data: followingList } = useCollection(followingQuery);
+  const followingIds = useMemo(() => new Set(followingList?.map((f: any) => f.id) || []), [followingList]);
+
+  const friendshipsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, "friendships"));
+  }, [firestore, user]);
+  const { data: friendships } = useCollection(friendshipsQuery);
+
+  const handleFollow = async (member: any) => {
+    if (!user || !firestore) return;
+    const ref = doc(firestore, "users", user.uid, "following", member.id);
+    const isFollowing = followingIds.has(member.id);
+    try {
+      if (isFollowing) {
+        await deleteDoc(ref);
+        toast({ title: "Unfollowed" });
+      } else {
+        await setDoc(ref, { 
+          id: member.id, 
+          displayName: member.displayName || member.name || "Member", 
+          photoURL: member.photoURL || "", 
+          timestamp: serverTimestamp() 
+        });
+        toast({ title: "Followed!" });
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error following user" });
+    }
+  };
+
+  const handleAddFriend = async (member: any) => {
+    if (!user || !firestore) return;
+    if (member.id === user.uid) {
+      toast({ variant: "destructive", title: "Error", description: "You cannot friend yourself." });
+      return;
+    }
+    const id = [user.uid, member.id].sort().join("_");
+    const friendshipRef = doc(firestore, "friendships", id);
+    try {
+      await setDoc(friendshipRef, {
+        id,
+        requesterId: user.uid,
+        requesterName: user.displayName?.replace(/^@+/, "") || "Member",
+        requesterEmail: user.email || "",
+        recipientId: member.id,
+        recipientName: member.displayName?.replace(/^@+/, "") || member.username || "Member",
+        recipientEmail: member.email || "",
+        status: "pending",
+        timestamp: serverTimestamp()
+      });
+      toast({ title: "Request Sent!", description: `Friend request sent to ${member.displayName || member.username || member.email}.` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error sending friend request" });
+    }
+  };
 
   // Load search history from localStorage on mount
   useEffect(() => {
@@ -647,17 +717,108 @@ function SearchContent() {
                 <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 pl-1">Matching People</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {matchedUsers.map((u: any) => (
-                    <Card key={u.id} className="flex items-center gap-4 p-4 rounded-2xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 transition-all">
-                      <img 
-                        src={u.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.id}`} 
-                        className="w-12 h-12 rounded-xl object-cover border border-white/10" 
-                        alt={u.displayName || u.name}
-                      />
-                      <div className="truncate">
-                        <div className="font-bold text-white text-sm">{u.displayName || u.name || 'User'}</div>
-                        <div className="text-xs text-zinc-500 truncate">{u.username || u.email || ''}</div>
-                      </div>
-                    </Card>
+                    <Dialog key={u.id}>
+                      <DialogTrigger asChild>
+                        <Card className="flex items-center justify-between p-4 rounded-2xl border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all cursor-pointer group">
+                          <div className="flex items-center gap-4 truncate">
+                            <img 
+                              src={u.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.id}`} 
+                              className="w-12 h-12 rounded-xl object-cover border border-white/10" 
+                              alt={u.displayName || u.name}
+                            />
+                            <div className="truncate text-left">
+                              <div className="font-bold text-white text-sm group-hover:text-primary transition-colors">{u.displayName || u.name || 'User'}</div>
+                              <div className="text-xs text-zinc-500 truncate">@{u.username || u.email?.split('@')[0] || ''}</div>
+                            </div>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-zinc-500 group-hover:text-primary transition-colors" />
+                        </Card>
+                      </DialogTrigger>
+                      <DialogContent className="glass-card border-white/10 rounded-[2.5rem] max-w-md text-white p-8 bg-zinc-950">
+                        <DialogHeader className="flex flex-col items-center text-center space-y-4">
+                          <img 
+                            src={u.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.id}`} 
+                            className="w-24 h-24 rounded-3xl object-cover border-4 border-white/10 shadow-2xl" 
+                            alt={u.displayName || u.name}
+                          />
+                          <div>
+                            <DialogTitle className="text-2xl font-black uppercase italic tracking-tighter text-white">
+                              {u.displayName || u.name || 'User'}
+                            </DialogTitle>
+                            <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">
+                              @{u.username || u.email?.split('@')[0] || ''}
+                            </p>
+                          </div>
+                        </DialogHeader>
+
+                        <div className="space-y-4 mt-6">
+                          {/* Add in XakChat */}
+                          <Button 
+                            onClick={() => {
+                              router.push(`/chat/dm/${u.username || u.displayName || u.id}`);
+                            }}
+                            className="w-full h-14 bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-3 border-none italic"
+                          >
+                            <MessageCircle className="w-5 h-5" /> Message in XakChat
+                          </Button>
+
+                          {/* Follow in Social */}
+                          <Button 
+                            onClick={() => handleFollow(u)}
+                            variant="outline"
+                            className={cn(
+                              "w-full h-14 font-black uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-3 border-white/10 italic",
+                              followingIds.has(u.id) ? "bg-white/10 text-white hover:bg-white/20" : "bg-primary hover:bg-primary/90 text-white border-none"
+                            )}
+                          >
+                            {followingIds.has(u.id) ? <UserCheck className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
+                            {followingIds.has(u.id) ? "Following on Social" : "Follow on Social"}
+                          </Button>
+
+                          {/* Add in Maps */}
+                          {(() => {
+                            const friendship = friendships?.find((f: any) => 
+                              (f.requesterId === user?.uid && f.recipientId === u.id) || 
+                              (f.requesterId === u.id && f.recipientId === user?.uid)
+                            );
+                            
+                            let buttonText = "Add to Maps";
+                            let buttonIcon = <MapPin className="w-5 h-5" />;
+                            let isAccepted = false;
+                            let isPending = false;
+
+                            if (friendship) {
+                              if (friendship.status === 'accepted') {
+                                buttonText = "Friends on Maps";
+                                buttonIcon = <UserCheck className="w-5 h-5 text-emerald-400" />;
+                                isAccepted = true;
+                              } else {
+                                buttonText = "Friend Request Pending";
+                                buttonIcon = <Loader2 className="w-5 h-5 animate-spin" />;
+                                isPending = true;
+                              }
+                            }
+
+                            return (
+                              <Button 
+                                onClick={() => !friendship && handleAddFriend(u)}
+                                disabled={isAccepted || isPending}
+                                variant="outline"
+                                className={cn(
+                                  "w-full h-14 font-black uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-3 border-white/10 italic",
+                                  isAccepted ? "bg-emerald-500/10 text-emerald-400 cursor-default" : 
+                                  isPending ? "bg-white/5 text-zinc-400 cursor-default" :
+                                  "bg-blue-600 hover:bg-blue-500 text-white border-none"
+                                )}
+                              >
+                                {buttonIcon}
+                                {buttonText}
+                              </Button>
+                            );
+                          })()}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   ))}
                 </div>
               </div>
