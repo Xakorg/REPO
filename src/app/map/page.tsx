@@ -28,7 +28,10 @@ import {
   MapPin,
   Flag,
   CircleDot,
-  CheckCircle2
+  CheckCircle2,
+  ArrowUp,
+  ArrowUpLeft,
+  ArrowUpRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
