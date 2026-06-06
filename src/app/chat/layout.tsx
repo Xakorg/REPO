@@ -95,81 +95,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   const [rolePermissions, setRolePermissions] = useState<string[]>(["sendMessages"]);
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
 
-  // Synchronize settings state when server document is loaded
-  useEffect(() => {
-    if (serverDocData) {
-      setServerNameInput(serverDocData.name || "");
-      setServerColorInput(serverDocData.iconColor || "bg-zinc-700");
-      setServerIsPrivate(serverDocData.isPrivate || false);
-    }
-  }, [serverDocData]);
 
-  // Helper to check user permissions
-  const hasLayoutPermission = (permission: string) => {
-    if (!user || !serverDocData) return true;
-    if (serverDocData.ownerId === user.uid) return true;
-    
-    const roles = serverDocData.roles || [];
-    const userRoleIds = serverDocData.memberRoles?.[user.uid] || [];
-    
-    if (roles.length === 0 || userRoleIds.length === 0) {
-      return permission === "sendMessages";
-    }
-    
-    return roles.some((role: any) => 
-      userRoleIds.includes(role.id) && 
-      role.permissions?.includes(permission)
-    );
-  };
-
-  const handleToggleMemberRole = async (memberId: string, roleId: string) => {
-    if (!firestore || !activeServer || !serverDocData) return;
-    try {
-      const currentMemberRoles = { ...(serverDocData.memberRoles || {}) };
-      const userRoles = [...(currentMemberRoles[memberId] || [])];
-      
-      let updatedRoles;
-      if (userRoles.includes(roleId)) {
-        updatedRoles = userRoles.filter(r => r !== roleId);
-      } else {
-        updatedRoles = [...userRoles, roleId];
-      }
-      
-      currentMemberRoles[memberId] = updatedRoles;
-      await updateDoc(doc(firestore, "servers", activeServer), {
-        memberRoles: currentMemberRoles
-      });
-      toast({ title: "Roles Updated!" });
-    } catch(e) {
-      toast({ variant: "destructive", title: "Error updating roles" });
-    }
-  };
-
-  const customServerMembers = useMemo(() => {
-    if (!hubMembers || !serverDocData || isBuiltInServer) return [];
-    const memberUids = serverDocData.members || [];
-    return hubMembers.filter(m => memberUids.includes(m.id));
-  }, [hubMembers, serverDocData, isBuiltInServer]);
-
-  const getMemberRoleDetails = (memberId: string) => {
-    if (!serverDocData) return { name: "Member", color: "text-zinc-400" };
-    const roles = serverDocData.roles || [];
-    const assignedIds = serverDocData.memberRoles?.[memberId] || [];
-    if (assignedIds.length === 0) {
-      if (serverDocData.ownerId === memberId) {
-        return { name: "Owner", color: "text-yellow-400" };
-      }
-      return { name: "Member", color: "text-zinc-400" };
-    }
-    const activeRoles = roles.filter((r: any) => assignedIds.includes(r.id));
-    if (activeRoles.length === 0) {
-      if (serverDocData.ownerId === memberId) {
-        return { name: "Owner", color: "text-yellow-400" };
-      }
-      return { name: "Member", color: "text-zinc-400" };
-    }
-    return { name: activeRoles[0].name, color: activeRoles[0].color || "text-zinc-300" };
-  };
 
   useEffect(() => {
     setMounted(true);
@@ -289,6 +215,82 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   }, [firestore, activeDmUsername]);
   const { data: friendUserDocs } = useCollection(friendUserQuery);
   const activeFriendData = friendUserDocs?.[0];
+
+  // Synchronize settings state when server document is loaded
+  useEffect(() => {
+    if (serverDocData) {
+      setServerNameInput(serverDocData.name || "");
+      setServerColorInput(serverDocData.iconColor || "bg-zinc-700");
+      setServerIsPrivate(serverDocData.isPrivate || false);
+    }
+  }, [serverDocData]);
+
+  // Helper to check user permissions
+  const hasLayoutPermission = (permission: string) => {
+    if (!user || !serverDocData) return true;
+    if (serverDocData.ownerId === user.uid) return true;
+    
+    const roles = serverDocData.roles || [];
+    const userRoleIds = serverDocData.memberRoles?.[user.uid] || [];
+    
+    if (roles.length === 0 || userRoleIds.length === 0) {
+      return permission === "sendMessages";
+    }
+    
+    return roles.some((role: any) => 
+      userRoleIds.includes(role.id) && 
+      role.permissions?.includes(permission)
+    );
+  };
+
+  const handleToggleMemberRole = async (memberId: string, roleId: string) => {
+    if (!firestore || !activeServer || !serverDocData) return;
+    try {
+      const currentMemberRoles = { ...(serverDocData.memberRoles || {}) };
+      const userRoles = [...(currentMemberRoles[memberId] || [])];
+      
+      let updatedRoles;
+      if (userRoles.includes(roleId)) {
+        updatedRoles = userRoles.filter(r => r !== roleId);
+      } else {
+        updatedRoles = [...userRoles, roleId];
+      }
+      
+      currentMemberRoles[memberId] = updatedRoles;
+      await updateDoc(doc(firestore, "servers", activeServer), {
+        memberRoles: currentMemberRoles
+      });
+      toast({ title: "Roles Updated!" });
+    } catch(e) {
+      toast({ variant: "destructive", title: "Error updating roles" });
+    }
+  };
+
+  const customServerMembers = useMemo(() => {
+    if (!hubMembers || !serverDocData || isBuiltInServer) return [];
+    const memberUids = serverDocData.members || [];
+    return hubMembers.filter(m => memberUids.includes(m.id));
+  }, [hubMembers, serverDocData, isBuiltInServer]);
+
+  const getMemberRoleDetails = (memberId: string) => {
+    if (!serverDocData) return { name: "Member", color: "text-zinc-400" };
+    const roles = serverDocData.roles || [];
+    const assignedIds = serverDocData.memberRoles?.[memberId] || [];
+    if (assignedIds.length === 0) {
+      if (serverDocData.ownerId === memberId) {
+        return { name: "Owner", color: "text-yellow-400" };
+      }
+      return { name: "Member", color: "text-zinc-400" };
+    }
+    const activeRoles = roles.filter((r: any) => assignedIds.includes(r.id));
+    if (activeRoles.length === 0) {
+      if (serverDocData.ownerId === memberId) {
+        return { name: "Owner", color: "text-yellow-400" };
+      }
+      return { name: "Member", color: "text-zinc-400" };
+    }
+    return { name: activeRoles[0].name, color: activeRoles[0].color || "text-zinc-300" };
+  };
 
   const handleSendInvite = async () => {
     if (!inviteEmail.trim() || !user || !firestore) return;
