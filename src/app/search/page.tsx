@@ -127,6 +127,53 @@ const LOCAL_DEFINITIONS: Record<string, { title: string, definition: string, typ
   }
 };
 
+const searchWebEngine = async (queryText: string) => {
+  try {
+    const res = await fetch(`/api/search-web?q=${encodeURIComponent(queryText)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.results)) {
+        return data.results;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to query /api/search-web proxy", e);
+  }
+  return [];
+};
+
+
+const fetchWikipediaSummary = async (queryText: string) => {
+  try {
+    const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(queryText)}&limit=1&namespace=0&format=json&origin=*`);
+    if (!searchRes.ok) return null;
+    const searchData = await searchRes.json();
+    const matchedTitle = searchData[1]?.[0];
+    if (!matchedTitle) return null;
+
+    const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(matchedTitle)}`);
+    if (!summaryRes.ok) return null;
+    const summaryData = await summaryRes.json();
+    
+    if (summaryData.extract) {
+      return {
+        title: summaryData.title,
+        definition: summaryData.extract,
+        type: summaryData.description || "Encyclopedia Entry",
+        image: summaryData.thumbnail?.source || null,
+        facts: {
+          "Source": "Wikipedia",
+          "Language": "English",
+          "URL": summaryData.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(matchedTitle)}`
+        }
+      };
+    }
+  } catch (e) {
+    console.warn("Failed to fetch Wikipedia summary", e);
+  }
+  return null;
+};
+
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -137,6 +184,9 @@ function SearchContent() {
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [images, setImages] = useState<Array<{title:string, thumb?:string, page?:string}>>([]);
   const [activeCategory, setActiveCategory] = useState<SearchCategory>("all");
+  const [externalSites, setExternalSites] = useState<any[]>([]);
+  const [wikiDefinition, setWikiDefinition] = useState<any>(null);
+  const [isWebSearching, setIsWebSearching] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -189,7 +239,10 @@ function SearchContent() {
 
     // Decouple UI state
     setAiResult(null);
+    setWikiDefinition(null);
+    setExternalSites([]);
     setIsAiLoading(true);
+    setIsWebSearching(true);
     setShowDropdown(false);
     
     // Save to history
@@ -198,7 +251,19 @@ function SearchContent() {
     // Traditional link results will load via the firestore query below
     router.push(`/search?q=${encodeURIComponent(target.trim())}`, { scroll: false });
 
+    // Fetch Wikipedia summary dynamically
+    void fetchWikipediaSummary(target).then(summary => {
+      if (summary) setWikiDefinition(summary);
+    });
+
     try {
+      // Real Web search Engine fetch
+      void searchWebEngine(target).then(results => {
+        if (results && results.length > 0) {
+          setExternalSites(results);
+        }
+      });
+
       const response = await aiPoweredWebSearch({ query: target });
       if (response && response.answer) {
         setAiResult(response.answer);
@@ -218,6 +283,7 @@ function SearchContent() {
       console.error("AI Search Error:", err);
     } finally {
       setIsAiLoading(false);
+      setIsWebSearching(false);
     }
   }, [queryInput, router, saveToHistory]);
 
@@ -287,18 +353,28 @@ function SearchContent() {
     queryLower === key || queryLower.includes(key)
   );
   const matchedDefinition = matchedDefKey ? LOCAL_DEFINITIONS[matchedDefKey] : null;
+  const activeDefinition = wikiDefinition || matchedDefinition;
 
-  // Filter sites matching the query
-  const filteredSites = (queryInput || '').trim()
-    ? combinedSites.filter((s: any) => {
-        const q = (queryInput || '').toLowerCase();
-        return (
+  // Filter sites matching the query and merge real search results
+  const filteredSites = useMemo(() => {
+    const q = (queryInput || '').trim().toLowerCase();
+    const local = q
+      ? combinedSites.filter((s: any) => (
           (s.title && s.title.toLowerCase().includes(q)) ||
           (s.url && s.url.toLowerCase().includes(q)) ||
           (s.description && s.description.toLowerCase().includes(q))
-        );
-      })
-    : combinedSites;
+        ))
+      : combinedSites;
+
+    // Combine local results and real web search results
+    const combined = [...local];
+    externalSites.forEach(ext => {
+      if (!combined.some(c => c.url.toLowerCase() === ext.url.toLowerCase())) {
+        combined.push(ext);
+      }
+    });
+    return combined;
+  }, [combinedSites, queryInput, externalSites]);
 
   // Group sites by host for visual separation
   const groupedSites = (() => {
@@ -617,14 +693,14 @@ function SearchContent() {
             {(activeCategory === "all" || activeCategory === "sites") && (
               <div className="space-y-8">
                 {/* Knowledge Graph Card / Definition Panel */}
-                {matchedDefinition && (
+                {activeDefinition && (
                   <Card className="p-8 bg-zinc-900/30 border-2 border-rose-500/30 rounded-[3rem] shadow-[0_20px_50px_rgba(244,63,94,0.15)] relative overflow-hidden flex flex-col md:flex-row gap-8 animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-transparent pointer-events-none" />
-                    {matchedDefinition.image && (
+                    {activeDefinition.image && (
                       <div className="w-full md:w-60 h-44 rounded-2xl overflow-hidden shrink-0 border border-white/10 relative">
                         <img 
-                          src={matchedDefinition.image} 
-                          alt={matchedDefinition.title} 
+                          src={activeDefinition.image} 
+                          alt={activeDefinition.title} 
                           className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" 
                         />
                       </div>
@@ -635,18 +711,18 @@ function SearchContent() {
                           <div className="text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-2">
                             <Sparkles className="w-3.5 h-3.5" /> Encyclopedia Definition
                           </div>
-                          <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter mt-1">{matchedDefinition.title}</h2>
+                          <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter mt-1">{activeDefinition.title}</h2>
                         </div>
                         <span className="px-3 py-1 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[9px] font-black uppercase tracking-widest rounded-full shrink-0">
-                          {matchedDefinition.type}
+                          {activeDefinition.type}
                         </span>
                       </div>
                       <p className="text-base text-zinc-300 leading-relaxed font-medium">
-                        {matchedDefinition.definition}
+                        {activeDefinition.definition}
                       </p>
-                      {matchedDefinition.facts && (
+                      {activeDefinition.facts && (
                         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-800/80">
-                          {Object.entries(matchedDefinition.facts).map(([key, val]) => (
+                          {Object.entries(activeDefinition.facts).map(([key, val]) => (
                             <div key={key}>
                               <div className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">{key}</div>
                               <div className="text-sm font-bold text-zinc-200 mt-0.5">{val}</div>
@@ -658,6 +734,11 @@ function SearchContent() {
                   </Card>
                 )}
 
+                {isWebSearching && (
+                  <div className="flex items-center gap-3 text-rose-400 italic text-xs font-bold py-2">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Searching the live web...
+                  </div>
+                )}
                 {isIndexLoading ? (
                   <div className="space-y-10">
                     {[1, 2, 3].map(i => (

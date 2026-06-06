@@ -409,6 +409,16 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────
+    // SERVERS (Xakteir Servers)
+    // ─────────────────────────────────────────────
+    match /servers/{serverId} {
+      allow read, write: if isSignedIn();
+      match /channels/{channelId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    // ─────────────────────────────────────────────
     // CHAT ROOMS
     // Robust rules for chats and messages:
     // - Users can create chats only if they're included in the participants array
@@ -439,33 +449,28 @@ service cloud.firestore {
       allow update, delete: if chatExists(chatId) && isChatParticipant(chatId);
 
       match /messages/{messageId} {
-        // Read/list messages if the chat ID is a known public channel
-        allow get, list: if isPublicChatId(chatId);
-        
-        // Read/list messages if admin
-        allow get, list: if isAdmin();
-
-        // Read/list messages if chat exists and is public or caller is participant
-        allow get, list: if chatExists(chatId) && (
-          get(/databases/$(database)/documents/chats/$(chatId)).data.get('public', false) == true
-          || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
-        );
+        // Read/list messages if the chat ID is a known public channel, a server channel (contains '-'), or a chat they have access to
+        allow get, list: if isPublicChatId(chatId)
+          || (isSignedIn() && chatId.matches(".*-.*"))
+          || (chatExists(chatId) && (
+                get(/databases/$(database)/documents/chats/$(chatId)).data.get('public', false) == true
+                || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+             ))
+          || isAdmin();
 
         // Create message if admin
         allow create: if isSignedIn() && isAdmin();
 
-        // Create message if senderId matches auth and it's a known public chat
+        // Create message if senderId matches auth and it's a known public chat, a server channel (contains '-'), or a chat they have access to
         allow create: if isSignedIn() 
           && request.auth.uid == request.resource.data.senderId 
-          && isPublicChatId(chatId);
-
-        // Create message if senderId matches auth and chat exists and they are allowed
-        allow create: if isSignedIn() 
-          && request.auth.uid == request.resource.data.senderId 
-          && chatExists(chatId) 
           && (
-            get(/databases/$(database)/documents/chats/$(chatId)).data.get('public', false) == true
-            || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+            isPublicChatId(chatId)
+            || chatId.matches(".*-.*")
+            || (chatExists(chatId) && (
+                  get(/databases/$(database)/documents/chats/$(chatId)).data.get('public', false) == true
+                  || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+               ))
           );
 
         // Update/delete allowed only to original sender or admins

@@ -70,7 +70,7 @@ export default function XakCodePage() {
   const [activeProjectId, setActiveId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ProjectTab>('ide');
   const [viewMode, setViewMode] = useState<IDEViewMode>('code');
-  const [isArchitecting, setIsArchitecting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [aiPrompt, setPrompt] = useState("");
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [newProjName, setNewProjName] = useState("");
@@ -173,12 +173,12 @@ export default function XakCodePage() {
     }
   };
 
-  const handleArchitect = async (e: React.FormEvent, customInstruction?: string) => {
+  const handleGenerateCode = async (e: React.FormEvent, customInstruction?: string) => {
     if (e) e.preventDefault();
     const instruction = customInstruction || aiPrompt;
-    if (!instruction.trim() || isArchitecting || !user || !firestore || !activeProject) return;
+    if (!instruction.trim() || isGenerating || !user || !firestore || !activeProject) return;
     
-    setIsArchitecting(true);
+    setIsGenerating(true);
     try {
       const res = await codeArchitect({ 
         prompt: instruction,
@@ -186,12 +186,12 @@ export default function XakCodePage() {
       });
       
       handleFileChange(res.code);
-      toast({ title: "Neural Shard Configured", description: "AI code modifications completed." });
+      toast({ title: "AI Code Updated", description: "AI code modifications completed." });
       setPrompt("");
     } catch (err) {
-      toast({ variant: "destructive", title: "Logic Synced Failed" });
+      toast({ variant: "destructive", title: "AI Code Sync Failed" });
     } finally {
-      setIsArchitecting(false);
+      setIsGenerating(false);
     }
   };
 
@@ -200,7 +200,7 @@ export default function XakCodePage() {
     try {
       const docRef = await addDoc(collection(firestore, "users", user.uid, "code_projects"), {
         name: newProjName,
-        code: `// Neural React Logic Core\nexport default function App() {\n  return (\n    <div className="p-10 flex flex-col items-center justify-center min-h-screen bg-black text-white">\n      <div className="max-w-md w-full p-8 rounded-3xl bg-zinc-900 border border-white/10 shadow-2xl text-center space-y-6">\n        <div className="w-16 h-16 bg-sky-500/10 border border-sky-500/30 rounded-2xl flex items-center justify-center mx-auto animate-pulse">\n          <svg className="w-8 h-8 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">\n            <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />\n          </svg>\n        </div>\n        <h1 className="text-3xl font-black uppercase italic tracking-tighter text-white">${newProjName}</h1>\n        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Status: Live and Connected</p>\n        <div className="h-px bg-white/5" />\n        <p className="text-sm italic font-medium opacity-80">Edit this template in Code Mode or prompt the Neural Architect in AI Mode to upgrade this page.</p>\n      </div>\n    </div>\n  );\n}`,
+        code: `// AI React Logic Core\nexport default function App() {\n  return (\n    <div className="p-10 flex flex-col items-center justify-center min-h-screen bg-black text-white">\n      <div className="max-w-md w-full p-8 rounded-3xl bg-zinc-900 border border-white/10 shadow-2xl text-center space-y-6">\n        <div className="w-16 h-16 bg-sky-500/10 border border-sky-500/30 rounded-2xl flex items-center justify-center mx-auto animate-pulse">\n          <svg className="w-8 h-8 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">\n            <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />\n          </svg>\n        </div>\n        <h1 className="text-3xl font-black uppercase italic tracking-tighter text-white">${newProjName}</h1>\n        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Status: Live and Connected</p>\n        <div className="h-px bg-white/5" />\n        <p className="text-sm italic font-medium opacity-80">Edit this template in Code Mode or prompt the AI Coding Assistant in AI Mode to upgrade this page.</p>\n      </div>\n    </div>\n  );\n}`,
         files: {
           "App.jsx": `export default function App() {\n  return (\n    <div className="p-20 flex flex-col items-center justify-center min-h-screen bg-black text-white">\n      <h1 className="text-5xl font-black italic uppercase text-primary mb-4">${newProjName}</h1>\n      <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase">Multi-File React Workspace Active</p>\n    </div>\n  );\n}`
         },
@@ -208,7 +208,7 @@ export default function XakCodePage() {
           { id: '1', type: 'A', name: '@', value: '76.76.21.21', ttl: 3600 },
           { id: '2', type: 'CNAME', name: 'www', value: 'xakteir.com', ttl: 3600 }
         ],
-        explanation: "Initialized new neural React shard.",
+        explanation: "Initialized new React project.",
         deployment: {
           status: 'idle',
           domain: `${newProjName.toLowerCase().replace(/\s+/g, '-')}.xakteir.app`,
@@ -220,7 +220,7 @@ export default function XakCodePage() {
       setActiveId(docRef.id);
       setIsNewModalOpen(false);
       setNewProjName("");
-      toast({ title: "Shard Initialized" });
+      toast({ title: "Project Initialized" });
     } catch (e) {
       toast({ variant: "destructive", title: "Error" });
     }
@@ -396,7 +396,7 @@ export default function XakCodePage() {
           }, { merge: true });
         } catch(e) {}
 
-        toast({ title: "DNS Match Successful!", description: `Linked custom domain ${domain} to this shard.` });
+        toast({ title: "DNS Match Successful!", description: `Linked custom domain ${domain} to this project.` });
       } else {
         toast({ 
           variant: "destructive", 
@@ -567,8 +567,8 @@ export default function XakCodePage() {
       <div className="w-32 h-32 rounded-[3.5rem] bg-sky-500/10 flex items-center justify-center border-4 border-sky-500/20 shadow-2xl">
         <Code2 className="w-16 h-16 text-sky-500" />
       </div>
-      <h2 className="text-6xl font-black uppercase italic tracking-tighter text-white">Architect Entry</h2>
-      <p className="text-muted-foreground font-bold uppercase tracking-widest max-w-sm">Sign in to initialize your neural code library and hosting suite.</p>
+      <h2 className="text-6xl font-black uppercase italic tracking-tighter text-white">Developer Entry</h2>
+      <p className="text-muted-foreground font-bold uppercase tracking-widest max-w-sm">Sign in to initialize your AI code library and hosting suite.</p>
       <Link href="/auth"><Button className="bg-primary hover:bg-primary/90 h-16 px-16 rounded-[2rem] font-black uppercase text-xs">Sign In</Button></Link>
     </div>
   );
@@ -589,7 +589,7 @@ export default function XakCodePage() {
           </div>
           
           <div className="flex gap-2">
-            <Button onClick={() => setIsNewModalOpen(true)} variant="outline" className="h-9 px-3.5 rounded-xl border-white/10 text-[9px] font-black uppercase tracking-widest hover:bg-white/5 text-white"><Plus className="w-3.5 h-3.5 mr-2" /> New Shard</Button>
+            <Button onClick={() => setIsNewModalOpen(true)} variant="outline" className="h-9 px-3.5 rounded-xl border-white/10 text-[9px] font-black uppercase tracking-widest hover:bg-white/5 text-white"><Plus className="w-3.5 h-3.5 mr-2" /> New Project</Button>
             
             {/* Native Folder Upload Input Trigger */}
             <input 
@@ -990,7 +990,7 @@ export default function XakCodePage() {
               <header className="h-10 bg-white/5 border-b border-white/5 px-5 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                   <Wand2 className="w-4 h-4 text-sky-400 animate-pulse" />
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-white">Neural Shard Assistant (30%)</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-white">AI Coding Assistant</h3>
                 </div>
                 <Badge className="bg-primary/20 text-primary border-none text-[8px] font-bold">READY</Badge>
               </header>
@@ -998,12 +998,12 @@ export default function XakCodePage() {
               <ScrollArea className="flex-1 p-5">
                 <div className="space-y-4">
                   <div className="p-5 bg-white/5 border border-white/5 rounded-[2rem] text-[11px] leading-relaxed italic text-white/70 text-left">
-                    "I am locked in with the current shard logic buffer. Describe the visual modifications, grids, or logic operations you want configured, and I will refactor the React script instantly."
+                    "I am locked in with the current project code. Describe the visual modifications, grids, or logic operations you want configured, and I will refactor the React script instantly."
                   </div>
                   
                   {activeProject?.explanation && (
                     <div className="p-4 bg-sky-500/5 border border-sky-500/20 rounded-[1.8rem] space-y-2 text-left">
-                      <span className="text-[8px] font-black text-sky-400 uppercase tracking-widest">Architect Commentary</span>
+                      <span className="text-[8px] font-black text-sky-400 uppercase tracking-widest">AI Commentary</span>
                       <p className="text-[10px] leading-relaxed italic text-white/80">{activeProject.explanation}</p>
                     </div>
                   )}
@@ -1011,10 +1011,10 @@ export default function XakCodePage() {
                   <div className="space-y-2 text-left">
                     <p className="text-[8px] font-black uppercase text-muted-foreground ml-2">Quick Commands</p>
                     <div className="grid grid-cols-1 gap-2">
-                      <Button onClick={() => handleArchitect(null as any, "Upgrade this UI. Add a dark glassmorphic cyber design theme with nice neon accents and gradient typography.")} variant="outline" className="h-10 text-[8px] font-black uppercase justify-start px-4 rounded-xl border-white/5 bg-white/5 hover:bg-sky-500/10 text-white">
+                      <Button onClick={() => handleGenerateCode(null as any, "Upgrade this UI. Add a dark glassmorphic cyber design theme with nice neon accents and gradient typography.")} variant="outline" className="h-10 text-[8px] font-black uppercase justify-start px-4 rounded-xl border-white/5 bg-white/5 hover:bg-sky-500/10 text-white">
                         <Sparkles className="w-3 h-3 mr-2 text-sky-400" /> Apply Cyber Aesthetic
                       </Button>
-                      <Button onClick={() => handleArchitect(null as any, "Add a dynamic grid system showing dashboard cards with interactive stats and micro-animations.")} variant="outline" className="h-10 text-[8px] font-black uppercase justify-start px-4 rounded-xl border-white/5 bg-white/5 hover:bg-sky-500/10 text-white">
+                      <Button onClick={() => handleGenerateCode(null as any, "Add a dynamic grid system showing dashboard cards with interactive stats and micro-animations.")} variant="outline" className="h-10 text-[8px] font-black uppercase justify-start px-4 rounded-xl border-white/5 bg-white/5 hover:bg-sky-500/10 text-white">
                         <Tv className="w-3 h-3 mr-2 text-sky-400" /> Add Dashboard Grid
                       </Button>
                     </div>
@@ -1023,15 +1023,15 @@ export default function XakCodePage() {
               </ScrollArea>
 
               <div className="p-4 border-t border-white/5 bg-black/40">
-                <form onSubmit={handleArchitect} className="relative">
+                <form onSubmit={handleGenerateCode} className="relative">
                   <Input 
                     value={aiPrompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Enter architecture prompts..." 
+                    placeholder="Enter coding prompts..." 
                     className="h-14 bg-zinc-950 border-white/10 rounded-2xl pr-14 text-xs font-bold text-white focus:border-sky-500"
                   />
-                  <Button disabled={isArchitecting || !aiPrompt.trim()} type="submit" size="icon" className="absolute right-1.5 top-1.5 h-11 w-11 bg-sky-600 rounded-xl hover:bg-sky-500 shadow-xl transition-all">
-                    {isArchitecting ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Send className="w-4 h-4 text-white" />}
+                  <Button disabled={isGenerating || !aiPrompt.trim()} type="submit" size="icon" className="absolute right-1.5 top-1.5 h-11 w-11 bg-sky-600 rounded-xl hover:bg-sky-500 shadow-xl transition-all">
+                    {isGenerating ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Send className="w-4 h-4 text-white" />}
                   </Button>
                 </form>
               </div>
@@ -1045,16 +1045,16 @@ export default function XakCodePage() {
         <DialogContent className="glass-card border-white/10 rounded-[2.5rem] max-w-md text-white p-8 bg-zinc-950">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black uppercase italic flex items-center gap-3">
-              <ShieldPlus className="w-6 h-6 text-sky-500" /> Initialize Shard
+              <ShieldPlus className="w-6 h-6 text-sky-500" /> Create Project
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground text-[10px] italic">Create a new React code shard inside your user namespace.</DialogDescription>
+            <DialogDescription className="text-muted-foreground text-[10px] italic">Create a new React project in your namespace.</DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-4">
             <div className="space-y-2 text-left">
               <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-2">Project Name</label>
-              <Input value={newProjName} onChange={(e) => setNewProjName(e.target.value)} placeholder="my-dynamic-shard" className="h-12 bg-black border-white/10 rounded-xl text-white font-bold" />
+              <Input value={newProjName} onChange={(e) => setNewProjName(e.target.value)} placeholder="my-dynamic-project" className="h-12 bg-black border-white/10 rounded-xl text-white font-bold" />
             </div>
-            <Button onClick={handleCreateProject} disabled={!newProjName.trim()} className="w-full h-14 bg-sky-600 hover:bg-sky-500 rounded-xl font-black uppercase tracking-widest text-white shadow-xl italic">Create Shard</Button>
+            <Button onClick={handleCreateProject} disabled={!newProjName.trim()} className="w-full h-14 bg-sky-600 hover:bg-sky-500 rounded-xl font-black uppercase tracking-widest text-white shadow-xl italic">Create Project</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -1064,7 +1064,7 @@ export default function XakCodePage() {
         <DialogContent className="glass-card border-white/10 rounded-[2.5rem] max-w-md text-white p-8 bg-zinc-950">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black uppercase italic flex items-center gap-3">
-              <Plus className="w-6 h-6 text-sky-500" /> Add File Shard
+              <Plus className="w-6 h-6 text-sky-500" /> Add File
             </DialogTitle>
             <DialogDescription className="text-muted-foreground text-[10px] italic">Specify path and name for the new workspace module.</DialogDescription>
           </DialogHeader>

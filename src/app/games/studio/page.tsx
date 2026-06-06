@@ -450,9 +450,9 @@ export default function XakStudioPage() {
           <div className="p-6 border-b border-white/5 bg-black/40 flex items-center justify-between">
              <div className="flex items-center gap-3">
                 <Bot className="w-5 h-5 text-primary animate-pulse" />
-                <h3 className="text-sm font-black uppercase italic tracking-tighter text-white">App Architect</h3>
+                <h3 className="text-sm font-black uppercase italic tracking-tighter text-white">App Assistant</h3>
              </div>
-             <Badge variant="outline" className="border-primary/20 text-primary text-[8px] font-black uppercase px-3 py-1">ARCHITECT</Badge>
+             <Badge variant="outline" className="border-primary/20 text-primary text-[8px] font-black uppercase px-3 py-1">ASSISTANT</Badge>
           </div>
           
           <ScrollArea className="flex-1 p-6" ref={chatScrollRef}>

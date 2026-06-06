@@ -159,7 +159,7 @@ export default function XakSocialPage() {
         status: 'pending'
       });
       
-      toast({ title: "Report Transmitted", description: "Architects will review this identity shard." });
+      toast({ title: "Report Transmitted", description: "Creators will review this profile." });
       setSelectedMember(null);
     } catch (e) {
       toast({ variant: "destructive", title: "Transmission Failed" });
@@ -227,7 +227,7 @@ export default function XakSocialPage() {
                     </ScrollArea>
                     <div className="p-6 bg-zinc-900/50 border-t border-white/10">
                       <form onSubmit={handleSendChat} className="flex gap-4">
-                        <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Send a neural transmission..." className="bg-black/60 border-white/5 h-14 rounded-2xl px-6 font-bold text-xs shadow-inner italic text-white" />
+                        <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Send a message..." className="bg-black/60 border-white/5 h-14 rounded-2xl px-6 font-bold text-xs shadow-inner italic text-white" />
                         <Button type="submit" size="icon" className="h-14 w-14 bg-primary rounded-2xl shadow-xl"><Send className="w-6 h-6 text-white" /></Button>
                       </form>
                     </div>
@@ -260,7 +260,7 @@ export default function XakSocialPage() {
                     <Plus className="w-10 h-10 text-muted-foreground group-hover:text-primary" />
                  </div>
                  <div>
-                    <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white">Initialize Group</h3>
+                    <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white">Create Group</h3>
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-2">Build a new Hub community</p>
                  </div>
               </Card>
@@ -276,7 +276,7 @@ export default function XakSocialPage() {
                       <h3 className="text-3xl font-black uppercase italic tracking-tighter leading-none group-hover:text-primary transition-colors text-white">{group.name}</h3>
                       <p className="text-sm font-medium italic text-muted-foreground line-clamp-3 leading-relaxed">{group.description}</p>
                       <div className="pt-4 flex justify-between items-center border-t border-white/5">
-                         <span className="text-[9px] font-black uppercase text-muted-foreground">{group.memberCount || 1} Neural Links</span>
+                         <span className="text-[9px] font-black uppercase text-muted-foreground">{group.memberCount || 1} Connections</span>
                          <Button variant="ghost" className="h-9 px-6 rounded-xl font-black uppercase text-[9px] text-primary hover:bg-primary/10">Join Zone</Button>
                       </div>
                    </CardContent>
@@ -323,7 +323,7 @@ export default function XakSocialPage() {
       <Dialog open={!!selectedMember} onOpenChange={() => setSelectedMember(null)}>
         <DialogContent className="w-96 p-0 overflow-hidden bg-[#111214] border-none rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.8)] text-foreground">
           <DialogHeader className="sr-only">
-             <DialogTitle>Member Profile: {selectedMember?.displayName || 'Identity Shard'}</DialogTitle>
+             <DialogTitle>Member Profile: {selectedMember?.displayName || 'Profile'}</DialogTitle>
           </DialogHeader>
           {/* Banner Section */}
           <div className="h-20 bg-[#2b2d31] relative">
@@ -363,9 +363,9 @@ export default function XakSocialPage() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <p className="text-[10px] font-black uppercase text-[#b5bac1] tracking-widest">About Identity Shard</p>
+                <p className="text-[10px] font-black uppercase text-[#b5bac1] tracking-widest">About Member</p>
                 <p className="text-sm font-medium text-[#dbdee1] leading-relaxed italic">
-                  {selectedMember?.description || "This member has not yet synchronized their neural biography shard with the Hub registry."}
+                  {selectedMember?.description || "This member has not yet synchronized their profile bio with the Hub registry."}
                 </p>
               </div>
 

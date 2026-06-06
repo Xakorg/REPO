@@ -18,7 +18,7 @@ export function FishingGame({ onExit }: { onExit: () => void }) {
   const catchFish = () => {
     if (status === 'BITE! CLICK NOW!') {
       setScore(s => s + 500);
-      setStatus('CAUGHT! Nice Shard.');
+      setStatus('CAUGHT! Nice catch.');
       setTimeout(cast, 2000);
     }
   };
@@ -28,7 +28,7 @@ export function FishingGame({ onExit }: { onExit: () => void }) {
   return (
     <div className="flex flex-col items-center gap-8 p-12 glass-card rounded-[4rem] border-4 border-blue-500/30 bg-background/90 max-w-md w-full">
       <div className="flex justify-between w-full items-center">
-        <h2 className="text-3xl font-black italic uppercase">Shard_Catch</h2>
+        <h2 className="text-3xl font-black italic uppercase">Fish_Catch</h2>
         <Button size="icon" variant="ghost" onClick={onExit}><X className="w-8 h-8" /></Button>
       </div>
       <div className="text-center space-y-6">

@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Circle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export function GolfGame({ onExit }: { onExit: () => void }) {
+  const { toast } = useToast();
   const [ballPos, setBallPos] = useState({ x: 50, y: 80 });
   const [strokes, setStrokes] = useState(0);
 
@@ -17,7 +19,7 @@ export function GolfGame({ onExit }: { onExit: () => void }) {
   return (
     <div className="flex flex-col items-center gap-8 p-12 glass-card rounded-[4rem] border-4 border-emerald-500/30 bg-background/90 max-w-lg w-full relative h-[600px]">
       <div className="flex justify-between w-full items-center">
-        <h2 className="text-3xl font-black italic uppercase">Neural_Put</h2>
+        <h2 className="text-3xl font-black italic uppercase">Golf_Put</h2>
         <div className="font-black text-xl">{strokes} Strokes</div>
         <Button size="icon" variant="ghost" onClick={onExit}><X className="w-8 h-8" /></Button>
       </div>

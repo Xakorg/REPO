@@ -193,7 +193,7 @@ export default function NotificationsPage() {
                             <p className="text-sm font-medium leading-relaxed italic text-muted-foreground line-clamp-2 max-w-2xl">{notif.message}</p>
                             <div className="flex gap-4 pt-2">
                               <Badge className="bg-white/5 border-white/10 text-[8px] font-black uppercase px-3 py-1 text-muted-foreground">{notif.isGlobal ? 'Global Broadcast' : 'Protocol Active'}</Badge>
-                              {(!notif.read && !notif.isGlobal) && <Badge className="bg-primary text-white border-none text-[8px] font-black uppercase px-3 py-1 shadow-lg">New Unit</Badge>}
+                              {(!notif.read && !notif.isGlobal) && <Badge className="bg-primary text-white border-none text-[8px] font-black uppercase px-3 py-1 shadow-lg">New</Badge>}
                             </div>
                           </div>
                         </div>

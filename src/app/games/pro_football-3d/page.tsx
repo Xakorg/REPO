@@ -150,7 +150,7 @@ export default function ProFootballScrollingPage() {
             <Card className="glass-card p-12 rounded-[4rem] border-white/10 bg-white/5 hover:border-primary transition-all cursor-pointer group" onClick={() => setGameMode('playing')}>
               <Shield className="w-20 h-20 text-primary mx-auto mb-8 transition-transform group-hover:scale-110" />
               <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-4">Local Arena</h3>
-              <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest italic leading-relaxed">Match against the professional neural bot defender.</p>
+              <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest italic leading-relaxed">Match against the professional AI bot defender.</p>
               <Button className="mt-8 bg-primary w-full h-14 rounded-2xl font-black uppercase text-xs text-white">Play Offline</Button>
             </Card>
 
@@ -243,7 +243,7 @@ export default function ProFootballScrollingPage() {
             style={{ left: `${playerPos.x}%`, top: `${playerPos.y}px`, transform: 'translate(-50%, -50%)' }}
           >
             <User className="w-8 h-8 text-white" />
-            <div className="absolute -top-10 bg-primary text-white text-[8px] font-black px-2 py-1 rounded-md shadow-xl whitespace-nowrap uppercase">Hero_Unit</div>
+            <div className="absolute -top-10 bg-primary text-white text-[8px] font-black px-2 py-1 rounded-md shadow-xl whitespace-nowrap uppercase">Hero Player</div>
           </div>
 
           <div 

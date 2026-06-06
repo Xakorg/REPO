@@ -109,7 +109,7 @@ export default function RietkaxPage() {
                 {gravity ? "Restore Anti-G" : "Toggle Gravity"}
               </Button>
               <Button onClick={() => window.location.reload()} variant="outline" className="h-20 md:h-28 rounded-[3rem] border-4 border-white/10 text-white font-black uppercase text-sm tracking-widest hover:bg-white/10 active:scale-95 transition-all">
-                Sync Shards
+                Sync Projects
               </Button>
             </div>
           </Card>

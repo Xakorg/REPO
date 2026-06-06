@@ -12,6 +12,15 @@ export function SequenceGame({ onExit }: { onExit: () => void }) {
   const [activeBtn, setActiveBtn] = useState<number | null>(null);
   const [gameOver, setGameOver] = useState(false);
 
+  const resetGame = () => {
+    setSequence([]);
+    setUserSequence([]);
+    setGameOver(false);
+    const next = Math.floor(Math.random() * 4);
+    setSequence([next]);
+    playSequence([next]);
+  };
+
   const startNextLevel = () => {
     const next = Math.floor(Math.random() * 4);
     const newSeq = [...sequence, next];
@@ -51,7 +60,7 @@ export function SequenceGame({ onExit }: { onExit: () => void }) {
   return (
     <div className="flex flex-col items-center gap-8 p-12 glass-card rounded-[4rem] border-4 border-amber-500/30 bg-background/90 max-w-md w-full relative">
       <div className="flex justify-between w-full items-center">
-        <h2 className="text-3xl font-black italic uppercase">Neural_Seq</h2>
+        <h2 className="text-3xl font-black italic uppercase">Sequence_Game</h2>
         <Button size="icon" variant="ghost" onClick={onExit}><X className="w-8 h-8" /></Button>
       </div>
       <div className="grid grid-cols-2 gap-4 w-full aspect-square">
@@ -71,7 +80,7 @@ export function SequenceGame({ onExit }: { onExit: () => void }) {
       {gameOver && <div className="absolute inset-0 bg-black/95 flex flex-col items-center justify-center rounded-[4rem] z-50">
         <Trophy className="w-16 h-16 text-amber-400 mb-4" />
         <h3 className="text-4xl font-black">GAME OVER</h3>
-        <Button onClick={() => window.location.reload()} className="mt-8 bg-primary">Retry</Button>
+        <Button onClick={resetGame} className="mt-8 bg-primary">Retry</Button>
       </div>}
     </div>
   );

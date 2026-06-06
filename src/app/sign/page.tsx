@@ -60,7 +60,7 @@ export default function XakSignPage() {
       });
       setDocTitle("");
       setDocContent("");
-      toast({ title: "Document Shard Ready" });
+      toast({ title: "Document Ready" });
     } catch (e) {
       toast({ variant: "destructive", title: "Sync Failed" });
     } finally {
@@ -104,11 +104,11 @@ export default function XakSignPage() {
              </Button>
            </DialogTrigger>
            <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-2xl text-foreground p-10">
-              <DialogHeader><DialogTitle className="text-3xl font-black uppercase italic">New Shard Request</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="text-3xl font-black uppercase italic">New Document Request</DialogTitle></DialogHeader>
               <div className="space-y-6 py-6">
                  <Input value={docTitle} onChange={(e) => setDocTitle(e.target.value)} placeholder="Document Headline" className="h-14 bg-secondary/50 rounded-xl" />
-                 <textarea value={docContent} onChange={(e) => setDocContent(e.target.value)} placeholder="Enter document logic..." className="min-h-[200px] w-full bg-secondary/50 rounded-2xl p-6 italic font-medium" />
-                 <Button onClick={handleCreate} disabled={isCreating || !docTitle} className="w-full h-16 bg-primary rounded-2xl font-black uppercase">{isCreating ? <Loader2 className="animate-spin w-6 h-6" /> : "SYCHRONIZE REQUEST"}</Button>
+                 <textarea value={docContent} onChange={(e) => setDocContent(e.target.value)} placeholder="Enter document text..." className="min-h-[200px] w-full bg-secondary/50 rounded-2xl p-6 italic font-medium" />
+                 <Button onClick={handleCreate} disabled={isCreating || !docTitle} className="w-full h-16 bg-primary rounded-2xl font-black uppercase">{isCreating ? <Loader2 className="animate-spin w-6 h-6" /> : "SEND REQUEST"}</Button>
               </div>
            </DialogContent>
         </Dialog>
@@ -148,7 +148,7 @@ export default function XakSignPage() {
                          </div>
 
                          <div className="flex gap-4">
-                            {docItem.status === 'pending' && <Button onClick={() => handleSign(docItem.id)} className="h-14 px-10 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Sign Shard</Button>}
+                            {docItem.status === 'pending' && <Button onClick={() => handleSign(docItem.id)} className="h-14 px-10 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Sign Document</Button>}
                             <Button variant="ghost" size="icon" onClick={() => deleteDoc(doc(firestore!, "users", user.uid, "sign_documents", docItem.id))} className="h-14 w-14 rounded-2xl text-rose-500 hover:bg-rose-500/10"><Trash2 className="w-5 h-5" /></Button>
                          </div>
                       </div>

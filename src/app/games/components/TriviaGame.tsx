@@ -3,20 +3,22 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Globe } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Q = [
-  { q: "What powers Xakteir?", a: ["Neural Logic", "Magic", "Steam", "Hamsters"], c: 0 },
+  { q: "What powers Xakteir?", a: ["AI Logic", "Magic", "Steam", "Hamsters"], c: 0 },
   { q: "Latest Hub Build?", a: ["v1.0", "v4.2.8", "v10.0", "Beta"], c: 1 }
 ];
 
 export function TriviaGame({ onExit }: { onExit: () => void }) {
+  const { toast } = useToast();
   const [curr, setCurr] = useState(0);
   const [score, setScore] = useState(0);
 
   const check = (i: number) => {
     if (i === Q[curr].c) setScore(s => s + 100);
     if (curr < Q.length - 1) setCurr(c => c + 1);
-    else toast({ title: "Master Architect!", description: `Score: ${score + (i === Q[curr].c ? 100 : 0)}` });
+    else toast({ title: "Master Player!", description: `Score: ${score + (i === Q[curr].c ? 100 : 0)}` });
   };
 
   return (

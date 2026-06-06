@@ -404,7 +404,7 @@ export default function XakDrivePage() {
           </div>
           <div className="flex gap-4">
              {driveMode === 'cloud' && selectedIds.length > 0 && (
-               <Button onClick={handleDeleteCloudFile} variant="ghost" className="h-12 px-6 rounded-xl text-rose-500 font-black uppercase text-[10px]"><Trash2 className="w-4 h-4 mr-2" /> Delete Shards</Button>
+               <Button onClick={handleDeleteCloudFile} variant="ghost" className="h-12 px-6 rounded-xl text-rose-500 font-black uppercase text-[10px]"><Trash2 className="w-4 h-4 mr-2" /> Delete Files</Button>
              )}
              <div className="relative w-80">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -521,7 +521,7 @@ export default function XakDrivePage() {
                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-zinc-900/50">
                   <h3 className="text-xl font-black uppercase italic text-white flex items-center gap-4"><Eye className="w-6 h-6 text-amber-500 animate-pulse" /> {previewFile?.name}</h3>
                   <div className="flex gap-4 items-center">
-                     <Button onClick={() => handleDownloadFile(previewFile)} className="bg-amber-500 hover:bg-amber-400 text-black font-black uppercase text-xs h-10 px-5 rounded-lg flex items-center gap-2"><Download className="w-4 h-4" /> Download Shard</Button>
+                     <Button onClick={() => handleDownloadFile(previewFile)} className="bg-amber-500 hover:bg-amber-400 text-black font-black uppercase text-xs h-10 px-5 rounded-lg flex items-center gap-2"><Download className="w-4 h-4" /> Download File</Button>
                      <Button onClick={() => setPreviewFile(null)} variant="ghost" size="icon" className="rounded-full hover:bg-white/5"><X className="w-6 h-6 text-white" /></Button>
                   </div>
                </div>
@@ -531,7 +531,7 @@ export default function XakDrivePage() {
                   ) : (
                     <div className="text-center space-y-8 opacity-30">
                       <File className="w-32 h-32 mx-auto text-amber-500" />
-                      <p className="text-2xl font-black uppercase italic">Binary File Shard Locked</p>
+                      <p className="text-2xl font-black uppercase italic">Binary File Locked</p>
                       <p className="text-xs text-muted-foreground uppercase tracking-widest max-w-sm mx-auto">Double click or use the download action above to extract this logic stream directly.</p>
                     </div>
                   )}

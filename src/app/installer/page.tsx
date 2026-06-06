@@ -33,8 +33,8 @@ export default function InstallerPage() {
   const startInstallation = () => {
     setStep(4);
     const installationSteps = [
-      { p: 10, t: "Downloading Anti-Gravity Shards..." },
-      { p: 25, t: "Synchronizing Neural Core..." },
+      { p: 10, t: "Downloading Anti-Gravity Files..." },
+      { p: 25, t: "Synchronizing System Core..." },
       { p: 45, t: "Unpacking Universal Asset Pack v4.2..." },
       { p: 65, t: "Optimizing Hub Graphics..." },
       { p: 85, t: "Finalizing Security Protocol..." },
@@ -78,7 +78,7 @@ export default function InstallerPage() {
             <button onClick={() => router.push('/download')} className="h-10 w-12 flex items-center justify-center hover:bg-[#e81123] transition-colors text-white/60 hover:text-white"><X className="w-4 h-4" /></button>
           </div>
         </header>
-
+ 
         <div className="flex h-[420px]">
           {/* Native-style Sidebar */}
           <div className="w-[220px] bg-[#252525] border-r border-white/5 p-8 flex flex-col items-center justify-center text-center space-y-8">
@@ -92,7 +92,7 @@ export default function InstallerPage() {
               <p className="text-[7px] font-black uppercase tracking-widest text-white">Verified Publisher</p>
             </div>
           </div>
-
+ 
           {/* Main Wizard Content Area */}
           <div className="flex-1 p-12 flex flex-col bg-[#1e1e1e]">
             {step === 1 && (
@@ -102,13 +102,13 @@ export default function InstallerPage() {
                   <p className="text-[10px] font-black text-primary uppercase tracking-widest">Setup Phase 01: Authorization</p>
                 </div>
                 <p className="text-[12px] text-white/60 leading-relaxed font-medium italic">
-                  This wizard will synchronize your local neural node with the Xakteir Hub Multiverse.
+                  This wizard will synchronize your local workstation with the Xakteir Hub Multiverse.
                   <br /><br />
                   Pro features include:
                   <ul className="mt-4 space-y-2">
                     <li className="flex items-center gap-2 text-white/80"><CheckCircle2 className="w-3 h-3 text-primary" /> Anti-Gravity Asset Sync</li>
                     <li className="flex items-center gap-2 text-white/80"><CheckCircle2 className="w-3 h-3 text-primary" /> High-Fidelity 3D Acceleration</li>
-                    <li className="flex items-center gap-2 text-white/80"><CheckCircle2 className="w-3 h-3 text-primary" /> Native Neural Buffering</li>
+                    <li className="flex items-center gap-2 text-white/80"><CheckCircle2 className="w-3 h-3 text-primary" /> Native Smart Buffering</li>
                   </ul>
                 </p>
               </div>
@@ -118,7 +118,7 @@ export default function InstallerPage() {
               <div className="flex-1 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                 <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">Destination Folder</h2>
                 <div className="space-y-4">
-                  <p className="text-[10px] text-white/40 font-bold uppercase">Choose where to store neural shards:</p>
+                  <p className="text-[10px] text-white/40 font-bold uppercase">Choose where to store project files:</p>
                   <div className="p-5 bg-black/40 rounded-xl border border-white/10 flex items-center justify-between group cursor-pointer hover:border-primary transition-all">
                     <div className="flex items-center gap-4">
                       <HardDrive className="w-5 h-5 text-primary" />

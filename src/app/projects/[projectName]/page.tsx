@@ -211,7 +211,7 @@ export default function PublishedProjectPage() {
                 >
                   <Play className="w-10 h-10 text-primary fill-primary" />
                 </button>
-                <p className="mt-6 text-[10px] font-black text-primary uppercase tracking-[0.3em]">Initialize Neural Runtime</p>
+                <p className="mt-6 text-[10px] font-black text-primary uppercase tracking-[0.3em]">Initialize Project Runtime</p>
               </>
             )}
           </Card>
@@ -237,7 +237,7 @@ export default function PublishedProjectPage() {
                 </>
               ) : (
                 <>
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Neural Blocks: {project.blocks?.length || 0}</p>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Project Blocks: {project.blocks?.length || 0}</p>
                   <div className="h-64 overflow-y-auto space-y-3 pr-2">
                     {project.blocks?.map((block: any, i: number) => (
                       <div key={i} className={cn("p-3 rounded-xl border-b-4 text-[10px] font-black text-white", block.color, block.border)}>
@@ -252,7 +252,7 @@ export default function PublishedProjectPage() {
 
           <Card className="glass-card rounded-[2.5rem] p-8 border-white/5 bg-gradient-to-br from-primary/10 to-transparent">
             <h3 className="text-lg font-black text-foreground uppercase italic tracking-tighter mb-2">Verified Ownership</h3>
-            <p className="text-xs text-muted-foreground font-medium leading-relaxed">This project signature matches the Xakteir Neural Registry for @{project.ownerName || "Member"}. Integrity verified 100%.</p>
+            <p className="text-xs text-muted-foreground font-medium leading-relaxed">This project signature matches the Xakteir Project Registry for @{project.ownerName || "Member"}. Integrity verified 100%.</p>
           </Card>
         </div>
       </div>

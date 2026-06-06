@@ -31,11 +31,11 @@ import Link from "next/link";
 
 const PATH_STATIONS = [
   { id: 1, title: "Basics of Logic", unit: 1, icon: Brain, status: 'completed' },
-  { id: 2, title: "Neural Greetings", unit: 1, icon: Globe, status: 'completed' },
-  { id: 3, title: "Unit 1 Checkpoint", unit: 1, icon: Trophy, status: 'current' },
+  { id: 2, title: "Smart Greetings", unit: 1, icon: Globe, status: 'completed' },
+  { id: 3, title: "Part 1 Checkpoint", unit: 1, icon: Trophy, status: 'current' },
   { id: 4, title: "Variables & Hubs", unit: 2, icon: Zap, status: 'locked' },
   { id: 5, title: "Smart Loops", unit: 2, icon: Sparkles, status: 'locked' },
-  { id: 6, title: "Unit 2 Checkpoint", unit: 2, icon: Star, status: 'locked' },
+  { id: 6, title: "Part 2 Checkpoint", unit: 2, icon: Star, status: 'locked' },
 ];
 
 export default function XakLearnPage() {
@@ -63,7 +63,7 @@ export default function XakLearnPage() {
     try {
       const res = await teachCode({ topic: title });
       setAiLesson(res);
-      toast({ title: "Unit Synchronized" });
+      toast({ title: "Lesson Synchronized" });
     } catch (err) { toast({ variant: "destructive", title: "Sync Failed" }); }
     finally { setLoading(false); }
   };
@@ -105,7 +105,7 @@ export default function XakLearnPage() {
         <Card className="flex-1 glass-card rounded-[3rem] p-8 border-white/10 bg-black/20 flex flex-col gap-8 shadow-2xl">
            <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-4"><Sparkles className="w-5 h-5" /> Path Selection</h3>
            <div className="space-y-4">
-              {['Neural Logic', 'German Bridge', 'App Architecture'].map((subj, i) => (
+              {['Smart Logic', 'German Bridge', 'App Design'].map((subj, i) => (
                 <button key={subj} className={cn("w-full p-6 rounded-[1.8rem] border-4 transition-all text-left group", i === 0 ? "bg-primary/10 border-primary shadow-xl" : "bg-white/5 border-transparent opacity-40")}>
                    <p className="text-[10px] font-black uppercase italic tracking-widest">{subj}</p>
                    <p className="text-[8px] font-bold text-muted-foreground uppercase mt-1">Level {i === 0 ? '12' : 'Locked'}</p>
@@ -131,7 +131,7 @@ export default function XakLearnPage() {
                    <pre className="text-sky-400 select-all">{aiLesson.exampleCode}</pre>
                 </div>
                 <div className="space-y-8 pt-10 border-t border-white/5">
-                  <div className="flex items-center gap-4"><Wand2 className="w-8 h-8 text-amber-400" /><h3 className="text-2xl font-black uppercase italic tracking-tighter">Neural Challenge</h3></div>
+                  <div className="flex items-center gap-4"><Wand2 className="w-8 h-8 text-amber-400" /><h3 className="text-2xl font-black uppercase italic tracking-tighter">Daily Challenge</h3></div>
                   <p className="text-2xl font-bold italic text-white/80">"{aiLesson.quizQuestion}"</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {aiLesson.quizOptions.map((opt, i) => (
@@ -171,7 +171,7 @@ export default function XakLearnPage() {
                 </div>
               ))}
               <div className="pt-20 opacity-10 text-center space-y-6">
-                <BookOpen className="w-20 h-20 mx-auto" /><p className="text-sm font-black uppercase tracking-[0.8em]">Deep Neural Sectors Locked</p>
+                <BookOpen className="w-20 h-20 mx-auto" /><p className="text-sm font-black uppercase tracking-[0.8em]">Advanced Learning Sectors Locked</p>
               </div>
             </div>
           </ScrollArea>
@@ -188,7 +188,7 @@ export default function XakLearnPage() {
 
         <Card className="glass-card rounded-[3rem] p-10 border-white/10 text-center space-y-6 shadow-2xl">
              <div className="flex items-center justify-center gap-4 text-primary"><Sparkles className="w-8 h-8 animate-pulse" /><h3 className="text-xl font-black uppercase italic">Shop Rewards</h3></div>
-             <p className="text-[10px] font-bold text-muted-foreground uppercase leading-relaxed tracking-widest">Your XP logic shards can be traded for premium Hub decorations.</p>
+             <p className="text-[10px] font-bold text-muted-foreground uppercase leading-relaxed tracking-widest">Your XP points can be traded for premium Hub decorations.</p>
              <Link href="/shop"><Button className="w-full bg-primary h-14 rounded-2xl font-black uppercase text-[10px] shadow-lg">Enter Market</Button></Link>
         </Card>
       </aside>

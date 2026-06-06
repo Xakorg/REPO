@@ -28,7 +28,7 @@ export default function NewsPage() {
         </div>
         <div className="space-y-3">
           <h1 className="text-7xl font-black tracking-tighter uppercase italic leading-none">Hub Broadcast</h1>
-          <p className="text-sm font-bold uppercase tracking-[0.4em] text-muted-foreground/60">Official Ecosystem Updates & Neural Insights</p>
+          <p className="text-sm font-bold uppercase tracking-[0.4em] text-muted-foreground/60">Official Ecosystem Updates & Technical Insights</p>
         </div>
       </header>
 
@@ -94,7 +94,7 @@ export default function NewsPage() {
               <div className="space-y-6">
                 {[
                   { label: "Core Runtime", status: "Operational", color: "text-green-500" },
-                  { label: "Neural Search", status: "Operational", color: "text-green-500" },
+                  { label: "Web Search", status: "Operational", color: "text-green-500" },
                   { label: "Link Layer", status: "Operational", color: "text-green-500" },
                   { label: "XakGuard 4.0", status: "Secured", color: "text-blue-500" },
                 ].map(svc => (
@@ -105,7 +105,7 @@ export default function NewsPage() {
                 ))}
               </div>
               <div className="pt-6 border-t border-white/5">
-                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center">Neural Layer V4.2.8 // Last Sync: Just Now</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center">System Layer V4.2.8 // Last Sync: Just Now</p>
               </div>
             </div>
           </Card>
@@ -117,7 +117,7 @@ export default function NewsPage() {
                 <Info className="w-8 h-8 text-primary" />
               </div>
               <h3 className="text-2xl font-black uppercase italic tracking-tighter leading-none">About Transmissions</h3>
-              <p className="text-xs text-muted-foreground font-bold leading-relaxed uppercase tracking-widest opacity-60">The Official Broadcast hub is where the Xakteir Architects share the progress of the neural multiverse.</p>
+              <p className="text-xs text-muted-foreground font-bold leading-relaxed uppercase tracking-widest opacity-60">The Official Broadcast hub is where the Xakteir Creators share the progress of the ecosystem.</p>
               <Link href="/about">
                 <button className="text-[10px] font-black text-primary uppercase tracking-[0.3em] hover:underline">Learn more about our Vision</button>
               </Link>

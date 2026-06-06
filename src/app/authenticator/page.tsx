@@ -247,7 +247,7 @@ export default function XakteirAuthPage() {
           </div>
           <ScrollArea className="flex-1 p-4">
              <div className="space-y-2">
-                {['All Shards', 'Work', 'Finance', 'Social', 'Gaming'].map((group, i) => (
+                {['All Codes', 'Work', 'Finance', 'Social', 'Gaming'].map((group, i) => (
                   <button key={group} className={cn("w-full flex items-center gap-4 p-4 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest text-left", i === 0 ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:bg-white/5")}>
                      <FolderOpen className="w-4 h-4" /> {group}
                   </button>
@@ -289,7 +289,7 @@ export default function XakteirAuthPage() {
             ) : accounts?.length === 0 ? (
               <div className="col-span-full py-40 text-center opacity-20 space-y-6">
                  <Zap className="w-20 h-20 mx-auto" />
-                 <p className="text-[10px] font-black uppercase tracking-[0.5em]">Zero 2FA Shards Active</p>
+                 <p className="text-[10px] font-black uppercase tracking-[0.5em]">Zero 2FA Codes Active</p>
               </div>
             ) : (
               accounts?.filter(a => a.service.toLowerCase().includes(search.toLowerCase())).map((acc) => {
@@ -360,7 +360,7 @@ export default function XakteirAuthPage() {
 
                 <div className="space-y-8 bg-black/40 p-10 rounded-[3rem] border-4 border-white/5 shadow-inner">
                    <div className="flex flex-col items-center gap-4">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-primary">Current Registry Shard</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-primary">Current Registry Code</span>
                       <span className="text-7xl font-black italic text-white tabular-nums drop-shadow-2xl">{generateTOTP(activeAccount.secret)}</span>
                    </div>
                    <div className="space-y-4">
@@ -370,7 +370,7 @@ export default function XakteirAuthPage() {
                       </div>
                       <Progress value={(secondsLeft / 30) * 100} className="h-1.5 bg-white/5" />
                    </div>
-                   <Button onClick={() => handleCopy(generateTOTP(activeAccount.secret))} className="w-full h-16 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl"><Copy className="w-4 h-4 mr-3" /> Copy Shard</Button>
+                   <Button onClick={() => handleCopy(generateTOTP(activeAccount.secret))} className="w-full h-16 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl"><Copy className="w-4 h-4 mr-3" /> Copy Code</Button>
                 </div>
 
                 <div className="mt-auto grid grid-cols-2 gap-4">
@@ -390,7 +390,7 @@ export default function XakteirAuthPage() {
                  </Button>
               </DialogTrigger>
               <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-foreground p-10 shadow-2xl">
-                 <DialogHeader><DialogTitle className="text-3xl font-black uppercase italic tracking-tighter">Initialize Shard</DialogTitle></DialogHeader>
+                 <DialogHeader><DialogTitle className="text-3xl font-black uppercase italic tracking-tighter">Add Code</DialogTitle></DialogHeader>
                  <div className="space-y-6 py-6">
                     <div className="grid grid-cols-2 gap-4">
                        <Button variant="outline" className="h-20 rounded-2xl border-white/5 bg-secondary/50 flex flex-col items-center justify-center gap-2"><QrCode className="w-6 h-6 text-primary" /><span className="text-[8px] font-black uppercase">Scan QR</span></Button>

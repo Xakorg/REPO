@@ -39,7 +39,7 @@ import { RenderHat } from "@/components/RenderHat";
 
 const SHOP_ITEMS = [
   { id: 1, name: "Neon Pulse Aura", category: "Auras", type: 'aura', key: 'neon', price: 450, color: "text-blue-500", bg: "bg-blue-500/10", rarity: "Epic", description: "A high-frequency rhythmic pulse around your avatar." },
-  { id: 2, name: "Neural Glitch Aura", category: "Auras", type: 'aura', key: 'glitch', price: 600, color: "text-primary", bg: "bg-primary/10", rarity: "Legendary", description: "Distort the boundaries of your profile with neural artifacts." },
+  { id: 2, name: "Cyber Glitch Aura", category: "Auras", type: 'aura', key: 'glitch', price: 600, color: "text-primary", bg: "bg-primary/10", rarity: "Legendary", description: "Distort the boundaries of your profile with digital artifacts." },
   { id: 3, name: "Divine Shine Aura", category: "Auras", type: 'aura', key: 'gold', price: 1200, color: "text-amber-500", bg: "bg-amber-500/10", rarity: "Mythic", description: "Radiate energy from the Hub's original power source." },
   { id: 4, name: "Electric Blue Plate", category: "Name Plates", type: 'nameplate', key: 'blue', price: 300, color: "text-blue-400", bg: "bg-blue-400/10", rarity: "Rare", description: "A vibrant cyan signature for your profile." },
   { id: 5, name: "Gold Elite Tag", category: "Name Plates", type: 'nameplate', key: 'gold', price: 850, color: "text-amber-500", bg: "bg-amber-500/10", rarity: "Legendary", description: "The standard of excellence in the multiverse." },
@@ -149,7 +149,7 @@ export default function ShopPage() {
         timestamp: serverTimestamp()
       });
 
-      toast({ title: "Gift Sent!", description: `Logic shard transmitted to @${giftTarget}` });
+      toast({ title: "Gift Sent!", description: `Gift transmitted to @${giftTarget}` });
       setGiftTarget("");
     } catch (e) {
       toast({ variant: "destructive", title: "Transmission Error" });
@@ -171,7 +171,7 @@ export default function ShopPage() {
           <div>
             <h1 className="text-8xl font-black text-foreground tracking-tighter uppercase italic leading-none">Market</h1>
             <p className="text-muted-foreground font-bold uppercase tracking-[0.4em] text-xs flex items-center gap-4 mt-4">
-              <Zap className="w-5 h-5 text-amber-500 animate-pulse" /> Neural Shard Exchange Active
+              <Zap className="w-5 h-5 text-amber-500 animate-pulse" /> Credit Exchange Active
             </p>
           </div>
         </div>

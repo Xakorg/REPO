@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, serverTimestamp, query, orderBy, limit, doc, addDoc } from "firebase/firestore";
+import { collection, serverTimestamp, query, orderBy, limit, doc, addDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { RenderHat } from "@/components/RenderHat";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -48,6 +48,13 @@ export default function ServerChatPage() {
   const [gifSearch, setGifSearch] = useState("");
   const [gifs, setGifs] = useState<string[]>([]);
   const [loadingGifs, setLoadingGifs] = useState(false);
+
+  // Fetch Server details for member check
+  const serverDocRef = useMemoFirebase(() => {
+    if (!firestore || !serverName || serverName === "xakteir") return null;
+    return doc(firestore, "servers", serverName);
+  }, [firestore, serverName]);
+  const { data: serverDoc } = useDoc(serverDocRef);
 
   // Check if admin
   const adminRoleRef = useMemoFirebase(() => {
@@ -187,6 +194,46 @@ export default function ServerChatPage() {
 
   if (!user) return null;
 
+  if (serverDoc && serverDoc.isPrivate && serverDoc.ownerId !== user.uid && (!serverDoc.members || !serverDoc.members.includes(user.uid))) {
+    const isInvited = searchParams.get("invite") === "true";
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[#080811] text-white">
+        <div className="max-w-md w-full p-8 rounded-[2.5rem] border-4 border-white/10 bg-zinc-950/40 text-center space-y-6 shadow-2xl">
+          <MessageCircle className="w-16 h-16 text-emerald-500 animate-pulse mx-auto" />
+          <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white">
+            {isInvited ? "You've Been Invited" : "Private Server"}
+          </h2>
+          <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest leading-relaxed">
+            {isInvited 
+              ? `You have been invited to join the private server ${serverDoc.name}.`
+              : `This server is private. You need a valid invite link to join ${serverDoc.name}.`
+            }
+          </p>
+          {isInvited && (
+            <Button 
+              onClick={async () => {
+                try {
+                  const currentMembers = serverDoc.members || [];
+                  if (!currentMembers.includes(user.uid)) {
+                    await updateDoc(serverDocRef, {
+                      members: [...currentMembers, user.uid]
+                    });
+                    toast({ title: "Welcome!", description: `Joined ${serverDoc.name} successfully.` });
+                  }
+                } catch (e) {
+                  toast({ variant: "destructive", title: "Join Failed", description: "Could not join this server." });
+                }
+              }}
+              className="w-full h-14 bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase rounded-xl shadow-xl transition-all border-none"
+            >
+              Join Server
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const isAnnouncements = channelName === "announcements";
   const isReadOnly = isAnnouncements && !isAdmin;
 
@@ -249,7 +296,7 @@ export default function ServerChatPage() {
       {showGifPicker && (
         <div className="absolute bottom-24 left-6 right-6 md:left-auto md:right-8 max-w-sm w-full bg-[#0a0a15] border-2 border-white/10 rounded-[2rem] p-4 shadow-[0_25px_60px_rgba(0,0,0,0.8)] z-50 flex flex-col space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-[9px] font-black uppercase tracking-widest text-primary">GIF Search Shard</span>
+            <span className="text-[9px] font-black uppercase tracking-widest text-primary">GIF Search Tool</span>
             <button onClick={() => setShowGifPicker(false)} className="text-white/40 hover:text-white"><X className="w-4 h-4" /></button>
           </div>
           <Input 

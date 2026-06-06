@@ -93,9 +93,9 @@ export default function XakVaultPage() {
         <div className="flex gap-4">
            <div className="relative w-80 group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input placeholder="Search shards..." className="pl-11 h-12 bg-black/40 border-none rounded-xl text-xs font-bold" />
+              <Input placeholder="Search items..." className="pl-11 h-12 bg-black/40 border-none rounded-xl text-xs font-bold" />
            </div>
-           <Button onClick={handleAddItem} className="h-12 px-8 bg-primary rounded-xl font-black uppercase text-[10px]">Add Shard</Button>
+           <Button onClick={handleAddItem} className="h-12 px-8 bg-primary rounded-xl font-black uppercase text-[10px]">Add Item</Button>
         </div>
       </header>
 

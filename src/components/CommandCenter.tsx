@@ -115,7 +115,7 @@ export function CommandCenter() {
                       </button>
                     )) : (
                       <div className="py-20 text-center opacity-20 uppercase font-black tracking-widest italic">
-                         No logic shards found
+                         No items found
                       </div>
                     )}
                  </div>

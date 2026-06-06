@@ -7,13 +7,22 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-export default function NeuralDefenseStandalone() {
+export default function BaseDefenseStandalone() {
   const [money, setMoney] = useState(500);
   const [health, setHealth] = useState(10);
   const [wave, setWave] = useState(1);
   const [towers, setTowers] = useState<{ id: number, x: number, y: number, type: string }[]>([]);
   const [enemies, setEnemies] = useState<{ id: number, progress: number, hp: number }[]>([]);
   const [gameOver, setGameOver] = useState(false);
+
+  const resetGame = () => {
+    setMoney(500);
+    setHealth(10);
+    setWave(1);
+    setTowers([]);
+    setEnemies([]);
+    setGameOver(false);
+  };
 
   useEffect(() => {
     if (gameOver) return;
@@ -82,7 +91,7 @@ export default function NeuralDefenseStandalone() {
           <div className="flex items-center gap-5">
             <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg"><Shield className="w-8 h-8 text-white" /></div>
             <div>
-              <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">Neural_Defense</h1>
+              <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">Base_Defense</h1>
               <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mt-1">Sector Integrity System v4.2</p>
             </div>
           </div>
@@ -165,7 +174,7 @@ export default function NeuralDefenseStandalone() {
       <footer className="h-20 border-t-4 border-white/10 bg-zinc-900/90 backdrop-blur-xl flex items-center justify-between px-10">
         <div className="flex items-center gap-4 text-muted-foreground">
           <Activity className="w-5 h-5 text-blue-500 animate-pulse" />
-          <p className="text-[10px] font-black uppercase tracking-[0.4em]">Sector Integrity Protocol Active // Neural Wave Impending</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em]">Sector Integrity Protocol Active // Enemy Wave Impending</p>
         </div>
         <Button onClick={() => setWave(w => w + 1)} className="bg-primary hover:bg-primary/90 h-12 px-12 rounded-xl font-black uppercase text-xs tracking-widest text-white shadow-xl transition-all active:scale-95">
           Release Wave {wave + 1}
@@ -178,7 +187,7 @@ export default function NeuralDefenseStandalone() {
           <h3 className="text-8xl font-black text-white uppercase italic tracking-tighter leading-none mb-4">SECTOR BREACH</h3>
           <p className="text-2xl text-muted-foreground font-black uppercase tracking-[0.5em] mb-12 italic">Waves Defeated: {wave}</p>
           <div className="flex gap-6">
-            <Button onClick={() => window.location.reload()} className="h-20 px-16 bg-primary hover:bg-primary/90 text-white rounded-[2rem] font-black uppercase text-xl tracking-widest shadow-2xl border-4 border-white/10">SYSTEM REBOOT</Button>
+            <Button onClick={resetGame} className="h-20 px-16 bg-primary hover:bg-primary/90 text-white rounded-[2rem] font-black uppercase text-xl tracking-widest shadow-2xl border-4 border-white/10">PLAY AGAIN</Button>
             <Link href="/games">
               <Button variant="outline" className="h-20 px-12 rounded-[2rem] border-4 border-white/10 font-black uppercase text-xs text-white hover:bg-white/5">HUB EXIT</Button>
             </Link>

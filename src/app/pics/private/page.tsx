@@ -107,7 +107,7 @@ export default function PrivatePicsPage() {
     }
     setIsUploading(false);
     setUploadProgress(0);
-    toast({ title: "Media Secured", description: "Shards added to your private vault." });
+    toast({ title: "Media Secured", description: "Photos added to your private vault." });
   };
 
   if (!mounted) return null;
@@ -123,7 +123,7 @@ export default function PrivatePicsPage() {
             <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">Private</h2>
          </div>
          <p className="text-[9px] font-black text-amber-500 uppercase tracking-[0.3em] leading-relaxed italic">
-           Shard Encryption Active.
+           Media Encryption Active.
          </p>
       </header>
 
@@ -150,7 +150,7 @@ export default function PrivatePicsPage() {
                   !activeAlbum ? "bg-primary/10 border-primary/20 text-primary shadow-lg" : "text-muted-foreground border-transparent hover:bg-white/5"
                 )}
                >
-                  <div className="flex items-center gap-4"><Grid className="w-4 h-4" /><span>All Shards</span></div>
+                  <div className="flex items-center gap-4"><Grid className="w-4 h-4" /><span>All Photos</span></div>
                </button>
                {albums?.map(album => (
                  <button 
@@ -187,7 +187,7 @@ export default function PrivatePicsPage() {
                   {activeAlbum ? albums?.find(a => a.id === activeAlbum)?.name : "Private Vault"}
                 </h1>
                 <p className="flex text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mt-2 items-center gap-3 italic">
-                  <ShieldCheck className="w-4 h-4 animate-pulse" /> Verified Shard Library
+                  <ShieldCheck className="w-4 h-4 animate-pulse" /> Verified Media Library
                 </p>
               </div>
               <div className="flex lg:hidden">
@@ -207,7 +207,7 @@ export default function PrivatePicsPage() {
            <div className="flex gap-4 w-full md:w-auto">
               <div className="relative flex-1 md:w-80 group">
                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-amber-500 transition-colors" />
-                 <Input placeholder="Search encrypted shards..." className="h-14 pl-14 bg-card/40 border-white/10 rounded-2xl text-sm font-bold italic shadow-inner" />
+                 <Input placeholder="Search encrypted media..." className="h-14 pl-14 bg-card/40 border-white/10 rounded-2xl text-sm font-bold italic shadow-inner" />
               </div>
               <Button variant="ghost" size="icon" className="h-14 w-14 border-2 border-white/5 rounded-2xl hover:bg-white/5 shadow-lg"><Settings className="w-6 h-6 text-muted-foreground" /></Button>
            </div>
@@ -216,7 +216,7 @@ export default function PrivatePicsPage() {
         {isUploading && (
           <Card className="p-6 md:p-8 bg-amber-500/10 border-4 border-amber-500/20 rounded-[2.5rem] md:rounded-[3.5rem] animate-in slide-in-from-top-4 shadow-2xl">
              <div className="flex justify-between items-center mb-4 text-[10px] font-black uppercase text-amber-500 tracking-widest italic">
-                <span className="flex items-center gap-3"><Loader2 className="w-4 h-4 animate-spin" /> Synchronizing Shards...</span>
+                <span className="flex items-center gap-3"><Loader2 className="w-4 h-4 animate-spin" /> Synchronizing Media...</span>
                 <span className="text-xl tabular-nums">{uploadProgress}%</span>
              </div>
              <Progress value={uploadProgress} className="h-3 bg-black/60 rounded-full border border-white/5 shadow-inner" />
@@ -229,7 +229,7 @@ export default function PrivatePicsPage() {
                  {isLoading ? (
                    <div className="py-40 flex flex-col items-center justify-center space-y-8">
                       <Loader2 className="animate-spin w-16 h-16 text-amber-500 opacity-20" />
-                      <p className="text-[10px] font-black uppercase tracking-[0.6em] text-amber-500/30">Decrypting Shards...</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.6em] text-amber-500/30">Decrypting Media...</p>
                    </div>
                  ) : !mediaItems || mediaItems.length === 0 ? (
                    <div className="py-40 flex flex-col items-center justify-center text-center space-y-10 opacity-20 group">

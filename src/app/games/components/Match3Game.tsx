@@ -17,7 +17,7 @@ export function Match3Game({ onExit }: { onExit: () => void }) {
   return (
     <div className="flex flex-col items-center gap-8 p-12 glass-card rounded-[4rem] border-4 border-blue-400/30 bg-background/90 max-w-lg w-full">
       <div className="flex justify-between w-full items-center">
-        <h2 className="text-3xl font-black italic uppercase">Shard_Match</h2>
+        <h2 className="text-3xl font-black italic uppercase">Match_3</h2>
         <Button size="icon" variant="ghost" onClick={onExit}><X className="w-8 h-8" /></Button>
       </div>
       <div className="grid grid-cols-6 gap-2 bg-black/40 p-4 rounded-3xl">

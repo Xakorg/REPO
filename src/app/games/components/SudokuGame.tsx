@@ -24,7 +24,7 @@ export function SudokuGame({ onExit }: { onExit: () => void }) {
           </div>
         ))}
       </div>
-      <p className="text-[10px] font-black uppercase opacity-40 italic">Complete the Shard Grid</p>
+      <p className="text-[10px] font-black uppercase opacity-40 italic">Complete the Sudoku Grid</p>
     </div>
   );
 }

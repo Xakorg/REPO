@@ -146,7 +146,7 @@ export default function XakViewStudio() {
            <button onClick={() => setActiveTab('edit')} className={cn("px-8 h-10 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all", activeTab === 'edit' ? "bg-rose-600 text-white" : "text-muted-foreground hover:bg-white/5")}>Capture & Edit</button>
         </nav>
 
-        <Badge variant="outline" className="border-rose-500/20 text-rose-400 bg-rose-500/5 text-[9px] font-black uppercase px-6 py-2">Verified Hub Architect</Badge>
+        <Badge variant="outline" className="border-rose-500/20 text-rose-400 bg-rose-500/5 text-[9px] font-black uppercase px-6 py-2">Verified Hub Creator</Badge>
       </header>
 
       {activeTab === 'analytics' ? (
@@ -154,13 +154,13 @@ export default function XakViewStudio() {
            <div className="max-w-7xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-700">
               <header className="space-y-4">
                  <h1 className="text-7xl font-black uppercase italic tracking-tighter text-white">Transmission Health</h1>
-                 <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.6em]">Real-Time Neural Telemetry</p>
+                 <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.6em]">Real-Time Telemetry</p>
               </header>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                  {[
                    { label: "Total Views", val: stats.views.toLocaleString(), icon: Eye, color: "text-blue-400" },
-                   { label: "Watch Logic (H)", val: stats.time.toFixed(1), icon: Activity, color: "text-emerald-400" },
+                   { label: "Watch Time (H)", val: stats.time.toFixed(1), icon: Activity, color: "text-emerald-400" },
                    { label: "Global Reach", val: stats.reach.toLocaleString(), icon: TrendingUp, color: "text-rose-500" },
                    { label: "Subscribers", val: "142", icon: Users, color: "text-amber-500" },
                  ].map(stat => (
@@ -178,7 +178,7 @@ export default function XakViewStudio() {
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                  <Card className="lg:col-span-8 glass-card rounded-[4rem] p-12 border-white/10 bg-black/40 space-y-10 shadow-2xl">
-                    <h3 className="text-xl font-black uppercase italic tracking-tighter flex items-center gap-4"><BarChart3 className="w-8 h-8 text-rose-500" /> Retention Shards</h3>
+                    <h3 className="text-xl font-black uppercase italic tracking-tighter flex items-center gap-4"><BarChart3 className="w-8 h-8 text-rose-500" /> Retention Stats</h3>
                     <div className="h-64 w-full bg-zinc-900 rounded-[2.5rem] border-4 border-white/5 flex items-end px-12 gap-6 pb-6 relative overflow-hidden">
                        <div className="absolute inset-0 arcade-grid opacity-10" />
                        {[40, 70, 45, 90, 65, 80, 55, 95, 75, 100].map((h, i) => (
@@ -189,7 +189,7 @@ export default function XakViewStudio() {
 
                  <Card className="lg:col-span-4 glass-card rounded-[4rem] border-white/10 overflow-hidden bg-rose-600/5 shadow-2xl">
                     <div className="p-10 space-y-8">
-                       <h3 className="text-xl font-black uppercase italic tracking-tighter">My Shards</h3>
+                       <h3 className="text-xl font-black uppercase italic tracking-tighter">My Videos</h3>
                        <ScrollArea className="h-64">
                           <div className="space-y-4 pr-4">
                              {myVideos?.map(v => (
@@ -227,7 +227,7 @@ export default function XakViewStudio() {
                    </Button>
                      <input ref={fileInputRef} type="file" className="hidden" multiple accept="video/*" onChange={(e) => handleFileUpload(e.target.files)} />
                      <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="h-20 px-12 rounded-[1.8rem] border-4 border-white/10 text-white font-black text-xl uppercase tracking-widest hover:bg-white/5 transition-all">
-                       <Upload className="w-8 h-8 mr-4" /> Import Shard
+                       <Upload className="w-8 h-8 mr-4" /> Import Video
                      </Button>
                 </div>
               </div>
@@ -249,9 +249,9 @@ export default function XakViewStudio() {
           
           <aside className="w-96 border-l-4 border-white/10 bg-zinc-950 p-10 flex flex-col gap-10">
              <div className="space-y-8">
-                <h3 className="text-xs font-black uppercase tracking-[0.4em] italic text-zinc-500">Edit Logic</h3>
+                <h3 className="text-xs font-black uppercase tracking-[0.4em] italic text-zinc-500">Edit Video</h3>
                 <div className="space-y-4">
-                   {['Trim Protocol', 'Neural Color', 'Master Audio', 'Add Part'].map(tool => (
+                   {['Trim Video', 'Color Balance', 'Master Audio', 'Add Segment'].map(tool => (
                      <Button key={tool} variant="outline" className="w-full h-16 rounded-3xl border-2 border-white/5 bg-zinc-800/50 hover:bg-rose-600 hover:text-white font-black uppercase text-[10px] tracking-widest transition-all">
                         {tool}
                      </Button>

@@ -279,7 +279,7 @@ export default function DirectMessagePage() {
       {showGifPicker && (
         <div className="absolute bottom-24 left-6 right-6 md:left-auto md:right-8 max-w-sm w-full bg-[#0a0a15] border-2 border-white/10 rounded-[2rem] p-4 shadow-[0_25px_60px_rgba(0,0,0,0.8)] z-50 flex flex-col space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-[9px] font-black uppercase tracking-widest text-primary">GIF Search Shard</span>
+            <span className="text-[9px] font-black uppercase tracking-widest text-primary">GIF Search Tool</span>
             <button onClick={() => setShowGifPicker(false)} className="text-white/40 hover:text-white"><X className="w-4 h-4" /></button>
           </div>
           <Input 

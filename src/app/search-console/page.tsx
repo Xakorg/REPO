@@ -55,7 +55,7 @@ export default function SearchConsolePage() {
       await addDoc(collection(firestore, "indexedSites"), {
         url: newSiteUrl.toLowerCase().trim(),
         title: newSiteTitle || newSiteUrl,
-        description: newSiteDesc || "A registered Xakteir Unit",
+        description: "A registered Xakteir Site",
         ownerId: user.uid,
         status: 'pending',
         verified: false,
@@ -123,7 +123,7 @@ export default function SearchConsolePage() {
             <DialogHeader><DialogTitle className="text-3xl font-black uppercase italic tracking-tighter">Index New Site</DialogTitle></DialogHeader>
             <div className="space-y-6 py-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Unit URL</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Site URL</label>
                 <div className="relative">
                   <LinkIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
                   <Input value={newSiteUrl} onChange={(e) => setNewSiteUrl(e.target.value)} placeholder="https://my-app.xakteir.com" className="bg-secondary/30 border-white/5 pl-14 h-14 rounded-2xl font-bold" />
@@ -149,7 +149,7 @@ export default function SearchConsolePage() {
         <div className="lg:col-span-8 space-y-10">
           <div className="flex items-center justify-between px-4">
             <h3 className="text-3xl font-black uppercase italic tracking-tighter flex items-center gap-4">
-              <Layout className="w-8 h-8 text-primary" /> Managed Shards
+              <Layout className="w-8 h-8 text-primary" /> Managed Sites
             </h3>
             <Badge variant="outline" className="border-white/10 text-[10px] font-black px-4 py-1">{mySites?.length || 0} Sites Indexed</Badge>
           </div>
@@ -245,7 +245,7 @@ export default function SearchConsolePage() {
                 <BarChart3 className="w-8 h-8 text-primary" />
               </div>
               <h2 className="text-2xl font-black uppercase italic tracking-tighter leading-none">Analytics Pro</h2>
-              <p className="text-xs text-muted-foreground font-bold leading-relaxed uppercase tracking-widest opacity-60">Unlock deep neural analytics for your indexed units.</p>
+              <p className="text-xs text-muted-foreground font-bold leading-relaxed uppercase tracking-widest opacity-60">Unlock deep traffic analytics for your indexed sites.</p>
               <Button className="w-full bg-primary h-12 rounded-xl font-black uppercase text-xs tracking-widest shadow-xl text-white">Upgrade</Button>
             </div>
           </Card>

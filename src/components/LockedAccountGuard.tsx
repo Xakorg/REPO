@@ -61,9 +61,9 @@ export function LockedAccountGuard({ children }: { children: React.ReactNode }) 
                 your identity <br /> is locked ({userData.banReason || "Protocol Violation"})
               </h1>
               <p className="text-lg text-white/80 font-bold italic leading-relaxed opacity-90 max-w-md mx-auto">
-                Access to the Xakteir Hub has been terminated for this shard. 
-                <br /><br />
-                If you believe this is a logic error, contact a Hub Architect immediately.
+                 Access to the Xakteir Hub has been terminated for this account. 
+                 <br /><br />
+                 If you believe this is an error, contact a Hub Administrator immediately.
               </p>
            </div>
 

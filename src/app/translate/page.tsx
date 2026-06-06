@@ -151,7 +151,7 @@ export default function XakTranslatePage() {
         toLanguage: to,
         timestamp: serverTimestamp()
       });
-      toast({ title: "Shard Favorited" });
+      toast({ title: "Translation Favorited" });
     } catch (e) { toast({ variant: "destructive", title: "Error" }); }
   };
 
@@ -219,7 +219,7 @@ export default function XakTranslatePage() {
                 ) : (
                    <div className="absolute inset-0 flex flex-col items-center justify-center space-y-8 p-12 text-center">
                       <Camera className="w-16 h-16 text-blue-500 animate-pulse" />
-                      <h3 className="text-4xl font-black uppercase italic">Neural Lens</h3>
+                      <h3 className="text-4xl font-black uppercase italic">Smart Lens</h3>
                       <Button onClick={startCamera} className="bg-blue-600 h-20 px-16 rounded-[2rem] font-black uppercase shadow-2xl">Initialize Camera</Button>
                    </div>
                 )}

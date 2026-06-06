@@ -83,7 +83,7 @@ export function TowerDefenseGame({ onExit }: { onExit: () => void }) {
       <div className="flex justify-between w-full items-center z-10">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg"><Shield className="w-6 h-6 text-white" /></div>
-          <h2 className="text-3xl font-black italic uppercase tracking-tighter">Neural_Defense</h2>
+          <h2 className="text-3xl font-black italic uppercase tracking-tighter">Base_Defense</h2>
         </div>
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-3 bg-secondary/50 px-6 py-2 rounded-xl border border-white/5 shadow-xl">
@@ -161,7 +161,7 @@ export function TowerDefenseGame({ onExit }: { onExit: () => void }) {
         <div className="absolute inset-0 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center text-center p-8 z-20 rounded-[4rem]">
           <Trophy className="w-24 h-24 text-amber-400 mb-6 animate-bounce" />
           <h3 className="text-6xl font-black text-white uppercase italic">Sector Breach!</h3>
-          <p className="text-muted-foreground font-bold mt-4 uppercase">You survived {wave} neural waves.</p>
+          <p className="text-muted-foreground font-bold mt-4 uppercase">You survived {wave} enemy waves.</p>
           <Button onClick={onExit} className="mt-10 bg-primary h-16 px-12 rounded-[2rem] font-black text-white shadow-2xl">Return to Hub</Button>
         </div>
       )}

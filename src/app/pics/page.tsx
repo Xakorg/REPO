@@ -147,7 +147,7 @@ export default function XakPicsPage() {
         authorName: user.displayName?.replace(/^@+/, "") || "Member",
         timestamp: serverTimestamp()
       });
-      toast({ title: "Shard Published!", description: `"${picTitle}" is live.` });
+      toast({ title: "Photo Published!", description: `"${picTitle}" is live.` });
       setPicTitle("");
       setPicUrl("");
       setIsPublishOpen(false);
@@ -221,7 +221,7 @@ export default function XakPicsPage() {
               <div className="space-y-6 pt-4">
                 <div className="space-y-2">
                   <label className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Album Name</label>
-                  <Input value={albumName} onChange={(e) => setAlbumName(e.target.value)} placeholder="Summer Shards" className="bg-zinc-900 border-white/5 h-12 rounded-xl text-xs font-bold" />
+                  <Input value={albumName} onChange={(e) => setAlbumName(e.target.value)} placeholder="Summer Album" className="bg-zinc-900 border-white/5 h-12 rounded-xl text-xs font-bold" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Description</label>
@@ -232,7 +232,7 @@ export default function XakPicsPage() {
                   <Input value={albumCover} onChange={(e) => setAlbumCover(e.target.value)} placeholder="https://images.unsplash.com/..." className="bg-zinc-900 border-white/5 h-12 rounded-xl text-xs font-bold" />
                 </div>
                 <Button onClick={handleCreateAlbum} className="w-full h-14 bg-pink-600 hover:bg-pink-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest border-none mt-2">
-                  Deploy Album Node
+                  Create Album
                 </Button>
               </div>
             </DialogContent>
@@ -242,12 +242,12 @@ export default function XakPicsPage() {
           <Dialog open={isPublishOpen} onOpenChange={setIsPublishOpen}>
             <DialogTrigger asChild>
               <Button className="bg-pink-600 hover:bg-pink-500 h-12 md:h-18 px-8 md:px-12 rounded-xl md:rounded-[2rem] font-black uppercase text-[9px] md:text-xs tracking-widest shadow-xl text-white border-b-4 md:border-b-8 border-pink-900 active:border-b-0 transition-all italic border-none">
-                <Plus className="w-4 h-4 md:w-5 md:h-5 mr-3" /> Publish Shard
+                <Plus className="w-4 h-4 md:w-5 md:h-5 mr-3" /> Publish Photo
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-zinc-950 border-4 border-white/10 rounded-[3rem] text-white p-10 max-w-md shadow-[0_30px_100px_rgba(0,0,0,0.9)]">
               <DialogHeader>
-                <DialogTitle className="text-3xl font-black uppercase italic tracking-tighter text-pink-500">Publish Photo Shard</DialogTitle>
+                <DialogTitle className="text-3xl font-black uppercase italic tracking-tighter text-pink-500">Publish Photo</DialogTitle>
               </DialogHeader>
               <div className="space-y-6 pt-4">
                 <div className="space-y-2">
@@ -271,7 +271,7 @@ export default function XakPicsPage() {
                   </select>
                 </div>
                 <Button onClick={handlePublishPic} className="w-full h-14 bg-pink-600 hover:bg-pink-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest border-none mt-2">
-                  Publish Shard Live
+                  Publish Photo Live
                 </Button>
               </div>
             </DialogContent>
@@ -328,7 +328,7 @@ export default function XakPicsPage() {
                     >
                       <img 
                         src={pic.url} 
-                        alt="Gallery Shard" 
+                        alt="Gallery Photo" 
                         className="w-full h-full object-cover opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-[1.5s]" 
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -367,7 +367,7 @@ export default function XakPicsPage() {
             <div className="py-20 text-center opacity-20 space-y-8 w-full col-span-3">
               <FolderOpen className="w-32 h-32 mx-auto animate-float text-pink-500" />
               <p className="text-xl font-black uppercase tracking-[0.5em] text-white">No Albums Created</p>
-              <p className="text-xs font-bold text-muted-foreground uppercase">Create your first album node above to organize your shards.</p>
+              <p className="text-xs font-bold text-muted-foreground uppercase">Create your first album above to organize your photos.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -387,7 +387,7 @@ export default function XakPicsPage() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                       <div className="absolute bottom-6 left-6 right-6 space-y-2">
-                        <Badge className="bg-pink-600 text-white font-black text-[8px] uppercase tracking-widest px-3 py-1 border-none">{albumCount} Shards</Badge>
+                        <Badge className="bg-pink-600 text-white font-black text-[8px] uppercase tracking-widest px-3 py-1 border-none">{albumCount} Photos</Badge>
                         <h3 className="text-3xl font-black uppercase italic tracking-tighter text-white">{album.name}</h3>
                         <p className="text-xs text-zinc-300 font-medium leading-relaxed italic">{album.description}</p>
                       </div>
@@ -469,7 +469,7 @@ export default function XakPicsPage() {
                 onClick={() => handleLike(filteredPics[slideshowIdx as number])}
                 className="h-14 px-8 bg-pink-600 hover:bg-pink-500 text-white rounded-xl font-black uppercase text-xs tracking-wider"
               >
-                <Heart className="w-5 h-5 mr-3 fill-current" /> Like Shard ({filteredPics[slideshowIdx].likes})
+                <Heart className="w-5 h-5 mr-3 fill-current" /> Like Photo ({filteredPics[slideshowIdx].likes})
               </Button>
               <a 
                 href={filteredPics[slideshowIdx].url} 

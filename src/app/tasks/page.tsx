@@ -82,7 +82,7 @@ export default function XakTaskPage() {
 
         <div className="flex flex-col gap-6 bg-white/5 p-6 rounded-[3rem] border border-white/5">
           <div className="flex justify-between items-center px-4">
-            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400">Completed Shards</h3>
+            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400">Completed Tasks</h3>
             <Badge variant="outline" className="bg-white/5 border-none text-[10px]">{completedGoals.length}</Badge>
           </div>
           <ScrollArea className="flex-1">
@@ -90,7 +90,7 @@ export default function XakTaskPage() {
               {isLoading ? (
                 <div className="flex justify-center py-20"><Loader2 className="animate-spin text-primary opacity-20" /></div>
               ) : completedGoals.length === 0 ? (
-                <div className="text-center opacity-20 py-20 uppercase font-black tracking-widest text-xs">Zero Finished Shards</div>
+                <div className="text-center opacity-20 py-20 uppercase font-black tracking-widest text-xs">Zero Finished Tasks</div>
               ) : (
                 completedGoals.map(task => (
                   <Card key={task.id} className="glass-card rounded-[2rem] p-6 border-white/5 opacity-60 grayscale-[0.5] shadow-xl">

@@ -46,7 +46,7 @@ const ALL_APPS = [
   { name: "XakCode", description: "AI-powered IDE with project hosting and deployment controls.", icon: Code2, color: "text-sky-400", href: "/xakcode", features: ["IDE", "AI", "Hosting"] },
   { name: "XakView", description: "Watch YouTube videos, livestreams, and follow creators.", icon: Video, color: "text-rose-500", href: "/xakview", features: ["YouTube Embeds", "Livestreams", "Creators"] },
   { name: "Xakteir Plan", description: "Plan calendar and define goals with tracking milestones.", icon: Calendar, color: "text-amber-500", href: "/calendar", features: ["Calendar", "Goals", "Milestones"] },
-  { name: "XakPicks", description: "Share public photo shards and manage personal albums.", icon: ImageIcon, color: "text-pink-500", href: "/pics", features: ["Albums", "Photos", "Uploads"] },
+  { name: "XakPicks", description: "Share public photos and manage personal albums.", icon: ImageIcon, color: "text-pink-500", href: "/pics", features: ["Albums", "Photos", "Uploads"] },
   { name: "Xakteir Classroom", description: "Educational portal for assignments, submissions, and grades.", icon: GraduationCap, color: "text-indigo-400", href: "/classroom", features: ["Assignments", "Submissions", "Grades"] },
   { name: "Forms", description: "Build surveys and forms.", icon: ClipboardList, color: "text-blue-500", href: "/forms", features: ["Builder", "Data"] },
   { name: "Art Studio", description: "Generate images with AI.", icon: Palette, color: "text-rose-500", href: "/art", features: ["AI Art", "Creative"] },

@@ -50,7 +50,7 @@ export function BubbleGame({ onExit }: { onExit: () => void }) {
         ))}
       </div>
 
-      <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40 italic">Pop bubbles to gain energy shards</p>
+      <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40 italic">Pop bubbles to gain energy points</p>
     </div>
   );
 }

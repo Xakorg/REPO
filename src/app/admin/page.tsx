@@ -381,7 +381,7 @@ export default function AdminDashboardPage() {
              </DialogHeader>
              <div className="py-8 space-y-8 text-white">
                 <div className="space-y-4">
-                   <label className="text-[10px] font-black uppercase text-muted-foreground ml-2">Neural Shard Balance (Coins)</label>
+                   <label className="text-[10px] font-black uppercase text-muted-foreground ml-2">Coin Balance</label>
                    <Input 
                       type="number"
                       value={coinsToGive}

@@ -302,7 +302,7 @@ export default function XakViewPage() {
   useEffect(() => {
     if (activeViewTab !== 'live') return;
     const interval = setInterval(() => {
-      const users = ["PixelVandal", "SoberRobloxian", "ChronoTrig", "XakteirArchitect", "GlitchKid", "MatrixRunner", "NeonViper", "RL_Legend"];
+      const users = ["PixelVandal", "SoberRobloxian", "ChronoTrig", "XakteirCreator", "GlitchKid", "MatrixRunner", "NeonViper", "RL_Legend"];
       const msgs = [
         "Let's gooo! 🎉",
         "Is this live?",
@@ -440,7 +440,7 @@ export default function XakViewPage() {
                 <div className="w-full h-full flex flex-col items-center justify-center space-y-6 bg-zinc-950/80 p-10 text-center">
                   <VideoIcon className="w-16 h-16 text-rose-500/20 animate-pulse" />
                   <h3 className="text-xl font-black uppercase tracking-widest text-zinc-400">No videos matching query</h3>
-                  <p className="text-xs font-bold text-zinc-500 uppercase">Publish your first broadcast shard in XakStudio!</p>
+                  <p className="text-xs font-bold text-zinc-500 uppercase">Publish your first video in XakStudio!</p>
                 </div>
               ) : activeVideo?.youtubeId ? (
                 <iframe
@@ -461,7 +461,7 @@ export default function XakViewPage() {
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center space-y-6 bg-zinc-950">
                   <Loader2 className="w-12 h-12 animate-spin text-rose-500 opacity-20" />
-                  <p className="text-[10px] font-black uppercase text-rose-500/40 tracking-widest">Loading shard...</p>
+                  <p className="text-[10px] font-black uppercase text-rose-500/40 tracking-widest">Loading video...</p>
                 </div>
               )}
             </div>

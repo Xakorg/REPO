@@ -45,7 +45,7 @@ export default function GroupsDiscoveryPage() {
           </div>
           <div>
             <h1 className="text-5xl font-black italic uppercase tracking-tighter">Hub Communities</h1>
-            <p className="text-muted-foreground font-medium flex items-center gap-2 mt-1 uppercase text-[9px] tracking-widest"><Globe className="w-3 h-3 text-primary" /> Discover Multi-Unit Sectors</p>
+            <p className="text-muted-foreground font-medium flex items-center gap-2 mt-1 uppercase text-[9px] tracking-widest"><Globe className="w-3 h-3 text-primary" /> Discover Community Groups</p>
           </div>
         </div>
         

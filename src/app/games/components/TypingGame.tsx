@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { X, Code2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-const WORDS = ["function", "async", "await", "import", "export", "react", "const", "return", "class", "logic", "neural", "shard"];
+const WORDS = ["function", "async", "await", "import", "export", "react", "const", "return", "class", "logic", "project", "code"];
 
 export function TypingGame({ onExit }: { onExit: () => void }) {
   const [target, setTarget] = useState("");
@@ -16,6 +16,12 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
   const nextWord = () => {
     setTarget(WORDS[Math.floor(Math.random() * WORDS.length)]);
     setInput("");
+  };
+
+  const resetGame = () => {
+    setScore(0);
+    setTimeLeft(30);
+    nextWord();
   };
 
   useEffect(() => {
@@ -54,7 +60,7 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
       {timeLeft === 0 && <div className="absolute inset-0 bg-black/95 flex flex-col items-center justify-center rounded-[4rem] z-50">
         <h3 className="text-4xl font-black">FINISHED</h3>
         <p className="text-primary text-2xl font-black mt-4">Score: {score}</p>
-        <Button onClick={() => window.location.reload()} className="mt-8 bg-primary">Try Again</Button>
+        <Button onClick={resetGame} className="mt-8 bg-primary">Try Again</Button>
       </div>}
     </div>
   );

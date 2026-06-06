@@ -11,6 +11,13 @@ export function DodgeGame({ onExit }: { onExit: () => void }) {
   const [gameOver, setGameOver] = useState(false);
   const [hazards, setHazards] = useState<{ id: number, x: number, y: number }[]>([]);
 
+  const resetGame = () => {
+    setScore(0);
+    setHazards([]);
+    setPlayerX(50);
+    setGameOver(false);
+  };
+
   useEffect(() => {
     if (gameOver) return;
 
@@ -43,7 +50,7 @@ export function DodgeGame({ onExit }: { onExit: () => void }) {
   return (
     <div className="flex flex-col items-center gap-10 p-12 glass-card rounded-[4rem] border-4 border-primary/30 shadow-2xl bg-background/90 max-w-4xl w-full text-foreground relative overflow-hidden">
       <div className="flex justify-between w-full items-center z-10">
-        <h2 className="text-3xl font-black italic uppercase">Shard_Dodge</h2>
+        <h2 className="text-3xl font-black italic uppercase">Laser_Dodge</h2>
         <div className="flex items-center gap-10">
            <div className="text-right">
               <p className="text-[8px] font-black uppercase text-muted-foreground mb-1">STREAK</p>
@@ -79,14 +86,14 @@ export function DodgeGame({ onExit }: { onExit: () => void }) {
         ))}
       </div>
 
-      <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40 italic">Move cursor to navigate identity shard</p>
+      <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40 italic">Move cursor to navigate player</p>
 
       {gameOver && (
         <div className="absolute inset-0 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center text-center p-12 z-50 rounded-[4rem] animate-in slide-in-from-bottom-10">
           <Trophy className="w-24 h-24 text-amber-400 mb-8 animate-bounce" />
           <h3 className="text-7xl font-black text-white uppercase italic tracking-tighter">Collision!</h3>
           <p className="text-2xl font-black text-muted-foreground uppercase tracking-widest mt-4">Final XP: {score}</p>
-          <Button onClick={() => window.location.reload()} className="mt-12 bg-primary h-20 px-20 rounded-[2.5rem] font-black uppercase text-xl shadow-2xl border-b-8 border-primary/20">REBOOT SYSTEM</Button>
+          <Button onClick={resetGame} className="mt-12 bg-primary h-20 px-20 rounded-[2.5rem] font-black uppercase text-xl shadow-2xl border-b-8 border-primary/20">PLAY AGAIN</Button>
         </div>
       )}
     </div>

@@ -30,7 +30,7 @@ export function TwoZeroFourEightGame({ onExit }: { onExit: () => void }) {
   return (
     <div className="flex flex-col items-center gap-8 p-12 glass-card rounded-[4rem] border-4 border-amber-500/30 bg-background/90 max-w-md w-full">
       <div className="flex justify-between w-full items-center">
-        <h2 className="text-3xl font-black italic uppercase">Shard_Merge</h2>
+        <h2 className="text-3xl font-black italic uppercase">Number_Merge</h2>
         <Button size="icon" variant="ghost" onClick={onExit}><X className="w-8 h-8" /></Button>
       </div>
       <div className="grid grid-cols-4 gap-3 bg-black/40 p-4 rounded-3xl border-4 border-white/5">

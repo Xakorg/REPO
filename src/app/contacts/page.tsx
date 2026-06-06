@@ -77,21 +77,21 @@ export default function XakContactsPage() {
           </div>
           <div>
             <h1 className="text-5xl font-black text-foreground tracking-tighter uppercase italic leading-none">XakContacts</h1>
-            <p className="text-blue-400 font-black uppercase tracking-[0.4em] text-[10px] mt-2 italic">Neural Network Library</p>
+            <p className="text-blue-400 font-black uppercase tracking-[0.4em] text-[10px] mt-2 italic">Member Network</p>
           </div>
         </div>
 
         <div className="flex gap-6 relative z-10 w-full md:w-auto">
           <div className="relative flex-1 md:w-96 group">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-blue-400 transition-colors" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find a member shard..." className="h-14 bg-background/60 border-white/10 rounded-2xl pl-12 font-bold text-sm italic" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find a contact..." className="h-14 bg-background/60 border-white/10 rounded-2xl pl-12 font-bold text-sm italic" />
           </div>
           <Dialog>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 h-14 px-10 rounded-2xl font-black uppercase text-xs tracking-widest text-white shadow-xl"><Plus className="w-4 h-4 mr-2" /> Add</Button>
             </DialogTrigger>
             <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-foreground p-10">
-               <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic">New Member Shard</DialogTitle></DialogHeader>
+               <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic">New Member</DialogTitle></DialogHeader>
                <div className="space-y-6 py-6">
                   <Input value={newContact.name} onChange={(e) => setNewContact({...newContact, name: e.target.value})} placeholder="Full Name" className="h-12 rounded-xl bg-secondary/50 border-white/10" />
                   <Input value={newContact.email} onChange={(e) => setNewContact({...newContact, email: e.target.value})} placeholder="email@xakteir.com" className="h-12 rounded-xl bg-secondary/50 border-white/10" />

@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
@@ -132,11 +133,11 @@ export default function BusinessPage() {
         <div className="space-y-4 max-w-xl">
            <h2 className="text-6xl font-black uppercase italic tracking-tighter">Xakteir for Business</h2>
            <p className="text-muted-foreground font-bold uppercase tracking-widest text-sm leading-relaxed">
-             Professional workspace for high-fidelity teams. Custom domains, team management, and priority neural access.
+             Professional workspace for high-fidelity teams. Custom domains, team management, and priority AI access.
            </p>
         </div>
         <Link href="/upgrade">
-          <Button className="bg-primary hover:bg-primary/90 h-16 px-16 rounded-[2rem] font-black uppercase tracking-widest text-white shadow-xl text-xs">Activate Business Unit</Button>
+          <Button className="bg-primary hover:bg-primary/90 h-16 px-16 rounded-[2rem] font-black uppercase tracking-widest text-white shadow-xl text-xs">Activate Business Workspace</Button>
         </Link>
       </div>
     );
@@ -153,7 +154,7 @@ export default function BusinessPage() {
             <Briefcase className="w-10 h-10 text-blue-400" />
           </div>
           <div>
-            <h1 className="text-6xl font-black text-foreground tracking-tighter uppercase italic leading-none">Business Unit</h1>
+            <h1 className="text-6xl font-black text-foreground tracking-tighter uppercase italic leading-none">Business Workspace</h1>
             <p className="text-blue-400 font-black uppercase tracking-[0.4em] text-[10px] mt-4 flex items-center gap-4">
                <span className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" /> Enterprise Authority Active
             </p>
@@ -186,7 +187,7 @@ export default function BusinessPage() {
                        <h3 className="text-xl font-black uppercase italic tracking-tighter text-foreground">Team Reach</h3>
                        <div className="flex items-end gap-4">
                           <span className="text-7xl font-black italic">{businessUnit?.members?.length + 1 || 1}</span>
-                          <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.3em] mb-3">Active Units</p>
+                          <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.3em] mb-3">Active Members</p>
                        </div>
                     </div>
                     <Button onClick={() => setActiveTab('team')} variant="outline" className="w-full h-12 border-white/10 bg-white/5 rounded-xl text-[10px] font-black uppercase">Manage Members</Button>
@@ -211,8 +212,8 @@ export default function BusinessPage() {
                       </div>
                     ) : (
                       <div className="space-y-6 text-center py-4">
-                         <p className="text-xs font-bold text-muted-foreground uppercase italic leading-relaxed">No domain associated with this business unit.</p>
-                         <Button onClick={() => setActiveTab('domain')} className="bg-primary h-12 px-8 rounded-xl font-black text-[10px] uppercase">Set Up Domain</Button>
+                          <p className="text-xs font-bold text-muted-foreground uppercase italic leading-relaxed">No domain associated with this business workspace.</p>
+                          <Button onClick={() => setActiveTab('domain')} className="bg-primary h-12 px-8 rounded-xl font-black text-[10px] uppercase">Set Up Domain</Button>
                       </div>
                     )}
                  </Card>
@@ -224,7 +225,7 @@ export default function BusinessPage() {
       {activeTab === 'domain' && (
         <div className="max-w-4xl mx-auto space-y-12 animate-in slide-in-from-right-8 duration-700">
            <header className="text-center space-y-6">
-              <h2 className="text-5xl font-black uppercase italic tracking-tighter text-foreground">Domain Architecture</h2>
+              <h2 className="text-5xl font-black uppercase italic tracking-tighter text-foreground">Domain Settings</h2>
               <p className="text-sm text-muted-foreground font-bold uppercase tracking-[0.3em] opacity-60">Verify your professional identity via Cloudflare or other provider</p>
            </header>
 
@@ -246,8 +247,8 @@ export default function BusinessPage() {
                    <p className="text-sm font-bold text-muted-foreground leading-relaxed italic">To verify ownership of <span className="text-white font-black">@{businessUnit.domain}</span>, you must add the following TXT record to your external DNS provider (e.g. Cloudflare, Namecheap).</p>
                    <div className="p-8 bg-black/60 rounded-3xl border-4 border-white/10 space-y-6 shadow-inner font-mono text-sm">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                         <div className="space-y-2"><p className="text-[8px] font-black uppercase text-muted-foreground">Type</p><p className="text-primary font-black">TXT</p></div>
-                         <div className="space-y-2"><p className="text-[8px] font-black uppercase text-muted-foreground">Host</p><p className="text-white font-black">@</p></div>
+                          <div className="space-y-2"><p className="text-[8px] font-black uppercase text-muted-foreground">Type</p><p className="text-primary font-black">TXT</p></div>
+                          <div className="space-y-2"><p className="text-[8px] font-black uppercase text-muted-foreground">Host</p><p className="text-white font-black">@</p></div>
                       </div>
                       <div className="space-y-2 pt-4 border-t border-white/5"><p className="text-[8px] font-black uppercase text-muted-foreground">Value</p><p className="text-emerald-500 break-all select-all">{businessUnit.verificationCode}</p></div>
                    </div>
@@ -267,7 +268,7 @@ export default function BusinessPage() {
         <div className="space-y-12 animate-in slide-in-from-right-8 duration-700">
            <header className="flex flex-col md:flex-row justify-between items-center gap-8">
               <div className="flex items-center gap-4 text-foreground"><Users className="w-8 h-8 text-blue-500" /><h2 className="text-4xl font-black uppercase italic tracking-tighter">Member Station</h2></div>
-              <Button onClick={() => setIsAddingMember(true)} className="bg-primary h-14 px-10 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl"><Plus className="w-5 h-5 mr-3" /> Add Unit</Button>
+              <Button onClick={() => setIsAddingMember(true)} className="bg-primary h-14 px-10 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl"><Plus className="w-5 h-5 mr-3" /> Add Member</Button>
            </header>
            <Card className="glass-card rounded-[4rem] border-white/10 overflow-hidden shadow-2xl">
               <ScrollArea className="h-[600px]"><div className="divide-y divide-white/5">{businessUnit?.members?.map((member: any) => (<div key={member.id} className="p-10 flex items-center justify-between group hover:bg-white/5 transition-all"><div className="flex items-center gap-8"><Avatar className="w-16 h-16 border-2 border-white/10"><AvatarFallback className="font-black text-muted-foreground">M</AvatarFallback></Avatar><div><h4 className="text-2xl font-black uppercase italic text-foreground leading-none">{member.email.split('@')[0]}</h4><p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-2">{member.email}</p></div></div><div className="flex items-center gap-6 opacity-0 group-hover:opacity-100 transition-opacity"><Button variant="ghost" size="icon" className="h-10 w-10 text-rose-500 hover:bg-rose-500/10 rounded-xl"><Trash2 className="w-4 h-4" /></Button></div></div>))}</div></ScrollArea>
@@ -277,7 +278,7 @@ export default function BusinessPage() {
 
       <Dialog open={isAddingMember} onOpenChange={setIsAddingMember}>
          <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-xl text-foreground p-12 shadow-2xl">
-            <DialogHeader><DialogTitle className="text-3xl font-black uppercase italic tracking-tighter">Add Team Unit</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="text-3xl font-black uppercase italic tracking-tighter">Add Team Member</DialogTitle></DialogHeader>
             <div className="space-y-8 py-8">
                <div className="space-y-3"><label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Member Email</label><div className="relative"><Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-primary" /><Input value={newMemberEmail} onChange={(e) => setNewMemberEmail(e.target.value)} placeholder="colleague@xakteir.com" className="h-16 bg-secondary/50 border-white/10 rounded-2xl pl-16 pr-8 text-lg font-bold shadow-inner" /></div></div>
                <Button onClick={handleAddMember} disabled={!newMemberEmail} className="w-full h-20 bg-primary hover:bg-primary/90 rounded-[2rem] font-black uppercase text-lg shadow-2xl italic">SYNC MEMBER</Button>

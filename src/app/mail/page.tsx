@@ -309,7 +309,7 @@ export default function MailPage() {
             <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-2xl text-white p-10 bg-zinc-950">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black uppercase italic">
-                  {mailMode === 'gmail' ? 'Compose via Gmail' : 'New Internal Shard'}
+                  {mailMode === 'gmail' ? 'Compose via Gmail' : 'New Internal Message'}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-6 py-4">
@@ -448,7 +448,7 @@ export default function MailPage() {
              ) : (
                <div className="flex-1 flex flex-col items-center justify-center opacity-10 text-white">
                   <MailIcon className="w-24 h-24 text-white" />
-                  <p className="text-base font-black uppercase italic mt-6 tracking-widest">Select an Email Shard</p>
+                  <p className="text-base font-black uppercase italic mt-6 tracking-widest">Select an Email</p>
                </div>
              )}
           </div>

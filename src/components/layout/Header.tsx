@@ -30,7 +30,31 @@ import {
   Maximize,
   Minimize,
   Calendar as CalendarIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Info,
+  TrendingUp,
+  Archive,
+  Palette,
+  ShieldCheck,
+  Heart,
+  Hammer,
+  Briefcase,
+  Globe,
+  HelpCircle,
+  Download,
+  Coins,
+  Dumbbell,
+  Award,
+  Link2,
+  Map,
+  Newspaper,
+  FileText,
+  Music,
+  Radio,
+  CheckSquare,
+  Lock,
+  Sun,
+  PenTool
 } from "lucide-react";
 import { Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -69,6 +93,33 @@ const APPS = [
   { name: "Notes", icon: Code2, href: "/notes", color: "text-indigo-400", bg: "bg-indigo-400/10" },
   { name: "Social", icon: Users, href: "/social", color: "text-pink-500", bg: "bg-pink-500/10" },
   { name: "Shop", icon: ShoppingBag, href: "/shop", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  
+  // Newly Added Apps
+  { name: "Art Studio", icon: Palette, href: "/art", color: "text-pink-400", bg: "bg-pink-400/10" },
+  { name: "About", icon: Info, href: "/about", color: "text-zinc-400", bg: "bg-zinc-400/10" },
+  { name: "Admin Panel", icon: Crown, href: "/admin", color: "text-yellow-400", bg: "bg-yellow-400/10" },
+  { name: "App Store", icon: LayoutGrid, href: "/apps", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "Archive", icon: Archive, href: "/archive", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "Authenticator", icon: ShieldCheck, href: "/authenticator", color: "text-teal-400", bg: "bg-teal-400/10" },
+  { name: "XakBuddy", icon: Heart, href: "/buddy", color: "text-rose-400", bg: "bg-rose-400/10" },
+  { name: "Business", icon: Briefcase, href: "/business", color: "text-cyan-400", bg: "bg-cyan-400/10" },
+  { name: "Support", icon: HelpCircle, href: "/contact", color: "text-zinc-400", bg: "bg-zinc-400/10" },
+  { name: "Contacts", icon: Users, href: "/contacts", color: "text-violet-400", bg: "bg-violet-400/10" },
+  { name: "Downloads", icon: Download, href: "/download", color: "text-sky-400", bg: "bg-sky-400/10" },
+  { name: "XakInstaller", icon: Download, href: "/installer", color: "text-sky-500", bg: "bg-sky-500/10" },
+  { name: "Learn Pro", icon: Award, href: "/learn-pro", color: "text-yellow-500", bg: "bg-yellow-500/10" },
+  { name: "Xakteir Maps", icon: Map, href: "/map", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { name: "News", icon: Newspaper, href: "/news", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Privacy", icon: FileText, href: "/privacy", color: "text-zinc-500", bg: "bg-zinc-500/10" },
+  { name: "Profile", icon: UserIcon, href: "/profile", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "Search Console", icon: SearchIcon, href: "/search-console", color: "text-teal-400", bg: "bg-teal-400/10" },
+  { name: "XakSign", icon: CheckSquare, href: "/sign", color: "text-amber-400", bg: "bg-amber-400/10" },
+  { name: "Stocks", icon: TrendingUp, href: "/stocks", color: "text-green-500", bg: "bg-green-500/10" },
+  { name: "Stream Feed", icon: Radio, href: "/stream", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Tasks Tracker", icon: CheckSquare, href: "/tasks", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { name: "Terms", icon: FileText, href: "/terms", color: "text-zinc-500", bg: "bg-zinc-500/10" },
+  { name: "XakVault", icon: Lock, href: "/vault", color: "text-rose-400", bg: "bg-rose-400/10" },
+  { name: "Weather", icon: Sun, href: "/weather", color: "text-amber-400", bg: "bg-amber-400/10" }
 ];
 
 export function Header() {

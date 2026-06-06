@@ -27,7 +27,7 @@ const mailAssistPrompt = ai.definePrompt({
   name: 'mailAssistPrompt',
   input: {schema: MailAssistInputSchema},
   output: {schema: MailAssistOutputSchema},
-  prompt: `You are the XakMail Neural Assistant. Your goal is to help creators manage their transmissions with precision and friendliness.
+  prompt: `You are the XakMail AI Assistant. Your goal is to help creators manage their transmissions with precision and friendliness.
 
 ACTION: {{{action}}}
 CONTENT: {{{content}}}

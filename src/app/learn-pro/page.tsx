@@ -140,7 +140,7 @@ export default function XakteirQuestPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[
                   { title: 'Global Capitals', plays: '4.2M', author: 'XakAdmin', color: 'bg-blue-500' },
-                  { title: 'Neural Logic 101', plays: '1.5M', author: 'ApexDev', color: 'bg-primary' },
+                  { title: 'Smart Logic 101', plays: '1.5M', author: 'ApexDev', color: 'bg-primary' },
                   { title: 'History of Mars', plays: '850K', author: 'StarLord', color: 'bg-rose-500' },
                   { title: 'Space Science', plays: '2.1M', author: 'Nova', color: 'bg-amber-500' },
                   { title: 'Language Arts', plays: '1.1M', author: 'Lyric', color: 'bg-emerald-500' },

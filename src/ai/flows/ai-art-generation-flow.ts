@@ -33,7 +33,7 @@ const aiArtFlow = ai.defineFlow(
     });
 
     if (!media) {
-      throw new Error('Failed to generate image shard.');
+      throw new Error('Failed to generate image.');
     }
 
     return {

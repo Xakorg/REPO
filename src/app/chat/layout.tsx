@@ -81,6 +81,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   const [showCreateServerModal, setShowCreateServerModal] = useState(false);
   const [serverNameInput, setServerNameInput] = useState("");
   const [serverColorInput, setServerColorInput] = useState("bg-rose-500");
+  const [serverIsPrivate, setServerIsPrivate] = useState(false);
   const [isCreatingServer, setIsCreatingServer] = useState(false);
 
   const [showCreateChannelModal, setShowCreateChannelModal] = useState(false);
@@ -131,17 +132,22 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     const list = [...SERVERS];
     if (dbServers) {
       dbServers.forEach(s => {
-        list.push({
-          id: s.id,
-          name: s.name,
-          icon: Zap,
-          color: s.iconColor || 'bg-zinc-700',
-          href: `/chat/s/${s.id}`
-        });
+        const isOwner = s.ownerId === user?.uid;
+        const isMember = s.members && s.members.includes(user?.uid);
+        const isPublic = !s.isPrivate;
+        if (isPublic || isOwner || isMember) {
+          list.push({
+            id: s.id,
+            name: s.name,
+            icon: Zap,
+            color: s.iconColor || 'bg-zinc-700',
+            href: `/chat/s/${s.id}`
+          });
+        }
       });
     }
     return list;
-  }, [dbServers]);
+  }, [dbServers, user?.uid]);
 
   // Fetch channels for custom servers
   const channelsQuery = useMemoFirebase(() => {
@@ -172,7 +178,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     if (isBuiltInServer) {
       return serverName === 'xakteir' ? 'Xakteir Hub' : serverName === 'gaming' ? 'Gaming Zone' : serverName === 'dev' ? 'Dev Sector' : 'Discovery';
     }
-    return serverDocData?.name || 'Loading Shard...';
+    return serverDocData?.name || 'Loading Server...';
   }, [isBuiltInServer, serverName, serverDocData]);
 
   // Fetch other users to display in DM lobby list
@@ -244,6 +250,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         name: serverNameInput.trim(),
         iconColor: serverColorInput,
         ownerId: user.uid,
+        isPrivate: serverIsPrivate,
+        members: [user.uid],
         createdAt: serverTimestamp()
       });
       // Add default general channel
@@ -253,6 +261,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       });
       toast({ title: "Server Created Successfully!" });
       setServerNameInput("");
+      setServerIsPrivate(false);
       setShowCreateServerModal(false);
       router.push(`/chat/s/${serverRef.id}?c=general`);
     } catch(e) {
@@ -384,9 +393,22 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         ) : (
           <>
             <header className="h-16 border-b border-white/5 px-6 flex items-center justify-between shadow-xl">
-               <h2 className="text-sm font-black uppercase italic tracking-tighter text-white">
+               <h2 className="text-sm font-black uppercase italic tracking-tighter text-white truncate max-w-[150px]">
                  {serverHeaderTitle}
                </h2>
+               {!isBuiltInServer && (
+                 <button 
+                   onClick={() => {
+                     const inviteLink = `${window.location.origin}/chat/s/${activeServer}?invite=true`;
+                     navigator.clipboard.writeText(inviteLink);
+                     toast({ title: "Invite Link Copied!", description: "Share this link with friends to let them join." });
+                   }} 
+                   className="text-white/40 hover:text-white transition-colors"
+                   title="Copy Invite Link"
+                 >
+                    <UserPlus className="w-4 h-4 text-emerald-500" />
+                 </button>
+               )}
             </header>
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-8">
@@ -524,7 +546,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                 ) : (
                   <div className="space-y-6 text-left">
                     <div className="space-y-2">
-                       <p className="px-3 text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-3">Architects — 1</p>
+                       <p className="px-3 text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-3">Creators — 1</p>
                        <div className="p-3 rounded-xl hover:bg-white/5 flex items-center gap-3 transition-all cursor-pointer group">
                           <div className="relative">
                             <Avatar className="w-9 h-9 border-2 border-primary/40"><AvatarImage src="https://picsum.photos/seed/ridwan/100" /><AvatarFallback>R</AvatarFallback></Avatar>
@@ -637,6 +659,32 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                 placeholder="My Awesome Clan" 
                 className="bg-[#0b0b14]/60 h-14 rounded-xl font-bold border-white/10 text-white focus:border-primary" 
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-white/40 ml-2">Server Access Privacy</label>
+              <div className="flex bg-[#0b0b14]/60 p-1 rounded-xl border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setServerIsPrivate(false)}
+                  className={cn(
+                    "flex-1 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                    !serverIsPrivate ? "bg-emerald-500 text-black shadow-lg" : "text-muted-foreground hover:bg-white/5"
+                  )}
+                >
+                  Public
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setServerIsPrivate(true)}
+                  className={cn(
+                    "flex-1 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                    serverIsPrivate ? "bg-emerald-500 text-black shadow-lg" : "text-muted-foreground hover:bg-white/5"
+                  )}
+                >
+                  Private
+                </button>
+              </div>
             </div>
             
             <div className="space-y-2">

@@ -129,7 +129,7 @@ export default function XakteirSuitePage() {
     if (!user || !firestore) return;
     try {
       const defaultContent = activeApp === 'slide' ? JSON.stringify([
-        { id: "1", title: "Welcome Shard", subtitle: "Designed in Xakteir Suite", content: "Double-click a slide layout options to begin.", layout: "title" }
+        { id: "1", title: "Welcome Slide", subtitle: "Designed in Xakteir Suite", content: "Double-click a slide layout options to begin.", layout: "title" }
       ]) : "";
 
       const newDoc = await addDocumentNonBlocking(collection(firestore, "users", user.uid, "suite_docs"), {
@@ -192,7 +192,7 @@ export default function XakteirSuitePage() {
       if (Array.isArray(data)) return data;
     } catch (e) {}
     return [
-      { id: "1", title: "Welcome Shard", subtitle: "Designed in Xakteir Suite", content: "Double-click a slide layout options to begin.", layout: "title" }
+      { id: "1", title: "Welcome Slide", subtitle: "Designed in Xakteir Suite", content: "Double-click a slide layout options to begin.", layout: "title" }
     ];
   }, [activeDoc, activeApp]);
 
@@ -312,7 +312,7 @@ export default function XakteirSuitePage() {
             )}
           </div>
           <Button onClick={handleCreateDoc} className="bg-primary hover:bg-primary/90 h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest text-white shadow-xl">
-             <Plus className="w-4 h-4 mr-2" /> New Shard
+             <Plus className="w-4 h-4 mr-2" /> New Document
           </Button>
         </div>
       </header>

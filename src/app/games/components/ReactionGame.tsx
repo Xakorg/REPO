@@ -66,8 +66,8 @@ export function ReactionGame({ onExit }: { onExit: () => void }) {
         <div className="text-center space-y-8 animate-in zoom-in-95">
            <h2 className="text-9xl font-black italic text-primary drop-shadow-[0_0_60px_rgba(var(--primary),0.6)]">{reactionTime}ms</h2>
            <div>
-              <p className="text-xl font-black uppercase italic tracking-widest text-white">Neural Speed</p>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase mt-2">Rank: Professional Architect</p>
+              <p className="text-xl font-black uppercase italic tracking-widest text-white">Reaction Speed</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase mt-2">Rank: Professional Player</p>
            </div>
            <Button onClick={(e) => { e.stopPropagation(); start(); }} className="h-20 px-16 bg-white text-black font-black uppercase text-xl rounded-[2rem] shadow-2xl border-b-8 border-zinc-200 active:border-b-0 active:translate-y-1 transition-all">TRY AGAIN</Button>
         </div>
