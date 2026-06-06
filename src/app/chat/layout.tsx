@@ -33,7 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, query, where, doc, addDoc, serverTimestamp, getDocs, limit, orderBy } from "firebase/firestore";
+import { collection, query, where, doc, addDoc, serverTimestamp, getDocs, limit, orderBy, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { RenderHat } from "@/components/RenderHat";
 import { Card } from "@/components/ui/card";
@@ -87,6 +87,89 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   const [showCreateChannelModal, setShowCreateChannelModal] = useState(false);
   const [channelNameInput, setChannelNameInput] = useState("");
   const [isCreatingChannel, setIsCreatingChannel] = useState(false);
+
+  // Server settings & Roles states
+  const [showServerSettingsModal, setShowServerSettingsModal] = useState(false);
+  const [roleNameInput, setRoleNameInput] = useState("");
+  const [roleColorInput, setRoleColorInput] = useState("text-zinc-300");
+  const [rolePermissions, setRolePermissions] = useState<string[]>(["sendMessages"]);
+  const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
+
+  // Synchronize settings state when server document is loaded
+  useEffect(() => {
+    if (serverDocData) {
+      setServerNameInput(serverDocData.name || "");
+      setServerColorInput(serverDocData.iconColor || "bg-zinc-700");
+      setServerIsPrivate(serverDocData.isPrivate || false);
+    }
+  }, [serverDocData]);
+
+  // Helper to check user permissions
+  const hasLayoutPermission = (permission: string) => {
+    if (!user || !serverDocData) return true;
+    if (serverDocData.ownerId === user.uid) return true;
+    
+    const roles = serverDocData.roles || [];
+    const userRoleIds = serverDocData.memberRoles?.[user.uid] || [];
+    
+    if (roles.length === 0 || userRoleIds.length === 0) {
+      return permission === "sendMessages";
+    }
+    
+    return roles.some((role: any) => 
+      userRoleIds.includes(role.id) && 
+      role.permissions?.includes(permission)
+    );
+  };
+
+  const handleToggleMemberRole = async (memberId: string, roleId: string) => {
+    if (!firestore || !activeServer || !serverDocData) return;
+    try {
+      const currentMemberRoles = { ...(serverDocData.memberRoles || {}) };
+      const userRoles = [...(currentMemberRoles[memberId] || [])];
+      
+      let updatedRoles;
+      if (userRoles.includes(roleId)) {
+        updatedRoles = userRoles.filter(r => r !== roleId);
+      } else {
+        updatedRoles = [...userRoles, roleId];
+      }
+      
+      currentMemberRoles[memberId] = updatedRoles;
+      await updateDoc(doc(firestore, "servers", activeServer), {
+        memberRoles: currentMemberRoles
+      });
+      toast({ title: "Roles Updated!" });
+    } catch(e) {
+      toast({ variant: "destructive", title: "Error updating roles" });
+    }
+  };
+
+  const customServerMembers = useMemo(() => {
+    if (!hubMembers || !serverDocData || isBuiltInServer) return [];
+    const memberUids = serverDocData.members || [];
+    return hubMembers.filter(m => memberUids.includes(m.id));
+  }, [hubMembers, serverDocData, isBuiltInServer]);
+
+  const getMemberRoleDetails = (memberId: string) => {
+    if (!serverDocData) return { name: "Member", color: "text-zinc-400" };
+    const roles = serverDocData.roles || [];
+    const assignedIds = serverDocData.memberRoles?.[memberId] || [];
+    if (assignedIds.length === 0) {
+      if (serverDocData.ownerId === memberId) {
+        return { name: "Owner", color: "text-yellow-400" };
+      }
+      return { name: "Member", color: "text-zinc-400" };
+    }
+    const activeRoles = roles.filter((r: any) => assignedIds.includes(r.id));
+    if (activeRoles.length === 0) {
+      if (serverDocData.ownerId === memberId) {
+        return { name: "Owner", color: "text-yellow-400" };
+      }
+      return { name: "Member", color: "text-zinc-400" };
+    }
+    return { name: activeRoles[0].name, color: activeRoles[0].color || "text-zinc-300" };
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -393,21 +476,32 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         ) : (
           <>
             <header className="h-16 border-b border-white/5 px-6 flex items-center justify-between shadow-xl">
-               <h2 className="text-sm font-black uppercase italic tracking-tighter text-white truncate max-w-[150px]">
+               <h2 className="text-sm font-black uppercase italic tracking-tighter text-white truncate max-w-[120px]">
                  {serverHeaderTitle}
                </h2>
                {!isBuiltInServer && (
-                 <button 
-                   onClick={() => {
-                     const inviteLink = `${window.location.origin}/chat/s/${activeServer}?invite=true`;
-                     navigator.clipboard.writeText(inviteLink);
-                     toast({ title: "Invite Link Copied!", description: "Share this link with friends to let them join." });
-                   }} 
-                   className="text-white/40 hover:text-white transition-colors"
-                   title="Copy Invite Link"
-                 >
-                    <UserPlus className="w-4 h-4 text-emerald-500" />
-                 </button>
+                 <div className="flex items-center gap-2">
+                   <button 
+                     onClick={() => {
+                       const inviteLink = `${window.location.origin}/chat/s/${activeServer}?invite=true`;
+                       navigator.clipboard.writeText(inviteLink);
+                       toast({ title: "Invite Link Copied!", description: "Share this link with friends to let them join." });
+                     }} 
+                     className="text-white/40 hover:text-white transition-colors"
+                     title="Copy Invite Link"
+                   >
+                      <UserPlus className="w-4 h-4 text-emerald-500" />
+                   </button>
+                   {hasLayoutPermission("manageSettings") && (
+                     <button
+                       onClick={() => setShowServerSettingsModal(true)}
+                       className="text-white/40 hover:text-white transition-colors"
+                       title="Server Settings"
+                     >
+                       <Settings className="w-4 h-4 text-primary" />
+                     </button>
+                   )}
+                 </div>
                )}
             </header>
             <ScrollArea className="flex-1">
@@ -435,7 +529,16 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                          Text Channels
                        </p>
                        {!isBuiltInServer && (
-                         <button onClick={() => setShowCreateChannelModal(true)} className="text-white/40 hover:text-white transition-colors">
+                         <button 
+                           onClick={() => {
+                             if (hasLayoutPermission("manageChannels")) {
+                               setShowCreateChannelModal(true);
+                             } else {
+                               toast({ variant: "destructive", title: "Access Denied", description: "You need manageChannels permission to add channels." });
+                             }
+                           }} 
+                           className="text-white/40 hover:text-white transition-colors"
+                         >
                            <Plus className="w-3.5 h-3.5" />
                          </button>
                        )}
@@ -545,42 +648,76 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                   )
                 ) : (
                   <div className="space-y-6 text-left">
-                    <div className="space-y-2">
-                       <p className="px-3 text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-3">Creators — 1</p>
-                       <div className="p-3 rounded-xl hover:bg-white/5 flex items-center gap-3 transition-all cursor-pointer group">
-                          <div className="relative">
-                            <Avatar className="w-9 h-9 border-2 border-primary/40"><AvatarImage src="https://picsum.photos/seed/ridwan/100" /><AvatarFallback>R</AvatarFallback></Avatar>
-                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-black" />
-                          </div>
-                          <div className="overflow-hidden"><p className="text-[11px] font-black uppercase text-primary italic truncate">Ridwan</p><p className="text-[8px] font-bold text-white/30 uppercase">Building...</p></div>
-                       </div>
-                    </div>
-                    <div className="space-y-2">
-                       <p className="px-3 text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-3">Online — {hubMembers?.length || 0}</p>
-                       {hubMembers?.filter(m => !m.isHidden).map(m => {
-                         const name = m.displayName?.replace(/^@+/, "") || "Member";
-                         return (
-                           <div 
-                             key={m.id} 
-                             onClick={() => handleStartDM(m.username || m.id)}
-                             className="p-3 rounded-xl hover:bg-white/5 flex items-center gap-3 transition-all cursor-pointer group"
-                           >
+                    {!isBuiltInServer ? (
+                      <div className="space-y-2">
+                        <p className="px-3 text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-3">
+                          Server Members — {customServerMembers.length}
+                        </p>
+                        {customServerMembers.map(m => {
+                          const name = m.displayName?.replace(/^@+/, "") || "Member";
+                          const roleDetails = getMemberRoleDetails(m.id);
+                          return (
+                            <div 
+                              key={m.id} 
+                              onClick={() => handleStartDM(m.username || m.id)}
+                              className="p-3 rounded-xl hover:bg-white/5 flex items-center gap-3 transition-all cursor-pointer group"
+                            >
                               <div className="relative shrink-0">
-                                 <RenderHat hatKey={m.hat} />
-                                 <Avatar className="w-9 h-9 border border-white/10">
-                                   <AvatarImage src={m.photoURL} />
-                                   <AvatarFallback>{name[0]}</AvatarFallback>
-                                 </Avatar>
-                                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-black" />
+                                <RenderHat hatKey={m.hat} />
+                                <Avatar className="w-9 h-9 border border-white/10">
+                                  <AvatarImage src={m.photoURL} />
+                                  <AvatarFallback>{name[0]}</AvatarFallback>
+                                </Avatar>
+                                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-black" />
                               </div>
                               <div className="overflow-hidden">
-                                 <p className="text-[11px] font-bold text-white/80 uppercase truncate">{name}</p>
-                                 <p className="text-[8px] font-bold text-muted-foreground uppercase italic">Level {m.level || 1}</p>
+                                <p className={cn("text-[11px] font-bold uppercase truncate", roleDetails.color)}>{name}</p>
+                                <p className="text-[8px] font-bold text-muted-foreground uppercase italic">{roleDetails.name}</p>
                               </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                           <p className="px-3 text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-3">Creators — 1</p>
+                           <div className="p-3 rounded-xl hover:bg-white/5 flex items-center gap-3 transition-all cursor-pointer group">
+                              <div className="relative">
+                                <Avatar className="w-9 h-9 border-2 border-primary/40"><AvatarImage src="https://picsum.photos/seed/ridwan/100" /><AvatarFallback>R</AvatarFallback></Avatar>
+                                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-black" />
+                              </div>
+                              <div className="overflow-hidden"><p className="text-[11px] font-black uppercase text-primary italic truncate">Ridwan</p><p className="text-[8px] font-bold text-white/30 uppercase">Building...</p></div>
                            </div>
-                         );
-                       })}
-                    </div>
+                        </div>
+                        <div className="space-y-2">
+                           <p className="px-3 text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-3">Online — {hubMembers?.length || 0}</p>
+                           {hubMembers?.filter(m => !m.isHidden).map(m => {
+                             const name = m.displayName?.replace(/^@+/, "") || "Member";
+                             return (
+                               <div 
+                                 key={m.id} 
+                                 onClick={() => handleStartDM(m.username || m.id)}
+                                 className="p-3 rounded-xl hover:bg-white/5 flex items-center gap-3 transition-all cursor-pointer group"
+                               >
+                                  <div className="relative shrink-0">
+                                     <RenderHat hatKey={m.hat} />
+                                     <Avatar className="w-9 h-9 border border-white/10">
+                                       <AvatarImage src={m.photoURL} />
+                                       <AvatarFallback>{name[0]}</AvatarFallback>
+                                     </Avatar>
+                                     <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-black" />
+                                  </div>
+                                  <div className="overflow-hidden">
+                                     <p className="text-[11px] font-bold text-white/80 uppercase truncate">{name}</p>
+                                     <p className="text-[8px] font-bold text-muted-foreground uppercase italic">Level {m.level || 1}</p>
+                                  </div>
+                               </div>
+                             );
+                           })}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
              </ScrollArea>
@@ -743,6 +880,332 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               {isCreatingChannel ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : null} Create Channel
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Server Settings Dialog */}
+      <Dialog open={showServerSettingsModal} onOpenChange={setShowServerSettingsModal}>
+        <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-2xl text-white p-10 bg-zinc-950">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-black uppercase italic text-white flex items-center gap-3">
+              <Settings className="w-8 h-8 text-primary animate-spin-slow" /> Server Settings
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground italic font-medium">Manage server general properties, custom roles, and members permissions.</DialogDescription>
+          </DialogHeader>
+          
+          <Tabs defaultValue="general" className="mt-6 flex flex-col h-[450px]">
+            <TabsList className="bg-[#0b0b14]/60 border border-white/10 p-1 rounded-xl w-full flex gap-1 mb-6">
+              <TabsTrigger value="general" className="flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest">General</TabsTrigger>
+              <TabsTrigger value="roles" className="flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest">Roles</TabsTrigger>
+              <TabsTrigger value="members" className="flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest">Members</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="general" className="flex-1 space-y-6 overflow-y-auto pr-1">
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] font-black uppercase text-white/40 ml-2">Server Name</label>
+                <Input 
+                  value={serverNameInput} 
+                  onChange={(e) => setServerNameInput(e.target.value)} 
+                  placeholder="Server Name" 
+                  className="bg-[#0b0b14]/60 h-14 rounded-xl font-bold border-white/10 text-white focus:border-primary" 
+                />
+              </div>
+
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] font-black uppercase text-white/40 ml-2">Server Access Privacy</label>
+                <div className="flex bg-[#0b0b14]/60 p-1 rounded-xl border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setServerIsPrivate(false)}
+                    className={cn(
+                      "flex-1 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                      !serverIsPrivate ? "bg-emerald-500 text-black shadow-lg" : "text-muted-foreground hover:bg-white/5"
+                    )}
+                  >
+                    Public
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setServerIsPrivate(true)}
+                    className={cn(
+                      "flex-1 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                      serverIsPrivate ? "bg-emerald-500 text-black shadow-lg" : "text-muted-foreground hover:bg-white/5"
+                    )}
+                  >
+                    Private
+                  </button>
+                </div>
+              </div>
+              
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] font-black uppercase text-white/40 ml-2">Theme Gutter Color</label>
+                <div className="flex gap-2">
+                  {GRADIENTS.map(col => (
+                    <button 
+                      key={col} 
+                      onClick={() => setServerColorInput(col)}
+                      className={cn(
+                        "w-8 h-8 rounded-full border-2 transition-all",
+                        col,
+                        serverColorInput === col ? "border-white scale-110" : "border-transparent"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              <Button 
+                onClick={async () => {
+                  if (!activeServer || !serverNameInput.trim()) return;
+                  try {
+                    await updateDoc(doc(firestore!, "servers", activeServer), {
+                      name: serverNameInput.trim(),
+                      isPrivate: serverIsPrivate,
+                      iconColor: serverColorInput
+                    });
+                    toast({ title: "Server Settings Saved!" });
+                  } catch (e) {
+                    toast({ variant: "destructive", title: "Failed to save settings" });
+                  }
+                }}
+                className="w-full h-14 bg-primary hover:bg-primary/95 text-black rounded-2xl font-black uppercase tracking-wider"
+              >
+                Save General Settings
+              </Button>
+            </TabsContent>
+
+            <TabsContent value="roles" className="flex-1 flex flex-col overflow-hidden">
+              <ScrollArea className="flex-1 pr-2">
+                <div className="space-y-6 text-left">
+                  {/* Create / Edit Role form */}
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-4">
+                    <h4 className="text-xs font-black uppercase text-primary italic">
+                      {editingRoleId ? "Edit Role" : "Create New Role"}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[8px] font-black uppercase text-zinc-500">Role Name</label>
+                        <Input 
+                          value={roleNameInput} 
+                          onChange={(e) => setRoleNameInput(e.target.value)} 
+                          placeholder="e.g. Moderator" 
+                          className="bg-[#0b0b14]/60 h-10 border-white/5 rounded-lg text-xs" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[8px] font-black uppercase text-zinc-500">Text Color Class</label>
+                        <select
+                          value={roleColorInput}
+                          onChange={(e) => setRoleColorInput(e.target.value)}
+                          className="w-full h-10 bg-[#0b0b14]/60 border border-white/5 rounded-lg text-xs px-2 text-white"
+                        >
+                          <option value="text-zinc-300">Default Zinc</option>
+                          <option value="text-red-400">Red</option>
+                          <option value="text-blue-400">Blue</option>
+                          <option value="text-emerald-400">Emerald</option>
+                          <option value="text-pink-400">Pink</option>
+                          <option value="text-amber-400">Amber</option>
+                          <option value="text-purple-400">Purple</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black uppercase text-zinc-500 block mb-2">Permissions Checklist</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { key: "sendMessages", label: "Send Messages" },
+                          { key: "manageChannels", label: "Manage Channels" },
+                          { key: "manageSettings", label: "Manage Settings" },
+                          { key: "manageRoles", label: "Manage Roles" }
+                        ].map(perm => (
+                          <label key={perm.key} className="flex items-center gap-2 text-[10px] font-bold text-zinc-300 cursor-pointer">
+                            <input 
+                              type="checkbox"
+                              checked={rolePermissions.includes(perm.key)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setRolePermissions(prev => [...prev, perm.key]);
+                                } else {
+                                  setRolePermissions(prev => prev.filter(p => p !== perm.key));
+                                }
+                              }}
+                              className="rounded border-white/10 bg-black text-primary"
+                            />
+                            {perm.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        onClick={async () => {
+                          if (!roleNameInput.trim() || !activeServer || !serverDocData) return;
+                          try {
+                            const currentRoles = [...(serverDocData.roles || [])];
+                            const newRoleId = editingRoleId || `role_${Date.now()}`;
+                            const newRoleObj = {
+                              id: newRoleId,
+                              name: roleNameInput.trim(),
+                              color: roleColorInput,
+                              permissions: rolePermissions
+                            };
+                            
+                            let updatedRoles;
+                            if (editingRoleId) {
+                              updatedRoles = currentRoles.map(r => r.id === editingRoleId ? newRoleObj : r);
+                            } else {
+                              updatedRoles = [...currentRoles, newRoleObj];
+                            }
+                            
+                            await updateDoc(doc(firestore!, "servers", activeServer), {
+                              roles: updatedRoles
+                            });
+                            
+                            // Reset state
+                            setRoleNameInput("");
+                            setRoleColorInput("text-zinc-300");
+                            setRolePermissions(["sendMessages"]);
+                            setEditingRoleId(null);
+                            toast({ title: editingRoleId ? "Role Updated!" : "Role Created!" });
+                          } catch (e) {
+                            toast({ variant: "destructive", title: "Role Operation Failed" });
+                          }
+                        }}
+                        className="flex-1 h-10 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase border-none"
+                      >
+                        {editingRoleId ? "Update Role" : "Add Role"}
+                      </Button>
+                      {editingRoleId && (
+                        <Button
+                          onClick={() => {
+                            setRoleNameInput("");
+                            setRoleColorInput("text-zinc-300");
+                            setRolePermissions(["sendMessages"]);
+                            setEditingRoleId(null);
+                          }}
+                          variant="ghost"
+                          className="h-10 text-[10px] font-black uppercase text-zinc-400 border border-white/5 rounded-xl"
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* List of Roles */}
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Active Roles</h4>
+                    {!(serverDocData?.roles || []).length ? (
+                      <p className="text-xs italic text-white/30">No custom roles created.</p>
+                    ) : (
+                      (serverDocData.roles || []).map((r: any) => (
+                        <div key={r.id} className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between">
+                          <div>
+                            <span className={cn("text-sm font-black uppercase italic", r.color)}>{r.name}</span>
+                            <div className="flex gap-1.5 mt-1">
+                              {r.permissions?.map((p: string) => (
+                                <Badge key={p} className="bg-white/5 text-zinc-400 border border-white/10 text-[6px] uppercase px-1.5 py-0.5 rounded">{p}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              onClick={() => {
+                                setEditingRoleId(r.id);
+                                setRoleNameInput(r.name);
+                                setRoleColorInput(r.color);
+                                setRolePermissions(r.permissions || []);
+                              }}
+                              className="h-8 px-3 text-[8px] font-black bg-zinc-800 text-zinc-300 hover:bg-zinc-700 rounded-lg border-none"
+                            >
+                              Edit
+                            </Button>
+                            <Button 
+                              onClick={async () => {
+                                if (!activeServer || !serverDocData) return;
+                                try {
+                                  const updatedRoles = (serverDocData.roles || []).filter((x: any) => x.id !== r.id);
+                                  // Clean role from member assignments
+                                  const updatedMemberRoles = { ...(serverDocData.memberRoles || {}) };
+                                  Object.keys(updatedMemberRoles).forEach(memberId => {
+                                    updatedMemberRoles[memberId] = (updatedMemberRoles[memberId] || []).filter((rid: string) => rid !== r.id);
+                                  });
+                                  
+                                  await updateDoc(doc(firestore!, "servers", activeServer), {
+                                    roles: updatedRoles,
+                                    memberRoles: updatedMemberRoles
+                                  });
+                                  toast({ title: "Role Deleted" });
+                                } catch(e) {
+                                  toast({ variant: "destructive", title: "Deletion Failed" });
+                                }
+                              }}
+                              className="h-8 px-3 text-[8px] font-black bg-rose-600/20 text-rose-500 hover:bg-rose-600 hover:text-white rounded-lg border-none"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="members" className="flex-1 flex flex-col overflow-hidden">
+              <ScrollArea className="flex-1 pr-2">
+                <div className="space-y-4 text-left">
+                  <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Assign Server Roles</h4>
+                  {customServerMembers.map(member => {
+                    const name = member.displayName?.replace(/^@+/, "") || "Member";
+                    const userRoleIds = serverDocData?.memberRoles?.[member.id] || [];
+                    const isOwner = serverDocData?.ownerId === member.id;
+                    
+                    return (
+                      <div key={member.id} className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <Avatar className="w-8 h-8 rounded-lg shrink-0">
+                            <AvatarImage src={member.photoURL} />
+                            <AvatarFallback>{name[0]}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs font-bold text-white truncate">{name}</span>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2 max-w-[60%] justify-end">
+                          {isOwner ? (
+                            <Badge className="bg-yellow-400 text-black text-[8px] font-black uppercase border-none px-3">Server Owner</Badge>
+                          ) : !(serverDocData?.roles || []).length ? (
+                            <span className="text-[9px] text-white/30 italic">No roles created</span>
+                          ) : (
+                            (serverDocData.roles || []).map((r: any) => {
+                              const assigned = userRoleIds.includes(r.id);
+                              return (
+                                <button
+                                  key={r.id}
+                                  onClick={() => handleToggleMemberRole(member.id, r.id)}
+                                  className={cn(
+                                    "px-2.5 py-1 rounded text-[7px] font-black uppercase border transition-all",
+                                    assigned 
+                                      ? `${r.color} bg-white/5 border-primary` 
+                                      : "text-zinc-500 border-white/5 hover:border-white/10 bg-transparent"
+                                  )}
+                                >
+                                  {r.name}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { 
   Hash, 
@@ -11,8 +11,14 @@ import {
   Brain, 
   MessageCircle,
   Radio,
-  X
+  X,
+  Compass,
+  Search,
+  Globe,
+  Users
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,6 +42,94 @@ export default function ServerChatPage() {
 
   const serverName = (params.serverName as string) || "xakteir";
   const channelName = searchParams.get("c") || "general";
+  const router = useRouter();
+
+  // Discover state
+  const [discoverSearch, setDiscoverSearch] = useState("");
+
+  // Fetch custom servers list from database for discovery
+  const discoverServersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "servers"), limit(100));
+  }, [firestore]);
+  const { data: dbDiscoverServers, isLoading: isDiscoverLoading } = useCollection(discoverServersQuery);
+
+  const publicServers = useMemo(() => {
+    if (!dbDiscoverServers) return [];
+    return dbDiscoverServers.filter((s: any) => s.isPrivate !== true);
+  }, [dbDiscoverServers]);
+
+  const filteredDiscoverServers = useMemo(() => {
+    if (!discoverSearch.trim()) return publicServers;
+    const q = discoverSearch.toLowerCase();
+    return publicServers.filter((s: any) => s.name?.toLowerCase().includes(q));
+  }, [publicServers, discoverSearch]);
+
+  const handleJoinServer = async (serverId: string, currentMembers: string[]) => {
+    if (!user || !firestore) return;
+    try {
+      const serverRef = doc(firestore, "servers", serverId);
+      const updatedMembers = [...(currentMembers || [])];
+      if (!updatedMembers.includes(user.uid)) {
+        updatedMembers.push(user.uid);
+      }
+      await updateDoc(serverRef, { members: updatedMembers });
+      toast({ title: "Joined Server!", description: "You are now a member of this community." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Failed to join server" });
+    }
+  };
+
+  const handleLeaveServer = async (serverId: string, currentMembers: string[]) => {
+    if (!user || !firestore) return;
+    try {
+      const serverRef = doc(firestore, "servers", serverId);
+      const updatedMembers = (currentMembers || []).filter(uid => uid !== user.uid);
+      await updateDoc(serverRef, { members: updatedMembers });
+      toast({ title: "Left Server", description: "You have left this community." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Failed to leave server" });
+    }
+  };
+
+  // Helper to check user permissions on the custom server
+  const hasPermission = (permission: string) => {
+    if (!user || !serverDoc) return true; 
+    if (serverDoc.ownerId === user.uid) return true; // Owner bypass
+    
+    const roles = serverDoc.roles || [];
+    const userRoleIds = serverDoc.memberRoles?.[user.uid] || [];
+    
+    if (roles.length === 0 || userRoleIds.length === 0) {
+      return permission === "sendMessages"; // default fallback
+    }
+    
+    return roles.some((role: any) => 
+      userRoleIds.includes(role.id) && 
+      role.permissions?.includes(permission)
+    );
+  };
+
+  // Helper to resolve the sender's text color using serverDoc.roles and serverDoc.memberRoles
+  const getSenderColor = (senderId: string) => {
+    if (!serverDoc) return "text-white/60";
+    const roles = serverDoc.roles || [];
+    const assignedIds = serverDoc.memberRoles?.[senderId] || [];
+    if (assignedIds.length === 0) {
+      if (serverDoc.ownerId === senderId) {
+        return "text-yellow-400";
+      }
+      return "text-white/60";
+    }
+    const activeRoles = roles.filter((r: any) => assignedIds.includes(r.id));
+    if (activeRoles.length === 0) {
+      if (serverDoc.ownerId === senderId) {
+        return "text-yellow-400";
+      }
+      return "text-white/60";
+    }
+    return activeRoles[0].color || "text-zinc-300";
+  };
 
   // Derive legacy public channels or scoped server channels
   const channelId = serverName === "xakteir" ? channelName : `${serverName}-${channelName}`;
@@ -125,6 +219,15 @@ export default function ServerChatPage() {
         variant: "destructive",
         title: "Permission Denied",
         description: "Only administrators can send messages in announcements."
+      });
+      return;
+    }
+
+    if (serverName !== "xakteir" && !hasPermission("sendMessages")) {
+      toast({
+        variant: "destructive",
+        title: "Permission Denied",
+        description: "You do not have permission to send messages in this server."
       });
       return;
     }
@@ -234,8 +337,121 @@ export default function ServerChatPage() {
     );
   }
 
+  // Intercept for discover panel
+  if (serverName === "discover") {
+    return (
+      <main className="flex-1 flex flex-col bg-[#05030d] text-white relative overflow-hidden h-full">
+        <div className="absolute inset-0 arcade-grid opacity-[0.02] pointer-events-none" />
+        
+        {/* Header */}
+        <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-black/45 backdrop-blur-2xl z-20 shadow-xl shrink-0">
+          <div className="flex items-center gap-4">
+            <Compass className="w-6 h-6 text-emerald-400 animate-pulse" />
+            <div>
+              <h2 className="text-xl font-black italic uppercase tracking-tighter text-white">Discovery</h2>
+              <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest leading-none mt-1">Explore Public Communities</p>
+            </div>
+          </div>
+          
+          <div className="relative group shrink-0 w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-emerald-400 transition-colors" />
+            <Input
+              value={discoverSearch}
+              onChange={(e) => setDiscoverSearch(e.target.value)}
+              placeholder="Search public servers..."
+              className="bg-black/60 border-white/10 h-11 rounded-xl pl-10 pr-4 text-xs font-bold focus:border-emerald-400/50 focus:ring-emerald-400 uppercase text-white placeholder:text-zinc-600"
+            />
+          </div>
+        </header>
+
+        {/* Content */}
+        <ScrollArea className="flex-1 p-8">
+          <div className="max-w-6xl mx-auto space-y-10 pb-20">
+            <div className="space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-[0.4em] text-muted-foreground italic">Public Hub Directory</h3>
+              <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider leading-relaxed">
+                Browse and join community servers hosted on Xakteir. Discover clans, development sectors, or create your own server using the sidebar button!
+              </p>
+            </div>
+
+            {isDiscoverLoading ? (
+              <div className="py-40 flex flex-col items-center justify-center space-y-6">
+                <Loader2 className="animate-spin w-12 h-12 text-emerald-400 opacity-20" />
+                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-emerald-400/40">Syncing communities...</p>
+              </div>
+            ) : filteredDiscoverServers.length === 0 ? (
+              <div className="py-40 text-center border-4 border-dashed border-white/5 rounded-[3rem] opacity-25 space-y-6">
+                <Compass className="w-20 h-20 mx-auto text-emerald-400 animate-bounce" />
+                <p className="text-lg font-black uppercase tracking-widest">No public servers found</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredDiscoverServers.map((server: any) => {
+                  const memberList = server.members || [];
+                  const isMember = memberList.includes(user.uid);
+                  const isOwner = server.ownerId === user.uid;
+                  
+                  return (
+                    <Card key={server.id} className="glass-card border-2 border-white/10 hover:border-emerald-500/40 rounded-[2.2rem] p-6 bg-zinc-950/40 flex flex-col justify-between shadow-2xl transition-all duration-300 hover:-translate-y-1 group">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-start">
+                          <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border border-white/10 group-hover:scale-105 transition-transform", server.iconColor || "bg-zinc-700")}>
+                            <MessageCircle className="w-6 h-6 text-white" />
+                          </div>
+                          <Badge className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+                            {memberList.length} {memberList.length === 1 ? 'member' : 'members'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <h4 className="text-lg font-black uppercase italic tracking-tighter text-white truncate group-hover:text-emerald-400 transition-colors">{server.name}</h4>
+                          <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                            Created by: {isOwner ? 'You (Owner)' : `User ${server.ownerId?.slice(0, 6)}`}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-6 flex gap-3">
+                        {isMember ? (
+                          <>
+                            <Button
+                              onClick={() => router.push(`/chat/s/${server.id}?c=general`)}
+                              className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[10px] tracking-widest rounded-xl transition-all border-none"
+                            >
+                              Open Chat
+                            </Button>
+                            {!isOwner && (
+                              <Button
+                                onClick={() => handleLeaveServer(server.id, memberList)}
+                                variant="ghost"
+                                className="h-11 px-4 hover:bg-red-500/10 text-red-500 hover:text-red-400 font-black uppercase text-[10px] tracking-widest rounded-xl transition-all border border-red-500/20"
+                              >
+                                Leave
+                              </Button>
+                            )}
+                          </>
+                        ) : (
+                          <Button
+                            onClick={() => handleJoinServer(server.id, memberList)}
+                            className="w-full h-11 bg-white hover:bg-emerald-500 hover:text-black text-black font-black uppercase text-[10px] tracking-widest rounded-xl transition-all border-none"
+                          >
+                            Join Server
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </main>
+    );
+  }
+
   const isAnnouncements = channelName === "announcements";
-  const isReadOnly = isAnnouncements && !isAdmin;
+  const isReadOnly = (isAnnouncements && !isAdmin) || (serverName !== "xakteir" && !hasPermission("sendMessages"));
 
   return (
     <main className="flex-1 flex flex-col bg-zinc-950 relative overflow-hidden h-full">
@@ -277,7 +493,7 @@ export default function ServerChatPage() {
                      </Avatar>
                    </div>
                    <div className={cn("flex flex-col space-y-1.5 max-w-[70%]", msg.senderId === user.uid && "items-end")}>
-                      <span className="text-[9px] font-black uppercase italic tracking-widest px-2 text-white/60">{msg.senderName}</span>
+                      <span className={cn("text-[9px] font-black uppercase italic tracking-widest px-2", getSenderColor(msg.senderId))}>{msg.senderName}</span>
                       <div className={cn("p-5 rounded-[1.8rem] shadow-2xl border transition-all italic text-sm font-medium leading-relaxed text-left", msg.senderId === user.uid ? "bg-primary text-white border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none text-foreground/90")}>
                          {isImageUrl(msg.content) ? (
                            <img src={msg.content} alt="gif" className="rounded-2xl max-w-full max-h-60 object-contain border border-white/10" />
@@ -330,7 +546,9 @@ export default function ServerChatPage() {
       <div className="p-4 md:p-6 bg-zinc-950 border-t border-white/5 shrink-0 z-20">
          {isReadOnly ? (
            <div className="max-w-5xl mx-auto p-5 rounded-[1.8rem] bg-white/5 border border-dashed border-white/10 text-center italic text-xs text-muted-foreground uppercase tracking-wider font-bold">
-              Announcements are read-only.
+              {isAnnouncements && !isAdmin 
+                ? "Announcements are read-only." 
+                : "You do not have permission to send messages in this server."}
            </div>
          ) : (
            <form onSubmit={(e) => handleSend(e)} className="max-w-5xl mx-auto flex items-end gap-3 md:gap-4">
