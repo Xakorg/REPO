@@ -231,7 +231,7 @@ export default function XakteirMapsPage() {
   const [loading, setLoading] = useState(true);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
-  const [mapLayer, setMapLayer] = useState<"dark" | "light" | "osm" | "satellite">("dark");
+  const [mapLayer, setMapLayer] = useState<"dark" | "light" | "osm" | "satellite">("osm");
 
   // Search points state
   const [startQuery, setStartQuery] = useState("My Location");
@@ -260,6 +260,11 @@ export default function XakteirMapsPage() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [currentStepProgress, setCurrentStepProgress] = useState({ instruction: "", distanceRemaining: 0, modifier: "" });
   
+  // Live Geolocation Navigation Mode
+  const [isNavigatingLive, setIsNavigatingLive] = useState(false);
+  const lastTimeRef = useRef<number>(Date.now());
+  const lastDistRef = useRef<number>(0);
+
   // Voice Navigation Settings
   const [voiceMuted, setVoiceMuted] = useState(false);
   const spokenRef = useRef<{ stepIndex: number; announced: boolean; closeAnnounced: boolean; nowAnnounced: boolean }>({
@@ -320,7 +325,11 @@ export default function XakteirMapsPage() {
   // Sync Geolocation and Watch Position
   useEffect(() => {
     const handleSuccess = (pos: GeolocationPosition) => {
-      const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      const coords = { 
+        lat: pos.coords.latitude, 
+        lon: pos.coords.longitude,
+        speed: pos.coords.speed
+      };
       setLocation(coords);
       setLoading(false);
       setStartPoint({ lat: coords.lat, lon: coords.lon, name: "My Location" });
@@ -330,7 +339,7 @@ export default function XakteirMapsPage() {
 
     const handleFailure = () => {
       // Graceful fallback to Dublin City Centre, Ireland
-      const fallback = { lat: 53.3498, lon: -6.2603 };
+      const fallback = { lat: 53.3498, lon: -6.2603, speed: 0 };
       setLocation(fallback);
       setLoading(false);
       setStartPoint({ lat: fallback.lat, lon: fallback.lon, name: "Dublin City Centre" });
@@ -340,18 +349,22 @@ export default function XakteirMapsPage() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(handleSuccess, handleFailure);
 
-      // Watch location only if user is authenticated and firestore exists
-      if (user && firestore) {
-        watchIdRef.current = navigator.geolocation.watchPosition(
-          (pos) => {
-            const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-            setLocation(coords);
+      // Watch location for real-time tracking (both guest & auth)
+      watchIdRef.current = navigator.geolocation.watchPosition(
+        (pos) => {
+          const coords = { 
+            lat: pos.coords.latitude, 
+            lon: pos.coords.longitude,
+            speed: pos.coords.speed
+          };
+          setLocation(coords);
+          if (user && firestore) {
             updateUserLocation(coords.lat, coords.lon);
-          },
-          null,
-          { enableHighAccuracy: true, timeout: 10000 }
-        );
-      }
+          }
+        },
+        null,
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
     } else {
       handleFailure();
     }
@@ -618,13 +631,13 @@ export default function XakteirMapsPage() {
         lineJoin: "round"
       }).addTo(mapRef.current);
 
-      if (!isSimulating) {
+      if (!isSimulating && !isNavigatingLive) {
         mapRef.current.fitBounds(L.polyline(routeCoords).getBounds(), {
           padding: [60, 60]
         });
       }
     }
-  }, [routeCoords, leafletLoaded, isSimulating]);
+  }, [routeCoords, leafletLoaded, isSimulating, isNavigatingLive]);
 
   // Car animation updates
   useEffect(() => {
@@ -632,7 +645,7 @@ export default function XakteirMapsPage() {
     const L = (window as any).L;
     if (!L) return;
 
-    if (!isSimulating) {
+    if (!isSimulating && !isNavigatingLive) {
       if (carMarkerRef.current) {
         carMarkerRef.current.remove();
         carMarkerRef.current = null;
@@ -640,11 +653,25 @@ export default function XakteirMapsPage() {
       return;
     }
 
-    const pos = getPositionAtDistance(routeCoords, simDistanceTravelled);
-    if (!pos) return;
+    let pos: [number, number] | null = null;
+    let bearing = 0;
 
-    const nextPos = getPositionAtDistance(routeCoords, simDistanceTravelled + 4);
-    const bearing = nextPos ? getBearing(pos[0], pos[1], nextPos[0], nextPos[1]) : 0;
+    if (isSimulating) {
+      pos = getPositionAtDistance(routeCoords, simDistanceTravelled);
+      if (pos) {
+        const nextPos = getPositionAtDistance(routeCoords, simDistanceTravelled + 4);
+        bearing = nextPos ? getBearing(pos[0], pos[1], nextPos[0], nextPos[1]) : 0;
+      }
+    } else if (isNavigatingLive && location) {
+      pos = [location.lat, location.lon];
+      const { closestIdx } = findClosestPointAndDistance(routeCoords, location.lat, location.lon);
+      if (closestIdx !== undefined && closestIdx < routeCoords.length - 1) {
+        const nextPoint = routeCoords[closestIdx + 1];
+        bearing = getBearing(pos[0], pos[1], nextPoint[0], nextPoint[1]);
+      }
+    }
+
+    if (!pos) return;
 
     if (carMarkerRef.current) {
       carMarkerRef.current.setLatLng(pos);
@@ -675,7 +702,7 @@ export default function XakteirMapsPage() {
     }
 
     mapRef.current.setView(pos, Math.max(16, mapRef.current.getZoom()));
-  }, [simDistanceTravelled, isSimulating, leafletLoaded]);
+  }, [simDistanceTravelled, isSimulating, isNavigatingLive, location, leafletLoaded]);
 
   // Suggestions fetching debounces
   useEffect(() => {
@@ -726,30 +753,36 @@ export default function XakteirMapsPage() {
         let limit = 50; 
         const totalDistance = routeDetails.distance;
 
-        // Apply dynamic speed limits based on distance
-        if (prevDist < 400 || (totalDistance - prevDist) < 400) {
-          limit = 50; // Urban
-        } else if (totalDistance > 8000) {
-          limit = 120; // Motorway
-        } else if (totalDistance > 2500) {
-          limit = 80; // National
+        if (travelMode === "walking") {
+          limit = 5;
+        } else if (travelMode === "cycling") {
+          limit = 15;
         } else {
-          limit = 60; // Regional
-        }
+          // Apply dynamic speed limits based on distance
+          if (prevDist < 400 || (totalDistance - prevDist) < 400) {
+            limit = 50; // Urban
+          } else if (totalDistance > 8000) {
+            limit = 120; // Motorway
+          } else if (totalDistance > 2500) {
+            limit = 80; // National
+          } else {
+            limit = 60; // Regional
+          }
 
-        // Speed limit adjustment for curves
-        if (currentPos && nextPos) {
-          const currentBearing = getBearing(currentPos[0], currentPos[1], nextPos[0], nextPos[1]);
-          const farPos = getPositionAtDistance(routeCoords, prevDist + 45);
-          if (farPos) {
-            const farBearing = getBearing(nextPos[0], nextPos[1], farPos[0], farPos[1]);
-            const angleDiff = Math.abs(currentBearing - farBearing);
-            const normalizedDiff = angleDiff > 180 ? 360 - angleDiff : angleDiff;
-            
-            if (normalizedDiff > 35) {
-              limit = Math.min(limit, 30); 
-            } else if (normalizedDiff > 15) {
-              limit = Math.min(limit, 50); 
+          // Speed limit adjustment for curves
+          if (currentPos && nextPos) {
+            const currentBearing = getBearing(currentPos[0], currentPos[1], nextPos[0], nextPos[1]);
+            const farPos = getPositionAtDistance(routeCoords, prevDist + 45);
+            if (farPos) {
+              const farBearing = getBearing(nextPos[0], nextPos[1], farPos[0], farPos[1]);
+              const angleDiff = Math.abs(currentBearing - farBearing);
+              const normalizedDiff = angleDiff > 180 ? 360 - angleDiff : angleDiff;
+              
+              if (normalizedDiff > 35) {
+                limit = Math.min(limit, 30); 
+              } else if (normalizedDiff > 15) {
+                limit = Math.min(limit, 50); 
+              }
             }
           }
         }
@@ -763,7 +796,7 @@ export default function XakteirMapsPage() {
         }
 
         // Random organic speed wobble
-        const fluctuation = Math.sin(now / 1500) * 1.5;
+        const fluctuation = Math.sin(now / 1500) * (travelMode === "walking" ? 0.2 : travelMode === "cycling" ? 0.8 : 1.5);
         const finalTarget = Math.max(0, targetSpeed + (simManualSpeedOverride !== null ? 0 : fluctuation));
 
         setSimSpeed((prevSpeed) => {
@@ -795,7 +828,7 @@ export default function XakteirMapsPage() {
 
   // Synchronize route instructions
   useEffect(() => {
-    if (!routeDetails || !steps || steps.length === 0 || !isSimulating) return;
+    if (!routeDetails || !steps || steps.length === 0 || (!isSimulating && !isNavigatingLive)) return;
 
     let currentStep = steps[0];
     let nextStep = steps[1];
@@ -829,11 +862,101 @@ export default function XakteirMapsPage() {
       distanceRemaining: distRemaining,
       modifier
     });
-  }, [simDistanceTravelled, routeDetails, steps, isSimulating]);
+  }, [simDistanceTravelled, routeDetails, steps, isSimulating, isNavigatingLive]);
+
+  // Project user's live position onto route and calculate metrics
+  useEffect(() => {
+    if (!isNavigatingLive || !location || !routeCoords || routeCoords.length === 0 || !routeDetails) return;
+
+    // 1. Find the closest route point and cumulative distance along route
+    const { point, distanceAlong } = findClosestPointAndDistance(routeCoords, location.lat, location.lon);
+    
+    if (point) {
+      setSimDistanceTravelled(distanceAlong);
+
+      // 2. Determine Speed Limit
+      let limitVal = 50;
+      const totalDistance = routeDetails.distance;
+      if (distanceAlong < 400 || (totalDistance - distanceAlong) < 400) {
+        limitVal = 50; // Urban
+      } else if (totalDistance > 8000) {
+        limitVal = 120; // Motorway
+      } else if (totalDistance > 2500) {
+        limitVal = 80; // National
+      } else {
+        limitVal = 60; // Regional
+      }
+
+      // Check curve for limit adjustments
+      const currentPos = getPositionAtDistance(routeCoords, distanceAlong);
+      const nextPos = getPositionAtDistance(routeCoords, distanceAlong + 15);
+      if (currentPos && nextPos) {
+        const currentBearing = getBearing(currentPos[0], currentPos[1], nextPos[0], nextPos[1]);
+        const farPos = getPositionAtDistance(routeCoords, distanceAlong + 45);
+        if (farPos) {
+          const farBearing = getBearing(nextPos[0], nextPos[1], farPos[0], farPos[1]);
+          const angleDiff = Math.abs(currentBearing - farBearing);
+          const normalizedDiff = angleDiff > 180 ? 360 - angleDiff : angleDiff;
+          if (normalizedDiff > 35) {
+            limitVal = Math.min(limitVal, 30);
+          } else if (normalizedDiff > 15) {
+            limitVal = Math.min(limitVal, 50);
+          }
+        }
+      }
+      setSimSpeedLimit(limitVal);
+
+      // 3. Determine Speed (sensor vs distance delta over time)
+      const now = Date.now();
+      const dt = (now - lastTimeRef.current) / 1000;
+      const dDist = distanceAlong - lastDistRef.current;
+      
+      if (location.speed !== null && location.speed !== undefined) {
+        setSimSpeed(location.speed * 3.6);
+      } else if (dt > 0.5) {
+        const calculatedSpeed = Math.max(0, (dDist / dt) * 3.6);
+        setSimSpeed(calculatedSpeed);
+        lastTimeRef.current = now;
+        lastDistRef.current = distanceAlong;
+      }
+
+      // 4. Check arrival
+      if (distanceAlong >= totalDistance - 15) {
+        setIsNavigatingLive(false);
+        setArrived(true);
+        speakText("You have arrived at your destination. Journey completed.");
+      }
+    }
+  }, [location, isNavigatingLive, routeCoords, routeDetails]);
+
+  // Find closest point on route polyline and return the cumulative distance along it
+  function findClosestPointAndDistance(coords: [number, number][], userLat: number, userLon: number) {
+    if (!coords || coords.length === 0) return { point: null, distanceAlong: 0 };
+    
+    let minDistance = Infinity;
+    let closestIdx = 0;
+    let closestPoint: [number, number] = coords[0];
+    
+    for (let i = 0; i < coords.length; i++) {
+      const d = getDistance(userLat, userLon, coords[i][0], coords[i][1]);
+      if (d < minDistance) {
+        minDistance = d;
+        closestIdx = i;
+        closestPoint = coords[i];
+      }
+    }
+    
+    let distanceAlong = 0;
+    for (let i = 0; i < closestIdx; i++) {
+      distanceAlong += getDistance(coords[i][0], coords[i][1], coords[i+1][0], coords[i+1][1]);
+    }
+    
+    return { point: closestPoint, distanceAlong, closestIdx };
+  }
 
   // Trigger speech turn instructions
   useEffect(() => {
-    if (!isSimulating || !routeDetails || !steps || steps.length === 0 || currentStepIndex === -1) {
+    if ((!isSimulating && !isNavigatingLive) || !routeDetails || !steps || steps.length === 0 || currentStepIndex === -1) {
       spokenRef.current = { stepIndex: -1, announced: false, closeAnnounced: false, nowAnnounced: false };
       return;
     }
@@ -879,7 +1002,7 @@ export default function XakteirMapsPage() {
         spokenRef.current.announced = true;
       }
     }
-  }, [simDistanceTravelled, currentStepIndex, isSimulating, steps, routeDetails, voiceMuted]);
+  }, [simDistanceTravelled, currentStepIndex, isSimulating, isNavigatingLive, steps, routeDetails, voiceMuted]);
 
   // Global Geocoding Suggestion Engine
   const getSuggestions = async (queryStr: string) => {
@@ -918,13 +1041,36 @@ export default function XakteirMapsPage() {
 
   // Fetch Route from OSRM
   const fetchRoute = async (start: { lat: number, lon: number }, end: { lat: number, lon: number }, mode: "driving" | "cycling" | "walking") => {
-    const profile = mode === "driving" ? "car" : mode === "cycling" ? "bike" : "foot";
-    const url = `https://router.project-osrm.org/route/v1/${profile}/${start.lon},${start.lat};${end.lon},${end.lat}?overview=full&geometries=geojson&steps=true`;
+    // The public OSRM demo server only supports the 'car' profile.
+    // We fetch using 'car' to get the route coordinates, and then adjust duration and speeds according to the selected mode.
+    const url = `https://router.project-osrm.org/route/v1/car/${start.lon},${start.lat};${end.lon},${end.lat}?overview=full&geometries=geojson&steps=true`;
     try {
       const res = await fetch(url);
       const data = await res.json();
-      if (data.code === "Ok") {
-        return data.routes[0];
+      if (data.code === "Ok" && data.routes && data.routes[0]) {
+        const route = data.routes[0];
+        
+        // Adjust duration based on travel mode speed in m/s
+        // Driving: 50 km/h (13.89 m/s), Cycling: 15 km/h (4.17 m/s), Walking: 5 km/h (1.39 m/s)
+        let speedMps = 13.89;
+        if (mode === "cycling") {
+          speedMps = 4.17;
+        } else if (mode === "walking") {
+          speedMps = 1.39;
+        }
+        
+        route.duration = route.distance / speedMps;
+        if (route.legs) {
+          route.legs.forEach((leg: any) => {
+            leg.duration = leg.distance / speedMps;
+            if (leg.steps) {
+              leg.steps.forEach((step: any) => {
+                step.duration = step.distance / speedMps;
+              });
+            }
+          });
+        }
+        return route;
       }
     } catch (e) {
       console.error(e);
@@ -1044,7 +1190,7 @@ export default function XakteirMapsPage() {
   };
 
   const swapStartEnd = () => {
-    if (isSimulating) return;
+    if (isSimulating || isNavigatingLive) return;
     const tempPoint = startPoint;
     const tempQuery = startQuery;
     setStartPoint(destPoint);
@@ -1056,6 +1202,7 @@ export default function XakteirMapsPage() {
   const startJourney = () => {
     if (!routeDetails || routeCoords.length === 0) return;
     setIsSimulating(true);
+    setIsNavigatingLive(false);
     setSimDistanceTravelled(0);
     setSimSpeed(0);
     setArrived(false);
@@ -1063,8 +1210,30 @@ export default function XakteirMapsPage() {
     speakText("Starting journey. Head towards your destination.");
   };
 
+  const startLiveNavigation = () => {
+    if (!routeDetails || routeCoords.length === 0) return;
+    setIsNavigatingLive(true);
+    setIsSimulating(false);
+    setSimDistanceTravelled(0);
+    setSimSpeed(0);
+    setArrived(false);
+    setSimManualSpeedOverride(null);
+    
+    if (location) {
+      const { distanceAlong } = findClosestPointAndDistance(routeCoords, location.lat, location.lon);
+      setSimDistanceTravelled(distanceAlong);
+      lastDistRef.current = distanceAlong;
+    } else {
+      lastDistRef.current = 0;
+    }
+    lastTimeRef.current = Date.now();
+    
+    speakText("Starting live navigation. Head towards your destination.");
+  };
+
   const resetJourney = () => {
     setIsSimulating(false);
+    setIsNavigatingLive(false);
     setRouteDetails(null);
     setRouteCoords([]);
     setSteps([]);
@@ -1072,6 +1241,7 @@ export default function XakteirMapsPage() {
     setDestQuery("");
     setArrived(false);
     setSimDistanceTravelled(0);
+    setSimSpeed(0);
   };
 
   // Speedometer Dash math
@@ -1187,7 +1357,7 @@ export default function XakteirMapsPage() {
         )}
 
         {/* GOOGLE MAPS FLOATING SEARCH / ROUTE BUILDER (Top-Left) */}
-        {!loading && !isSimulating && (
+        {!loading && !isSimulating && !isNavigatingLive && (
           <div className="absolute top-6 left-6 z-[400] w-[380px] max-w-[calc(100vw-50px)] pointer-events-auto">
             <Card className="glass-card p-6 rounded-[2.5rem] bg-black/75 border-white/10 shadow-3xl flex flex-col gap-4">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -1351,12 +1521,20 @@ export default function XakteirMapsPage() {
                     <Badge className="bg-emerald-600 text-white uppercase text-[8px] font-black py-1.5 px-3">Fastest Route</Badge>
                   </div>
 
-                  <Button 
-                    onClick={startJourney}
-                    className="bg-blue-600 hover:bg-blue-500 text-white rounded-[1.5rem] h-12 w-full font-black text-xs uppercase tracking-widest border-none flex items-center justify-center gap-2 shadow-lg"
-                  >
-                    <Navigation className="w-4.5 h-4.5 rotate-45" /> Start Journey
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      onClick={startLiveNavigation}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-[1.5rem] h-12 w-full font-black text-xs uppercase tracking-widest border-none flex items-center justify-center gap-2 shadow-lg"
+                    >
+                      <Locate className="w-4.5 h-4.5" /> Start GPS Navigation
+                    </Button>
+                    <Button 
+                      onClick={startJourney}
+                      className="bg-blue-600/30 hover:bg-blue-500/40 text-blue-400 rounded-[1.5rem] h-11 w-full font-black text-[10px] uppercase tracking-widest border border-blue-500/20 flex items-center justify-center gap-2"
+                    >
+                      <FastForward className="w-4 h-4" /> Simulate Walkthrough
+                    </Button>
+                  </div>
                 </div>
               )}
             </Card>
@@ -1364,7 +1542,7 @@ export default function XakteirMapsPage() {
         )}
 
         {/* ACTIVE NAVIGATION HUD - TOP BANNER (Green Turn Indicators) */}
-        {isSimulating && currentStepProgress && (
+        {(isSimulating || isNavigatingLive) && currentStepProgress && (
           <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[400] w-[450px] max-w-[calc(100vw-30px)]">
             <Card className="bg-emerald-600 border border-emerald-500 rounded-[2.2rem] p-5 shadow-3xl flex items-center gap-4 text-white">
               <div className="w-12 h-12 rounded-full bg-black/20 flex items-center justify-center border border-white/10 shrink-0">
@@ -1379,7 +1557,7 @@ export default function XakteirMapsPage() {
         )}
 
         {/* ACTIVE NAVIGATION HUD - BOTTOM DASHBOARD PANEL (Speedometer, limit, progress) */}
-        {isSimulating && routeDetails && (
+        {(isSimulating || isNavigatingLive) && routeDetails && (
           <div className="absolute bottom-6 left-6 right-6 z-[400] flex flex-col md:flex-row gap-4 justify-between items-center pointer-events-none">
             
             {/* SPEED HUD (LEFT) */}
@@ -1476,24 +1654,32 @@ export default function XakteirMapsPage() {
 
               {/* Control elements */}
               <div className="flex flex-col gap-3 w-full md:w-auto">
-                <div className="flex gap-2 justify-center">
-                  {/* Pause/Play */}
-                  <Button 
-                    size="icon" 
-                    onClick={() => setIsSimulating(!isSimulating)}
-                    className={cn("w-10 h-10 rounded-xl border-none text-white", isSimulating ? "bg-amber-600 hover:bg-amber-500" : "bg-emerald-600 hover:bg-emerald-500")}
-                  >
-                    {isSimulating ? <Pause className="w-4.5 h-4.5" /> : <Play className="w-4.5 h-4.5 fill-white" />}
-                  </Button>
+                <div className="flex gap-2 justify-center items-center">
+                  {isNavigatingLive ? (
+                    <Badge className="bg-emerald-600/80 text-white uppercase text-[8px] font-black py-1.5 px-3 animate-pulse">
+                      LIVE GPS ACTIVE
+                    </Badge>
+                  ) : (
+                    <>
+                      {/* Pause/Play */}
+                      <Button 
+                        size="icon" 
+                        onClick={() => setIsSimulating(!isSimulating)}
+                        className={cn("w-10 h-10 rounded-xl border-none text-white", isSimulating ? "bg-amber-600 hover:bg-amber-500" : "bg-emerald-600 hover:bg-emerald-500")}
+                      >
+                        {isSimulating ? <Pause className="w-4.5 h-4.5" /> : <Play className="w-4.5 h-4.5 fill-white" />}
+                      </Button>
 
-                  {/* Speed rate multiplier (toggle rates) */}
-                  <Button
-                    size="sm"
-                    onClick={() => setSimMultiplier(prev => prev === 1 ? 5 : prev === 5 ? 10 : prev === 10 ? 25 : prev === 25 ? 50 : 1)}
-                    className="bg-zinc-800 hover:bg-zinc-700 border border-white/5 h-10 rounded-xl px-3 text-[9px] font-black uppercase text-white tracking-widest shrink-0"
-                  >
-                    Rate: {simMultiplier}x
-                  </Button>
+                      {/* Speed rate multiplier (toggle rates) */}
+                      <Button
+                        size="sm"
+                        onClick={() => setSimMultiplier(prev => prev === 1 ? 5 : prev === 5 ? 10 : prev === 10 ? 25 : prev === 25 ? 50 : 1)}
+                        className="bg-zinc-800 hover:bg-zinc-700 border border-white/5 h-10 rounded-xl px-3 text-[9px] font-black uppercase text-white tracking-widest shrink-0"
+                      >
+                        Rate: {simMultiplier}x
+                      </Button>
+                    </>
+                  )}
 
                   {/* End simulation */}
                   <Button 
@@ -1515,32 +1701,34 @@ export default function XakteirMapsPage() {
                 </div>
 
                 {/* Manual speed override slider */}
-                <div className="w-44 flex flex-col gap-1 mx-auto">
-                  <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider text-zinc-400">
-                    <span>Manual Cruise</span>
-                    <span className={simManualSpeedOverride !== null ? "text-blue-400" : "text-zinc-500"}>
-                      {simManualSpeedOverride !== null ? `${simManualSpeedOverride} km/h` : "Auto"}
-                    </span>
+                {!isNavigatingLive && (
+                  <div className="w-44 flex flex-col gap-1 mx-auto">
+                    <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider text-zinc-400">
+                      <span>Manual Cruise</span>
+                      <span className={simManualSpeedOverride !== null ? "text-blue-400" : "text-zinc-500"}>
+                        {simManualSpeedOverride !== null ? `${simManualSpeedOverride} km/h` : "Auto"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[simManualSpeedOverride !== null ? simManualSpeedOverride : 50]}
+                        onValueChange={(val) => setSimManualSpeedOverride(val[0])}
+                        min={0}
+                        max={160}
+                        step={5}
+                        className="flex-1"
+                      />
+                      {simManualSpeedOverride !== null && (
+                        <button 
+                          onClick={() => setSimManualSpeedOverride(null)}
+                          className="text-[8px] font-black text-rose-500 uppercase tracking-widest"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Slider
-                      value={[simManualSpeedOverride !== null ? simManualSpeedOverride : 50]}
-                      onValueChange={(val) => setSimManualSpeedOverride(val[0])}
-                      min={0}
-                      max={160}
-                      step={5}
-                      className="flex-1"
-                    />
-                    {simManualSpeedOverride !== null && (
-                      <button 
-                        onClick={() => setSimManualSpeedOverride(null)}
-                        className="text-[8px] font-black text-rose-500 uppercase tracking-widest"
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
             </Card>
           </div>

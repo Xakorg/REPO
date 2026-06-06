@@ -144,7 +144,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         const isOwner = s.ownerId === user?.uid;
         const isMember = s.members && s.members.includes(user?.uid);
         const isPublic = !s.isPrivate;
-        if (isPublic || isOwner || isMember) {
+        if (isOwner || isMember) {
           list.push({
             id: s.id,
             name: s.name,

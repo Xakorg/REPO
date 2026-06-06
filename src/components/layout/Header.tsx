@@ -38,7 +38,6 @@ import {
   ShieldCheck,
   Heart,
   Hammer,
-  Briefcase,
   Globe,
   HelpCircle,
   Download,
@@ -98,7 +97,7 @@ const APPS = [
   { name: "Archive", icon: Archive, href: "/archive", color: "text-amber-500", bg: "bg-amber-500/10" },
   { name: "Authenticator", icon: ShieldCheck, href: "/authenticator", color: "text-teal-400", bg: "bg-teal-400/10" },
   { name: "XakBuddy", icon: Heart, href: "/buddy", color: "text-rose-400", bg: "bg-rose-400/10" },
-  { name: "Business", icon: Briefcase, href: "/business", color: "text-cyan-400", bg: "bg-cyan-400/10" },
+
   { name: "XakInstaller", icon: Download, href: "/installer", color: "text-sky-500", bg: "bg-sky-500/10" },
   { name: "Xakteir Maps", icon: Map, href: "/map", color: "text-emerald-400", bg: "bg-emerald-400/10" },
   { name: "News", icon: Newspaper, href: "/news", color: "text-rose-500", bg: "bg-rose-500/10" },
