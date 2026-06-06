@@ -31,7 +31,9 @@ import {
   CheckCircle2,
   ArrowUp,
   ArrowUpLeft,
-  ArrowUpRight
+  ArrowUpRight,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -257,6 +259,25 @@ export default function XakteirMapsPage() {
   const [arrived, setArrived] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [currentStepProgress, setCurrentStepProgress] = useState({ instruction: "", distanceRemaining: 0, modifier: "" });
+  
+  // Voice Navigation Settings
+  const [voiceMuted, setVoiceMuted] = useState(false);
+  const spokenRef = useRef<{ stepIndex: number; announced: boolean; closeAnnounced: boolean; nowAnnounced: boolean }>({
+    stepIndex: -1,
+    announced: false,
+    closeAnnounced: false,
+    nowAnnounced: false
+  });
+
+  const speakText = (text: string) => {
+    if (voiceMuted) return;
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.05;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
 
   // Friends states
   const [friendSearch, setFriendSearch] = useState("");
@@ -761,6 +782,7 @@ export default function XakteirMapsPage() {
           clearInterval(interval);
           setIsSimulating(false);
           setArrived(true);
+          speakText("You have arrived at your destination. Journey completed.");
           return totalDistance;
         }
 
@@ -808,6 +830,56 @@ export default function XakteirMapsPage() {
       modifier
     });
   }, [simDistanceTravelled, routeDetails, steps, isSimulating]);
+
+  // Trigger speech turn instructions
+  useEffect(() => {
+    if (!isSimulating || !routeDetails || !steps || steps.length === 0 || currentStepIndex === -1) {
+      spokenRef.current = { stepIndex: -1, announced: false, closeAnnounced: false, nowAnnounced: false };
+      return;
+    }
+
+    const currentStep = steps[currentStepIndex];
+    const nextStep = steps[currentStepIndex + 1];
+    const distRemaining = currentStep.endDistance - simDistanceTravelled;
+
+    // Reset spoken state if step changes
+    if (spokenRef.current.stepIndex !== currentStepIndex) {
+      spokenRef.current = {
+        stepIndex: currentStepIndex,
+        announced: false,
+        closeAnnounced: false,
+        nowAnnounced: false
+      };
+    }
+
+    if (nextStep) {
+      const instruction = nextStep.maneuver.instruction;
+      
+      // 1. Initial announcement when entering the step (if distance > 150m)
+      if (!spokenRef.current.announced && distRemaining > 150) {
+        speakText(`In ${formatDistance(distRemaining)}, ${instruction}`);
+        spokenRef.current.announced = true;
+      }
+      
+      // 2. Near announcement (around 100m)
+      if (!spokenRef.current.closeAnnounced && distRemaining <= 120 && distRemaining > 30) {
+        speakText(`In 100 meters, ${instruction}`);
+        spokenRef.current.closeAnnounced = true;
+      }
+
+      // 3. Immediate turn announcement (around 20m)
+      if (!spokenRef.current.nowAnnounced && distRemaining <= 25) {
+        speakText(instruction);
+        spokenRef.current.nowAnnounced = true;
+      }
+    } else {
+      // Near destination
+      if (!spokenRef.current.announced) {
+        speakText("You are arriving at your destination.");
+        spokenRef.current.announced = true;
+      }
+    }
+  }, [simDistanceTravelled, currentStepIndex, isSimulating, steps, routeDetails, voiceMuted]);
 
   // Global Geocoding Suggestion Engine
   const getSuggestions = async (queryStr: string) => {
@@ -988,6 +1060,7 @@ export default function XakteirMapsPage() {
     setSimSpeed(0);
     setArrived(false);
     setSimManualSpeedOverride(null);
+    speakText("Starting journey. Head towards your destination.");
   };
 
   const resetJourney = () => {
@@ -1429,6 +1502,15 @@ export default function XakteirMapsPage() {
                     className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/5 hover:bg-rose-950 text-rose-500"
                   >
                     <Square className="w-4 h-4 fill-rose-500" />
+                  </Button>
+
+                  {/* Voice Mute Toggle */}
+                  <Button 
+                    size="icon" 
+                    onClick={() => setVoiceMuted(!voiceMuted)}
+                    className={cn("w-10 h-10 rounded-xl border border-white/5 text-white bg-zinc-900 hover:bg-zinc-800")}
+                  >
+                    {voiceMuted ? <VolumeX className="w-4.5 h-4.5 text-zinc-400" /> : <Volume2 className="w-4.5 h-4.5 text-blue-400" />}
                   </Button>
                 </div>
 
