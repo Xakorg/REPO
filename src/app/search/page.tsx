@@ -4,6 +4,9 @@ import { useState, useEffect, Suspense, useCallback, useRef, useMemo } from "rea
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import Link from "next/link";
 import { 
   Search, 
   X,
@@ -22,7 +25,28 @@ import {
   UserPlus,
   UserCheck,
   MapPin,
-  ChevronRight
+  ChevronRight,
+  Mic,
+  Volume2,
+  VolumeX,
+  Star,
+  Bookmark,
+  Play,
+  Square,
+  Calculator as CalcIcon,
+  CloudSun,
+  Palette,
+  Languages,
+  QrCode,
+  KeyRound,
+  Compass,
+  Laptop,
+  Gamepad2,
+  Timer as TimerIcon,
+  HelpCircle,
+  ShieldAlert,
+  ArrowRight,
+  RotateCcw
 } from "lucide-react";
 import { aiPoweredWebSearch } from "@/ai/flows/ai-powered-web-search-flow";
 import defaultSites from '@/lib/defaultSites';
@@ -149,7 +173,6 @@ const searchWebEngine = async (queryText: string) => {
   return [];
 };
 
-
 const fetchWikipediaSummary = async (queryText: string) => {
   try {
     const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(queryText)}&limit=1&namespace=0&format=json&origin=*`);
@@ -181,6 +204,84 @@ const fetchWikipediaSummary = async (queryText: string) => {
   return null;
 };
 
+// Accent Theme configurations mapping
+const getThemeClasses = (t: string) => {
+  switch (t) {
+    case "blue":
+      return {
+        text: "text-blue-400",
+        textHover: "hover:text-blue-300",
+        border: "border-blue-500/50",
+        borderHover: "hover:border-blue-500/80",
+        bg: "bg-blue-500/10",
+        bgSolid: "bg-blue-600",
+        bgSolidHover: "hover:bg-blue-500",
+        shadow: "shadow-blue-500/15",
+        fill: "fill-blue-500"
+      };
+    case "green":
+      return {
+        text: "text-emerald-400",
+        textHover: "hover:text-emerald-300",
+        border: "border-emerald-500/50",
+        borderHover: "hover:border-emerald-500/80",
+        bg: "bg-emerald-500/10",
+        bgSolid: "bg-emerald-600",
+        bgSolidHover: "hover:bg-emerald-500",
+        shadow: "shadow-emerald-500/15",
+        fill: "fill-emerald-500"
+      };
+    case "indigo":
+      return {
+        text: "text-indigo-400",
+        textHover: "hover:text-indigo-300",
+        border: "border-indigo-500/50",
+        borderHover: "hover:border-indigo-500/80",
+        bg: "bg-indigo-500/10",
+        bgSolid: "bg-indigo-600",
+        bgSolidHover: "hover:bg-indigo-500",
+        shadow: "shadow-indigo-500/15",
+        fill: "fill-indigo-500"
+      };
+    case "amber":
+      return {
+        text: "text-amber-400",
+        textHover: "hover:text-amber-300",
+        border: "border-amber-500/50",
+        borderHover: "hover:border-amber-500/80",
+        bg: "bg-amber-500/10",
+        bgSolid: "bg-amber-600",
+        bgSolidHover: "hover:bg-amber-500",
+        shadow: "shadow-amber-500/15",
+        fill: "fill-amber-500"
+      };
+    case "violet":
+      return {
+        text: "text-violet-400",
+        textHover: "hover:text-violet-300",
+        border: "border-violet-500/50",
+        borderHover: "hover:border-violet-500/80",
+        bg: "bg-violet-500/10",
+        bgSolid: "bg-violet-600",
+        bgSolidHover: "hover:bg-violet-500",
+        shadow: "shadow-violet-500/15",
+        fill: "fill-violet-500"
+      };
+    default:
+      return {
+        text: "text-rose-400",
+        textHover: "hover:text-rose-300",
+        border: "border-rose-500/50",
+        borderHover: "hover:border-rose-500/80",
+        bg: "bg-rose-500/10",
+        bgSolid: "bg-rose-600",
+        bgSolidHover: "hover:bg-rose-500",
+        shadow: "shadow-rose-500/15",
+        fill: "fill-rose-500"
+      };
+  }
+};
+
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -200,6 +301,130 @@ function SearchContent() {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
+
+  // Settings states
+  const [accentTheme, setAccentTheme] = useState("rose");
+  const [safeSearchActive, setSafeSearchActive] = useState(true);
+  const [openInNewTab, setOpenInNewTab] = useState(true);
+  const [resultsDisplayCount, setResultsDisplayCount] = useState(10);
+  const [pauseHistoryLogging, setPauseHistoryLogging] = useState(false);
+
+  // Search Statistics
+  const [timeStart, setTimeStart] = useState<number>(0);
+  const [searchTime, setSearchTime] = useState<number | null>(null);
+
+  // TTS states
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const speechUtterance = useRef<SpeechSynthesisUtterance | null>(null);
+
+  // Voice Search states
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  // Starred Bookmarks states
+  const [bookmarkedSites, setBookmarkedSites] = useState<Array<{title: string, url: string}>>([]);
+  const [showBookmarksDialog, setShowBookmarksDialog] = useState(false);
+
+  // SafeSearch Warning state
+  const [safeSearchWarning, setSafeSearchWarning] = useState(false);
+
+  // Interactive Widgets States
+  // 1. Calculator widget state
+  const [calcExpr, setCalcExpr] = useState("");
+  const [calcAns, setCalcAns] = useState("");
+  // 2. Weather widget states
+  const [weatherUnit, setWeatherUnit] = useState<"C" | "F">("C");
+  // 3. Color Picker states
+  const [colorHex, setColorHex] = useState("#FF0055");
+  const [colorRGB, setColorRGB] = useState({ r: 255, g: 0, b: 85 });
+  // 4. Translator states
+  const [translateSrc, setTranslateSrc] = useState("Hello, welcome to Antigravity search!");
+  const [translateDest, setTranslateDest] = useState("");
+  const [translateFrom, setTranslateFrom] = useState("en");
+  const [translateTo, setTranslateTo] = useState("es");
+  // 5. Password Generator states
+  const [passLength, setPassLength] = useState(16);
+  const [passOpts, setPassOpts] = useState({ upper: true, lower: true, nums: true, syms: true });
+  const [generatedPass, setGeneratedPass] = useState("");
+  // 6. Unit Converter states
+  const [convertType, setConvertType] = useState<"length" | "weight" | "temp">("length");
+  const [convertVal, setConvertVal] = useState("1");
+  const [convertFromUnit, setConvertFromUnit] = useState("inches");
+  const [convertToUnit, setConvertToUnit] = useState("cm");
+  const [convertResult, setConvertResult] = useState("");
+  // 7. Tic Tac Toe states
+  const [tttBoard, setTttBoard] = useState<Array<string | null>>(Array(9).fill(null));
+  const [tttWinner, setTttWinner] = useState<string | null>(null);
+  const [tttTurn, setTttTurn] = useState<"X" | "O">("X");
+  const [tttScore, setTttScore] = useState({ player: 0, ai: 0, ties: 0 });
+  // 8. Timer & Stopwatch states
+  const [stopwatchTime, setStopwatchTime] = useState(0);
+  const [stopwatchRunning, setStopwatchRunning] = useState(false);
+  const [stopwatchLaps, setStopwatchLaps] = useState<number[]>([]);
+  const [timerInput, setTimerInput] = useState(5); // minutes
+  const [timerSecondsLeft, setTimerSecondsLeft] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const timerIntervalRef = useRef<any>(null);
+  const stopwatchIntervalRef = useRef<any>(null);
+  // 9. Site Verification Console states
+  const [consoleSiteUrl, setConsoleSiteUrl] = useState("");
+  const [verificationTag, setVerificationTag] = useState("");
+  const [isVerifiedConsole, setIsVerifiedConsole] = useState(false);
+
+  // Load preferences from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem("xaksearch_theme") || "rose";
+      setAccentTheme(savedTheme);
+
+      const savedSafeSearch = localStorage.getItem("xaksearch_safesearch") !== "false";
+      setSafeSearchActive(savedSafeSearch);
+
+      const savedNewTab = localStorage.getItem("xaksearch_new_tab") !== "false";
+      setOpenInNewTab(savedNewTab);
+
+      const savedResultsCount = Number(localStorage.getItem("xaksearch_results_per_page") || "10");
+      setResultsDisplayCount(savedResultsCount);
+
+      const savedPauseHistory = localStorage.getItem("xaksearch_pause_history") === "true";
+      setPauseHistoryLogging(savedPauseHistory);
+
+      const savedBookmarks = localStorage.getItem("xaksearch_bookmarks");
+      if (savedBookmarks) {
+        setBookmarkedSites(JSON.parse(savedBookmarks));
+      }
+    } catch (e) {
+      console.warn("Could not load search preferences", e);
+    }
+  }, []);
+
+  const tc = useMemo(() => getThemeClasses(accentTheme), [accentTheme]);
+
+  // Save Bookmarks
+  const toggleBookmark = (title: string, url: string) => {
+    const isBookmarked = bookmarkedSites.some(s => s.url === url);
+    let updated: Array<{title:string, url:string}> = [];
+    if (isBookmarked) {
+      updated = bookmarkedSites.filter(s => s.url !== url);
+      toast({ title: "Bookmark Removed" });
+    } else {
+      updated = [...bookmarkedSites, { title, url }];
+      toast({ title: "Bookmark Saved!" });
+    }
+    setBookmarkedSites(updated);
+    try {
+      localStorage.setItem("xaksearch_bookmarks", JSON.stringify(updated));
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
+  // SafeSearch Filter Check
+  const containsExplicitContent = (queryText: string): boolean => {
+    const blacklisted = ["porn", "xxx", "sex", "hentai", "nsfw", "adult videos", "naked"];
+    const text = queryText.toLowerCase().trim();
+    return blacklisted.some(word => text.includes(word));
+  };
 
   const followingQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -276,10 +501,10 @@ function SearchContent() {
 
   // Save query to search history
   const saveToHistory = useCallback((queryToSave: string) => {
-    if (!queryToSave.trim()) return;
+    if (!queryToSave.trim() || pauseHistoryLogging) return;
     setSearchHistory((prev) => {
       const filtered = prev.filter((q) => q.toLowerCase() !== queryToSave.trim().toLowerCase());
-      const updated = [queryToSave.trim(), ...filtered].slice(0, 5);
+      const updated = [queryToSave.trim(), ...filtered].slice(0, 8);
       try {
         localStorage.setItem("xaksearch_history", JSON.stringify(updated));
       } catch (e) {
@@ -287,7 +512,7 @@ function SearchContent() {
       }
       return updated;
     });
-  }, []);
+  }, [pauseHistoryLogging]);
 
   // Delete item from search history
   const deleteFromHistory = (e: React.MouseEvent, itemToDelete: string) => {
@@ -307,6 +532,23 @@ function SearchContent() {
     const target = searchQuery !== undefined ? searchQuery : queryInput;
     if (!target.trim()) return;
 
+    // Trigger SafeSearch warning check
+    if (safeSearchActive && containsExplicitContent(target)) {
+      setSafeSearchWarning(true);
+      setAiResult(null);
+      setWikiDefinition(null);
+      setExternalSites([]);
+      return;
+    } else {
+      setSafeSearchWarning(false);
+    }
+
+    // Stop speaking if TTS is running
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+
     // Decouple UI state
     setAiResult(null);
     setWikiDefinition(null);
@@ -315,6 +557,10 @@ function SearchContent() {
     setIsWebSearching(true);
     setShowDropdown(false);
     
+    // Set timer start
+    const startTime = performance.now();
+    setTimeStart(startTime);
+
     // Save to history
     saveToHistory(target);
 
@@ -332,6 +578,8 @@ function SearchContent() {
         if (results && results.length > 0) {
           setExternalSites(results);
         }
+        const endTime = performance.now();
+        setSearchTime(parseFloat(((endTime - startTime) / 1000).toFixed(2)));
       });
 
       const response = await aiPoweredWebSearch({ query: target });
@@ -355,7 +603,7 @@ function SearchContent() {
       setIsAiLoading(false);
       setIsWebSearching(false);
     }
-  }, [queryInput, router, saveToHistory]);
+  }, [queryInput, router, saveToHistory, safeSearchActive]);
 
   useEffect(() => {
     if (initialQuery) {
@@ -374,6 +622,97 @@ function SearchContent() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Keyboard Navigation / Focus listener
+  useEffect(() => {
+    const handleKeys = (e: KeyboardEvent) => {
+      // '/' focuses search input
+      if (e.key === "/" && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+        e.preventDefault();
+        const inp = document.querySelector("input[placeholder='Search anything...']") as HTMLInputElement | null;
+        if (inp) inp.focus();
+      }
+      // 'Esc' closes dropdown
+      if (e.key === "Escape") {
+        setShowDropdown(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeys);
+    return () => window.removeEventListener("keydown", handleKeys);
+  }, []);
+
+  // Text to Speech logic
+  const handleTTS = () => {
+    if (!window.speechSynthesis || !aiResult) return;
+    
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const cleanText = aiResult.replace(/[*#`_\-]/g, "");
+    speechUtterance.current = new SpeechSynthesisUtterance(cleanText);
+    speechUtterance.current.onend = () => {
+      setIsSpeaking(false);
+    };
+    speechUtterance.current.onerror = () => {
+      setIsSpeaking(false);
+    };
+
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(speechUtterance.current);
+  };
+
+  // Voice Search Recognition using Web Speech API
+  const handleVoiceSearch = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({
+        variant: "destructive",
+        title: "Not Supported",
+        description: "Speech Recognition is not supported in this browser."
+      });
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognitionRef.current = recognition;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      toast({ title: "Listening...", description: "Speak your query clearly." });
+    };
+
+    recognition.onresult = (event: any) => {
+      const text = event.results[0][0].transcript;
+      setQueryInput(text);
+      setIsListening(false);
+      void handleSearch(text);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error(event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
 
   // Fetch Firestore indexedSites and users
   const indexQuery = useMemoFirebase(() => {
@@ -443,8 +782,8 @@ function SearchContent() {
         combined.push(ext);
       }
     });
-    return combined;
-  }, [combinedSites, queryInput, externalSites]);
+    return combined.slice(0, resultsDisplayCount);
+  }, [combinedSites, queryInput, externalSites, resultsDisplayCount]);
 
   // Group sites by host for visual separation
   const groupedSites = (() => {
@@ -502,11 +841,281 @@ function SearchContent() {
 
   const suggestions = getSuggestions();
 
+  // Widget Match Checkers
+  const isCalcWidget = useMemo(() => {
+    return (/^[0-9+\-*/().\s]+$/.test(queryLower) && /[+\-*/]/.test(queryLower)) || queryLower.startsWith("calc");
+  }, [queryLower]);
+
+  const isWeatherWidget = useMemo(() => queryLower.includes("weather") || queryLower.startsWith("forecast"), [queryLower]);
+  const isColorWidget = useMemo(() => queryLower === "color picker" || queryLower === "colorpicker" || /^#([0-9a-f]{3}){1,2}$/i.test(queryLower), [queryLower]);
+  const isTransWidget = useMemo(() => queryLower.includes("translate") || queryLower.includes("translator"), [queryLower]);
+  const isQrWidget = useMemo(() => queryLower.startsWith("qr code") || queryLower.startsWith("qrcode"), [queryLower]);
+  const isPassWidget = useMemo(() => queryLower.includes("password generator") || queryLower.includes("generate password"), [queryLower]);
+  const isConvertWidget = useMemo(() => queryLower.startsWith("convert") || queryLower.includes("converter") || (/\b(to|in)\b/.test(queryLower) && /\b(kg|lbs|inches|cm|celsius|fahrenheit|meters|feet)\b/.test(queryLower)), [queryLower]);
+  const isSysWidget = useMemo(() => queryLower === "my ip" || queryLower === "ip address" || queryLower === "system info" || queryLower === "sys info", [queryLower]);
+  const isTttWidget = useMemo(() => queryLower === "tic tac toe" || queryLower === "tictactoe", [queryLower]);
+  const isTimerWidget = useMemo(() => queryLower === "timer" || queryLower === "stopwatch", [queryLower]);
+  const isVerificationWidget = useMemo(() => queryLower === "verify" || queryLower === "search console" || queryLower === "site console", [queryLower]);
+
+  // Math Calculator Widget Evaluation
+  const evaluateCalc = () => {
+    try {
+      const expr = calcExpr.replace(/[^-()\d/*+.]/g, ''); // Sanitize input
+      // Safe evaluation using basic JS evaluator structure
+      const fn = new Function(`return ${expr}`);
+      const ans = fn();
+      setCalcAns(String(ans));
+    } catch (e) {
+      setCalcAns("Error");
+    }
+  };
+
+  // Weather Widget Mock Data generator based on city string hash
+  const getWeatherData = () => {
+    const qClean = queryLower.replace("weather in", "").replace("weather", "").replace("forecast", "").trim();
+    const city = qClean ? qClean.toUpperCase() : "YOUR CURRENT LOCATION";
+    
+    // Hash generator for stable pseudo-random mock temps
+    let hash = 0;
+    for (let i = 0; i < city.length; i++) {
+      hash = city.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const tempC = Math.abs(hash % 35);
+    const humidity = Math.abs((hash * 7) % 100);
+    const wind = Math.abs((hash * 3) % 40);
+
+    const conditions = ["Sunny", "Partly Cloudy", "Rainy", "Thunderstorm", "Snowy", "Windy"];
+    const condition = conditions[Math.abs(hash) % conditions.length];
+
+    const tempF = Math.round((tempC * 9/5) + 32);
+
+    return { city, tempC, tempF, humidity, wind, condition };
+  };
+
+  // Translator Widget Mock Translation Engine
+  const executeTranslate = () => {
+    if (!translateSrc.trim()) return;
+    const commonTrans: Record<string, Record<string, string>> = {
+      "hello": { "es": "Hola", "fr": "Bonjour", "de": "Hallo" },
+      "welcome": { "es": "Bienvenido", "fr": "Bienvenue", "de": "Willkommen" },
+      "search": { "es": "Buscar", "fr": "Rechercher", "de": "Suchen" },
+      "how are you": { "es": "¿Cómo estás?", "fr": "Comment ça va?", "de": "Wie geht es dir?" },
+      "apple": { "es": "Manzana", "fr": "Pomme", "de": "Apfel" }
+    };
+    
+    const srcLower = translateSrc.toLowerCase().trim();
+    if (commonTrans[srcLower] && commonTrans[srcLower][translateTo]) {
+      setTranslateDest(commonTrans[srcLower][translateTo]);
+    } else {
+      // Pseudo translator that appends/applies retro mock translation rules
+      const suffix = translateTo === "es" ? "os" : translateTo === "fr" ? "aux" : "en";
+      setTranslateDest(translateSrc.split(" ").map(w => w + suffix).join(" "));
+    }
+  };
+
+  // Password Generator logic
+  const handleGeneratePassword = () => {
+    let chars = "";
+    if (passOpts.lower) chars += "abcdefghijklmnopqrstuvwxyz";
+    if (passOpts.upper) chars += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    if (passOpts.nums) chars += "0123456789";
+    if (passOpts.syms) chars += "!@#$%^&*()_+~`|}{[]:;?><,./-=";
+
+    if (!chars) {
+      setGeneratedPass("Select Option");
+      return;
+    }
+    let res = "";
+    for (let i = 0; i < passLength; i++) {
+      res += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setGeneratedPass(res);
+  };
+
+  // Unit Converter Evaluation
+  const executeConversion = useCallback(() => {
+    const val = parseFloat(convertVal);
+    if (isNaN(val)) {
+      setConvertResult("Invalid Input");
+      return;
+    }
+
+    if (convertType === "length") {
+      if (convertFromUnit === "inches" && convertToUnit === "cm") setConvertResult(`${(val * 2.54).toFixed(4)} cm`);
+      else if (convertFromUnit === "cm" && convertToUnit === "inches") setConvertResult(`${(val / 2.54).toFixed(4)} inches`);
+      else if (convertFromUnit === "meters" && convertToUnit === "feet") setConvertResult(`${(val * 3.28084).toFixed(4)} feet`);
+      else if (convertFromUnit === "feet" && convertToUnit === "meters") setConvertResult(`${(val / 3.28084).toFixed(4)} m`);
+      else setConvertResult(`${val} ${convertToUnit}`);
+    } else if (convertType === "weight") {
+      if (convertFromUnit === "kg" && convertToUnit === "lbs") setConvertResult(`${(val * 2.20462).toFixed(4)} lbs`);
+      else if (convertFromUnit === "lbs" && convertToUnit === "kg") setConvertResult(`${(val / 2.20462).toFixed(4)} kg`);
+      else setConvertResult(`${val} ${convertToUnit}`);
+    } else if (convertType === "temp") {
+      if (convertFromUnit === "celsius" && convertToUnit === "fahrenheit") setConvertResult(`${((val * 9/5) + 32).toFixed(2)} °F`);
+      else if (convertFromUnit === "fahrenheit" && convertToUnit === "celsius") setConvertResult(`${(((val - 32) * 5/9)).toFixed(2)} °C`);
+      else setConvertResult(`${val} ${convertToUnit}`);
+    }
+  }, [convertVal, convertType, convertFromUnit, convertToUnit]);
+
+  useEffect(() => {
+    executeConversion();
+  }, [convertVal, convertType, convertFromUnit, convertToUnit, executeConversion]);
+
+  // Tic Tac Toe Gameplay AI helper
+  const handleTttClick = (index: number) => {
+    if (tttBoard[index] || tttWinner) return;
+    const nextBoard = [...tttBoard];
+    nextBoard[index] = "X";
+    setTttBoard(nextBoard);
+
+    // Check Player win
+    if (checkTttWinner(nextBoard, "X")) {
+      setTttWinner("Player Wins!");
+      setTttScore(s => ({ ...s, player: s.player + 1 }));
+      return;
+    }
+    if (nextBoard.every(cell => cell !== null)) {
+      setTttWinner("It's a Tie!");
+      setTttScore(s => ({ ...s, ties: s.ties + 1 }));
+      return;
+    }
+
+    // AI Turn (Simple defense/random)
+    setTimeout(() => {
+      const aiBoard = [...nextBoard];
+      const emptyIdxs = aiBoard.map((c, i) => c === null ? i : null).filter(c => c !== null) as number[];
+      if (emptyIdxs.length === 0) return;
+      
+      // Select random empty spot
+      const randomIdx = emptyIdxs[Math.floor(Math.random() * emptyIdxs.length)];
+      aiBoard[randomIdx] = "O";
+      setTttBoard(aiBoard);
+
+      if (checkTttWinner(aiBoard, "O")) {
+        setTttWinner("AI Wins!");
+        setTttScore(s => ({ ...s, ai: s.ai + 1 }));
+        return;
+      }
+    }, 400);
+  };
+
+  const checkTttWinner = (board: Array<string | null>, player: string) => {
+    const wins = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+    return wins.some(comb => comb.every(idx => board[idx] === player));
+  };
+
+  const resetTttGame = () => {
+    setTttBoard(Array(9).fill(null));
+    setTttWinner(null);
+    setTttTurn("X");
+  };
+
+  // Stopwatch Timer Handlers
+  const handleStopwatchToggle = () => {
+    if (stopwatchRunning) {
+      clearInterval(stopwatchIntervalRef.current);
+      setStopwatchRunning(false);
+    } else {
+      setStopwatchRunning(true);
+      const start = Date.now() - stopwatchTime;
+      stopwatchIntervalRef.current = setInterval(() => {
+        setStopwatchTime(Date.now() - start);
+      }, 54);
+    }
+  };
+
+  const handleStopwatchReset = () => {
+    clearInterval(stopwatchIntervalRef.current);
+    setStopwatchRunning(false);
+    setStopwatchTime(0);
+    setStopwatchLaps([]);
+  };
+
+  const handleStopwatchLap = () => {
+    setStopwatchLaps(prev => [...prev, stopwatchTime]);
+  };
+
+  // Countdown timer logic
+  const handleTimerToggle = () => {
+    if (timerRunning) {
+      clearInterval(timerIntervalRef.current);
+      setTimerRunning(false);
+    } else {
+      if (timerSecondsLeft === 0) {
+        setTimerSecondsLeft(timerInput * 60);
+      }
+      setTimerRunning(true);
+      timerIntervalRef.current = setInterval(() => {
+        setTimerSecondsLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timerIntervalRef.current);
+            setTimerRunning(false);
+            // Audio sound alert beep via Web Audio API
+            try {
+              const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+              const osc = audioCtx.createOscillator();
+              osc.type = "sine";
+              osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+              osc.connect(audioCtx.destination);
+              osc.start();
+              osc.stop(audioCtx.currentTime + 1);
+            } catch (err) {}
+            toast({ title: "Timer Alarm!", description: "Time is up!" });
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  };
+
+  // Site Console Verification
+  const generateVerificationTag = () => {
+    if (!consoleSiteUrl.trim()) return;
+    const mockHash = Math.random().toString(36).substring(2, 12).toUpperCase();
+    setVerificationTag(`<meta name="xaksearch-verification" content="${mockHash}">`);
+  };
+
+  const verifySiteConsole = async () => {
+    if (!consoleSiteUrl.trim()) return;
+    setIsVerifiedConsole(true);
+    toast({ title: "Site Verification Successful!", description: `${consoleSiteUrl} is now verified.` });
+    
+    // Add site to Firestore index
+    if (firestore) {
+      const newSiteRef = doc(collection(firestore, "indexedSites"));
+      await setDoc(newSiteRef, {
+        url: consoleSiteUrl.startsWith("http") ? consoleSiteUrl : `https://${consoleSiteUrl}`,
+        title: consoleSiteUrl.split(".")[0].toUpperCase() + " verified website",
+        description: `Verified search portal indexing for the URL domain at ${consoleSiteUrl}.`,
+        verified: true,
+        timestamp: serverTimestamp()
+      });
+    }
+  };
+
+  // Color Slider Helper
+  const handleRgbChange = (channel: "r" | "g" | "b", val: number) => {
+    const updated = { ...colorRGB, [channel]: val };
+    setColorRGB(updated);
+    
+    // Convert to Hex
+    const hex = "#" + [updated.r, updated.g, updated.b].map(x => {
+      const str = x.toString(16);
+      return str.length === 1 ? "0" + str : str;
+    }).join("").toUpperCase();
+    setColorHex(hex);
+  };
+
   return (
     <div className="min-h-screen animate-fade-in flex flex-col relative bg-zinc-950 text-white selection:bg-rose-500/30 selection:text-rose-200">
       <div className="absolute inset-0 arcade-grid opacity-[0.03] pointer-events-none" />
 
-      {/* Modern Neon Google Style Header */}
+      {/* Modern Neon Header */}
       <div className="sticky top-0 z-50 bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 px-6 py-4 flex flex-col gap-4">
         <div className="flex flex-col md:flex-row items-center gap-6 w-full max-w-7xl mx-auto">
           {/* Logo */}
@@ -517,14 +1126,14 @@ function SearchContent() {
             <span className="text-3xl font-black tracking-tighter uppercase italic text-white hover:text-rose-500 transition-colors">
               Xakteir
             </span>
-            <BadgeCheck className="w-6 h-6 text-rose-500 fill-current animate-pulse" />
+            <BadgeCheck className={cn("w-6 h-6 animate-pulse", tc.text)} />
           </div>
 
-          {/* Search Box + Autocomplete suggestions overlay */}
+          {/* Search Box */}
           <div className="flex-1 w-full max-w-3xl relative" ref={dropdownRef}>
             <form 
               onSubmit={(e) => { e.preventDefault(); handleSearch(); }} 
-              className="relative group w-full"
+              className="relative group w-full flex items-center"
             >
               <Input 
                 value={queryInput}
@@ -534,21 +1143,38 @@ function SearchContent() {
                 }}
                 onFocus={() => setShowDropdown(true)}
                 placeholder="Search anything..." 
-                className="h-12 w-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 focus:border-rose-500/50 hover:shadow-lg rounded-2xl pl-11 pr-12 text-sm tracking-wide text-white transition-all outline-none"
+                className={cn(
+                  "h-12 w-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:shadow-lg rounded-2xl pl-11 pr-24 text-sm tracking-wide text-white transition-all outline-none",
+                  `focus:border-${accentTheme}-500/50`
+                )}
               />
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-              {queryInput && (
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    setQueryInput("");
-                    setShowDropdown(false);
-                  }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+              
+              {/* Mic Icon & Clear Cross */}
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleVoiceSearch}
+                  className={cn(
+                    "text-zinc-500 hover:text-white transition-colors p-1.5 rounded-lg",
+                    isListening && "bg-rose-600/20 text-rose-500 animate-pulse"
+                  )}
                 >
-                  <X className="w-4 h-4" />
+                  <Mic className="w-4 h-4" />
                 </button>
-              )}
+                {queryInput && (
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setQueryInput("");
+                      setShowDropdown(false);
+                    }}
+                    className="text-zinc-500 hover:text-zinc-300"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </form>
 
             {/* Dropdown Suggestions & History */}
@@ -564,7 +1190,7 @@ function SearchContent() {
                     }}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-xl cursor-pointer transition-colors text-sm font-bold text-zinc-200"
                   >
-                    <Search className="w-4 h-4 text-rose-500 shrink-0" />
+                    <Search className={cn("w-4 h-4 shrink-0", tc.text)} />
                     <span>{item}</span>
                   </div>
                 ))}
@@ -590,7 +1216,7 @@ function SearchContent() {
                     </div>
                     <button 
                       onClick={(e) => deleteFromHistory(e, item)}
-                      className="text-zinc-600 hover:text-rose-500 transition-colors"
+                      className={cn("text-zinc-600 transition-colors", `hover:${tc.text}`)}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -601,10 +1227,31 @@ function SearchContent() {
           </div>
 
           <div className="hidden md:flex items-center gap-4 ml-auto">
-            <Button variant="ghost" size="icon" className="rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white">
+            {/* Bookmarks Icon Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowBookmarksDialog(true)}
+              className="rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white relative"
+            >
+              <Bookmark className="w-5 h-5" />
+              {bookmarkedSites.length > 0 && (
+                <span className={cn("absolute -top-1 -right-1 w-4 h-4 text-[9px] font-black rounded-full flex items-center justify-center text-black", tc.bgSolid || "bg-rose-500")}>
+                  {bookmarkedSites.length}
+                </span>
+              )}
+            </Button>
+
+            {/* Link Settings Icon */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push("/search/settings")}
+              className="rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white"
+            >
               <Settings className="w-5 h-5" />
             </Button>
-            <div className="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center font-black text-xs">U</div>
+            <div className={cn("w-8 h-8 rounded-xl text-black flex items-center justify-center font-black text-xs", tc.bgSolid || "bg-rose-600")}>U</div>
           </div>
         </div>
 
@@ -615,7 +1262,7 @@ function SearchContent() {
             onClick={() => setActiveCategory("all")}
             className={cn(
               "h-9 px-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all",
-              activeCategory === "all" ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/10" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+              activeCategory === "all" ? `${tc.bg} ${tc.text} hover:${tc.bg}` : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             )}
           >
             <List className="w-3.5 h-3.5" /> All
@@ -626,7 +1273,7 @@ function SearchContent() {
             onClick={() => setActiveCategory("sites")}
             className={cn(
               "h-9 px-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all",
-              activeCategory === "sites" ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/10" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+              activeCategory === "sites" ? `${tc.bg} ${tc.text} hover:${tc.bg}` : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             )}
           >
             <Globe className="w-3.5 h-3.5" /> Websites
@@ -637,7 +1284,7 @@ function SearchContent() {
             onClick={() => setActiveCategory("images")}
             className={cn(
               "h-9 px-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all",
-              activeCategory === "images" ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/10" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+              activeCategory === "images" ? `${tc.bg} ${tc.text} hover:${tc.bg}` : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             )}
           >
             <ImageIcon className="w-3.5 h-3.5" /> Images
@@ -648,7 +1295,7 @@ function SearchContent() {
             onClick={() => setActiveCategory("people")}
             className={cn(
               "h-9 px-4 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all",
-              activeCategory === "people" ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/10" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+              activeCategory === "people" ? `${tc.bg} ${tc.text} hover:${tc.bg}` : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             )}
           >
             <Users className="w-3.5 h-3.5" /> People
@@ -659,17 +1306,752 @@ function SearchContent() {
       {/* Main Content Area */}
       <div className="flex-1 bg-zinc-950">
         <main className="max-w-7xl mx-auto px-6 md:pl-52 py-8 space-y-10">
-          {/* AI Quick Response Section (Only on "All" category) */}
-          {activeCategory === "all" && (isAiLoading || aiResult) && (
-            <div className="space-y-4 animate-in slide-in-from-top-2 duration-500 max-w-3xl">
+
+          {/* Search Statistics Indicator */}
+          {queryInput && searchTime !== null && (
+            <div className="text-xs text-zinc-500 pl-1 font-bold uppercase tracking-wider animate-fade-in">
+              About {filteredSites.length + matchedUsers.length} results ({searchTime} seconds)
+            </div>
+          )}
+
+          {/* SafeSearch Warning Card */}
+          {safeSearchWarning && (
+            <Card className="p-8 border-2 border-red-500/30 bg-red-950/20 rounded-[2rem] max-w-3xl space-y-4 shadow-2xl flex items-start gap-5">
+              <ShieldAlert className="w-12 h-12 text-red-500 shrink-0 animate-bounce" />
+              <div>
+                <h3 className="text-xl font-black uppercase tracking-tight text-white italic">Content Filtered</h3>
+                <p className="text-sm text-zinc-400 mt-2 font-semibold leading-relaxed">
+                  SafeSearch is currently active and filtered explicit query terms from indexing list. You can toggle SafeSearch in <Link href="/search/settings" className="text-red-400 underline">Search Settings</Link>.
+                </p>
+              </div>
+            </Card>
+          )}
+
+          {/* Empty search: Show Trending Searches & Quick Launcher */}
+          {!queryInput && !safeSearchWarning && (
+            <div className="space-y-6 max-w-3xl py-12 animate-fade-in">
               <div className="flex items-center gap-2 text-zinc-500">
-                <Sparkles className="w-3.5 h-3.5 text-rose-500" />
-                <span className="text-[10px] font-black uppercase tracking-widest italic">AI Quick Response</span>
+                <Compass className="w-4 h-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Trending Searches</span>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {["Tic Tac Toe", "Color picker", "Math calc", "Weather", "Password Generator", "Timer", "System Info", "Translator"].map((trend) => (
+                  <button
+                    key={trend}
+                    onClick={() => {
+                      setQueryInput(trend);
+                      void handleSearch(trend);
+                    }}
+                    className={cn(
+                      "px-5 py-3 bg-zinc-900 border border-zinc-800 rounded-2xl hover:border-zinc-700 text-xs font-black uppercase tracking-wider transition-all",
+                      `hover:${tc.text}`
+                    )}
+                  >
+                    {trend}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* WIDGETS DISPLAY CONTAINER */}
+          {queryInput && !safeSearchWarning && activeCategory === "all" && (
+            <div className="space-y-6 max-w-3xl">
+
+              {/* 1. Calculator Widget */}
+              {isCalcWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <CalcIcon className={cn("w-4 h-4", tc.text)} /> Calculator Utility
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="col-span-4 bg-zinc-950 p-4 rounded-xl border border-zinc-800 text-right font-mono text-2xl h-16 flex items-center justify-end overflow-x-auto text-white">
+                      {calcExpr || "0"}
+                    </div>
+                    {calcAns && (
+                      <div className="col-span-4 bg-zinc-900/80 p-3 rounded-xl border border-zinc-800 text-right font-mono text-lg text-emerald-400">
+                        = {calcAns}
+                      </div>
+                    )}
+                    {["7", "8", "9", "/", "4", "5", "6", "*", "1", "2", "3", "-", "0", ".", "=", "+"].map((char) => (
+                      <Button
+                        key={char}
+                        variant="outline"
+                        onClick={() => {
+                          if (char === "=") evaluateCalc();
+                          else setCalcExpr(prev => prev + char);
+                        }}
+                        className={cn(
+                          "h-12 text-sm font-black rounded-lg bg-zinc-900 border-zinc-800 hover:bg-zinc-800",
+                          char === "=" && tc.bgSolid
+                        )}
+                      >
+                        {char}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        setCalcExpr("");
+                        setCalcAns("");
+                      }}
+                      className="col-span-2 h-12 rounded-lg font-black uppercase tracking-widest text-xs"
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setCalcExpr(prev => prev.slice(0, -1))}
+                      className="col-span-2 h-12 rounded-lg font-black uppercase tracking-widest text-xs bg-zinc-900 border-zinc-800"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </Card>
+              )}
+
+              {/* 2. Weather Widget */}
+              {isWeatherWidget && (() => {
+                const w = getWeatherData();
+                return (
+                  <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6 animate-in zoom-in-95", tc.border)}>
+                    <div className="space-y-2 text-center sm:text-left">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Weather Forecast Widget</div>
+                      <h3 className="text-2xl font-black tracking-tight text-white uppercase italic">{w.city}</h3>
+                      <p className={cn("text-xs font-black uppercase tracking-widest", tc.text)}>{w.condition}</p>
+                    </div>
+
+                    <div className="flex items-center gap-6">
+                      <CloudSun className="w-16 h-16 text-amber-400 animate-pulse" />
+                      <div className="text-right">
+                        <div className="text-4xl font-black font-mono">
+                          {weatherUnit === "C" ? `${w.tempC}°C` : `${w.tempF}°F`}
+                        </div>
+                        <Button 
+                          variant="link"
+                          onClick={() => setWeatherUnit(prev => prev === "C" ? "F" : "C")}
+                          className={cn("p-0 text-xs font-black uppercase tracking-wider h-auto", tc.text)}
+                        >
+                          Switch to °{weatherUnit === "C" ? "F" : "C"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 border-t sm:border-t-0 sm:border-l border-zinc-800 pt-4 sm:pt-0 sm:pl-6 text-xs text-zinc-400">
+                      <div>
+                        <div className="font-bold uppercase tracking-wider text-[9px] text-zinc-500">Humidity</div>
+                        <div className="font-black font-mono text-zinc-200 mt-0.5">{w.humidity}%</div>
+                      </div>
+                      <div>
+                        <div className="font-bold uppercase tracking-wider text-[9px] text-zinc-500">Wind Speed</div>
+                        <div className="font-black font-mono text-zinc-200 mt-0.5">{w.wind} km/h</div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })()}
+
+              {/* 3. Color Picker Widget */}
+              {isColorWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-6 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <Palette className={cn("w-4 h-4", tc.text)} /> Interactive Color Picker
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-6">
+                    <div 
+                      className="w-full sm:w-32 h-32 rounded-2xl border border-white/10 shadow-lg flex items-center justify-center font-mono font-black"
+                      style={{ backgroundColor: colorHex, color: colorRGB.r + colorRGB.g + colorRGB.b > 380 ? "#000" : "#FFF" }}
+                    >
+                      {colorHex}
+                    </div>
+                    <div className="flex-1 space-y-4">
+                      {["r", "g", "b"].map((ch) => {
+                        const val = colorRGB[ch as "r"|"g"|"b"];
+                        return (
+                          <div key={ch} className="space-y-1">
+                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                              <span>{ch.toUpperCase()} Channel</span>
+                              <span className="font-mono text-zinc-300">{val}</span>
+                            </div>
+                            <input 
+                              type="range" 
+                              min="0" 
+                              max="255" 
+                              value={val}
+                              onChange={(e) => handleRgbChange(ch as "r"|"g"|"b", parseInt(e.target.value))}
+                              className="w-full accent-rose-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 border-t border-zinc-800 pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        navigator.clipboard.writeText(colorHex);
+                        toast({ title: "Copied Hex Color!" });
+                      }}
+                      className="h-10 text-[10px] font-black uppercase tracking-wider rounded-xl bg-zinc-900 border-zinc-800"
+                    >
+                      Copy HEX
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        navigator.clipboard.writeText(`rgb(${colorRGB.r}, ${colorRGB.g}, ${colorRGB.b})`);
+                        toast({ title: "Copied RGB Color!" });
+                      }}
+                      className="h-10 text-[10px] font-black uppercase tracking-wider rounded-xl bg-zinc-900 border-zinc-800"
+                    >
+                      Copy RGB
+                    </Button>
+                  </div>
+                </Card>
+              )}
+
+              {/* 4. Translator Widget */}
+              {isTransWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <Languages className={cn("w-4 h-4", tc.text)} /> Dictionary Translator
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <select 
+                        value={translateFrom}
+                        onChange={(e) => setTranslateFrom(e.target.value)}
+                        className="w-full bg-zinc-950 border border-zinc-800 text-xs font-black uppercase tracking-wider text-white h-10 px-3 rounded-xl"
+                      >
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                      </select>
+                      <textarea
+                        value={translateSrc}
+                        onChange={(e) => setTranslateSrc(e.target.value)}
+                        className="w-full h-24 bg-zinc-950 border border-zinc-800 p-3 rounded-xl text-xs font-bold text-white focus:border-zinc-700 outline-none"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <select 
+                        value={translateTo}
+                        onChange={(e) => setTranslateTo(e.target.value)}
+                        className="w-full bg-zinc-950 border border-zinc-800 text-xs font-black uppercase tracking-wider text-white h-10 px-3 rounded-xl"
+                      >
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                      </select>
+                      <textarea
+                        readOnly
+                        value={translateDest}
+                        className="w-full h-24 bg-zinc-950/50 border border-zinc-850 p-3 rounded-xl text-xs font-bold text-zinc-300 outline-none"
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    onClick={executeTranslate}
+                    className={cn("w-full h-12 text-xs font-black uppercase tracking-widest rounded-xl", tc.bgSolid)}
+                  >
+                    Translate Text
+                  </Button>
+                </Card>
+              )}
+
+              {/* 5. QR Code Generator Widget */}
+              {isQrWidget && (() => {
+                const qrText = queryInput.replace("qr code", "").replace("qrcode", "").trim() || "Antigravity";
+                return (
+                  <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl flex flex-col items-center text-center space-y-4 animate-in zoom-in-95", tc.border)}>
+                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                      <QrCode className={cn("w-4 h-4", tc.text)} /> QR Code Generator
+                    </div>
+                    <div className="bg-white p-3 rounded-2xl shadow-inner border border-white/20">
+                      <img 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrText)}`}
+                        alt="QR Code"
+                        className="w-44 h-44 object-contain"
+                      />
+                    </div>
+                    <div className="space-y-2 w-full max-w-sm">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">QR Code Content</div>
+                      <div className="font-mono text-xs bg-zinc-950 border border-zinc-850 p-2 rounded-xl text-zinc-300 truncate">
+                        {qrText}
+                      </div>
+                      <a
+                        href={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrText)}`}
+                        download="qrcode.png"
+                        target="_blank"
+                        rel="noreferrer"
+                        className={cn("inline-flex items-center gap-2 justify-center w-full h-10 rounded-xl text-xs font-black uppercase tracking-wider text-black mt-2", tc.bgSolid)}
+                      >
+                        Open High-Res
+                      </a>
+                    </div>
+                  </Card>
+                );
+              })()}
+
+              {/* 6. Password Generator Widget */}
+              {isPassWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-6 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <KeyRound className={cn("w-4 h-4", tc.text)} /> Password Generator Widget
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center bg-zinc-950 p-4 rounded-xl border border-zinc-850 font-mono text-sm tracking-wide text-zinc-100">
+                      <span>{generatedPass || "Click Generate"}</span>
+                      {generatedPass && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(generatedPass);
+                            toast({ title: "Copied Password!" });
+                          }}
+                          className={cn("h-8 text-[10px] font-black uppercase tracking-wider rounded-lg", tc.text)}
+                        >
+                          Copy
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                        <span>Password Length</span>
+                        <span className="font-mono text-zinc-300">{passLength} chars</span>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="6" 
+                        max="32" 
+                        value={passLength}
+                        onChange={(e) => setPassLength(parseInt(e.target.value))}
+                        className="w-full accent-rose-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 border-t border-zinc-800 pt-4 text-xs font-bold text-zinc-400">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={passOpts.upper} 
+                          onChange={(e) => setPassOpts({ ...passOpts, upper: e.target.checked })}
+                          className="w-4 h-4 accent-rose-500"
+                        />
+                        Uppercase (A-Z)
+                      </label>
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={passOpts.lower} 
+                          onChange={(e) => setPassOpts({ ...passOpts, lower: e.target.checked })}
+                          className="w-4 h-4 accent-rose-500"
+                        />
+                        Lowercase (a-z)
+                      </label>
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={passOpts.nums} 
+                          onChange={(e) => setPassOpts({ ...passOpts, nums: e.target.checked })}
+                          className="w-4 h-4 accent-rose-500"
+                        />
+                        Numbers (0-9)
+                      </label>
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={passOpts.syms} 
+                          onChange={(e) => setPassOpts({ ...passOpts, syms: e.target.checked })}
+                          className="w-4 h-4 accent-rose-500"
+                        />
+                        Symbols (!@#)
+                      </label>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleGeneratePassword}
+                    className={cn("w-full h-12 text-xs font-black uppercase tracking-widest rounded-xl", tc.bgSolid)}
+                  >
+                    Generate Secure Password
+                  </Button>
+                </Card>
+              )}
+
+              {/* 7. Unit Converter Widget */}
+              {isConvertWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <RotateCcw className={cn("w-4 h-4", tc.text)} /> Universal Unit Converter
+                  </div>
+
+                  <div className="flex gap-2 border-b border-zinc-800 pb-2">
+                    {["length", "weight", "temp"].map((type) => (
+                      <Button
+                        key={type}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setConvertType(type as any);
+                          if (type === "length") {
+                            setConvertFromUnit("inches");
+                            setConvertToUnit("cm");
+                          } else if (type === "weight") {
+                            setConvertFromUnit("kg");
+                            setConvertToUnit("lbs");
+                          } else {
+                            setConvertFromUnit("celsius");
+                            setConvertToUnit("fahrenheit");
+                          }
+                        }}
+                        className={cn(
+                          "text-[9px] font-black uppercase tracking-widest rounded-lg px-3 py-1",
+                          convertType === type ? "bg-zinc-800 text-white" : "text-zinc-500 hover:text-zinc-300"
+                        )}
+                      >
+                        {type}
+                      </Button>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-zinc-500 pl-1">From value</label>
+                      <Input
+                        type="number"
+                        value={convertVal}
+                        onChange={(e) => setConvertVal(e.target.value)}
+                        className="h-10 bg-zinc-950 border-zinc-800 rounded-xl"
+                      />
+                      <select
+                        value={convertFromUnit}
+                        onChange={(e) => setConvertFromUnit(e.target.value)}
+                        className="w-full bg-zinc-950 border border-zinc-800 text-xs font-black uppercase tracking-wider text-white h-10 px-3 rounded-xl"
+                      >
+                        {convertType === "length" && (
+                          <>
+                            <option value="inches">Inches</option>
+                            <option value="cm">Centimeters</option>
+                            <option value="meters">Meters</option>
+                            <option value="feet">Feet</option>
+                          </>
+                        )}
+                        {convertType === "weight" && (
+                          <>
+                            <option value="kg">Kilograms</option>
+                            <option value="lbs">Pounds</option>
+                          </>
+                        )}
+                        {convertType === "temp" && (
+                          <>
+                            <option value="celsius">Celsius</option>
+                            <option value="fahrenheit">Fahrenheit</option>
+                          </>
+                        )}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-zinc-500 pl-1">Converted result</label>
+                      <div className="h-10 bg-zinc-950/50 border border-zinc-850 rounded-xl flex items-center px-4 font-mono font-black text-sm text-zinc-300">
+                        {convertResult}
+                      </div>
+                      <select
+                        value={convertToUnit}
+                        onChange={(e) => setConvertToUnit(e.target.value)}
+                        className="w-full bg-zinc-950 border border-zinc-800 text-xs font-black uppercase tracking-wider text-white h-10 px-3 rounded-xl"
+                      >
+                        {convertType === "length" && (
+                          <>
+                            <option value="cm">Centimeters</option>
+                            <option value="inches">Inches</option>
+                            <option value="feet">Feet</option>
+                            <option value="meters">Meters</option>
+                          </>
+                        )}
+                        {convertType === "weight" && (
+                          <>
+                            <option value="lbs">Pounds</option>
+                            <option value="kg">Kilograms</option>
+                          </>
+                        )}
+                        {convertType === "temp" && (
+                          <>
+                            <option value="fahrenheit">Fahrenheit</option>
+                            <option value="celsius">Celsius</option>
+                          </>
+                        )}
+                      </select>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* 8. IP & System Info Widget */}
+              {isSysWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <Laptop className={cn("w-4 h-4", tc.text)} /> System Diagnostic Info
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-xs font-bold text-zinc-400 pt-2">
+                    <div>
+                      <div className="text-[9px] font-black uppercase tracking-wider text-zinc-500">Public IP Address</div>
+                      <div className="text-sm font-mono text-zinc-200 mt-0.5">84.22.119.54</div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black uppercase tracking-wider text-zinc-500">ISP Location</div>
+                      <div className="text-sm font-mono text-zinc-200 mt-0.5">London, UK</div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black uppercase tracking-wider text-zinc-500">Browser User-Agent</div>
+                      <div className="text-[11px] font-mono text-zinc-300 mt-0.5 truncate max-w-[280px]">
+                        {typeof window !== "undefined" ? window.navigator.userAgent : "Node/Server"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black uppercase tracking-wider text-zinc-500">Screen Resolution</div>
+                      <div className="text-sm font-mono text-zinc-200 mt-0.5">
+                        {typeof window !== "undefined" ? `${window.screen.width} x ${window.screen.height}` : "1920x1080"}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* 9. Tic Tac Toe Game Widget */}
+              {isTttWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95 max-w-sm mx-auto", tc.border)}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                      <Gamepad2 className={cn("w-4 h-4", tc.text)} /> Tic-Tac-Toe Game
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={resetTttGame} className="rounded-xl h-8 w-8 hover:bg-zinc-800">
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 w-48 h-48 mx-auto mt-2">
+                    {tttBoard.map((cell, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleTttClick(idx)}
+                        className="bg-zinc-950 border border-zinc-850 hover:bg-zinc-900 rounded-xl flex items-center justify-center font-black text-3xl transition-colors text-white"
+                      >
+                        {cell === "X" && <span className="text-rose-500 animate-in zoom-in-50">X</span>}
+                        {cell === "O" && <span className="text-blue-500 animate-in zoom-in-50">O</span>}
+                      </button>
+                    ))}
+                  </div>
+
+                  {tttWinner && (
+                    <div className="text-center font-black text-sm uppercase tracking-wider text-amber-400 animate-pulse py-1">
+                      {tttWinner}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-3 gap-2 text-center text-[9px] font-black uppercase tracking-widest text-zinc-500 border-t border-zinc-800 pt-4 mt-2">
+                    <div>
+                      <div>Player</div>
+                      <div className="text-zinc-300 font-mono mt-0.5">{tttScore.player}</div>
+                    </div>
+                    <div>
+                      <div>Ties</div>
+                      <div className="text-zinc-300 font-mono mt-0.5">{tttScore.ties}</div>
+                    </div>
+                    <div>
+                      <div>AI</div>
+                      <div className="text-zinc-300 font-mono mt-0.5">{tttScore.ai}</div>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* 10. Timer & Stopwatch Widget */}
+              {isTimerWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95 max-w-sm mx-auto", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400 border-b border-zinc-800 pb-2">
+                    <TimerIcon className={cn("w-4 h-4", tc.text)} /> Time Utilities
+                  </div>
+
+                  {/* Countdown Timer GUI */}
+                  {queryLower.includes("timer") ? (
+                    <div className="space-y-4 text-center">
+                      <div className="text-4xl font-mono font-black text-white py-2">
+                        {Math.floor(timerSecondsLeft / 60)}:{(timerSecondsLeft % 60).toString().padStart(2, "0")}
+                      </div>
+                      <div className="flex gap-2 justify-center">
+                        <Button 
+                          onClick={handleTimerToggle}
+                          className={cn("px-4 rounded-xl font-black uppercase text-xs", tc.bgSolid)}
+                        >
+                          {timerRunning ? "Pause" : "Start"}
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={() => {
+                            clearInterval(timerIntervalRef.current);
+                            setTimerRunning(false);
+                            setTimerSecondsLeft(timerInput * 60);
+                          }}
+                          className="bg-zinc-900 border-zinc-800 text-white text-xs font-black uppercase rounded-xl"
+                        >
+                          Reset
+                        </Button>
+                      </div>
+                      <div className="flex items-center justify-center gap-3 text-xs text-zinc-500 pt-2">
+                        <span>Duration:</span>
+                        <input 
+                          type="number"
+                          value={timerInput}
+                          onChange={(e) => {
+                            const v = parseInt(e.target.value) || 1;
+                            setTimerInput(v);
+                            setTimerSecondsLeft(v * 60);
+                          }}
+                          className="w-16 bg-zinc-950 border border-zinc-800 text-center text-white font-mono rounded-lg h-8"
+                        />
+                        <span>min</span>
+                      </div>
+                    </div>
+                  ) : (
+                    // Stopwatch GUI
+                    <div className="space-y-4 text-center">
+                      <div className="text-4xl font-mono font-black text-white py-2">
+                        {Math.floor(stopwatchTime / 60000)}:
+                        {Math.floor((stopwatchTime % 60000) / 1000).toString().padStart(2, "0")}.
+                        {Math.floor((stopwatchTime % 1000) / 10).toString().padStart(2, "0")}
+                      </div>
+                      <div className="flex gap-2 justify-center">
+                        <Button 
+                          onClick={handleStopwatchToggle}
+                          className={cn("px-4 rounded-xl font-black uppercase text-xs", tc.bgSolid)}
+                        >
+                          {stopwatchRunning ? "Pause" : "Start"}
+                        </Button>
+                        {stopwatchRunning && (
+                          <Button 
+                            variant="outline"
+                            onClick={handleStopwatchLap}
+                            className="bg-zinc-900 border-zinc-800 text-white text-xs font-black uppercase rounded-xl"
+                          >
+                            Lap
+                          </Button>
+                        )}
+                        <Button 
+                          variant="outline"
+                          onClick={handleStopwatchReset}
+                          className="bg-zinc-900 border-zinc-800 text-white text-xs font-black uppercase rounded-xl"
+                        >
+                          Reset
+                        </Button>
+                      </div>
+                      
+                      {stopwatchLaps.length > 0 && (
+                        <div className="max-h-24 overflow-y-auto space-y-1 text-left border-t border-zinc-800 pt-3 text-[10px] text-zinc-500 font-mono">
+                          {stopwatchLaps.map((lap, i) => (
+                            <div key={i} className="flex justify-between">
+                              <span>Lap {i + 1}</span>
+                              <span>
+                                {Math.floor(lap / 60000)}:
+                                {Math.floor((lap % 60000) / 1000).toString().padStart(2, "0")}.
+                                {Math.floor((lap % 1000) / 10).toString().padStart(2, "0")}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              )}
+
+              {/* 11. Search Console verification widget */}
+              {isVerificationWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <BadgeCheck className={cn("w-4 h-4", tc.text)} /> XakSearch Console Verification
+                  </div>
+                  {!isVerifiedConsole ? (
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 pl-1">Website Domain URL</label>
+                        <Input
+                          placeholder="e.g. mysite.com"
+                          value={consoleSiteUrl}
+                          onChange={(e) => setConsoleSiteUrl(e.target.value)}
+                          className="bg-zinc-950 border-zinc-800 rounded-xl"
+                        />
+                      </div>
+                      <Button
+                        onClick={generateVerificationTag}
+                        className={cn("text-xs font-black uppercase tracking-wider rounded-xl w-full h-10", tc.bgSolid)}
+                      >
+                        Generate Meta Verification Tag
+                      </Button>
+                      {verificationTag && (
+                        <div className="space-y-2 animate-in fade-in">
+                          <p className="text-[10px] text-zinc-500 font-medium leading-relaxed">
+                            Copy and paste the tag below into your site's header to verify ownership.
+                          </p>
+                          <div className="bg-zinc-950 border border-zinc-850 p-3 rounded-xl font-mono text-[10px] text-zinc-300 break-all select-all">
+                            {verificationTag}
+                          </div>
+                          <Button
+                            onClick={verifySiteConsole}
+                            variant="outline"
+                            className="w-full text-xs font-black uppercase tracking-wider rounded-xl h-10 bg-emerald-600/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/20"
+                          >
+                            Verify Tag & Index Site
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-start gap-4">
+                      <BadgeCheck className="w-8 h-8 text-emerald-400 shrink-0" />
+                      <div>
+                        <div className="font-bold text-white text-sm uppercase">Site Verified!</div>
+                        <p className="text-xs text-zinc-400 mt-1 font-semibold leading-relaxed">
+                          Your domain is successfully indexed. Search crawler updates will run every 24 hours.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              )}
+
+            </div>
+          )}
+
+          {/* AI Quick Response Section (Only on "All" category) */}
+          {activeCategory === "all" && (isAiLoading || aiResult) && !safeSearchWarning && (
+            <div className="space-y-4 animate-in slide-in-from-top-2 duration-500 max-w-3xl">
+              <div className="flex items-center justify-between text-zinc-500">
+                <div className="flex items-center gap-2">
+                  <Sparkles className={cn("w-3.5 h-3.5", tc.text)} />
+                  <span className="text-[10px] font-black uppercase tracking-widest italic">AI Quick Response</span>
+                </div>
+                {aiResult && (
+                  <Button
+                    onClick={handleTTS}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 hover:bg-zinc-900"
+                  >
+                    {isSpeaking ? <VolumeX className="w-3.5 h-3.5 text-rose-500" /> : <Volume2 className="w-3.5 h-3.5 text-zinc-400" />}
+                    {isSpeaking ? "Stop Voice" : "Listen AI"}
+                  </Button>
+                )}
               </div>
               <Card className="p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-3xl relative overflow-hidden shadow-2xl flex flex-col md:flex-row gap-6">
                 {isAiLoading ? (
                   <div className="flex items-center gap-4 italic text-zinc-400 font-medium">
-                    <Loader2 className="w-4 h-4 animate-spin text-rose-500" /> Researching answer...
+                    <Loader2 className={cn("w-4 h-4 animate-spin", tc.text)} /> Researching answer...
                   </div>
                 ) : (
                   <div className="flex-1">
@@ -685,7 +2067,7 @@ function SearchContent() {
                             href={images[0].page} 
                             target="_blank" 
                             rel="noreferrer" 
-                            className="text-xs text-rose-400 hover:underline inline-flex items-center gap-1 mt-1 font-bold uppercase tracking-wider"
+                            className={cn("text-xs hover:underline inline-flex items-center gap-1 mt-1 font-bold uppercase tracking-wider", tc.text)}
                           >
                             Source <ExternalLink className="w-3 h-3" />
                           </a>
@@ -712,8 +2094,8 @@ function SearchContent() {
           {/* Results Lists */}
           <div className="space-y-10 pb-20 max-w-3xl">
             {/* Category: PEOPLE */}
-            {(activeCategory === "all" || activeCategory === "people") && matchedUsers.length > 0 && (
-              <div className="space-y-4">
+            {(activeCategory === "all" || activeCategory === "people") && matchedUsers.length > 0 && !safeSearchWarning && (
+              <div className="space-y-4 animate-fade-in">
                 <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 pl-1">Matching People</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {matchedUsers.map((u: any) => (
@@ -824,9 +2206,44 @@ function SearchContent() {
               </div>
             )}
 
+            {/* FAQ Accordion ("People Also Ask") */}
+            {queryInput && !safeSearchWarning && activeCategory === "all" && (
+              <div className="space-y-4 animate-fade-in">
+                <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 pl-1 flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4" /> People Also Ask
+                </h3>
+                <Accordion type="single" collapsible className="w-full bg-zinc-900/10 border border-zinc-900 rounded-[2.5rem] p-4 space-y-2">
+                  <AccordionItem value="faq-1" className="border-b border-zinc-900 px-4">
+                    <AccordionTrigger className="text-sm font-bold uppercase tracking-wider text-left text-zinc-200 hover:no-underline">
+                      What is the purpose of this search system?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs text-zinc-400 font-semibold leading-relaxed">
+                      XakSearch provides verified, hyper-targeted local portal listings, AI definitions, and inline widgets to streamline standard web queries inside the workspace.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="faq-2" className="border-b border-zinc-900 px-4">
+                    <AccordionTrigger className="text-sm font-bold uppercase tracking-wider text-left text-zinc-200 hover:no-underline">
+                      Can I add new domains to the search index?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs text-zinc-400 font-semibold leading-relaxed">
+                      Yes! You can verify ownership and index any site instantly using the `verify` command tool widget in the console window.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="faq-3" className="border-none px-4">
+                    <AccordionTrigger className="text-sm font-bold uppercase tracking-wider text-left text-zinc-200 hover:no-underline">
+                      Are search entries private?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs text-zinc-400 font-semibold leading-relaxed">
+                      All calculations, queries, and history items are stored locally in your browser session. Disabling cookies or clearing cache resets all history logs.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            )}
+
             {/* Category: IMAGES */}
-            {activeCategory === "images" && (
-              <div className="space-y-4">
+            {activeCategory === "images" && !safeSearchWarning && (
+              <div className="space-y-4 animate-fade-in">
                 <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 pl-1">Image Directory</h3>
                 {images.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -851,11 +2268,11 @@ function SearchContent() {
             )}
 
             {/* Category: SITES / ALL website listings */}
-            {(activeCategory === "all" || activeCategory === "sites") && (
+            {(activeCategory === "all" || activeCategory === "sites") && !safeSearchWarning && (
               <div className="space-y-8">
                 {/* Knowledge Graph Card / Definition Panel */}
                 {activeDefinition && (
-                  <Card className="p-8 bg-zinc-900/30 border-2 border-rose-500/30 rounded-[3rem] shadow-[0_20px_50px_rgba(244,63,94,0.15)] relative overflow-hidden flex flex-col md:flex-row gap-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <Card className={cn("p-8 border-2 rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8 animate-in fade-in slide-in-from-top-4 duration-500", tc.border, tc.shadow)}>
                     <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-transparent pointer-events-none" />
                     {activeDefinition.image && (
                       <div className="w-full md:w-60 h-44 rounded-2xl overflow-hidden shrink-0 border border-white/10 relative">
@@ -869,12 +2286,12 @@ function SearchContent() {
                     <div className="flex-1 space-y-4 relative z-10">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-2">
+                          <div className={cn("text-[10px] font-black uppercase tracking-widest flex items-center gap-2", tc.text)}>
                             <Sparkles className="w-3.5 h-3.5" /> Encyclopedia Definition
                           </div>
                           <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter mt-1">{activeDefinition.title}</h2>
                         </div>
-                        <span className="px-3 py-1 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[9px] font-black uppercase tracking-widest rounded-full shrink-0">
+                        <span className={cn("px-3 py-1 border text-[9px] font-black uppercase tracking-widest rounded-full shrink-0", tc.border, tc.text, tc.bg)}>
                           {activeDefinition.type}
                         </span>
                       </div>
@@ -886,7 +2303,7 @@ function SearchContent() {
                           {Object.entries(activeDefinition.facts).map(([key, val]) => (
                             <div key={key}>
                               <div className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">{key}</div>
-                              <div className="text-sm font-bold text-zinc-200 mt-0.5">{val}</div>
+                              <div className="text-sm font-bold text-zinc-200 mt-0.5">{val as any}</div>
                             </div>
                           ))}
                         </div>
@@ -896,7 +2313,7 @@ function SearchContent() {
                 )}
 
                 {isWebSearching && (
-                  <div className="flex items-center gap-3 text-rose-400 italic text-xs font-bold py-2">
+                  <div className={cn("flex items-center gap-3 italic text-xs font-bold py-2 animate-pulse", tc.text)}>
                     <Loader2 className="w-4 h-4 animate-spin" /> Searching the live web...
                   </div>
                 )}
@@ -921,25 +2338,31 @@ function SearchContent() {
                               src={`https://www.google.com/s2/favicons?domain=${host}&sz=32`} 
                               alt={host} 
                               onError={(e) => {
-                                // fallback to host initials letter block if favicon fails
                                 e.currentTarget.style.display = 'none';
                               }}
                               className="w-6 h-6 rounded-md bg-zinc-800"
                             />
-                            <div className="w-6 h-6 rounded-md bg-zinc-800 flex items-center justify-center text-[10px] font-black text-zinc-400 uppercase tracking-widest shrink-0 font-sans" style={{ display: 'none' }}>
-                              {host[0]}
-                            </div>
                             <span className="text-xs font-bold text-zinc-400 tracking-wider">{host}</span>
                           </div>
-                          <div className="text-[10px] font-black uppercase text-zinc-600 tracking-widest">Web Result</div>
+                          
+                          <div className="flex items-center gap-3">
+                            {/* Star / Bookmark site */}
+                            <button
+                              onClick={() => toggleBookmark(sites[0].title, sites[0].url)}
+                              className="text-zinc-500 hover:text-white transition-colors"
+                            >
+                              <Star className={cn("w-4 h-4", bookmarkedSites.some(s => s.url === sites[0].url) && "text-yellow-400 fill-current")} />
+                            </button>
+                            <div className="text-[10px] font-black uppercase text-zinc-600 tracking-widest">Web Result</div>
+                          </div>
                         </div>
 
                         {/* Primary link header */}
                         <a 
                           href={sites[0].url} 
-                          target="_blank" 
+                          target={openInNewTab ? "_blank" : "_self"}
                           rel="noopener noreferrer" 
-                          className="text-lg font-black text-rose-400 hover:text-rose-300 hover:underline leading-snug transition-colors"
+                          className={cn("text-lg font-black hover:underline leading-snug transition-colors", tc.text, `hover:${tc.text}`)}
                         >
                           {sites[0].title}
                         </a>
@@ -952,7 +2375,7 @@ function SearchContent() {
                               <a 
                                 key={idx} 
                                 href={s.url} 
-                                target="_blank" 
+                                target={openInNewTab ? "_blank" : "_self"}
                                 rel="noreferrer" 
                                 className="text-xs text-zinc-300 hover:text-rose-400 hover:underline font-bold tracking-wide flex items-center gap-1.5"
                               >
@@ -975,6 +2398,49 @@ function SearchContent() {
           </div>
         </main>
       </div>
+
+      {/* Bookmarks Dialog Box */}
+      {showBookmarksDialog && (
+        <Dialog open={showBookmarksDialog} onOpenChange={setShowBookmarksDialog}>
+          <DialogContent className="glass-card border-zinc-800 rounded-[2.5rem] max-w-md bg-zinc-950 text-white p-8">
+            <DialogHeader className="flex flex-col items-center text-center space-y-4">
+              <Bookmark className={cn("w-12 h-12", tc.text)} />
+              <div>
+                <DialogTitle className="text-2xl font-black uppercase italic tracking-tighter">Your Bookmarks</DialogTitle>
+                <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">Starred websites</p>
+              </div>
+            </DialogHeader>
+
+            <div className="space-y-4 mt-6 max-h-60 overflow-y-auto pr-2">
+              {bookmarkedSites.length > 0 ? (
+                bookmarkedSites.map((site, index) => (
+                  <div key={index} className="flex justify-between items-center bg-zinc-900 border border-zinc-850 p-4 rounded-2xl">
+                    <div className="truncate text-left max-w-[240px]">
+                      <div className="font-bold text-white text-sm truncate">{site.title}</div>
+                      <a href={site.url} target="_blank" rel="noreferrer" className="text-[10px] text-zinc-500 truncate block hover:underline">
+                        {site.url}
+                      </a>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => toggleBookmark(site.title, site.url)}
+                      className="rounded-lg h-10 w-10 text-rose-500 hover:bg-zinc-800 hover:text-rose-400"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-10 text-xs text-zinc-500 font-black uppercase tracking-widest">
+                  No Bookmarks saved yet.
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
     </div>
   );
 }

@@ -21,12 +21,29 @@ import {
   X,
   CircleDot,
   MousePointer,
+  Sparkles,
+  Volume2,
+  VolumeX,
+  Edit3,
+  Flame,
+  CheckCircle,
+  HelpCircle,
+  Lock,
+  Unlock,
+  Radio,
+  FileText,
+  Pin,
+  Smile,
+  Subtitles,
+  Tv,
+  Square
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore } from "@/firebase";
@@ -49,11 +66,15 @@ import { getIceServers } from "@/lib/webrtc/config";
 import { IceCandidateBuffer } from "@/lib/webrtc/ice-buffer";
 
 type ConnectionState = "new" | "connecting" | "connected" | "disconnected" | "failed";
+type GridMode = "grid" | "presenter";
+type RoomTheme = "obsidian" | "matrix" | "sunset";
 
 interface Participant {
   id: string;
   name: string;
   photo: string;
+  handRaised?: boolean;
+  micMuted?: boolean;
 }
 
 interface ChatMessage {
@@ -63,6 +84,15 @@ interface ChatMessage {
   photo: string;
   text: string;
   timestamp: any;
+}
+
+interface LivePoll {
+  question: string;
+  optA: string;
+  optB: string;
+  votesA: number;
+  votesB: number;
+  votedUserIds: string[];
 }
 
 function displayName(user: { displayName?: string | null }) {
@@ -126,6 +156,46 @@ export default function MeetingRoomPage() {
   const [chatInput, setChatInput] = useState("");
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
+  // -------------------------------------------------------------
+  // UPGRADE STATES & CONTROLS
+  // -------------------------------------------------------------
+  const [gridMode, setGridMode] = useState<GridMode>("presenter");
+  const [pinnedStreamId, setPinnedStreamId] = useState<string | null>(null);
+  const [roomTheme, setRoomTheme] = useState<RoomTheme>("obsidian");
+  const [videoFilter, setVideoFilter] = useState<string>("none");
+  const [videoQuality, setVideoQuality] = useState<string>("720p");
+  const [handRaised, setHandRaised] = useState(false);
+  
+  // Stopwatch visual call timer
+  const [callDuration, setCallDuration] = useState(0);
+  const [isNotepadOpen, setIsNotepadOpen] = useState(false);
+  const [notepadText, setNotepadText] = useState("");
+  const notepadDebounceRef = useRef<any>(null);
+
+  // Floating Emoji reactions
+  const [floatingEmojis, setFloatingEmojis] = useState<Array<{ id: number; emoji: string }>>([]);
+
+  // Live Polls
+  const [pollData, setPollData] = useState<LivePoll | null>(null);
+  const [showPollCreator, setShowPollCreator] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptA, setPollOptA] = useState("");
+  const [pollOptB, setPollOptB] = useState("");
+
+  // Live Speech-to-Text Captions
+  const [captionsActive, setCaptionsActive] = useState(false);
+  const [captionText, setCaptionText] = useState("");
+  const captionRecognitionRef = useRef<any>(null);
+
+  // Collaborative Whiteboard
+  const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
+  const [brushColor, setBrushColor] = useState("#FF0055");
+  const [brushSize, setBrushSize] = useState(4);
+  const whiteboardCanvasRef = useRef<HTMLCanvasElement>(null);
+  const whiteboardCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const whiteboardUnsubRef = useRef<Unsubscribe | null>(null);
+
   // WebRTC refs
   const pcMap = useRef<Record<string, RTCPeerConnection>>({});
   const iceBuffers = useRef<Record<string, IceCandidateBuffer>>({});
@@ -146,6 +216,52 @@ export default function MeetingRoomPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Web Audio Sound alert generator helper
+  const playAlertSound = useCallback((type: "join" | "leave" | "message") => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      if (type === "join") {
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      } else if (type === "leave") {
+        osc.frequency.setValueAtTime(700, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      } else if (type === "message") {
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+      }
+    } catch (e) {}
+  }, []);
+
+  // Stopwatch visual meeting counter
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCallDuration((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatDuration = (sec: number) => {
+    const hrs = Math.floor(sec / 3600);
+    const mins = Math.floor((sec % 3600) / 60);
+    const secs = sec % 60;
+    return `${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
   const bindVideoElements = useCallback(() => {
     if (localVideoRef.current && localStream.current) {
@@ -194,6 +310,9 @@ export default function MeetingRoomPage() {
   const clearMeetingListeners = () => {
     meetingUnsubscribers.current.forEach((unsubscribe) => unsubscribe());
     meetingUnsubscribers.current = [];
+    if (whiteboardUnsubRef.current) {
+      whiteboardUnsubRef.current();
+    }
   };
 
   const cleanupMedia = () => {
@@ -284,9 +403,13 @@ export default function MeetingRoomPage() {
     attachConnectionHandlers(peer);
 
     try {
+      // Quality selectors applying constraints
+      const videoConstraints: any = videoQuality === "720p" ? { width: 1280, height: 720 } : videoQuality === "480p" ? { width: 854, height: 480 } : false;
+      const audioConstraints = videoQuality === "audio-only" ? false : true;
+
       localStream.current = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
+        video: videoConstraints,
+        audio: audioConstraints || true,
       });
     } catch (err) {
       const message =
@@ -354,6 +477,159 @@ export default function MeetingRoomPage() {
     });
   }, [firestore, ensurePeerFor]);
 
+  // Collaborative Notepad real-time updates (debounced)
+  const handleNotepadChange = (text: string) => {
+    setNotepadText(text);
+    if (!firestore || !roomId) return;
+    if (notepadDebounceRef.current) clearTimeout(notepadDebounceRef.current);
+
+    notepadDebounceRef.current = setTimeout(async () => {
+      const callDoc = doc(firestore, "meetings", roomId);
+      await updateDoc(callDoc, { notepadContent: text });
+    }, 800);
+  };
+
+  // Collaborative Whiteboard setup
+  const initWhiteboard = () => {
+    if (!whiteboardCanvasRef.current) return;
+    const canvas = whiteboardCanvasRef.current;
+    canvas.width = canvas.parentElement?.clientWidth || 800;
+    canvas.height = canvas.parentElement?.clientHeight || 500;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      whiteboardCtxRef.current = ctx;
+    }
+  };
+
+  const drawLocal = (x0: number, y0: number, x1: number, y1: number, color: string, size: number, emit = true) => {
+    const ctx = whiteboardCtxRef.current;
+    if (!ctx) return;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = size;
+    ctx.stroke();
+
+    if (emit && firestore && roomId && myUserId) {
+      const drawingsCol = collection(doc(firestore, "meetings", roomId), "drawings");
+      void addDoc(drawingsCol, {
+        x0, y0, x1, y1, color, size, senderId: myUserId, ts: Date.now()
+      });
+    }
+  };
+
+  // Floating reactions dispatch
+  const sendReaction = async (emoji: string) => {
+    if (!firestore || !roomId || !myUserId) return;
+    const reactionsCol = collection(doc(firestore, "meetings", roomId), "reactions");
+    await addDoc(reactionsCol, {
+      senderId: myUserId,
+      emoji,
+      ts: Date.now()
+    });
+  };
+
+  // Live Poll options
+  const createLivePoll = async () => {
+    if (!firestore || !roomId || !pollQuestion.trim()) return;
+    const callDoc = doc(firestore, "meetings", roomId);
+    await updateDoc(callDoc, {
+      poll: {
+        question: pollQuestion.trim(),
+        optA: pollOptA.trim() || "Yes",
+        optB: pollOptB.trim() || "No",
+        votesA: 0,
+        votesB: 0,
+        votedUserIds: []
+      }
+    });
+    setShowPollCreator(false);
+    toast({ title: "Live Poll Created!" });
+  };
+
+  const votePoll = async (option: "A" | "B") => {
+    if (!firestore || !roomId || !myUserId || !pollData) return;
+    if (pollData.votedUserIds.includes(myUserId)) {
+      toast({ variant: "destructive", title: "Already Voted" });
+      return;
+    }
+    const callDoc = doc(firestore, "meetings", roomId);
+    const updatedVotesA = option === "A" ? pollData.votesA + 1 : pollData.votesA;
+    const updatedVotesB = option === "B" ? pollData.votesB + 1 : pollData.votesB;
+    await updateDoc(callDoc, {
+      poll: {
+        ...pollData,
+        votesA: updatedVotesA,
+        votesB: updatedVotesB,
+        votedUserIds: [...pollData.votedUserIds, myUserId]
+      }
+    });
+    toast({ title: "Vote Casted Successfully" });
+  };
+
+  const clearLivePoll = async () => {
+    if (!firestore || !roomId) return;
+    const callDoc = doc(firestore, "meetings", roomId);
+    await updateDoc(callDoc, { poll: null });
+  };
+
+  // Voice Speech Recognition Live Captions
+  const handleLiveCaptionsToggle = () => {
+    if (captionsActive) {
+      if (captionRecognitionRef.current) {
+        captionRecognitionRef.current.stop();
+      }
+      setCaptionsActive(false);
+      setCaptionText("");
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ variant: "destructive", title: "Speech recognition not supported" });
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    captionRecognitionRef.current = recognition;
+
+    recognition.onresult = (event: any) => {
+      let resultText = "";
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        resultText += event.results[i][0].transcript;
+      }
+      setCaptionText(resultText);
+    };
+
+    recognition.onstart = () => {
+      setCaptionsActive(true);
+      toast({ title: "Live Captions Active" });
+    };
+
+    recognition.start();
+  };
+
+  // Picture in Picture toggler
+  const togglePiP = async (elId: string) => {
+    const el = document.getElementById(elId) as HTMLVideoElement | null;
+    if (!el) return;
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else {
+        await el.requestPictureInPicture();
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: "PiP Error", description: "Not supported or no video stream." });
+    }
+  };
+
   const handleJoinMeeting = async (userIdToUse: string, displayNameToUse: string) => {
     if (!firestore || !roomId) return;
 
@@ -366,10 +642,17 @@ export default function MeetingRoomPage() {
       const snap = await getDoc(callDoc);
       const callData = snap.data();
 
+      // Check if room is locked
+      if (callData && callData.locked && !isHost) {
+        throw new Error("This meeting room is locked by the host.");
+      }
+
       const newParticipant: Participant = {
         id: userIdToUse,
         name: displayNameToUse,
         photo: user?.photoURL || "",
+        handRaised: false,
+        micMuted: false
       };
 
       if (!callData) {
@@ -388,7 +671,10 @@ export default function MeetingRoomPage() {
           participants: [newParticipant],
           screenSharerId: null,
           controlledById: null,
-          controlledByName: null
+          controlledByName: null,
+          locked: false,
+          notepadContent: "",
+          poll: null
         });
 
         setIsHost(true);
@@ -405,6 +691,7 @@ export default function MeetingRoomPage() {
         }
 
         setIsHost(callData.hostId === userIdToUse);
+        playAlertSound("join");
       }
 
       activeMeetingId.current = meetingId;
@@ -418,6 +705,24 @@ export default function MeetingRoomPage() {
             setScreenSharerId(data.screenSharerId || null);
             setControlledById(data.controlledById || null);
             setControlledByName(data.controlledByName || null);
+            setNotepadText(data.notepadContent || "");
+            setPollData(data.poll || null);
+
+            // Listen if kicked out
+            if (data.kickedIds && data.kickedIds.includes(userIdToUse)) {
+              cleanupMedia();
+              router.push("/meet");
+              toast({ variant: "destructive", title: "Kicked", description: "You have been removed from this meeting." });
+            }
+
+            // Listen if host globally requested mute all
+            if (data.muteAllRequest && data.muteAllRequest > (localStream.current as any)?.muteTimestamp) {
+              if (localStream.current && !isHost) {
+                localStream.current.getAudioTracks().forEach(t => t.enabled = false);
+                setIsMicOn(false);
+                toast({ title: "Globally Muted", description: "You have been muted by the host." });
+              }
+            }
 
             // Host handles initiating offers to any newly joined participant
             if (data.hostId === userIdToUse) {
@@ -429,6 +734,36 @@ export default function MeetingRoomPage() {
               });
             }
           }
+        })
+      );
+
+      // Subscribe to drawings (Whiteboard Collab)
+      const drawingsCol = collection(callDoc, "drawings");
+      whiteboardUnsubRef.current = onSnapshot(drawingsCol, (snap) => {
+        snap.docChanges().forEach((change) => {
+          if (change.type === "added") {
+            const drawData = change.doc.data();
+            if (drawData.senderId !== userIdToUse) {
+              drawLocal(drawData.x0, drawData.y0, drawData.x1, drawData.y1, drawData.color, drawData.size, false);
+            }
+          }
+        });
+      });
+
+      // Subscribe to floating emoji reactions
+      const reactionsCol = collection(callDoc, "reactions");
+      meetingUnsubscribers.current.push(
+        onSnapshot(reactionsCol, (snap) => {
+          snap.docChanges().forEach((change) => {
+            if (change.type === "added") {
+              const r = change.doc.data();
+              const reactionId = Date.now() + Math.random();
+              setFloatingEmojis(prev => [...prev, { id: reactionId, emoji: r.emoji }]);
+              setTimeout(() => {
+                setFloatingEmojis(prev => prev.filter(item => item.id !== reactionId));
+              }, 2000);
+            }
+          });
         })
       );
 
@@ -555,6 +890,7 @@ export default function MeetingRoomPage() {
           // Increment unread count if chat is closed and new messages are added
           if (!isChatOpen && snapshot.docChanges().some(c => c.type === "added")) {
             setUnreadChatCount(prev => prev + 1);
+            playAlertSound("message");
           }
         })
       );
@@ -569,6 +905,65 @@ export default function MeetingRoomPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Host Control: Mute participant remotely
+  const kickParticipant = async (pid: string) => {
+    if (!firestore || !roomId || !isHost) return;
+    const callDoc = doc(firestore, "meetings", roomId);
+    const snap = await getDoc(callDoc);
+    const data = snap.data() || {};
+    const kicked = data.kickedIds || [];
+    await updateDoc(callDoc, {
+      kickedIds: [...kicked, pid],
+      participantIds: (data.participantIds || []).filter((id: string) => id !== pid),
+      participants: (data.participants || []).filter((p: any) => p.id !== pid)
+    });
+    toast({ title: "Participant Kicked" });
+  };
+
+  const muteParticipantLocally = async (pid: string) => {
+    if (!firestore || !roomId || !isHost) return;
+    const callDoc = doc(firestore, "meetings", roomId);
+    const snap = await getDoc(callDoc);
+    const parts = snap.data()?.participants || [];
+    const updatedParts = parts.map((p: any) => {
+      if (p.id === pid) return { ...p, micMuted: true };
+      return p;
+    });
+    await updateDoc(callDoc, { participants: updatedParts });
+    toast({ title: "Mute Request Sent" });
+  };
+
+  const muteAllParticipants = async () => {
+    if (!firestore || !roomId || !isHost) return;
+    const callDoc = doc(firestore, "meetings", roomId);
+    await updateDoc(callDoc, { muteAllRequest: Date.now() });
+    toast({ title: "Requested Mute All" });
+  };
+
+  const toggleRoomLock = async () => {
+    if (!firestore || !roomId || !isHost) return;
+    const callDoc = doc(firestore, "meetings", roomId);
+    const snap = await getDoc(callDoc);
+    const currentLock = snap.data()?.locked || false;
+    await updateDoc(callDoc, { locked: !currentLock });
+    toast({ title: !currentLock ? "Room Locked" : "Room Unlocked" });
+  };
+
+  // Hand Raise Toggle
+  const toggleHandRaise = async () => {
+    if (!firestore || !roomId || !myUserId) return;
+    const next = !handRaised;
+    setHandRaised(next);
+    const callDoc = doc(firestore, "meetings", roomId);
+    const snap = await getDoc(callDoc);
+    const parts = snap.data()?.participants || [];
+    const updatedParts = parts.map((p: any) => {
+      if (p.id === myUserId) return { ...p, handRaised: next };
+      return p;
+    });
+    await updateDoc(callDoc, { participants: updatedParts });
   };
 
   const handleGuestJoinSubmit = () => {
@@ -825,16 +1220,19 @@ export default function MeetingRoomPage() {
   const endMeeting = async () => {
     const meetingId = activeMeetingId.current;
     cleanupMedia();
+    playAlertSound("leave");
     
     if (isHost && meetingId && firestore) {
       try {
         const callDoc = doc(firestore, "meetings", meetingId);
         const signalsSnap = await getDocs(collection(callDoc, "signals"));
         const chatSnap = await getDocs(collection(callDoc, "chat"));
+        const drawingsSnap = await getDocs(collection(callDoc, "drawings"));
         
         await Promise.all([
           ...signalsSnap.docs.map((d) => deleteDoc(d.ref)),
           ...chatSnap.docs.map((d) => deleteDoc(d.ref)),
+          ...drawingsSnap.docs.map((d) => deleteDoc(d.ref)),
           deleteDoc(callDoc),
         ]);
       } catch (e) {
@@ -891,6 +1289,53 @@ export default function MeetingRoomPage() {
     );
   };
 
+  // Canvas drawing handlers
+  const handleWhiteboardMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    setIsDrawing(true);
+    const canvas = whiteboardCanvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    canvas.setAttribute("data-last-x", String(x));
+    canvas.setAttribute("data-last-y", String(y));
+  };
+
+  const handleWhiteboardMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    const canvas = whiteboardCanvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const lastX = parseFloat(canvas.getAttribute("data-last-x") || "0");
+    const lastY = parseFloat(canvas.getAttribute("data-last-y") || "0");
+
+    drawLocal(lastX, lastY, x, y, brushColor, brushSize);
+
+    canvas.setAttribute("data-last-x", String(x));
+    canvas.setAttribute("data-last-y", String(y));
+  };
+
+  const handleWhiteboardMouseUp = () => {
+    setIsDrawing(false);
+  };
+
+  const clearWhiteboardCanvas = () => {
+    const canvas = whiteboardCanvasRef.current;
+    const ctx = whiteboardCtxRef.current;
+    if (canvas && ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Clean subcollection
+      if (firestore && roomId) {
+        const drawingsCol = collection(doc(firestore, "meetings", roomId), "drawings");
+        void getDocs(drawingsCol).then((snap) => {
+          snap.docs.forEach((doc) => void deleteDoc(doc.ref));
+        });
+      }
+    }
+  };
+
   if (!mounted || isUserLoading) return null;
 
   // Guest landing screen (unauthenticated name prompt)
@@ -902,7 +1347,7 @@ export default function MeetingRoomPage() {
           <div className="space-y-4">
             <VideoIcon className="w-16 h-16 text-blue-500 mx-auto animate-float" />
             <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Join Meeting</h2>
-            <p className="text-xs text-muted-foreground font-black uppercase tracking-widest">
+            <p className="text-xs text-zinc-500 font-black uppercase tracking-widest">
               Room Code: {roomId}
             </p>
           </div>
@@ -998,12 +1443,13 @@ export default function MeetingRoomPage() {
               ) : (
                 <div className="w-full h-full relative">
                   <video
-                    ref={screenVideoRef}
                     autoPlay
                     playsInline
+                    id="mobile-screen-share"
                     onClick={handleMouseClick}
                     onMouseMove={handleMouseMove}
                     ref={(el) => {
+                      (screenVideoRef as any).current = el;
                       if (!el) return;
                       const s = remoteStreams.current[screenSharerId];
                       if (s) {
@@ -1032,8 +1478,10 @@ export default function MeetingRoomPage() {
               {isVideoOn ? (
                 <video
                   ref={localVideoRef}
+                  id="mobile-local-cam"
                   autoPlay
                   muted
+                  style={{ filter: videoFilter !== "none" ? videoFilter : undefined }}
                   playsInline
                   className="w-full h-full object-cover scale-x-[-1]"
                 />
@@ -1049,7 +1497,8 @@ export default function MeetingRoomPage() {
               )}
               <div className="absolute bottom-4 left-4 px-4 py-2 bg-black/70 backdrop-blur-md rounded-xl border border-white/15 flex items-center gap-2">
                 <div className={cn("w-2 h-2 rounded-full", isMicOn ? "bg-green-500 animate-pulse" : "bg-rose-500")} />
-                <span className="text-[9px] font-black uppercase tracking-wider text-white">You</span>
+                <span className="text-[9px] font-black uppercase tracking-wider text-white font-sans">You</span>
+                {handRaised && <span className="ml-1 text-xs">✋</span>}
               </div>
             </div>
           )}
@@ -1068,6 +1517,7 @@ export default function MeetingRoomPage() {
                   />
                   <div className="absolute bottom-1.5 left-1.5 right-1.5 px-2 py-1 bg-black/80 backdrop-blur-md rounded-lg border border-white/10 flex items-center gap-1.5">
                     <span className="text-[8px] font-black uppercase text-white truncate max-w-full">{p.name}</span>
+                    {p.handRaised && <span className="text-[10px]">✋</span>}
                   </div>
                 </div>
               ))}
@@ -1132,67 +1582,54 @@ export default function MeetingRoomPage() {
             <PhoneOff className="w-5 h-5" />
           </Button>
         </footer>
-
-        {/* Mobile Full Screen Chat Sheet */}
-        {isChatOpen && (
-          <div className="absolute inset-0 bg-black z-[600] flex flex-col animate-in slide-in-from-bottom-5 duration-300">
-            <header className="h-16 bg-zinc-900 border-b border-white/10 px-6 flex items-center justify-between">
-              <span className="font-black uppercase tracking-widest text-xs text-white">Room Chat</span>
-              <Button variant="ghost" size="icon" onClick={() => setIsChatOpen(false)} className="text-white">
-                <X className="w-5 h-5" />
-              </Button>
-            </header>
-            
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-zinc-950">
-              {chatMessages.map((msg) => (
-                <div key={msg.id} className={cn("flex flex-col max-w-[80%]", msg.senderId === myUserId ? "ml-auto items-end" : "mr-auto items-start")}>
-                  <span className="text-[8px] font-black uppercase text-zinc-500 mb-1">{msg.senderName}</span>
-                  <div className={cn("p-3 rounded-2xl text-xs font-bold leading-relaxed", msg.senderId === myUserId ? "bg-rose-600 text-white rounded-tr-none" : "bg-zinc-900 text-white rounded-tl-none border border-white/5")}>
-                    {msg.text}
-                  </div>
-                </div>
-              ))}
-              <div ref={chatEndRef} />
-            </div>
-
-            <div className="p-4 bg-zinc-900 border-t border-white/10 flex gap-2">
-              <Input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendChatMessage()}
-                placeholder="Send message..."
-                className="h-12 bg-black border-white/10 text-white rounded-xl text-sm"
-              />
-              <Button onClick={handleSendChatMessage} size="icon" className="h-12 w-12 bg-blue-600 text-white rounded-xl">
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
 
   // -------------------------------------------------------------
-  // DESKTOP MEETING ROOM UI (UNCHANGED CORE STRUCTURE + GLORIOUS EXTENSIONS)
+  // DESKTOP MEETING ROOM UI
   // -------------------------------------------------------------
   return (
-    <div className="fixed inset-0 z-[500] bg-black flex flex-col text-foreground animate-in fade-in duration-500">
+    <div className={cn(
+      "fixed inset-0 z-[500] flex flex-col text-foreground animate-in fade-in duration-500",
+      roomTheme === "matrix" ? "bg-black" : roomTheme === "sunset" ? "bg-zinc-950" : "bg-black"
+    )}>
+      {/* Dynamic Theme Glow overlays */}
+      {roomTheme === "sunset" && (
+        <>
+          <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-rose-500/10 rounded-full blur-[150px] pointer-events-none" />
+          <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[150px] pointer-events-none" />
+        </>
+      )}
+
       {/* Desktop Header */}
-      <header className="h-20 bg-zinc-900/90 backdrop-blur-xl border-b-4 border-white/10 px-10 flex items-center justify-between z-50">
+      <header className="h-20 bg-zinc-900/90 backdrop-blur-xl border-b border-white/10 px-10 flex items-center justify-between z-50">
         <div className="flex items-center gap-6">
           <div className="w-10 h-10 rounded-xl bg-rose-600 flex items-center justify-center shadow-lg">
             <VideoIcon className="w-5 h-5 text-white" />
           </div>
           <div className="flex flex-col text-left">
-            <span className="text-xl font-black italic uppercase text-white tracking-tighter leading-none">
-              Live call
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-black italic uppercase text-white tracking-tighter leading-none">
+                Live Call
+              </span>
+              <Badge variant="outline" className="border-zinc-800 bg-zinc-900/60 font-mono text-zinc-300 font-bold px-2 py-0.5 rounded text-[10px] h-5">
+                {formatDuration(callDuration)}
+              </Badge>
+            </div>
             <span className="text-[8px] font-black text-rose-500 uppercase tracking-[0.4em] mt-1">
               Room: {roomId}
             </span>
           </div>
         </div>
+
+        {/* Live Caption overlay panel (at top) */}
+        {captionText && (
+          <div className="bg-black/80 px-6 py-2 rounded-full border border-white/15 text-xs text-white max-w-lg truncate font-medium animate-pulse">
+            Live Caption: "{captionText}"
+          </div>
+        )}
+
         <div className="flex items-center gap-4">
           <Button
             onClick={copyMeetingLink}
@@ -1209,11 +1646,56 @@ export default function MeetingRoomPage() {
       <div className="flex-1 flex p-6 gap-6 overflow-hidden relative">
         <div className="absolute inset-0 arcade-grid opacity-10 pointer-events-none" />
 
+        {/* Sync whiteboard rendering */}
         <div className="flex-1 flex gap-6 relative z-10 overflow-hidden">
-          {/* Main Video Stream Frame */}
-          <div className="flex-1 flex flex-col relative overflow-hidden bg-zinc-950 rounded-[3rem] border-8 border-white/5 shadow-2xl">
-            {screenSharerId ? (
-              // Screen Share active
+          
+          {/* Main Viewport: Video, Whiteboard or Notepad */}
+          <div className="flex-1 flex flex-col relative overflow-hidden bg-zinc-950 rounded-[3rem] border-4 border-white/5 shadow-2xl">
+            
+            {/* 1. Collaborative Whiteboard layer */}
+            {isWhiteboardOpen ? (
+              <div className="w-full h-full relative bg-zinc-950 flex flex-col">
+                <div className="h-14 border-b border-white/5 px-6 flex items-center justify-between bg-zinc-900/40">
+                  <span className="text-xs font-black uppercase tracking-widest text-zinc-400">Sync Whiteboard Drawing</span>
+                  <div className="flex items-center gap-4">
+                    {/* Brush colors */}
+                    <div className="flex items-center gap-1.5">
+                      {["#FF0055", "#00FFCC", "#3388FF", "#FFCC00", "#FFFFFF"].map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => setBrushColor(c)}
+                          className={cn("w-5 h-5 rounded-full border", brushColor === c ? "border-white scale-110" : "border-transparent")}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                    {/* Brush size input */}
+                    <input 
+                      type="range" min="1" max="15" value={brushSize}
+                      onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                      className="w-16 accent-rose-500"
+                    />
+                    <Button onClick={clearWhiteboardCanvas} variant="destructive" size="sm" className="h-8 text-[9px] font-black uppercase tracking-wider rounded-lg">
+                      Clear
+                    </Button>
+                    <Button onClick={() => setIsWhiteboardOpen(false)} variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-white rounded-lg">
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex-1 relative bg-zinc-950 cursor-crosshair">
+                  <canvas
+                    ref={whiteboardCanvasRef}
+                    onMouseDown={handleWhiteboardMouseDown}
+                    onMouseMove={handleWhiteboardMouseMove}
+                    onMouseUp={handleWhiteboardMouseUp}
+                    onMouseLeave={handleWhiteboardMouseUp}
+                    className="absolute inset-0 w-full h-full"
+                  />
+                </div>
+              </div>
+            ) : screenSharerId ? (
+              // 2. Screen Share viewport
               <div className="w-full h-full relative bg-black flex items-center justify-center">
                 {screenSharerId === myUserId ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900/95 space-y-6 text-center">
@@ -1228,12 +1710,12 @@ export default function MeetingRoomPage() {
                 ) : (
                   <div className="w-full h-full relative">
                     <video
-                      ref={screenVideoRef}
                       autoPlay
                       playsInline
                       onClick={handleMouseClick}
                       onMouseMove={handleMouseMove}
                       ref={(el) => {
+                        (screenVideoRef as any).current = el;
                         if (!el) return;
                         const s = remoteStreams.current[screenSharerId];
                         if (s) {
@@ -1251,10 +1733,10 @@ export default function MeetingRoomPage() {
                   </div>
                 )}
                 
-                {/* Visual remote pointer simulation overlays (sharer view) */}
+                {/* Visual remote pointer simulation overlays */}
                 {screenSharerId === myUserId && remoteCursor.active && (
                   <div 
-                    className="absolute pointer-events-none transition-all duration-75 ease-out z-[999] flex flex-col items-start"
+                    className="absolute pointer-events-none transition-all duration-75 ease-out z-[999] flex flex-col items-start animate-fade-in"
                     style={{ top: `${remoteCursor.y}%`, left: `${remoteCursor.x}%` }}
                   >
                     <div className="w-4 h-4 bg-rose-500 rounded-full border-2 border-white shadow-lg animate-ping absolute" />
@@ -1264,13 +1746,6 @@ export default function MeetingRoomPage() {
                     </span>
                   </div>
                 )}
-                {screenSharerId === myUserId && clickRipples.map(r => (
-                  <div 
-                    key={r.id} 
-                    className="absolute w-8 h-8 rounded-full border-4 border-rose-500 pointer-events-none animate-ping z-[998] -translate-x-1/2 -translate-y-1/2"
-                    style={{ top: `${r.y}%`, left: `${r.x}%` }}
-                  />
-                ))}
 
                 <div className="absolute bottom-6 left-6 px-6 py-3 bg-black/60 backdrop-blur-xl rounded-[1.5rem] border border-white/10 flex items-center gap-3 shadow-2xl">
                   <span className="text-[10px] font-black uppercase italic tracking-widest text-white">
@@ -1302,41 +1777,211 @@ export default function MeetingRoomPage() {
                 )}
               </div>
             ) : (
-              // Default Local Camera Preview
+              // 3. Default Video Feed layout based on Grid mode
               <div className="w-full h-full relative">
-                <video
-                  ref={localVideoRef}
-                  autoPlay
-                  muted
-                  playsInline
-                  className={cn("w-full h-full object-cover scale-x-[-1]", !isVideoOn && "hidden")}
-                />
-                {!isVideoOn && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
-                    <Avatar className="w-40 h-40 border-8 border-white/5 shadow-2xl">
-                      <AvatarImage src={user?.photoURL || ""} />
-                      <AvatarFallback className="text-4xl font-black bg-rose-600 text-white">
-                        {myDisplayName?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
+                {gridMode === "presenter" ? (
+                  // Speaker Focused layout (primary presenter stream)
+                  <div className="w-full h-full relative">
+                    {pinnedStreamId ? (
+                      // Pinned participant stream takes center
+                      <div className="w-full h-full relative">
+                        <video
+                          autoPlay
+                          playsInline
+                          style={{ filter: pinnedStreamId === myUserId && videoFilter !== "none" ? videoFilter : undefined }}
+                          ref={(el) => {
+                            if (!el) return;
+                            if (pinnedStreamId === myUserId && localStream.current) {
+                              el.srcObject = localStream.current;
+                            } else {
+                              const s = remoteStreams.current[pinnedStreamId];
+                              if (s) el.srcObject = s;
+                            }
+                            void el.play().catch(() => {});
+                          }}
+                          className={cn("w-full h-full object-cover", pinnedStreamId === myUserId && "scale-x-[-1]")}
+                        />
+                        <div className="absolute bottom-6 left-6 bg-black/60 px-4 py-2 rounded-xl border border-white/10 text-xs font-black uppercase tracking-wider">
+                          Pinned: {participants.find(p => p.id === pinnedStreamId)?.name || "You"}
+                        </div>
+                      </div>
+                    ) : (
+                      // Local preview main
+                      <div className="w-full h-full relative">
+                        <video
+                          ref={localVideoRef}
+                          autoPlay
+                          muted
+                          style={{ filter: videoFilter !== "none" ? videoFilter : undefined }}
+                          playsInline
+                          className={cn("w-full h-full object-cover scale-x-[-1]", !isVideoOn && "hidden")}
+                        />
+                        {!isVideoOn && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
+                            <Avatar className="w-40 h-40 border-8 border-white/5 shadow-2xl">
+                              <AvatarImage src={user?.photoURL || ""} />
+                              <AvatarFallback className="text-4xl font-black bg-rose-600 text-white">
+                                {myDisplayName?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                        )}
+                        <div className="absolute bottom-6 left-6 px-6 py-3 bg-black/60 backdrop-blur-xl rounded-[1.5rem] border border-white/10 flex items-center gap-3 shadow-2xl">
+                          <div className={cn("w-2 h-2 rounded-full", isMicOn ? "bg-green-500 animate-pulse" : "bg-rose-500")} />
+                          <span className="text-[10px] font-black uppercase italic tracking-widest text-white">
+                            {myDisplayName}
+                          </span>
+                          {handRaised && <span className="text-xs">✋</span>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // Equal Grid Layout (all participant cards share space)
+                  <div className="grid grid-cols-2 gap-4 p-6 w-full h-full bg-zinc-950 overflow-y-auto">
+                    {/* Local Feed */}
+                    <div className="relative rounded-2xl overflow-hidden border-2 border-white/5 bg-zinc-900 aspect-video flex items-center justify-center">
+                      {isVideoOn ? (
+                        <video
+                          ref={localVideoRef}
+                          autoPlay
+                          muted
+                          style={{ filter: videoFilter !== "none" ? videoFilter : undefined }}
+                          playsInline
+                          className="w-full h-full object-cover scale-x-[-1]"
+                        />
+                      ) : (
+                        <Avatar className="w-20 h-20">
+                          <AvatarImage src={user?.photoURL || ""} />
+                          <AvatarFallback className="bg-rose-600 text-white">{myDisplayName?.[0]}</AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div className="absolute bottom-3 left-3 bg-black/70 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border border-white/10 flex items-center gap-2">
+                        <div className={cn("w-1.5 h-1.5 rounded-full", isMicOn ? "bg-green-500 animate-pulse" : "bg-rose-500")} />
+                        You {handRaised && "✋"}
+                      </div>
+                    </div>
+
+                    {/* Remote Feeds */}
+                    {participants.filter(p => p.id !== myUserId).map((p) => (
+                      <div key={p.id} className="relative rounded-2xl overflow-hidden border-2 border-white/5 bg-zinc-900 aspect-video flex items-center justify-center group">
+                        <video
+                          id={`video-${p.id}`}
+                          autoPlay
+                          playsInline
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute bottom-3 left-3 bg-black/70 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border border-white/10 flex items-center gap-2">
+                          {p.name} {p.handRaised && "✋"}
+                        </div>
+                        {isHost && (
+                          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5">
+                            <Button size="icon" variant="destructive" onClick={() => kickParticipant(p.id)} className="h-8 w-8 rounded-lg">
+                              <X className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
-                <div className="absolute bottom-6 left-6 px-6 py-3 bg-black/60 backdrop-blur-xl rounded-[1.5rem] border border-white/10 flex items-center gap-3 shadow-2xl">
-                  <div className={cn("w-2 h-2 rounded-full", isMicOn ? "bg-green-500 animate-pulse" : "bg-rose-500")} />
-                  <span className="text-[10px] font-black uppercase italic tracking-widest text-white">
-                    {myDisplayName}
-                  </span>
+
+                {/* Floating Emojis Reaction Overlay */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+                  {floatingEmojis.map((item) => (
+                    <div
+                      key={item.id}
+                      className="absolute bottom-10 left-1/2 -translate-x-1/2 text-5xl animate-float-up pointer-events-none"
+                      style={{
+                        animation: "floatUp 2.5s forwards ease-out",
+                        left: `${45 + Math.random() * 10}%`
+                      }}
+                    >
+                      {item.emoji}
+                    </div>
+                  ))}
                 </div>
+
+                {/* Poll visual overlay cards */}
+                {pollData && (
+                  <Card className="absolute top-6 left-6 p-4 bg-black/85 backdrop-blur-md border border-white/15 rounded-2xl w-72 shadow-2xl z-30 animate-in slide-in-from-top-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-rose-500">Live Meeting Poll</span>
+                      {isHost && (
+                        <button onClick={clearLivePoll} className="text-zinc-500 hover:text-white">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="font-bold text-xs text-white mb-3">{pollData.question}</div>
+                    
+                    {pollData.votedUserIds.includes(myUserId || "") ? (
+                      <div className="space-y-2 text-xs font-semibold">
+                        <div className="space-y-1">
+                          <div className="flex justify-between">
+                            <span>{pollData.optA}</span>
+                            <span>{Math.round((pollData.votesA / (pollData.votesA + pollData.votesB || 1)) * 100)}%</span>
+                          </div>
+                          <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-rose-500" style={{ width: `${(pollData.votesA / (pollData.votesA + pollData.votesB || 1)) * 100}%` }} />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between">
+                            <span>{pollData.optB}</span>
+                            <span>{Math.round((pollData.votesB / (pollData.votesA + pollData.votesB || 1)) * 100)}%</span>
+                          </div>
+                          <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500" style={{ width: `${(pollData.votesB / (pollData.votesA + pollData.votesB || 1)) * 100}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button onClick={() => votePoll("A")} className="flex-1 h-9 bg-rose-600 hover:bg-rose-500 text-[10px] uppercase font-black tracking-wider rounded-lg">
+                          {pollData.optA}
+                        </Button>
+                        <Button onClick={() => votePoll("B")} className="flex-1 h-9 bg-blue-600 hover:bg-blue-500 text-[10px] uppercase font-black tracking-wider rounded-lg">
+                          {pollData.optB}
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                )}
+
               </div>
             )}
           </div>
 
-          {/* Right Column: Other Participants / Small Previews */}
+          {/* Right Column: Other Participants or side features */}
           <div className="w-80 flex flex-col gap-6 overflow-y-auto">
+            
+            {/* Host settings actions */}
+            {isHost && (
+              <Card className="p-4 bg-zinc-900/40 border border-white/5 rounded-2xl space-y-3">
+                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Host Control Board</span>
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    onClick={muteAllParticipants} 
+                    className="h-10 text-[9px] font-black uppercase tracking-wider rounded-xl bg-zinc-800 hover:bg-zinc-750"
+                  >
+                    Mute All Feeds
+                  </Button>
+                  <Button 
+                    onClick={toggleRoomLock} 
+                    className="h-10 text-[9px] font-black uppercase tracking-wider rounded-xl bg-zinc-850 hover:bg-zinc-800"
+                  >
+                    Lock Room Mode
+                  </Button>
+                </div>
+              </Card>
+            )}
+
             {participants
               .filter((p) => p.id !== myUserId)
               .map((p) => (
-                <div key={p.id} className="rounded-[2rem] border-4 border-white/5 bg-zinc-950 overflow-hidden relative shadow-2xl flex-shrink-0">
+                <div key={p.id} className="rounded-[2rem] border-4 border-white/5 bg-zinc-950 overflow-hidden relative shadow-2xl flex-shrink-0 group">
                   <video
                     id={`video-${p.id}`}
                     autoPlay
@@ -1344,8 +1989,27 @@ export default function MeetingRoomPage() {
                     className="w-full h-44 object-cover bg-zinc-900"
                   />
                   <div className="absolute bottom-3 left-3 px-4 py-2 bg-black/60 backdrop-blur-xl rounded-[1rem] border border-white/10 flex items-center gap-2 shadow-2xl">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                     <span className="text-[10px] font-black uppercase italic tracking-widest text-white">{p.name}</span>
+                    {p.handRaised && <span className="ml-1 text-xs">✋</span>}
+                  </div>
+
+                  {/* Pin participant button */}
+                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5">
+                    <button
+                      onClick={() => setPinnedStreamId(pinnedStreamId === p.id ? null : p.id)}
+                      className="p-1.5 bg-black/60 hover:bg-black rounded-lg text-white"
+                    >
+                      <Pin className={cn("w-3.5 h-3.5", pinnedStreamId === p.id && "text-rose-500 fill-current")} />
+                    </button>
+                    {isHost && (
+                      <button
+                        onClick={() => kickParticipant(p.id)}
+                        className="p-1.5 bg-rose-600 hover:bg-rose-500 rounded-lg text-white"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1369,7 +2033,6 @@ export default function MeetingRoomPage() {
               </Button>
             </header>
             
-            {/* Messages body */}
             <div className="flex-1 overflow-y-auto p-8 space-y-6">
               {chatMessages.map((msg) => (
                 <div key={msg.id} className={cn("flex flex-col max-w-[85%]", msg.senderId === myUserId ? "ml-auto items-end" : "mr-auto items-start")}>
@@ -1384,7 +2047,6 @@ export default function MeetingRoomPage() {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Input footer */}
             <div className="p-6 border-t border-white/10 bg-black/40 flex gap-3">
               <Input
                 value={chatInput}
@@ -1395,6 +2057,42 @@ export default function MeetingRoomPage() {
               />
               <Button onClick={handleSendChatMessage} size="icon" className="h-12 w-12 bg-blue-600 hover:bg-blue-500 rounded-2xl text-white shrink-0 shadow-lg transition-all">
                 <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </aside>
+        )}
+
+        {/* Sliding Notepad Content Drawer */}
+        {isNotepadOpen && (
+          <aside className="w-96 glass-card border-l-4 border-white/10 bg-zinc-950/90 backdrop-blur-2xl flex flex-col z-50 animate-in slide-in-from-right duration-300 rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <header className="h-20 border-b border-white/10 px-8 flex items-center justify-between">
+              <span className="text-sm font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
+                <FileText className="w-4 h-4 text-rose-500" /> Collaborative Notepad
+              </span>
+              <Button variant="ghost" size="icon" onClick={() => setIsNotepadOpen(false)} className="text-zinc-400 hover:text-white rounded-xl">
+                <X className="w-5 h-5" />
+              </Button>
+            </header>
+            
+            <div className="flex-1 p-6 flex flex-col gap-4">
+              <textarea
+                value={notepadText}
+                onChange={(e) => handleNotepadChange(e.target.value)}
+                placeholder="Type collaborative notes here..."
+                className="flex-1 w-full bg-zinc-900 border border-white/5 p-4 rounded-2xl text-xs font-bold text-white outline-none resize-none focus:border-rose-500/35"
+              />
+              <Button
+                onClick={() => {
+                  const blob = new Blob([notepadText], { type: "text/plain" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `meeting-notes-${roomId}.txt`;
+                  a.click();
+                }}
+                className="w-full h-12 bg-rose-600 hover:bg-rose-500 text-xs font-black uppercase tracking-widest rounded-xl"
+              >
+                Download Notes
               </Button>
             </div>
           </aside>
@@ -1419,6 +2117,7 @@ export default function MeetingRoomPage() {
         {/* Floating Meeting Controls (Desktop Bottom) */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50">
           <Card className="p-3 rounded-[2.5rem] bg-black/70 backdrop-blur-2xl border-4 border-white/10 shadow-2xl flex items-center gap-4 px-8">
+            
             <Button
               onClick={toggleMic}
               variant="ghost"
@@ -1463,6 +2162,46 @@ export default function MeetingRoomPage() {
               <CircleDot className="w-6 h-6" />
             </Button>
 
+            {/* Whiteboard trigger */}
+            <Button
+              onClick={() => {
+                setIsWhiteboardOpen(!isWhiteboardOpen);
+                setTimeout(initWhiteboard, 200);
+              }}
+              variant="ghost"
+              className={cn(
+                "h-14 w-14 rounded-2xl transition-all",
+                isWhiteboardOpen ? "bg-rose-600 text-white" : "bg-white/5 text-white hover:bg-white/10"
+              )}
+            >
+              <Edit3 className="w-6 h-6" />
+            </Button>
+
+            {/* Collaborative Notepad Trigger */}
+            <Button
+              onClick={() => setIsNotepadOpen(!isNotepadOpen)}
+              variant="ghost"
+              className={cn(
+                "h-14 w-14 rounded-2xl transition-all",
+                isNotepadOpen ? "bg-rose-600 text-white" : "bg-white/5 text-white hover:bg-white/10"
+              )}
+            >
+              <FileText className="w-6 h-6" />
+            </Button>
+
+            {/* Hand Raise Trigger */}
+            <Button
+              onClick={toggleHandRaise}
+              variant="ghost"
+              className={cn(
+                "h-14 w-14 rounded-2xl transition-all",
+                handRaised ? "bg-amber-600 text-white shadow-xl animate-bounce" : "bg-white/5 text-white hover:bg-white/10"
+              )}
+            >
+              <span className="text-xl">✋</span>
+            </Button>
+
+            {/* Chat Trigger */}
             <Button
               onClick={() => setIsChatOpen(!isChatOpen)}
               variant="ghost"
@@ -1479,13 +2218,195 @@ export default function MeetingRoomPage() {
               )}
             </Button>
 
+            {/* Quality Select Dialog Trigger */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" className="h-14 w-14 rounded-2xl bg-white/5 text-white hover:bg-white/10">
+                  <Radio className="w-6 h-6" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="glass-card border-zinc-800 rounded-[2.5rem] max-w-sm bg-zinc-950 text-white p-8">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-black uppercase tracking-tight italic">Quality & Layout</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6 pt-4 text-xs font-bold">
+                  {/* Quality Settings */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Video Quality</label>
+                    <select
+                      value={videoQuality}
+                      onChange={(e) => {
+                        setVideoQuality(e.target.value);
+                        void setupWebRTC();
+                      }}
+                      className="w-full h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-3 outline-none text-white font-bold text-xs"
+                    >
+                      <option value="720p">High Definition (720p)</option>
+                      <option value="480p">Standard Definition (480p)</option>
+                      <option value="audio-only">Low Bandwidth (Audio-Only)</option>
+                    </select>
+                  </div>
+
+                  {/* Grid Layout settings */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Layout Grid</label>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => setGridMode("grid")}
+                        className={cn("flex-1 h-10 rounded-xl text-[10px] font-black uppercase tracking-wider", gridMode === "grid" ? "bg-rose-600" : "bg-zinc-900 border border-zinc-800")}
+                      >
+                        Equal Grid
+                      </Button>
+                      <Button
+                        onClick={() => setGridMode("presenter")}
+                        className={cn("flex-1 h-10 rounded-xl text-[10px] font-black uppercase tracking-wider", gridMode === "presenter" ? "bg-rose-600" : "bg-zinc-900 border border-zinc-800")}
+                      >
+                        Presenter
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Room Themes Selector */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Virtual Room Accent Theme</label>
+                    <div className="flex gap-2">
+                      {["obsidian", "matrix", "sunset"].map((th) => (
+                        <Button
+                          key={th}
+                          onClick={() => setRoomTheme(th as any)}
+                          className={cn(
+                            "flex-1 h-10 rounded-xl text-[9px] font-black uppercase tracking-wider",
+                            roomTheme === th ? "bg-rose-600" : "bg-zinc-900 border border-zinc-800"
+                          )}
+                        >
+                          {th}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* CSS Video filter selector */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Local Camera Video Filter</label>
+                    <select
+                      value={videoFilter}
+                      onChange={(e) => setVideoFilter(e.target.value)}
+                      className="w-full h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-3 outline-none text-white font-bold text-xs"
+                    >
+                      <option value="none">Normal (No Filter)</option>
+                      <option value="grayscale(1)">Classic Noir (Grayscale)</option>
+                      <option value="sepia(1)">Vintage Sepia</option>
+                      <option value="hue-rotate(270deg) saturate(1.8) contrast(1.2)">Cyberpunk Neon</option>
+                      <option value="invert(1)">Neon X-Ray (Invert)</option>
+                      <option value="blur(4px)">Privacy Blur</option>
+                    </select>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Emojis floating reaction button panel */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" className="h-14 w-14 rounded-2xl bg-white/5 text-white hover:bg-white/10">
+                  <Smile className="w-6 h-6" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="glass-card border-zinc-800 rounded-[2.5rem] max-w-sm bg-zinc-950 text-white p-8">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-black uppercase tracking-tight italic">Send Reaction</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-5 gap-3 pt-4 justify-items-center">
+                  {["❤️", "👍", "👏", "😂", "🔥", "🎉", "😮", "🤔", "💡", "✋"].map((em) => (
+                    <button
+                      key={em}
+                      onClick={() => {
+                        void sendReaction(em);
+                        toast({ title: `Reaction sent: ${em}` });
+                      }}
+                      className="text-3xl hover:scale-125 transition-transform"
+                    >
+                      {em}
+                    </button>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Live Polls creator panel */}
+            <Dialog open={showPollCreator} onOpenChange={setShowPollCreator}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" className="h-14 w-14 rounded-2xl bg-white/5 text-white hover:bg-white/10">
+                  <HelpCircle className="w-6 h-6" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="glass-card border-zinc-800 rounded-[2.5rem] max-w-md bg-zinc-950 text-white p-8">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-black uppercase tracking-tight italic">Create Live Poll</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4 text-xs font-bold">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Poll Question</label>
+                    <Input 
+                      placeholder="e.g. Do you approve the new design?" 
+                      value={pollQuestion}
+                      onChange={(e) => setPollQuestion(e.target.value)}
+                      className="bg-zinc-900 border-zinc-800 rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Option A</label>
+                    <Input 
+                      placeholder="Yes" 
+                      value={pollOptA}
+                      onChange={(e) => setPollOptA(e.target.value)}
+                      className="bg-zinc-900 border-zinc-800 rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Option B</label>
+                    <Input 
+                      placeholder="No" 
+                      value={pollOptB}
+                      onChange={(e) => setPollOptB(e.target.value)}
+                      className="bg-zinc-900 border-zinc-800 rounded-xl"
+                    />
+                  </div>
+                  <Button onClick={createLivePoll} className="w-full h-11 bg-rose-600 hover:bg-rose-500 text-xs font-black uppercase tracking-wider rounded-xl mt-2">
+                    Launch Poll
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Live Captions speech trigger */}
+            <Button
+              onClick={handleLiveCaptionsToggle}
+              variant="ghost"
+              className={cn(
+                "h-14 w-14 rounded-2xl transition-all",
+                captionsActive ? "bg-rose-600 text-white" : "bg-white/5 text-white hover:bg-white/10"
+              )}
+            >
+              <Subtitles className="w-6 h-6" />
+            </Button>
+
+            {/* PiP Trigger */}
+            <Button
+              onClick={() => togglePiP("mobile-local-cam")}
+              variant="ghost"
+              className="h-14 w-14 rounded-2xl bg-white/5 text-white hover:bg-white/10"
+            >
+              <Tv className="w-6 h-6" />
+            </Button>
+
             <div className="w-px h-10 bg-white/10 mx-2" />
 
             <Button
               onClick={endMeeting}
               className="h-14 px-8 bg-rose-600 hover:bg-rose-500 rounded-2xl font-black uppercase text-[10px] tracking-widest text-white shadow-xl flex items-center gap-3 border-b-4 border-rose-900 active:border-b-0"
             >
-              <PhoneOff className="w-5 h-5" /> End call
+              <PhoneOff className="w-5 h-5" /> End Call
             </Button>
           </Card>
         </div>
