@@ -228,7 +228,7 @@ export default function XakteirMapsPage() {
   const [location, setLocation] = useState<{lat: number, lon: number} | null>(null);
   const [loading, setLoading] = useState(true);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<"map" | "friends">("map");
+  const [friendsOpen, setFriendsOpen] = useState(false);
   const [mapLayer, setMapLayer] = useState<"dark" | "light" | "osm" | "satellite">("dark");
 
   // Search points state
@@ -1011,7 +1011,7 @@ export default function XakteirMapsPage() {
   const isSpeeding = simSpeed > simSpeedLimit;
 
   return (
-    <div className="max-w-[1600px] mx-auto py-6 animate-fade-in px-6 h-[calc(100vh-140px)] flex flex-col gap-6 text-foreground relative">
+    <div className="w-full h-[calc(100vh-68px)] animate-fade-in text-foreground relative overflow-hidden flex flex-col">
       <style>{`
         @keyframes bounce-marker {
           0% { transform: translateY(0); }
@@ -1030,460 +1030,457 @@ export default function XakteirMapsPage() {
         }
       `}</style>
 
-      {/* Header Panel */}
-      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 glass-card p-6 rounded-[2.5rem] border-white/10 shadow-2xl relative z-[100] bg-black/40">
-        <div className="flex items-center gap-4 pl-4 border-r border-white/10 pr-8">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20"><MapIcon className="w-6 h-6 text-blue-500" /></div>
-          <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none">Xakteir Maps</h1>
-        </div>
+      {/* Main stage - takes up full viewport */}
+      <div className="flex-1 w-full h-full relative overflow-hidden">
+        {loading ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center space-y-6 bg-zinc-950 z-[900]">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-500 opacity-20" />
+            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-500">Syncing Geo-Registry...</p>
+          </div>
+        ) : (
+          <div id="leaflet-map-holder" className="w-full h-full rounded-none border-none z-10" />
+        )}
 
-        {/* Tab Switcher */}
-        <div className="flex bg-black/45 p-1 rounded-xl border border-white/5 relative z-20">
-          <button 
-            onClick={() => { setActiveTab("map"); }}
-            className={cn("px-6 h-10 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all", activeTab === "map" ? "bg-blue-600 text-white shadow-lg" : "text-muted-foreground hover:bg-white/5")}
-          >
-            Map View
-          </button>
-          <button 
-            onClick={() => { setActiveTab("friends"); }}
-            className={cn("px-6 h-10 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2", activeTab === "friends" ? "bg-blue-600 text-white shadow-lg" : "text-muted-foreground hover:bg-white/5")}
-          >
-            <UsersIcon className="w-3.5 h-3.5" /> Friends Locator ({activeFriends.length})
-          </button>
-        </div>
-
-        <div className="flex items-center gap-4 pr-4">
-          <Button onClick={() => { if (location) panToTarget(location.lat, location.lon); }} variant="ghost" size="icon" className="rounded-xl h-11 w-11 hover:bg-white/5"><Locate className="w-6 h-6 text-blue-400" /></Button>
-          <Badge className="bg-blue-600/80 text-white font-black text-[9px] px-4 py-2 border-none">NAV GRID: ACTIVE</Badge>
-        </div>
-      </header>
-
-      {/* Main split stage */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0 relative">
-        {/* Left Side: Map Holder & Floating HUDs */}
-        <div className="flex-1 bg-zinc-950 rounded-[4rem] border-8 border-white/5 relative overflow-hidden shadow-2xl h-full min-h-[400px]">
-          {loading ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center space-y-6">
-              <Loader2 className="w-12 h-12 animate-spin text-blue-500 opacity-20" />
-              <p className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-500">Syncing Geo-Registry...</p>
-            </div>
-          ) : (
-            <div id="leaflet-map-holder" className="w-full h-full" />
-          )}
-
-          {/* FLOATING MAP LAYERS PICKER (Bottom-Left) */}
-          {!loading && (
-            <div className="absolute bottom-10 left-10 z-[400] flex gap-2">
-              <Card className="glass-card p-1.5 rounded-2xl border-white/10 flex gap-1 shadow-2xl bg-black/60">
-                <Button 
-                  size="sm" 
-                  variant={mapLayer === "dark" ? "default" : "ghost"}
-                  onClick={() => setMapLayer("dark")}
-                  className={cn("text-[9px] font-black uppercase tracking-wider h-8 rounded-lg px-3", mapLayer === "dark" ? "bg-blue-600" : "text-white")}
-                >
-                  Dark
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={mapLayer === "light" ? "default" : "ghost"}
-                  onClick={() => setMapLayer("light")}
-                  className={cn("text-[9px] font-black uppercase tracking-wider h-8 rounded-lg px-3", mapLayer === "light" ? "bg-blue-600" : "text-white")}
-                >
-                  Light
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={mapLayer === "osm" ? "default" : "ghost"}
-                  onClick={() => setMapLayer("osm")}
-                  className={cn("text-[9px] font-black uppercase tracking-wider h-8 rounded-lg px-3", mapLayer === "osm" ? "bg-blue-600" : "text-white")}
-                >
-                  Street
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={mapLayer === "satellite" ? "default" : "ghost"}
-                  onClick={() => setMapLayer("satellite")}
-                  className={cn("text-[9px] font-black uppercase tracking-wider h-8 rounded-lg px-3", mapLayer === "satellite" ? "bg-blue-600" : "text-white")}
-                >
-                  Satellite
-                </Button>
-              </Card>
-            </div>
-          )}
-
-          {/* Map zoom controls */}
-          <div className="absolute bottom-10 right-10 flex flex-col gap-4 z-[400]">
-            <Card className="glass-card p-2 rounded-3xl border-white/10 flex flex-col gap-2 shadow-2xl bg-black/60">
-              <Button size="icon" variant="ghost" onClick={() => mapRef.current?.zoomIn()} className="h-12 w-12 rounded-2xl hover:bg-primary/10 hover:text-primary text-white"><Plus className="w-5 h-5" /></Button>
-              <Button size="icon" variant="ghost" onClick={() => mapRef.current?.zoomOut()} className="h-12 w-12 rounded-2xl hover:bg-primary/10 hover:text-primary text-white"><Minus className="w-5 h-5" /></Button>
+        {/* FLOATING MAP LAYERS PICKER (Bottom-Left) */}
+        {!loading && (
+          <div className="absolute bottom-10 left-10 z-[400] flex gap-2">
+            <Card className="glass-card p-1.5 rounded-2xl border-white/10 flex gap-1 shadow-2xl bg-black/60">
+              <Button 
+                size="sm" 
+                variant={mapLayer === "dark" ? "default" : "ghost"}
+                onClick={() => setMapLayer("dark")}
+                className={cn("text-[9px] font-black uppercase tracking-wider h-8 rounded-lg px-3", mapLayer === "dark" ? "bg-blue-600" : "text-white")}
+              >
+                Dark
+              </Button>
+              <Button 
+                size="sm" 
+                variant={mapLayer === "light" ? "default" : "ghost"}
+                onClick={() => setMapLayer("light")}
+                className={cn("text-[9px] font-black uppercase tracking-wider h-8 rounded-lg px-3", mapLayer === "light" ? "bg-blue-600" : "text-white")}
+              >
+                Light
+              </Button>
+              <Button 
+                size="sm" 
+                variant={mapLayer === "osm" ? "default" : "ghost"}
+                onClick={() => setMapLayer("osm")}
+                className={cn("text-[9px] font-black uppercase tracking-wider h-8 rounded-lg px-3", mapLayer === "osm" ? "bg-blue-600" : "text-white")}
+              >
+                Street
+              </Button>
+              <Button 
+                size="sm" 
+                variant={mapLayer === "satellite" ? "default" : "ghost"}
+                onClick={() => setMapLayer("satellite")}
+                className={cn("text-[9px] font-black uppercase tracking-wider h-8 rounded-lg px-3", mapLayer === "satellite" ? "bg-blue-600" : "text-white")}
+              >
+                Satellite
+              </Button>
             </Card>
           </div>
+        )}
 
-          {/* GOOGLE MAPS FLOATING SEARCH / ROUTE BUILDER (Top-Left) */}
-          {!loading && !isSimulating && (
-            <div className="absolute top-6 left-6 z-[400] w-[380px] max-w-[calc(100vw-50px)]">
-              <Card className="glass-card p-6 rounded-[2.5rem] bg-black/75 border-white/10 shadow-3xl flex flex-col gap-4">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <h3 className="text-xs font-black uppercase italic tracking-wider text-white flex items-center gap-2">
-                    <Navigation className="w-4 h-4 text-blue-500 rotate-45" /> Journey Planner
-                  </h3>
-                  {routeDetails && (
-                    <Button onClick={resetJourney} size="icon" variant="ghost" className="h-7 w-7 rounded-lg text-zinc-400 hover:text-white">
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
+        {/* Map zoom controls */}
+        <div className="absolute bottom-10 right-10 flex flex-col gap-4 z-[400]">
+          <Card className="glass-card p-2 rounded-3xl border-white/10 flex flex-col gap-2 shadow-2xl bg-black/60">
+            <Button size="icon" variant="ghost" onClick={() => mapRef.current?.zoomIn()} className="h-12 w-12 rounded-2xl hover:bg-primary/10 hover:text-primary text-white"><Plus className="w-5 h-5" /></Button>
+            <Button size="icon" variant="ghost" onClick={() => mapRef.current?.zoomOut()} className="h-12 w-12 rounded-2xl hover:bg-primary/10 hover:text-primary text-white"><Minus className="w-5 h-5" /></Button>
+          </Card>
+        </div>
+
+        {/* FLOATING FRIENDS LIST TOGGLE (Top-Right) */}
+        {!loading && (
+          <div className="absolute top-6 right-6 z-[400] flex gap-3 pointer-events-auto">
+            <Button
+              onClick={() => setFriendsOpen(!friendsOpen)}
+              className={cn(
+                "glass-card border-white/10 text-white rounded-2xl flex items-center gap-2 h-12 px-5 font-black text-xs uppercase tracking-widest",
+                friendsOpen ? "bg-pink-600/90 hover:bg-pink-500/90 border-pink-500" : "bg-black/75 hover:bg-black/90"
+              )}
+            >
+              <UsersIcon className="w-4 h-4 text-pink-500" />
+              Friends ({activeFriends.length})
+            </Button>
+            <Button 
+              onClick={() => { if (location) panToTarget(location.lat, location.lon); }} 
+              variant="ghost" 
+              size="icon" 
+              className="glass-card bg-black/75 hover:bg-black/90 border-white/10 rounded-2xl h-12 w-12 text-blue-400"
+            >
+              <Locate className="w-5 h-5" />
+            </Button>
+          </div>
+        )}
+
+        {/* GOOGLE MAPS FLOATING SEARCH / ROUTE BUILDER (Top-Left) */}
+        {!loading && !isSimulating && (
+          <div className="absolute top-6 left-6 z-[400] w-[380px] max-w-[calc(100vw-50px)] pointer-events-auto">
+            <Card className="glass-card p-6 rounded-[2.5rem] bg-black/75 border-white/10 shadow-3xl flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                    <MapIcon className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div>
+                    <h1 className="text-sm font-black text-white tracking-tighter uppercase italic leading-none">Xakteir Maps</h1>
+                    <p className="text-[7px] font-black uppercase text-zinc-500 tracking-wider mt-0.5">Journey Planner</p>
+                  </div>
+                </div>
+                {routeDetails && (
+                  <Button onClick={resetJourney} size="icon" variant="ghost" className="h-7 w-7 rounded-lg text-zinc-400 hover:text-white">
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+
+              {/* Start & End Input Container */}
+              <div className="relative flex flex-col gap-3">
+                {/* Vertical connecting line indicator */}
+                <div className="absolute left-4.5 top-9.5 bottom-9.5 w-0.5 border-l-2 border-dashed border-zinc-700 pointer-events-none"></div>
+
+                {/* Start Point */}
+                <div className="flex items-center gap-3 relative">
+                  <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/30 shrink-0 z-10">
+                    <div className="w-3.5 h-3.5 rounded-full bg-green-500 animate-pulse"></div>
+                  </div>
+                  <div className="flex-1 relative">
+                    <Input
+                      value={startQuery}
+                      onFocus={() => setActiveSearchInput("start")}
+                      onBlur={() => setTimeout(() => setActiveSearchInput(null), 200)}
+                      onChange={(e) => { setStartQuery(e.target.value); if (startPoint) setStartPoint(null); }}
+                      placeholder="Enter start location or EirCode..."
+                      className="bg-zinc-950/80 border-white/5 h-10 rounded-xl text-xs font-bold text-white pl-4 pr-10"
+                    />
+                    {startQuery !== "My Location" && (
+                      <button 
+                        onClick={() => { setStartQuery("My Location"); if (location) setStartPoint({ lat: location.lat, lon: location.lon, name: "My Location" }); }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-wider text-blue-400 hover:text-blue-300"
+                      >
+                        GPS
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                {/* Start & End Input Container */}
-                <div className="relative flex flex-col gap-3">
-                  {/* Vertical connecting line indicator */}
-                  <div className="absolute left-4.5 top-9.5 bottom-9.5 w-0.5 border-l-2 border-dashed border-zinc-700 pointer-events-none"></div>
-
-                  {/* Start Point */}
-                  <div className="flex items-center gap-3 relative">
-                    <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/30 shrink-0 z-10">
-                      <div className="w-3.5 h-3.5 rounded-full bg-green-500 animate-pulse"></div>
-                    </div>
-                    <div className="flex-1 relative">
-                      <Input
-                        value={startQuery}
-                        onFocus={() => setActiveSearchInput("start")}
-                        onBlur={() => setTimeout(() => setActiveSearchInput(null), 200)}
-                        onChange={(e) => { setStartQuery(e.target.value); if (startPoint) setStartPoint(null); }}
-                        placeholder="Enter start location or EirCode..."
-                        className="bg-zinc-950/80 border-white/5 h-10 rounded-xl text-xs font-bold text-white pl-4 pr-10"
-                      />
-                      {startQuery !== "My Location" && (
-                        <button 
-                          onClick={() => { setStartQuery("My Location"); if (location) setStartPoint({ lat: location.lat, lon: location.lon, name: "My Location" }); }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-wider text-blue-400 hover:text-blue-300"
-                        >
-                          GPS
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Swap Button in between */}
-                  <div className="flex justify-end pr-4 -my-2.5">
-                    <Button 
-                      onClick={swapStartEnd} 
-                      type="button" 
-                      variant="ghost" 
-                      size="icon" 
-                      className="w-7 h-7 bg-zinc-900 border border-white/5 rounded-full hover:bg-zinc-800 text-zinc-400"
-                    >
-                      <ArrowLeftLeftRight className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-
-                  {/* Destination Point */}
-                  <div className="flex items-center gap-3 relative">
-                    <div className="w-9 h-9 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/30 shrink-0 z-10">
-                      <MapPin className="w-4.5 h-4.5 text-red-500" />
-                    </div>
-                    <div className="flex-1 relative">
-                      <Input
-                        value={destQuery}
-                        onFocus={() => setActiveSearchInput("dest")}
-                        onBlur={() => setTimeout(() => setActiveSearchInput(null), 200)}
-                        onChange={(e) => { setDestQuery(e.target.value); if (destPoint) setDestPoint(null); }}
-                        placeholder="Choose destination or EirCode..."
-                        className="bg-zinc-950/80 border-white/5 h-10 rounded-xl text-xs font-bold text-white pl-4"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Autocomplete Suggestions */}
-                  {activeSearchInput === "start" && startSuggestions.length > 0 && (
-                    <Card className="absolute top-[44px] left-12 right-0 z-[500] bg-zinc-950/95 border-white/10 rounded-2xl p-2 max-h-48 overflow-y-auto shadow-2xl flex flex-col gap-1">
-                      {startSuggestions.map((s, idx) => (
-                        <button
-                          key={idx}
-                          onMouseDown={() => {
-                            setStartPoint({ lat: s.lat, lon: s.lon, name: s.name });
-                            setStartQuery(s.name);
-                            setStartSuggestions([]);
-                          }}
-                          className="w-full text-left p-2.5 hover:bg-white/5 rounded-lg text-[10px] font-bold text-zinc-300 truncate"
-                        >
-                          {s.name}
-                        </button>
-                      ))}
-                    </Card>
-                  )}
-
-                  {activeSearchInput === "dest" && destSuggestions.length > 0 && (
-                    <Card className="absolute top-[96px] left-12 right-0 z-[500] bg-zinc-950/95 border-white/10 rounded-2xl p-2 max-h-48 overflow-y-auto shadow-2xl flex flex-col gap-1">
-                      {destSuggestions.map((s, idx) => (
-                        <button
-                          key={idx}
-                          onMouseDown={() => {
-                            setDestPoint({ lat: s.lat, lon: s.lon, name: s.name });
-                            setDestQuery(s.name);
-                            setDestSuggestions([]);
-                          }}
-                          className="w-full text-left p-2.5 hover:bg-white/5 rounded-lg text-[10px] font-bold text-zinc-300 truncate"
-                        >
-                          {s.name}
-                        </button>
-                      ))}
-                    </Card>
-                  )}
-                </div>
-
-                {/* Transportation Mode Pickers */}
-                <div className="grid grid-cols-3 gap-2 mt-1">
-                  <Button
-                    size="sm"
-                    variant={travelMode === "driving" ? "default" : "ghost"}
-                    onClick={() => setTravelMode("driving")}
-                    className={cn("h-9 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider border border-white/5", travelMode === "driving" ? "bg-blue-600 text-white" : "text-zinc-400 hover:bg-white/5")}
+                {/* Swap Button in between */}
+                <div className="flex justify-end pr-4 -my-2.5">
+                  <Button 
+                    onClick={swapStartEnd} 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon" 
+                    className="w-7 h-7 bg-zinc-900 border border-white/5 rounded-full hover:bg-zinc-800 text-zinc-400"
                   >
-                    <Car className="w-3.5 h-3.5" /> Drive
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={travelMode === "cycling" ? "default" : "ghost"}
-                    onClick={() => setTravelMode("cycling")}
-                    className={cn("h-9 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider border border-white/5", travelMode === "cycling" ? "bg-blue-600 text-white" : "text-zinc-400 hover:bg-white/5")}
-                  >
-                    <Bike className="w-3.5 h-3.5" /> Cycle
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={travelMode === "walking" ? "default" : "ghost"}
-                    onClick={() => setTravelMode("walking")}
-                    className={cn("h-9 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider border border-white/5", travelMode === "walking" ? "bg-blue-600 text-white" : "text-zinc-400 hover:bg-white/5")}
-                  >
-                    <Footprints className="w-3.5 h-3.5" /> Walk
+                    <ArrowLeftLeftRight className="w-3.5 h-3.5" />
                   </Button>
                 </div>
 
-                {/* Route Loading state */}
-                {routingLoading && (
-                  <div className="flex items-center justify-center gap-2 py-4 text-blue-400 text-xs font-black uppercase tracking-widest">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Routing Path...
+                {/* Destination Point */}
+                <div className="flex items-center gap-3 relative">
+                  <div className="w-9 h-9 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/30 shrink-0 z-10">
+                    <MapPin className="w-4.5 h-4.5 text-red-500" />
                   </div>
+                  <div className="flex-1 relative">
+                    <Input
+                      value={destQuery}
+                      onFocus={() => setActiveSearchInput("dest")}
+                      onBlur={() => setTimeout(() => setActiveSearchInput(null), 200)}
+                      onChange={(e) => { setDestQuery(e.target.value); if (destPoint) setDestPoint(null); }}
+                      placeholder="Choose destination or EirCode..."
+                      className="bg-zinc-950/80 border-white/5 h-10 rounded-xl text-xs font-bold text-white pl-4"
+                    />
+                  </div>
+                </div>
+
+                {/* Autocomplete Suggestions */}
+                {activeSearchInput === "start" && startSuggestions.length > 0 && (
+                  <Card className="absolute top-[44px] left-12 right-0 z-[500] bg-zinc-950/95 border-white/10 rounded-2xl p-2 max-h-48 overflow-y-auto shadow-2xl flex flex-col gap-1">
+                    {startSuggestions.map((s, idx) => (
+                      <button
+                        key={idx}
+                        onMouseDown={() => {
+                          setStartPoint({ lat: s.lat, lon: s.lon, name: s.name });
+                          setStartQuery(s.name);
+                          setStartSuggestions([]);
+                        }}
+                        className="w-full text-left p-2.5 hover:bg-white/5 rounded-lg text-[10px] font-bold text-zinc-300 truncate"
+                      >
+                        {s.name}
+                      </button>
+                    ))}
+                  </Card>
                 )}
 
-                {/* Route stats & Start Journey panel */}
-                {routeDetails && !routingLoading && (
-                  <div className="flex flex-col gap-4 pt-2 border-t border-white/10">
-                    <div className="flex justify-between items-center bg-zinc-950/50 p-4 rounded-2xl border border-white/5">
-                      <div>
-                        <p className="text-lg font-black text-white">{formatDuration(routeDetails.duration)}</p>
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide mt-0.5">Distance: {formatDistance(routeDetails.distance)}</p>
-                      </div>
-                      <Badge className="bg-emerald-600 text-white uppercase text-[8px] font-black py-1.5 px-3">Fastest Route</Badge>
-                    </div>
-
-                    <Button 
-                      onClick={startJourney}
-                      className="bg-blue-600 hover:bg-blue-500 text-white rounded-[1.5rem] h-12 w-full font-black text-xs uppercase tracking-widest border-none flex items-center justify-center gap-2 shadow-lg"
-                    >
-                      <Navigation className="w-4.5 h-4.5 rotate-45" /> Start Journey
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            </div>
-          )}
-
-          {/* ACTIVE NAVIGATION HUD - TOP BANNER (Green Turn Indicators) */}
-          {isSimulating && currentStepProgress && (
-            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[400] w-[450px] max-w-[calc(100vw-30px)]">
-              <Card className="bg-emerald-600 border border-emerald-500 rounded-[2.2rem] p-5 shadow-3xl flex items-center gap-4 text-white">
-                <div className="w-12 h-12 rounded-full bg-black/20 flex items-center justify-center border border-white/10 shrink-0">
-                  {renderTurnIcon(currentStepProgress.modifier)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-sm font-black tracking-tight leading-tight uppercase line-clamp-2">{currentStepProgress.instruction}</h2>
-                  <p className="text-[9px] font-bold tracking-widest uppercase text-emerald-200 mt-0.5">Route Navigation HUD</p>
-                </div>
-              </Card>
-            </div>
-          )}
-
-          {/* ACTIVE NAVIGATION HUD - BOTTOM DASHBOARD PANEL (Speedometer, limit, progress) */}
-          {isSimulating && routeDetails && (
-            <div className="absolute bottom-6 left-6 right-6 z-[400] flex flex-col md:flex-row gap-4 justify-between items-center pointer-events-none">
-              
-              {/* SPEED HUD (LEFT) */}
-              <div className="flex gap-4 items-center pointer-events-auto">
-                {/* Circular Speedometer */}
-                <Card className={cn(
-                  "glass-card p-4 rounded-[2.5rem] bg-black/80 flex items-center gap-4 shrink-0 transition-all border-white/10",
-                  isSpeeding && "speeding-alert-container border-rose-500/80"
-                )}>
-                  <div className="relative w-24 h-24 flex items-center justify-center">
-                    {/* SVG Gauge */}
-                    <svg className="w-24 h-24 transform -rotate-225" viewBox="0 0 100 100">
-                      {/* Grey dial background */}
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r={radius}
-                        fill="transparent"
-                        stroke="rgba(255,255,255,0.06)"
-                        strokeWidth="7"
-                        strokeDasharray={arcLength}
-                        className="stroke-round"
-                      />
-                      {/* Active Speed line */}
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r={radius}
-                        fill="transparent"
-                        stroke={isSpeeding ? "#ef4444" : "#10b981"}
-                        strokeWidth="7"
-                        strokeDasharray={arcLength}
-                        strokeDashoffset={strokeDashoffset}
-                        className="transition-all duration-100 ease-out"
-                        style={{ strokeLinecap: "round" }}
-                      />
-                    </svg>
-                    {/* Digital display */}
-                    <div className="absolute flex flex-col items-center justify-center">
-                      <span className={cn("text-2xl font-black italic tracking-tighter leading-none", isSpeeding ? "text-rose-500" : "text-white")}>
-                        {Math.round(simSpeed)}
-                      </span>
-                      <span className="text-[7px] font-black uppercase text-zinc-500 tracking-wider">km/h</span>
-                    </div>
-                  </div>
-
-                  {/* Speed Limit Sign & Warning text */}
-                  <div className="flex flex-col items-center pr-2">
-                    {/* European/Irish Circular Speed Limit Sign */}
-                    <div className={cn(
-                      "w-12 h-12 rounded-full border-4 border-rose-600 bg-white flex items-center justify-center shadow-lg shrink-0",
-                      isSpeeding && "animate-bounce"
-                    )}>
-                      <span className="text-zinc-950 font-black text-sm tracking-tighter">{simSpeedLimit}</span>
-                    </div>
-                    <span className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mt-1">Limit</span>
-                  </div>
-                </Card>
-
-                {/* Over speed warning indicator */}
-                {isSpeeding && (
-                  <Card className="bg-rose-600 text-white rounded-2xl px-4 py-2 border-none flex items-center gap-2 text-[9px] font-black uppercase tracking-widest animate-pulse shadow-lg shrink-0">
-                    <ShieldAlert className="w-4 h-4 animate-bounce" /> SPEED ALERT!
+                {activeSearchInput === "dest" && destSuggestions.length > 0 && (
+                  <Card className="absolute top-[96px] left-12 right-0 z-[500] bg-zinc-950/95 border-white/10 rounded-2xl p-2 max-h-48 overflow-y-auto shadow-2xl flex flex-col gap-1">
+                    {destSuggestions.map((s, idx) => (
+                      <button
+                        key={idx}
+                        onMouseDown={() => {
+                          setDestPoint({ lat: s.lat, lon: s.lon, name: s.name });
+                          setDestQuery(s.name);
+                          setDestSuggestions([]);
+                        }}
+                        className="w-full text-left p-2.5 hover:bg-white/5 rounded-lg text-[10px] font-bold text-zinc-300 truncate"
+                      >
+                        {s.name}
+                      </button>
+                    ))}
                   </Card>
                 )}
               </div>
 
-              {/* SIMULATION CONTROLS & TRIP STATUS (MIDDLE / RIGHT) */}
-              <Card className="glass-card p-6 rounded-[2.5rem] bg-black/85 border-white/10 shadow-3xl w-full md:max-w-2xl pointer-events-auto flex flex-col md:flex-row items-center gap-6">
-                
-                {/* Stats Panel */}
-                <div className="flex-1 w-full space-y-2 border-r border-white/10 pr-6">
-                  <div className="flex justify-between items-end text-xs">
+              {/* Transportation Mode Pickers */}
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                <Button
+                  size="sm"
+                  variant={travelMode === "driving" ? "default" : "ghost"}
+                  onClick={() => setTravelMode("driving")}
+                  className={cn("h-9 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider border border-white/5", travelMode === "driving" ? "bg-blue-600 text-white" : "text-zinc-400 hover:bg-white/5")}
+                >
+                  <Car className="w-3.5 h-3.5" /> Drive
+                </Button>
+                <Button
+                  size="sm"
+                  variant={travelMode === "cycling" ? "default" : "ghost"}
+                  onClick={() => setTravelMode("cycling")}
+                  className={cn("h-9 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider border border-white/5", travelMode === "cycling" ? "bg-blue-600 text-white" : "text-zinc-400 hover:bg-white/5")}
+                >
+                  <Bike className="w-3.5 h-3.5" /> Cycle
+                </Button>
+                <Button
+                  size="sm"
+                  variant={travelMode === "walking" ? "default" : "ghost"}
+                  onClick={() => setTravelMode("walking")}
+                  className={cn("h-9 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider border border-white/5", travelMode === "walking" ? "bg-blue-600 text-white" : "text-zinc-400 hover:bg-white/5")}
+                >
+                  <Footprints className="w-3.5 h-3.5" /> Walk
+                </Button>
+              </div>
+
+              {/* Route Loading state */}
+              {routingLoading && (
+                <div className="flex items-center justify-center gap-2 py-4 text-blue-400 text-xs font-black uppercase tracking-widest">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Routing Path...
+                </div>
+              )}
+
+              {/* Route stats & Start Journey panel */}
+              {routeDetails && !routingLoading && (
+                <div className="flex flex-col gap-4 pt-2 border-t border-white/10">
+                  <div className="flex justify-between items-center bg-zinc-950/50 p-4 rounded-2xl border border-white/5">
                     <div>
-                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Remaining ETA</p>
-                      <p className="text-base font-black text-white mt-0.5">
-                        {formatDuration(((routeDetails.distance - simDistanceTravelled) / (simSpeed || 30)) * 3.6)}
-                      </p>
+                      <p className="text-lg font-black text-white">{formatDuration(routeDetails.duration)}</p>
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide mt-0.5">Distance: {formatDistance(routeDetails.distance)}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Distance</p>
-                      <p className="text-xs font-black text-zinc-300 mt-0.5">
-                        {formatDistance(routeDetails.distance - simDistanceTravelled)} left
-                      </p>
-                    </div>
+                    <Badge className="bg-emerald-600 text-white uppercase text-[8px] font-black py-1.5 px-3">Fastest Route</Badge>
                   </div>
 
-                  {/* Progress Bar */}
-                  <Progress 
-                    value={(simDistanceTravelled / routeDetails.distance) * 100}
-                    className="h-2 bg-zinc-950 border border-white/5 rounded-full"
-                  />
+                  <Button 
+                    onClick={startJourney}
+                    className="bg-blue-600 hover:bg-blue-500 text-white rounded-[1.5rem] h-12 w-full font-black text-xs uppercase tracking-widest border-none flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    <Navigation className="w-4.5 h-4.5 rotate-45" /> Start Journey
+                  </Button>
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+
+        {/* ACTIVE NAVIGATION HUD - TOP BANNER (Green Turn Indicators) */}
+        {isSimulating && currentStepProgress && (
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[400] w-[450px] max-w-[calc(100vw-30px)]">
+            <Card className="bg-emerald-600 border border-emerald-500 rounded-[2.2rem] p-5 shadow-3xl flex items-center gap-4 text-white">
+              <div className="w-12 h-12 rounded-full bg-black/20 flex items-center justify-center border border-white/10 shrink-0">
+                {renderTurnIcon(currentStepProgress.modifier)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-sm font-black tracking-tight leading-tight uppercase line-clamp-2">{currentStepProgress.instruction}</h2>
+                <p className="text-[9px] font-bold tracking-widest uppercase text-emerald-200 mt-0.5">Route Navigation HUD</p>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ACTIVE NAVIGATION HUD - BOTTOM DASHBOARD PANEL (Speedometer, limit, progress) */}
+        {isSimulating && routeDetails && (
+          <div className="absolute bottom-6 left-6 right-6 z-[400] flex flex-col md:flex-row gap-4 justify-between items-center pointer-events-none">
+            
+            {/* SPEED HUD (LEFT) */}
+            <div className="flex gap-4 items-center pointer-events-auto">
+              {/* Circular Speedometer */}
+              <Card className={cn(
+                "glass-card p-4 rounded-[2.5rem] bg-black/80 flex items-center gap-4 shrink-0 transition-all border-white/10",
+                isSpeeding && "speeding-alert-container border-rose-500/80"
+              )}>
+                <div className="relative w-24 h-24 flex items-center justify-center">
+                  {/* SVG Gauge */}
+                  <svg className="w-24 h-24 transform -rotate-225" viewBox="0 0 100 100">
+                    {/* Grey dial background */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={radius}
+                      fill="transparent"
+                      stroke="rgba(255,255,255,0.06)"
+                      strokeWidth="7"
+                      strokeDasharray={arcLength}
+                      className="stroke-round"
+                    />
+                    {/* Active Speed line */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={radius}
+                      fill="transparent"
+                      stroke={isSpeeding ? "#ef4444" : "#10b981"}
+                      strokeWidth="7"
+                      strokeDasharray={arcLength}
+                      strokeDashoffset={strokeDashoffset}
+                      className="transition-all duration-100 ease-out"
+                      style={{ strokeLinecap: "round" }}
+                    />
+                  </svg>
+                  {/* Digital display */}
+                  <div className="absolute flex flex-col items-center justify-center">
+                    <span className={cn("text-2xl font-black italic tracking-tighter leading-none", isSpeeding ? "text-rose-500" : "text-white")}>
+                      {Math.round(simSpeed)}
+                    </span>
+                    <span className="text-[7px] font-black uppercase text-zinc-500 tracking-wider">km/h</span>
+                  </div>
                 </div>
 
-                {/* Control elements */}
-                <div className="flex flex-col gap-3 w-full md:w-auto">
-                  <div className="flex gap-2 justify-center">
-                    {/* Pause/Play */}
-                    <Button 
-                      size="icon" 
-                      onClick={() => setIsSimulating(!isSimulating)}
-                      className={cn("w-10 h-10 rounded-xl border-none text-white", isSimulating ? "bg-amber-600 hover:bg-amber-500" : "bg-emerald-600 hover:bg-emerald-500")}
-                    >
-                      {isSimulating ? <Pause className="w-4.5 h-4.5" /> : <Play className="w-4.5 h-4.5 fill-white" />}
-                    </Button>
-
-                    {/* Speed rate multiplier (toggle rates) */}
-                    <Button
-                      size="sm"
-                      onClick={() => setSimMultiplier(prev => prev === 1 ? 5 : prev === 5 ? 10 : prev === 10 ? 25 : prev === 25 ? 50 : 1)}
-                      className="bg-zinc-800 hover:bg-zinc-700 border border-white/5 h-10 rounded-xl px-3 text-[9px] font-black uppercase text-white tracking-widest shrink-0"
-                    >
-                      Rate: {simMultiplier}x
-                    </Button>
-
-                    {/* End simulation */}
-                    <Button 
-                      size="icon" 
-                      onClick={resetJourney}
-                      className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/5 hover:bg-rose-950 text-rose-500"
-                    >
-                      <Square className="w-4 h-4 fill-rose-500" />
-                    </Button>
+                {/* Speed Limit Sign & Warning text */}
+                <div className="flex flex-col items-center pr-2">
+                  {/* European/Irish Circular Speed Limit Sign */}
+                  <div className={cn(
+                    "w-12 h-12 rounded-full border-4 border-rose-600 bg-white flex items-center justify-center shadow-lg shrink-0",
+                    isSpeeding && "animate-bounce"
+                  )}>
+                    <span className="text-zinc-950 font-black text-sm tracking-tighter">{simSpeedLimit}</span>
                   </div>
-
-                  {/* Manual speed override slider */}
-                  <div className="w-44 flex flex-col gap-1 mx-auto">
-                    <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider text-zinc-400">
-                      <span>Manual Cruise</span>
-                      <span className={simManualSpeedOverride !== null ? "text-blue-400" : "text-zinc-500"}>
-                        {simManualSpeedOverride !== null ? `${simManualSpeedOverride} km/h` : "Auto"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Slider
-                        value={[simManualSpeedOverride !== null ? simManualSpeedOverride : 50]}
-                        onValueChange={(val) => setSimManualSpeedOverride(val[0])}
-                        min={0}
-                        max={160}
-                        step={5}
-                        className="flex-1"
-                      />
-                      {simManualSpeedOverride !== null && (
-                        <button 
-                          onClick={() => setSimManualSpeedOverride(null)}
-                          className="text-[8px] font-black text-rose-500 uppercase tracking-widest"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                  <span className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mt-1">Limit</span>
                 </div>
               </Card>
+
+              {/* Over speed warning indicator */}
+              {isSpeeding && (
+                <Card className="bg-rose-600 text-white rounded-2xl px-4 py-2 border-none flex items-center gap-2 text-[9px] font-black uppercase tracking-widest animate-pulse shadow-lg shrink-0">
+                  <ShieldAlert className="w-4 h-4 animate-bounce" /> SPEED ALERT!
+                </Card>
+              )}
             </div>
-          )}
 
-        </div>
+            {/* SIMULATION CONTROLS & TRIP STATUS (MIDDLE / RIGHT) */}
+            <Card className="glass-card p-6 rounded-[2.5rem] bg-black/85 border-white/10 shadow-3xl w-full md:max-w-2xl pointer-events-auto flex flex-col md:flex-row items-center gap-6">
+              
+              {/* Stats Panel */}
+              <div className="flex-1 w-full space-y-2 border-r border-white/10 pr-6">
+                <div className="flex justify-between items-end text-xs">
+                  <div>
+                    <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Remaining ETA</p>
+                    <p className="text-base font-black text-white mt-0.5">
+                      {formatDuration(((routeDetails.distance - simDistanceTravelled) / (simSpeed || 30)) * 3.6)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Distance</p>
+                    <p className="text-xs font-black text-zinc-300 mt-0.5">
+                      {formatDistance(routeDetails.distance - simDistanceTravelled)} left
+                    </p>
+                  </div>
+                </div>
 
-        {/* Right Side: Friends / Add requests panel */}
-        {activeTab === "friends" && (
-          <aside className="w-full lg:w-96 glass-card p-8 rounded-[3rem] border-4 border-white/10 bg-zinc-950/40 shadow-3xl flex flex-col gap-8 shrink-0 overflow-y-auto h-full relative z-50">
+                {/* Progress Bar */}
+                <Progress 
+                  value={(simDistanceTravelled / routeDetails.distance) * 100}
+                  className="h-2 bg-zinc-950 border border-white/5 rounded-full"
+                />
+              </div>
+
+              {/* Control elements */}
+              <div className="flex flex-col gap-3 w-full md:w-auto">
+                <div className="flex gap-2 justify-center">
+                  {/* Pause/Play */}
+                  <Button 
+                    size="icon" 
+                    onClick={() => setIsSimulating(!isSimulating)}
+                    className={cn("w-10 h-10 rounded-xl border-none text-white", isSimulating ? "bg-amber-600 hover:bg-amber-500" : "bg-emerald-600 hover:bg-emerald-500")}
+                  >
+                    {isSimulating ? <Pause className="w-4.5 h-4.5" /> : <Play className="w-4.5 h-4.5 fill-white" />}
+                  </Button>
+
+                  {/* Speed rate multiplier (toggle rates) */}
+                  <Button
+                    size="sm"
+                    onClick={() => setSimMultiplier(prev => prev === 1 ? 5 : prev === 5 ? 10 : prev === 10 ? 25 : prev === 25 ? 50 : 1)}
+                    className="bg-zinc-800 hover:bg-zinc-700 border border-white/5 h-10 rounded-xl px-3 text-[9px] font-black uppercase text-white tracking-widest shrink-0"
+                  >
+                    Rate: {simMultiplier}x
+                  </Button>
+
+                  {/* End simulation */}
+                  <Button 
+                    size="icon" 
+                    onClick={resetJourney}
+                    className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/5 hover:bg-rose-950 text-rose-500"
+                  >
+                    <Square className="w-4 h-4 fill-rose-500" />
+                  </Button>
+                </div>
+
+                {/* Manual speed override slider */}
+                <div className="w-44 flex flex-col gap-1 mx-auto">
+                  <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider text-zinc-400">
+                    <span>Manual Cruise</span>
+                    <span className={simManualSpeedOverride !== null ? "text-blue-400" : "text-zinc-500"}>
+                      {simManualSpeedOverride !== null ? `${simManualSpeedOverride} km/h` : "Auto"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Slider
+                      value={[simManualSpeedOverride !== null ? simManualSpeedOverride : 50]}
+                      onValueChange={(val) => setSimManualSpeedOverride(val[0])}
+                      min={0}
+                      max={160}
+                      step={5}
+                      className="flex-1"
+                    />
+                    {simManualSpeedOverride !== null && (
+                      <button 
+                        onClick={() => setSimManualSpeedOverride(null)}
+                        className="text-[8px] font-black text-rose-500 uppercase tracking-widest"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* FLOATING COLLAPSIBLE FRIENDS PANEL (Right Side Overlay) */}
+        {friendsOpen && !loading && (
+          <aside className="absolute right-6 top-22 bottom-6 w-96 max-w-[calc(100vw-50px)] glass-card p-6 rounded-[2.5rem] border-white/10 bg-zinc-950/85 shadow-3xl flex flex-col gap-6 overflow-y-auto z-[400] pointer-events-auto">
             {/* Add Friend form */}
             <div className="space-y-4">
-              <h3 className="text-sm font-black uppercase italic tracking-tighter text-white flex items-center gap-2"><UserPlus className="w-4.5 h-4.5 text-blue-500" /> Link Friend Node</h3>
+              <h3 className="text-xs font-black uppercase italic tracking-tighter text-white flex items-center gap-2"><UserPlus className="w-4.5 h-4.5 text-blue-500" /> Link Friend Node</h3>
               <div className="flex gap-2">
                 <Input
                   value={friendSearch}
                   onChange={(e) => setFriendSearch(e.target.value)}
                   placeholder="Friend's email..."
-                  className="bg-black/60 border-white/5 h-11 rounded-xl text-xs font-bold text-white"
+                  className="bg-black/60 border-white/5 h-10 rounded-xl text-xs font-bold text-white"
                 />
                 <Button 
                   onClick={handleSendFriendRequest} 
                   disabled={isProcessing || !friendSearch.trim()}
-                  className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl h-11 px-4 font-black text-xs border-none"
+                  className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl h-10 px-4 font-black text-xs border-none"
                 >
                   Link
                 </Button>
@@ -1492,8 +1489,8 @@ export default function XakteirMapsPage() {
 
             {/* Friend Requests */}
             {pendingRequests.length > 0 && (
-              <div className="space-y-4 border-t border-white/5 pt-6">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Pending Requests ({pendingRequests.length})</h4>
+              <div className="space-y-4 border-t border-white/5 pt-4">
+                <h4 className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Pending Requests ({pendingRequests.length})</h4>
                 <div className="space-y-3">
                   {pendingRequests.map((req) => (
                     <div key={req.id} className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-2xl flex justify-between items-center">
@@ -1512,8 +1509,8 @@ export default function XakteirMapsPage() {
             )}
 
             {/* Active friends listing */}
-            <div className="space-y-4 border-t border-white/5 pt-6 flex-1 flex flex-col min-h-0">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Active Friends Location ({activeFriends.length})</h4>
+            <div className="space-y-4 border-t border-white/5 pt-4 flex-1 flex flex-col min-h-0">
+              <h4 className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Active Friends Location ({activeFriends.length})</h4>
               <div className="space-y-3 overflow-y-auto flex-1 pr-1 custom-scrollbar">
                 {activeFriends.map((friend) => {
                   const hasLoc = friend.location?.lat && friend.location?.lon;
