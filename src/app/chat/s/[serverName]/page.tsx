@@ -35,7 +35,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, serverTimestamp, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc, where } from "firebase/firestore";
+import { collection, serverTimestamp, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc, where, getDocs } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { RenderHat } from "@/components/RenderHat";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -102,6 +102,11 @@ export default function ServerChatPage() {
 
   // Typing indicators
   const [lastTypedAt, setLastTypedAt] = useState(0);
+
+  // @mention autocomplete states
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [showMentionList, setShowMentionList] = useState(false);
+  const [mentionCandidates, setMentionCandidates] = useState<any[]>([]);
 
   // Channel custom settings modal states
   const [showChannelSettingsModal, setShowChannelSettingsModal] = useState(false);
@@ -266,6 +271,72 @@ export default function ServerChatPage() {
     }
   };
 
+  // Handle @mention autocomplete: fires when user types @
+  const handleInputChange = (value: string) => {
+    setChatInput(value);
+    handleTyping();
+
+    // Detect trailing @word pattern
+    const match = value.match(/@([\w]*)$/);
+    if (match) {
+      const q = match[1].toLowerCase();
+      setMentionQuery(q);
+      setShowMentionList(true);
+      // Filter all visible server members (from allUsers query already loaded)
+    } else {
+      setShowMentionList(false);
+      setMentionQuery("");
+    }
+  };
+
+  // Insert selected username into input
+  const handleSelectMention = (username: string) => {
+    const updated = chatInput.replace(/@[\w]*$/, `@${username} `);
+    setChatInput(updated);
+    setShowMentionList(false);
+    setMentionQuery("");
+  };
+
+  // Send a notification to a user by UID
+  const sendNotification = async (toUid: string, title: string, message: string) => {
+    if (!firestore || toUid === user?.uid) return;
+    try {
+      await addDoc(collection(firestore, "users", toUid, "notifications"), {
+        title,
+        message,
+        type: "xakchat",
+        read: false,
+        timestamp: serverTimestamp()
+      });
+    } catch(e) {}
+  };
+
+  // Resolve @mentions in a message text and dispatch notifications
+  const dispatchMentionNotifications = async (content: string, senderName: string) => {
+    if (!firestore) return;
+    const mentionRegex = /@([\w]+)/g;
+    let m;
+    const found: string[] = [];
+    while ((m = mentionRegex.exec(content)) !== null) {
+      const uname = m[1].toLowerCase();
+      if (!found.includes(uname)) found.push(uname);
+    }
+    for (const uname of found) {
+      try {
+        const q = query(collection(firestore, "users"), where("username", "==", uname), limit(1));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const targetUid = snap.docs[0].id;
+          await sendNotification(
+            targetUid,
+            `📣 You were mentioned in #${channelName}`,
+            `@${senderName}: ${content.slice(0, 80)}${content.length > 80 ? "…" : ""}`
+          );
+        }
+      } catch(e) {}
+    }
+  };
+
   const renderMarkdown = (text: string) => {
     if (!text) return "";
     let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -273,6 +344,8 @@ export default function ServerChatPage() {
     escaped = escaped.replace(/_([^_]+)_/g, "<em>$1</em>");
     escaped = escaped.replace(/~([^~]+)~/g, "<del>$1</del>");
     escaped = escaped.replace(/`([^`]+)`/g, "<code class='bg-black/50 px-1 py-0.5 rounded text-pink-400 font-mono text-xs'>$1</code>");
+    // Highlight @mentions as styled pills
+    escaped = escaped.replace(/@([\w]+)/g, "<span class='inline-flex items-center bg-primary/20 text-primary font-black px-1.5 py-0.5 rounded-md text-xs cursor-pointer hover:bg-primary/30 transition-colors'>@$1</span>");
     escaped = escaped.replace(/(https?:\/\/[^\s]+)/g, (url) => {
       return `<a href="#" onclick="if(window.openXakChatWebview){window.openXakChatWebview('${url}');return false;}else{window.open('${url}','_blank');return false;}" class="text-primary hover:underline font-bold">${url}</a>`;
     });
@@ -504,6 +577,13 @@ export default function ServerChatPage() {
   }, [firestore, user]);
   const { data: userData } = useDoc(userRef);
 
+  // All users list for @mention autocomplete
+  const allUsersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "users"), limit(50));
+  }, [firestore]);
+  const { data: allUsers } = useCollection(allUsersQuery);
+
 
   // Auto-scroll chat to bottom
   useEffect(() => {
@@ -615,6 +695,10 @@ export default function ServerChatPage() {
       }
 
       await addDocumentNonBlocking(collection(firestore, "chats", channelId, "messages"), payload);
+      // Dispatch @mention notifications after message is saved
+      if (content.includes("@")) {
+        dispatchMentionNotifications(content, user.displayName?.replace(/^@+/, "") || "Member");
+      }
     } catch (error) {
       if (!imagePreview) setChatInput(content);
       toast({
@@ -1349,17 +1433,50 @@ export default function ServerChatPage() {
                       onClick={() => setShowGifPicker(!showGifPicker)} 
                       className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-black text-white/40 hover:text-white transition-all shrink-0"
                    >
-                     GIF
+                     <div className="relative flex-1">
+                      {/* @mention autocomplete dropdown */}
+                      {showMentionList && mentionCandidates.length > 0 && (
+                        <div className="absolute bottom-full mb-2 left-0 w-64 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
+                          <div className="px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-primary border-b border-white/5">Mention a member</div>
+                          {mentionCandidates.map((u: any) => (
+                            <button
+                              key={u.id}
+                              type="button"
+                              onClick={() => handleSelectMention(u.username)}
+                              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-primary/10 text-left transition-colors"
+                            >
+                              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-black text-primary shrink-0">
+                                {(u.displayName || u.username || "?")[0].toUpperCase()}
+                              </div>
+                              <span className="text-xs font-bold text-white">@{u.username}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <Input 
+                        value={chatInput} 
+                        onChange={(e) => {
+                          handleInputChange(e.target.value);
+                          // Update mention candidates from already-loaded users list
+                          const m = e.target.value.match(/@([\w]*)$/);
+                          if (m) {
+                            const q = m[1].toLowerCase();
+                            // Use allUsers if available (server members query)
+                            setMentionCandidates(
+                              (allUsers || []).filter((u: any) => 
+                                u.username?.toLowerCase().startsWith(q) ||
+                                u.displayName?.toLowerCase().startsWith(q)
+                              ).slice(0, 6)
+                            );
+                          } else {
+                            setMentionCandidates([]);
+                          }
+                        }} 
+                        placeholder={`Message #${channelName}... (type @ to mention)`} 
+                        className="border-none bg-transparent focus-visible:ring-0 text-white text-sm italic placeholder:text-white/20 animate-none" 
+                      />
+                    </div>
                    </button>
-                   <Input 
-                     value={chatInput} 
-                     onChange={(e) => {
-                       setChatInput(e.target.value);
-                       handleTyping();
-                     }} 
-                     placeholder={`Message #${channelName}...`} 
-                     className="border-none bg-transparent focus-visible:ring-0 text-white text-sm italic placeholder:text-white/20 animate-none" 
-                   />
                    <button type="button" className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"><Smile className="w-4 h-4 md:w-5 md:h-5" /></button>
                 </div>
                 <Button type="submit" size="icon" className="h-12 w-12 md:h-16 md:w-16 bg-primary rounded-[1rem] md:rounded-[1.5rem] shadow-2xl active:scale-90 flex items-center justify-center shrink-0 border-none"><Send className="w-5 h-5 md:w-6 md:h-6 text-white" /></Button>
