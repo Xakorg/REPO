@@ -419,6 +419,55 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────
+    // TYPING INDICATORS
+    // Any signed-in user may read typing docs (to show "{user} is typing…")
+    // Only the owner may create/update/delete their own typing doc
+    // ─────────────────────────────────────────────
+    match /typing/{docId} {
+      allow read, list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ─────────────────────────────────────────────
+    // VOICE CHANNEL PRESENCE
+    // Tracks which users are in which voice channels for WebRTC mesh
+    // ─────────────────────────────────────────────
+    match /voice_status/{docId} {
+      allow read, list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ─────────────────────────────────────────────
+    // DIRECT CALLS (WebRTC DM Calling)
+    // Both the caller and recipient need read/write to exchange call state
+    // ─────────────────────────────────────────────
+    match /calls/{callId} {
+      allow read, write: if isSignedIn() && (
+        request.auth.uid == resource.data.callerId
+        || request.auth.uid == resource.data.recipientId
+        || !exists(/databases/$(database)/documents/calls/$(callId))
+      );
+    }
+
+    // ─────────────────────────────────────────────
+    // INVITATIONS
+    // Signed-in users can send invitations; recipients can read their own
+    // ─────────────────────────────────────────────
+    match /invitations/{invId} {
+      allow create: if isSignedIn();
+      allow read, list: if isSignedIn() && (
+        resource.data.fromUid == request.auth.uid
+        || request.auth.token.email == resource.data.toEmail
+      );
+      allow update, delete: if isSignedIn() && (
+        resource.data.fromUid == request.auth.uid
+        || isAdmin()
+      );
+    }
+
+    // ─────────────────────────────────────────────
     // CHAT ROOMS
     // Robust rules for chats and messages:
     // - Users can create chats only if they're included in the participants array
