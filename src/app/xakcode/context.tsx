@@ -476,11 +476,25 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (!activeProject || !user || !firestore) return;
     setIsDeploying(true);
     try {
+      // Derive a URL-safe slug from project name, e.g. "My Cool App" → "my-cool-app"
+      const slug = (activeProject.name || 'project')
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
+
+      const subdomainUrl = `${slug}.code.xakteir.com`;
+      const domainName =
+        activeProject.deployment?.customDomain ||
+        subdomainUrl;
+
       // Update project deployment status
       const activeProjRef = doc(firestore, "users", user.uid, "code_projects", activeProject.id);
       await updateDoc(activeProjRef, {
         "deployment.status": 'live',
-        "deployment.liveAt": serverTimestamp()
+        "deployment.liveAt": serverTimestamp(),
+        "deployment.domain": domainName,
+        "deployment.slug": slug,
       });
 
       // Build a safe, size-limited snapshot of files for the public index
@@ -493,11 +507,6 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
         safeFiles[name] = chunk;
       }
 
-      const domainName =
-        activeProject.deployment?.customDomain ||
-        activeProject.deployment?.domain ||
-        `${(activeProject.name || 'project').toLowerCase().replace(/\s+/g, '-')}.xakteir.app`;
-
       // Upsert public project index — merge:true means re-deploys update in-place
       await setDoc(
         doc(firestore, "publishedProjects", activeProject.id),
@@ -506,6 +515,7 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
           ownerId: user.uid,
           ownerName: user.displayName?.replace(/^@+/, "") || "Member",
           name: activeProject.name,
+          slug,
           domain: domainName,
           publishedAt: serverTimestamp(),
           status: 'published',
@@ -514,7 +524,10 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
         { merge: true }
       );
 
-      toast({ title: "Unit Published! 🚀", description: `Live at ${domainName}` });
+      toast({
+        title: "🚀 Published!",
+        description: `Live at https://${domainName}`,
+      });
     } catch (e: any) {
       console.error("Deploy error:", e);
       toast({

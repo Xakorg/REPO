@@ -374,7 +374,7 @@ export interface ThreeConfig {
 export function ThreeViewer({ config }: { config: ThreeConfig }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [wireframe, setWireframe] = useState(config.wireframe || false);
-  const [autoRotate, setAutoRotate] = useState(config.autoRotate || true);
+  const [autoRotate, setAutoRotate] = useState<boolean>(config.autoRotate ?? true);
 
   useEffect(() => {
     let cleanup = () => {};

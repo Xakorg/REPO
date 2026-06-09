@@ -169,7 +169,24 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   const [callCamVideoOff, setCallCamVideoOff] = useState(false);
   const [callScreenSharing, setCallScreenSharing] = useState(false);
   const callScreenStream = useRef<MediaStream | null>(null);
+  // Use a ref for the signal unsub to avoid stale closure
+  const callSignalUnsubRef = useRef<(() => void) | null>(null);
   const [callSignalUnsub, setCallSignalUnsub] = useState<any>(null);
+  // ICE candidate buffers per peer
+  const voiceIceBuffers = useRef<Record<string, RTCIceCandidate[]>>({});
+  const voiceRemoteDescSet = useRef<Record<string, boolean>>({});
+  const directCallIceBuffer = useRef<RTCIceCandidate[]>([]);
+  const directCallRemoteDescSet = useRef(false);
+
+  // Global search state
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
+
+  // Group DM state
+  const [showGroupDmModal, setShowGroupDmModal] = useState(false);
+  const [groupDmName, setGroupDmName] = useState("");
+  const [groupDmMembers, setGroupDmMembers] = useState<string[]>([]);
+  const [isCreatingGroupDm, setIsCreatingGroupDm] = useState(false);
 
   // Start DM States
   const [showStartDmDialog, setShowStartDmDialog] = useState(false);
@@ -198,6 +215,31 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     setMounted(true);
+    // Online presence: write online status on mount, clear on unmount
+    if (firestore && user) {
+      updateDoc(doc(firestore, "users", user.uid), { onlineAt: Date.now(), online: true }).catch(() => {});
+      const cleanup = () => {
+        updateDoc(doc(firestore, "users", user.uid), { online: false }).catch(() => {});
+      };
+      window.addEventListener("beforeunload", cleanup);
+      return () => {
+        cleanup();
+        window.removeEventListener("beforeunload", cleanup);
+      };
+    }
+  }, [firestore, user]);
+
+  // Global search keyboard shortcut (Ctrl+K)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowGlobalSearch(v => !v);
+      }
+      if (e.key === 'Escape') setShowGlobalSearch(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, []);
 
   useEffect(() => {
@@ -645,13 +687,59 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         if (sig.to !== user?.uid) return;
         
         const fromId = sig.from;
-        const peer = voicePcMap.current[fromId];
+        let peer = voicePcMap.current[fromId];
+
+        // Lazily create peer if not yet in map (handles late joiners)
+        if (!peer && sig.type === "offer") {
+          peer = new RTCPeerConnection(getIceServers());
+          voicePcMap.current[fromId] = peer;
+          voiceIceBuffers.current[fromId] = [];
+          voiceRemoteDescSet.current[fromId] = false;
+
+          voiceStream.current?.getTracks().forEach((track) => {
+            peer!.addTrack(track, voiceStream.current!);
+          });
+
+          const remoteMs = new MediaStream();
+          voiceRemoteStreams.current[fromId] = remoteMs;
+
+          peer.ontrack = (event) => {
+            event.streams[0]?.getTracks().forEach((track) => remoteMs.addTrack(track));
+            setVoiceRemoteStreamsVersion(v => v + 1);
+            const audioEl = document.createElement("audio");
+            audioEl.srcObject = remoteMs;
+            audioEl.autoplay = true;
+            audioEl.volume = isDeafened ? 0 : 1;
+            audioEl.className = "voice-remote-audio";
+            audioEl.play().catch(e => console.warn(e));
+          };
+
+          peer.onicecandidate = (event) => {
+            if (event.candidate) {
+              addDoc(signalsRef, {
+                from: user!.uid,
+                to: fromId,
+                type: "ice",
+                candidate: event.candidate.toJSON(),
+                ts: Date.now()
+              });
+            }
+          };
+        }
         
         if (sig.type === "offer" && peer) {
           (async () => {
-            await peer.setRemoteDescription(new RTCSessionDescription({ type: sig.sdpType, sdp: sig.sdp }));
-            const answer = await peer.createAnswer();
-            await peer.setLocalDescription(answer);
+            await peer!.setRemoteDescription(new RTCSessionDescription({ type: sig.sdpType, sdp: sig.sdp }));
+            voiceRemoteDescSet.current[fromId] = true;
+            // Flush buffered ICE candidates
+            const buffered = voiceIceBuffers.current[fromId] || [];
+            for (const c of buffered) {
+              peer!.addIceCandidate(c).catch(() => {});
+            }
+            voiceIceBuffers.current[fromId] = [];
+
+            const answer = await peer!.createAnswer();
+            await peer!.setLocalDescription(answer);
             await addDoc(signalsRef, {
               from: user!.uid,
               to: fromId,
@@ -662,9 +750,23 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             });
           })();
         } else if (sig.type === "answer" && peer) {
-          peer.setRemoteDescription(new RTCSessionDescription({ type: sig.sdpType, sdp: sig.sdp }));
+          (async () => {
+            await peer!.setRemoteDescription(new RTCSessionDescription({ type: sig.sdpType, sdp: sig.sdp }));
+            voiceRemoteDescSet.current[fromId] = true;
+            // Flush buffered ICE candidates
+            const buffered = voiceIceBuffers.current[fromId] || [];
+            for (const c of buffered) {
+              peer!.addIceCandidate(c).catch(() => {});
+            }
+            voiceIceBuffers.current[fromId] = [];
+          })();
         } else if (sig.type === "ice" && peer) {
-          peer.addIceCandidate(new RTCIceCandidate(sig.candidate));
+          if (voiceRemoteDescSet.current[fromId]) {
+            peer.addIceCandidate(new RTCIceCandidate(sig.candidate)).catch(() => {});
+          } else {
+            if (!voiceIceBuffers.current[fromId]) voiceIceBuffers.current[fromId] = [];
+            voiceIceBuffers.current[fromId].push(new RTCIceCandidate(sig.candidate));
+          }
         }
       });
     });
@@ -677,6 +779,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     voiceUnsubscribers.current = [];
     Object.values(voicePcMap.current).forEach((pc) => pc.close());
     voicePcMap.current = {};
+    voiceIceBuffers.current = {};
+    voiceRemoteDescSet.current = {};
     voiceStream.current?.getTracks().forEach((track) => track.stop());
     voiceStream.current = null;
     voiceRemoteStreams.current = {};
@@ -946,6 +1050,13 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         if (sig.type === "offer") {
           (async () => {
             await peer.setRemoteDescription(new RTCSessionDescription({ type: sig.sdpType, sdp: sig.sdp }));
+            directCallRemoteDescSet.current = true;
+            // Flush buffered ICE candidates
+            for (const c of directCallIceBuffer.current) {
+              peer.addIceCandidate(c).catch(() => {});
+            }
+            directCallIceBuffer.current = [];
+
             const answer = await peer.createAnswer();
             await peer.setLocalDescription(answer);
             await addDoc(signalsRef, {
@@ -958,20 +1069,34 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             });
           })();
         } else if (sig.type === "answer") {
-          peer.setRemoteDescription(new RTCSessionDescription({ type: sig.sdpType, sdp: sig.sdp }));
+          (async () => {
+            await peer.setRemoteDescription(new RTCSessionDescription({ type: sig.sdpType, sdp: sig.sdp }));
+            directCallRemoteDescSet.current = true;
+            for (const c of directCallIceBuffer.current) {
+              peer.addIceCandidate(c).catch(() => {});
+            }
+            directCallIceBuffer.current = [];
+          })();
         } else if (sig.type === "ice") {
-          peer.addIceCandidate(new RTCIceCandidate(sig.candidate));
+          if (directCallRemoteDescSet.current) {
+            peer.addIceCandidate(new RTCIceCandidate(sig.candidate)).catch(() => {});
+          } else {
+            directCallIceBuffer.current.push(new RTCIceCandidate(sig.candidate));
+          }
         }
       });
     });
 
+    // Store unsub in both ref and state
+    callSignalUnsubRef.current = unsub;
     setCallSignalUnsub(() => unsub);
   };
 
   const cleanupDirectCallWebRTC = () => {
-    if (callSignalUnsub) {
-      callSignalUnsub();
-      setCallSignalUnsub(null);
+    // Use the ref to avoid stale closure issues
+    if (callSignalUnsubRef.current) {
+      callSignalUnsubRef.current();
+      callSignalUnsubRef.current = null;
     }
     if (callPc.current) {
       callPc.current.close();
@@ -980,6 +1105,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     if (callStream) {
       callStream.getTracks().forEach((track) => track.stop());
     }
+    directCallIceBuffer.current = [];
+    directCallRemoteDescSet.current = false;
     setCallStream(null);
     setRemoteCallStream(null);
     setCallMicMuted(false);
@@ -1089,15 +1216,31 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       <aside className="hidden md:flex w-64 bg-[#0a0a15] border-r border-white/5 flex-col z-20 shrink-0">
         {activeServer === 'home' ? (
           <>
-            <header className="h-16 border-b border-white/5 px-6 flex items-center justify-between shadow-xl">
+            <header className="h-16 border-b border-white/5 px-4 flex items-center justify-between shadow-xl">
                <h2 className="text-sm font-black uppercase italic tracking-tighter text-white">Direct Messages</h2>
-               <button 
-                 onClick={() => setShowStartDmDialog(true)}
-                 className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-all"
-                 title="Start DM with anyone"
-               >
-                 <PlusCircle className="w-4 h-4" />
-               </button>
+               <div className="flex items-center gap-1">
+                 <button 
+                   onClick={() => setShowGlobalSearch(true)}
+                   className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-all"
+                   title="Search messages (Ctrl+K)"
+                 >
+                   <Search className="w-3.5 h-3.5" />
+                 </button>
+                 <button
+                   onClick={() => setShowGroupDmModal(true)}
+                   className="p-1.5 rounded-lg text-white/40 hover:text-emerald-400 hover:bg-white/5 transition-all"
+                   title="New Group DM"
+                 >
+                   <Users className="w-3.5 h-3.5" />
+                 </button>
+                 <button 
+                   onClick={() => setShowStartDmDialog(true)}
+                   className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-all"
+                   title="Start DM with anyone"
+                 >
+                   <PlusCircle className="w-4 h-4" />
+                 </button>
+               </div>
             </header>
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-8">
@@ -1226,10 +1369,17 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           </div>
         )}
 
+        {/* Footer with online presence dot */}
         <footer className="p-4 bg-black/40 border-t border-white/5 flex items-center justify-between shrink-0">
            <div className="flex items-center gap-3">
-              <Avatar className="w-9 h-9 border border-white/10"><AvatarImage src={user.photoURL || ""} /><AvatarFallback>{user.displayName?.[0] || 'U'}</AvatarFallback></Avatar>
-              <div className="text-left"><p className="text-[10px] font-black italic">{user.displayName}</p></div>
+              <div className="relative">
+                <Avatar className="w-9 h-9 border border-white/10"><AvatarImage src={user.photoURL || ""} /><AvatarFallback>{user.displayName?.[0] || 'U'}</AvatarFallback></Avatar>
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0a0a15] rounded-full" />
+              </div>
+              <div className="text-left">
+                <p className="text-[10px] font-black italic">{user.displayName}</p>
+                <p className="text-[8px] text-emerald-400 font-bold">{userData?.statusEmoji || '💬'} {userData?.statusText || 'Online'}</p>
+              </div>
            </div>
            <div className="flex gap-1">
               <button onClick={() => setIsMuted(!isMuted)} className={cn("p-1.5 rounded-lg", isMuted ? "bg-red-500/20 text-red-500" : "text-white/40")}><MicOff className="w-3.5 h-3.5" /></button>
