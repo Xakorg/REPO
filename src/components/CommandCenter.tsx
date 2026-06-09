@@ -60,6 +60,10 @@ export function CommandCenter() {
   const results = [
     { name: "Whiteboard", type: "App", icon: LayoutGrid, href: "/whiteboard" },
     { name: "Xakteir Suite", type: "App", icon: FileText, href: "/suite" },
+    { name: "Xakteir Write", type: "Suite App", icon: FileText, href: "/write" },
+    { name: "Xakteir Sheets", type: "Suite App", icon: LayoutGrid, href: "/sheets" },
+    { name: "Xakteir Slides", type: "Suite App", icon: LayoutGrid, href: "/slides" },
+    { name: "Xakteir Forms", type: "Suite App", icon: LayoutGrid, href: "/forms" },
     { name: "Games", type: "App", icon: Gamepad2, href: "/games" },
     { name: "Xak AI", type: "App", icon: Zap, href: "/ai-chat" },
     { name: "XakCode", type: "App", icon: FileText, href: "/xakcode" },

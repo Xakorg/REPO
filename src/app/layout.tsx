@@ -12,6 +12,7 @@ import { CommandCenter } from '@/components/CommandCenter';
 import { LockedAccountGuard } from '@/components/LockedAccountGuard';
 import { TimeTravelOverlay } from '@/components/TimeTravelOverlay';
 import { NotificationManager } from '@/components/NotificationManager';
+import { FocusModeListener } from '@/components/FocusModeListener';
 
 export const metadata: Metadata = {
   title: 'Xakteir',
@@ -37,6 +38,7 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <OnboardingProvider>
             <LockedAccountGuard>
+              <FocusModeListener />
               <Header />
               <main className="relative z-10">
                 {children}

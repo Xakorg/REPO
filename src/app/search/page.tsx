@@ -173,36 +173,8 @@ const searchWebEngine = async (queryText: string) => {
   return [];
 };
 
-const fetchWikipediaSummary = async (queryText: string) => {
-  try {
-    const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(queryText)}&limit=1&namespace=0&format=json&origin=*`);
-    if (!searchRes.ok) return null;
-    const searchData = await searchRes.json();
-    const matchedTitle = searchData[1]?.[0];
-    if (!matchedTitle) return null;
 
-    const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(matchedTitle)}`);
-    if (!summaryRes.ok) return null;
-    const summaryData = await summaryRes.json();
-    
-    if (summaryData.extract) {
-      return {
-        title: summaryData.title,
-        definition: summaryData.extract,
-        type: summaryData.description || "Encyclopedia Entry",
-        image: summaryData.thumbnail?.source || null,
-        facts: {
-          "Source": "Wikipedia",
-          "Language": "English",
-          "URL": summaryData.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(matchedTitle)}`
-        }
-      };
-    }
-  } catch (e) {
-    console.warn("Failed to fetch Wikipedia summary", e);
-  }
-  return null;
-};
+// Removed Wikipedia summary fetching entirely.
 
 // Accent Theme configurations mapping
 const getThemeClasses = (t: string) => {
@@ -427,20 +399,20 @@ function SearchContent() {
   };
 
   const followingQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore || !user?.uid) return null;
     return collection(firestore, "users", user.uid, "following");
   }, [firestore, user]);
   const { data: followingList } = useCollection(followingQuery);
   const followingIds = useMemo(() => new Set(followingList?.map((f: any) => f.id) || []), [followingList]);
 
   const friendshipsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore || !user?.uid) return null;
     return query(collection(firestore, "friendships"));
   }, [firestore, user]);
   const { data: friendships } = useCollection(friendshipsQuery);
 
   const handleFollow = async (member: any) => {
-    if (!user || !firestore) return;
+    if (!user?.uid || !firestore) return;
     const ref = doc(firestore, "users", user.uid, "following", member.id);
     const isFollowing = followingIds.has(member.id);
     try {
@@ -462,7 +434,7 @@ function SearchContent() {
   };
 
   const handleAddFriend = async (member: any) => {
-    if (!user || !firestore) return;
+    if (!user?.uid || !firestore) return;
     if (member.id === user.uid) {
       toast({ variant: "destructive", title: "Error", description: "You cannot friend yourself." });
       return;
@@ -567,10 +539,10 @@ function SearchContent() {
     // Traditional link results will load via the firestore query below
     router.push(`/search?q=${encodeURIComponent(target.trim())}`, { scroll: false });
 
-    // Fetch Wikipedia summary dynamically
-    void fetchWikipediaSummary(target).then(summary => {
-      if (summary) setWikiDefinition(summary);
-    });
+    // Wikipedia summary removed. Using local definitions only.
+    if (matchedDefinition) {
+      setWikiDefinition(matchedDefinition);
+    }
 
     try {
       // Real Web search Engine fetch
@@ -761,8 +733,17 @@ function SearchContent() {
   const matchedDefKey = Object.keys(LOCAL_DEFINITIONS).find(key => 
     queryLower === key || queryLower.includes(key)
   );
-  const matchedDefinition = matchedDefKey ? LOCAL_DEFINITIONS[matchedDefKey] : null;
   const activeDefinition = wikiDefinition || matchedDefinition;
+
+  // Gamification States (Stubs)
+  const [activeTab, setActiveTab] = useState<"search" | "explore" | "worlds" | "collections" | "profile">("search");
+  const [userXP, setUserXP] = useState(1240);
+  const [userLevel, setUserLevel] = useState(12);
+
+  // Compare Mode State
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareQuery, setCompareQuery] = useState("");
+
 
   // Filter sites matching the query and merge real search results
   const filteredSites = useMemo(() => {
@@ -2134,7 +2115,6 @@ function SearchContent() {
                         </DialogHeader>
 
                         <div className="space-y-4 mt-6">
-                          {/* Add in XakChat */}
                           <Button 
                             onClick={() => {
                               router.push(`/chat/dm/${u.username || u.displayName || u.id}`);
@@ -2144,7 +2124,6 @@ function SearchContent() {
                             <MessageCircle className="w-5 h-5" /> Message in XakChat
                           </Button>
 
-                          {/* Follow in Social */}
                           <Button 
                             onClick={() => handleFollow(u)}
                             variant="outline"
@@ -2157,7 +2136,6 @@ function SearchContent() {
                             {followingIds.has(u.id) ? "Following on Social" : "Follow on Social"}
                           </Button>
 
-                          {/* Add in Maps */}
                           {(() => {
                             const friendship = friendships?.find((f: any) => 
                               (f.requesterId === user?.uid && f.recipientId === u.id) || 
@@ -2270,48 +2248,6 @@ function SearchContent() {
             {/* Category: SITES / ALL website listings */}
             {(activeCategory === "all" || activeCategory === "sites") && !safeSearchWarning && (
               <div className="space-y-8">
-                {/* Knowledge Graph Card / Definition Panel */}
-                {activeDefinition && (
-                  <Card className={cn("p-8 border-2 rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8 animate-in fade-in slide-in-from-top-4 duration-500", tc.border, tc.shadow)}>
-                    <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-transparent pointer-events-none" />
-                    {activeDefinition.image && (
-                      <div className="w-full md:w-60 h-44 rounded-2xl overflow-hidden shrink-0 border border-white/10 relative">
-                        <img 
-                          src={activeDefinition.image} 
-                          alt={activeDefinition.title} 
-                          className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" 
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 space-y-4 relative z-10">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className={cn("text-[10px] font-black uppercase tracking-widest flex items-center gap-2", tc.text)}>
-                            <Sparkles className="w-3.5 h-3.5" /> Encyclopedia Definition
-                          </div>
-                          <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter mt-1">{activeDefinition.title}</h2>
-                        </div>
-                        <span className={cn("px-3 py-1 border text-[9px] font-black uppercase tracking-widest rounded-full shrink-0", tc.border, tc.text, tc.bg)}>
-                          {activeDefinition.type}
-                        </span>
-                      </div>
-                      <p className="text-base text-zinc-300 leading-relaxed font-medium">
-                        {activeDefinition.definition}
-                      </p>
-                      {activeDefinition.facts && (
-                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-800/80">
-                          {Object.entries(activeDefinition.facts).map(([key, val]) => (
-                            <div key={key}>
-                              <div className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">{key}</div>
-                              <div className="text-sm font-bold text-zinc-200 mt-0.5">{val as any}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                )}
-
                 {isWebSearching && (
                   <div className={cn("flex items-center gap-3 italic text-xs font-bold py-2 animate-pulse", tc.text)}>
                     <Loader2 className="w-4 h-4 animate-spin" /> Searching the live web...
@@ -2331,7 +2267,6 @@ function SearchContent() {
                   (Object.entries(groupedSites) as [string, any[]][]).map(([host, sites]) => (
                     <Card key={host} className="p-6 border border-zinc-900 bg-zinc-900/10 hover:border-zinc-800/80 rounded-[2rem] transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
                       <div className="flex flex-col">
-                        {/* Domain favicon and title info */}
                         <div className="flex items-center justify-between mb-3 border-b border-zinc-800/40 pb-3">
                           <div className="flex items-center gap-3">
                             <img 
@@ -2346,7 +2281,6 @@ function SearchContent() {
                           </div>
                           
                           <div className="flex items-center gap-3">
-                            {/* Star / Bookmark site */}
                             <button
                               onClick={() => toggleBookmark(sites[0].title, sites[0].url)}
                               className="text-zinc-500 hover:text-white transition-colors"
@@ -2357,7 +2291,6 @@ function SearchContent() {
                           </div>
                         </div>
 
-                        {/* Primary link header */}
                         <a 
                           href={sites[0].url} 
                           target={openInNewTab ? "_blank" : "_self"}
@@ -2368,7 +2301,6 @@ function SearchContent() {
                         </a>
                         <p className="text-sm text-zinc-400 leading-relaxed mt-2 font-bold opacity-80">{sites[0].description}</p>
 
-                        {/* Additional sub-links inside the same host */}
                         {sites.length > 1 && (
                           <div className="mt-4 pt-4 border-t border-zinc-800/45 grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {sites.slice(1, 5).map((s: any, idx: number) => (
@@ -2397,6 +2329,95 @@ function SearchContent() {
             )}
           </div>
         </main>
+        
+        {/* Sidebar Stubs */}
+        <div className="hidden lg:block w-80 space-y-6 sticky top-24 h-[calc(100vh-100px)]">
+          {/* AI Summary Sidebar */}
+          {aiResult && (
+            <Card className="p-5 border-white/10 bg-zinc-900/50 backdrop-blur-xl relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-primary to-blue-500" />
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-white tracking-tight">AI Summary</h3>
+                <div className="ml-auto flex gap-2">
+                   <button onClick={handleTTS} className="p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/60 transition-colors" title="Read Aloud">
+                     {isSpeaking ? <VolumeX className="w-4 h-4 text-primary" /> : <Volume2 className="w-4 h-4" />}
+                   </button>
+                </div>
+              </div>
+              <div className="text-sm text-zinc-300 leading-relaxed max-h-[300px] overflow-y-auto pr-2 custom-scrollbar whitespace-pre-wrap">
+                {aiResult.split('\n').map((paragraph, idx) => {
+                  const parts = paragraph.split(/(\*\*.*?\*\*)/g);
+                  return (
+                    <p key={idx} className="mb-2">
+                      {parts.map((part, pIdx) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                          return <strong key={pIdx} className="text-white font-bold">{part.slice(2, -2)}</strong>;
+                        }
+                        const subParts = part.split(/(\*.*?\*)/g);
+                        return subParts.map((sub, sIdx) => {
+                          if (sub.startsWith('*') && sub.endsWith('*')) {
+                            return <strong key={sIdx} className="text-white font-bold">{sub.slice(1, -1)}</strong>;
+                          }
+                          return <span key={sIdx}>{sub}</span>;
+                        });
+                      })}
+                    </p>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+
+          {/* Knowledge Sidebar */}
+          {activeDefinition && (
+            <Card className="border-white/10 bg-zinc-900/50 overflow-hidden backdrop-blur-xl">
+              {activeDefinition.image && (
+                <div className="h-48 w-full relative">
+                  <img src={activeDefinition.image} alt={activeDefinition.title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent" />
+                </div>
+              )}
+              <div className="p-5 relative -mt-12">
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <h2 className="text-2xl font-black text-white">{activeDefinition.title}</h2>
+                </div>
+                <p className="text-xs text-primary font-bold uppercase tracking-widest mb-3">
+                  {activeDefinition.type}
+                </p>
+                <p className="text-sm text-zinc-300 leading-relaxed mb-4">
+                  {activeDefinition.definition}
+                </p>
+                
+                {activeDefinition.facts && Object.keys(activeDefinition.facts).length > 0 && (
+                  <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-white/10">
+                    {Object.entries(activeDefinition.facts).map(([key, val]) => (
+                      <div key={key}>
+                        <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">{key}</p>
+                        {String(val).startsWith("http") ? (
+                          <a href={String(val)} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline truncate block">Link</a>
+                        ) : (
+                          <p className="text-sm text-zinc-200">{String(val)}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-6 pt-4 border-t border-white/10 flex flex-col gap-2">
+                  <Button variant="secondary" className="w-full justify-between bg-white/5 hover:bg-white/10 border border-white/5 text-white">
+                    <span>Generate Flashcards</span>
+                    <Sparkles className="w-4 h-4 text-primary" />
+                  </Button>
+                  <Button variant="secondary" className="w-full justify-between bg-white/5 hover:bg-white/10 border border-white/5 text-white" onClick={() => setCompareMode(!compareMode)}>
+                    <span>Compare With...</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
 
       {/* Bookmarks Dialog Box */}
@@ -2441,6 +2462,149 @@ function SearchContent() {
         </Dialog>
       )}
 
+      {/* Gamification Stubs */}
+      {activeTab === "explore" && (
+        <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-12 space-y-12">
+          <div className="text-center">
+            <h1 className="text-4xl font-black text-white tracking-tighter">Explore Knowledge</h1>
+            <p className="text-zinc-400 mt-2">Discover topics, follow curiosity chains, and learn something new every day.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="p-6 border-white/10 bg-zinc-900/50 backdrop-blur-xl text-center hover:bg-white/5 transition-all cursor-pointer">
+              <Sparkles className="w-8 h-8 text-primary mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-white">Daily Discovery</h3>
+              <p className="text-sm text-zinc-400 mt-2">Learn about Quantum Computing</p>
+            </Card>
+            <Card className="p-6 border-white/10 bg-zinc-900/50 backdrop-blur-xl text-center hover:bg-white/5 transition-all cursor-pointer">
+              <Compass className="w-8 h-8 text-blue-400 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-white">Curiosity Chains</h3>
+              <p className="text-sm text-zinc-400 mt-2">French Revolution → Napoleon → Waterloo</p>
+            </Card>
+            <Card className="p-6 border-white/10 bg-zinc-900/50 backdrop-blur-xl text-center hover:bg-white/5 transition-all cursor-pointer">
+              <Star className="w-8 h-8 text-amber-400 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-white">Recommended</h3>
+              <p className="text-sm text-zinc-400 mt-2">Based on your recent physics searches</p>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "worlds" && (
+        <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-12 space-y-12">
+          <div className="text-center">
+            <h1 className="text-4xl font-black text-white tracking-tighter">Knowledge Worlds</h1>
+            <p className="text-zinc-400 mt-2">Level up your understanding across different domains.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { name: "History", color: "text-amber-500", icon: History, level: 8, xp: "840/1000" },
+              { name: "Science", color: "text-blue-500", icon: Globe, level: 12, xp: "120/1500" },
+              { name: "Technology", color: "text-emerald-500", icon: Laptop, level: 15, xp: "1400/2000" },
+              { name: "Space", color: "text-purple-500", icon: Sparkles, level: 4, xp: "200/500" },
+              { name: "Art", color: "text-rose-500", icon: Palette, level: 2, xp: "50/300" }
+            ].map((world) => (
+              <Card key={world.name} className="p-6 border-white/10 bg-zinc-900/50 backdrop-blur-xl flex flex-col gap-4">
+                <div className="flex items-center gap-4">
+                  <div className={`p-4 rounded-2xl bg-white/5 ${world.color}`}>
+                    <world.icon className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">{world.name} World</h3>
+                    <p className="text-sm text-zinc-400">Level {world.level}</p>
+                  </div>
+                </div>
+                <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div className={`h-full bg-current ${world.color}`} style={{ width: '60%' }} />
+                </div>
+                <p className="text-xs text-zinc-500 text-right">{world.xp} XP</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "collections" && (
+        <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-12 space-y-12">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-4xl font-black text-white tracking-tighter">Your Collections</h1>
+              <p className="text-zinc-400 mt-2">Save notes, flashcards, and research materials.</p>
+            </div>
+            <Button className="bg-primary hover:bg-primary/90 text-black font-bold">New Collection</Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card className="p-6 border-white/10 bg-zinc-900/50 backdrop-blur-xl hover:bg-white/5 transition-all cursor-pointer">
+              <Bookmark className="w-6 h-6 text-primary mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">History Revision</h3>
+              <p className="text-xs text-zinc-400">12 Notes • 45 Flashcards</p>
+            </Card>
+            <Card className="p-6 border-white/10 bg-zinc-900/50 backdrop-blur-xl hover:bg-white/5 transition-all cursor-pointer">
+              <Bookmark className="w-6 h-6 text-blue-400 mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">Physics 101</h3>
+              <p className="text-xs text-zinc-400">8 Notes • 120 Flashcards</p>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "profile" && (
+        <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-12 space-y-8">
+          <Card className="p-8 border-white/10 bg-zinc-900/50 backdrop-blur-xl flex items-center gap-8">
+            <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center text-primary text-3xl font-black">
+              {user?.displayName?.[0] || "?"}
+            </div>
+            <div>
+              <h1 className="text-3xl font-black text-white">{user?.displayName || "Searcher"}</h1>
+              <p className="text-primary font-bold tracking-widest uppercase mt-1">Level {userLevel} Polymath</p>
+              <p className="text-zinc-400 mt-2">Total XP: {userXP} • Topics Mastered: 14</p>
+            </div>
+          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="p-6 border-white/10 bg-zinc-900/50 backdrop-blur-xl">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <BadgeCheck className="w-5 h-5 text-primary" /> Achievements
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-500"><History className="w-5 h-5" /></div>
+                  <div>
+                    <p className="text-sm font-bold text-white">Historian</p>
+                    <p className="text-xs text-zinc-400">Complete 50 history topics</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-500"><Globe className="w-5 h-5" /></div>
+                  <div>
+                    <p className="text-sm font-bold text-white">Scientist</p>
+                    <p className="text-xs text-zinc-400">Master 100 science flashcards</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+            <Card className="p-6 border-white/10 bg-zinc-900/50 backdrop-blur-xl">
+              <h3 className="text-lg font-bold text-white mb-4">Knowledge Stats</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-white/5 text-center">
+                  <p className="text-3xl font-black text-white">124</p>
+                  <p className="text-xs text-zinc-400 uppercase tracking-wider font-bold mt-1">Topics Explored</p>
+                </div>
+                <div className="p-4 rounded-xl bg-white/5 text-center">
+                  <p className="text-3xl font-black text-white">850</p>
+                  <p className="text-xs text-zinc-400 uppercase tracking-wider font-bold mt-1">Flashcards</p>
+                </div>
+                <div className="p-4 rounded-xl bg-white/5 text-center">
+                  <p className="text-3xl font-black text-white">42</p>
+                  <p className="text-xs text-zinc-400 uppercase tracking-wider font-bold mt-1">Quizzes Passed</p>
+                </div>
+                <div className="p-4 rounded-xl bg-white/5 text-center">
+                  <p className="text-3xl font-black text-white">18</p>
+                  <p className="text-xs text-zinc-400 uppercase tracking-wider font-bold mt-1">Comparisons</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

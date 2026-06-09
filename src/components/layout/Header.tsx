@@ -69,6 +69,7 @@ import { collection, query, where, doc } from "firebase/firestore";
 import { triggerCommandCenter } from "@/components/CommandCenter";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { RenderHat } from "@/components/RenderHat";
+import { useSuiteStore } from "@/lib/store";
 
 const APPS = [
   { name: "Search", icon: SearchIcon, href: "/search", color: "text-blue-400", bg: "bg-blue-400/10" },
@@ -119,6 +120,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const [appSearch, setAppSearch] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const { isFocusMode } = useSuiteStore();
 
   useEffect(() => { 
     setMounted(true); 
@@ -166,6 +168,7 @@ export function Header() {
   };
 
   if (!mounted) return null;
+  if (isFocusMode) return null;
 
   const AppsList = () => (
     <div className="flex flex-col h-full bg-[#0a0a15] text-white">
