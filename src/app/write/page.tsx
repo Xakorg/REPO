@@ -4,6 +4,7 @@ import React from 'react';
 import { useSuiteStore } from '@/lib/store';
 import { Settings, Share, MessageSquare, History, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { XakteirEditor } from '@/components/editor/XakteirEditor';
 
 export default function XakteirWrite() {
   const { isFocusMode, toggleFocusMode } = useSuiteStore();
@@ -27,10 +28,8 @@ export default function XakteirWrite() {
 
       <div className="flex-1 flex justify-center p-8 mt-10">
          <div className="w-full max-w-[850px] min-h-[1100px] bg-white text-black p-24 shadow-2xl rounded-sm">
-            <h1 className="text-5xl font-black tracking-tighter mb-6">Untitled Document</h1>
-            <p className="text-xl text-black/60 leading-relaxed">
-              Start typing your thoughts here...
-            </p>
+            {/* The Live Editor Canvas */}
+            <XakteirEditor />
          </div>
       </div>
 

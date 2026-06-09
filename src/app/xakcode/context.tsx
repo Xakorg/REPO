@@ -483,10 +483,7 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
         .replace(/\s+/g, '-')
         .replace(/[^a-z0-9-]/g, '');
 
-      const subdomainUrl = `${slug}.code.xakteir.com`;
-      const domainName =
-        activeProject.deployment?.customDomain ||
-        subdomainUrl;
+      const domainName = activeProject.deployment?.customDomain || `xakteir.com/sites/${slug}`;
 
       // Update project deployment status
       const activeProjRef = doc(firestore, "users", user.uid, "code_projects", activeProject.id);

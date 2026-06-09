@@ -540,8 +540,13 @@ function SearchContent() {
     router.push(`/search?q=${encodeURIComponent(target.trim())}`, { scroll: false });
 
     // Wikipedia summary removed. Using local definitions only.
-    if (matchedDefinition) {
-      setWikiDefinition(matchedDefinition);
+    const queryLowerTarget = target.toLowerCase().trim();
+    const matchedDefKeyTarget = Object.keys(LOCAL_DEFINITIONS).find(key => 
+      queryLowerTarget === key || queryLowerTarget.includes(key)
+    );
+    const matchedDef = matchedDefKeyTarget ? LOCAL_DEFINITIONS[matchedDefKeyTarget] : null;
+    if (matchedDef) {
+      setWikiDefinition(matchedDef);
     }
 
     try {
@@ -733,6 +738,7 @@ function SearchContent() {
   const matchedDefKey = Object.keys(LOCAL_DEFINITIONS).find(key => 
     queryLower === key || queryLower.includes(key)
   );
+  const matchedDefinition = matchedDefKey ? LOCAL_DEFINITIONS[matchedDefKey] : null;
   const activeDefinition = wikiDefinition || matchedDefinition;
 
   // Gamification States (Stubs)
