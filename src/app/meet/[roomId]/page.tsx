@@ -402,27 +402,52 @@ export default function MeetingRoomPage() {
     iceBuffer.current = new IceCandidateBuffer(peer);
     attachConnectionHandlers(peer);
 
+    let stream: MediaStream | null = null;
     try {
-      // Quality selectors applying constraints
-      const videoConstraints: any = videoQuality === "720p" ? { width: 1280, height: 720 } : videoQuality === "480p" ? { width: 854, height: 480 } : false;
+      // Quality selectors applying constraints with ideal fallback to avoid OverconstrainedError
+      const videoConstraints: any = videoQuality === "720p" 
+        ? { width: { ideal: 1280 }, height: { ideal: 720 } } 
+        : videoQuality === "480p" 
+          ? { width: { ideal: 854 }, height: { ideal: 480 } } 
+          : false;
       const audioConstraints = videoQuality === "audio-only" ? false : true;
 
-      localStream.current = await navigator.mediaDevices.getUserMedia({
+      stream = await navigator.mediaDevices.getUserMedia({
         video: videoConstraints,
         audio: audioConstraints || true,
       });
     } catch (err) {
-      const message =
-        err instanceof DOMException && err.name === "NotAllowedError"
-          ? "Camera and microphone permission denied."
-          : "Could not access camera or microphone.";
-      throw new Error(message);
+      console.warn("First getUserMedia attempt failed, trying fallback...", err);
+      try {
+        // Fallback 1: Simple video & audio (browser resolves compatible values)
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+      } catch (err2) {
+        console.warn("Fallback 1 failed, trying audio-only...", err2);
+        try {
+          // Fallback 2: Audio-only (e.g. if camera is blocked/missing)
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: false,
+            audio: true,
+          });
+        } catch (err3) {
+          console.warn("Fallback 2 failed, joining without local media tracks...", err3);
+          // Fallback 3: Empty stream (e.g. if everything is blocked/missing)
+          stream = new MediaStream();
+        }
+      }
     }
 
+    localStream.current = stream;
     remoteStream.current = new MediaStream();
-    localStream.current.getTracks().forEach((track) => {
-      peer.addTrack(track, localStream.current!);
-    });
+    
+    if (stream) {
+      stream.getTracks().forEach((track) => {
+        peer.addTrack(track, stream!);
+      });
+    }
 
     peer.ontrack = (event) => {
       event.streams[0]?.getTracks().forEach((track) => {
