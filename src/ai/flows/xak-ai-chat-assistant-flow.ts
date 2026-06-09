@@ -144,6 +144,62 @@ const createFile = ai.defineTool(
   }
 );
 
+// Tool to generate an image
+const generateImage = ai.defineTool(
+  {
+    name: 'generateImage',
+    description: 'Generates a real high-fidelity image from a detailed text prompt.',
+    inputSchema: z.object({
+      prompt: z.string().describe('Detailed prompt describing the image to generate.'),
+    }),
+    outputSchema: z.object({
+      imageUrl: z.string().describe('The URL or base64 data URI of the generated image.'),
+    }),
+  },
+  async (input) => {
+    const { media } = await ai.generate({
+      model: 'googleai/imagen-4.0-fast-generate-001',
+      prompt: input.prompt,
+    });
+    if (!media) {
+      throw new Error('Image generation failed.');
+    }
+    return { imageUrl: media.url };
+  }
+);
+
+// Tool to generate a video/animation configuration
+const generateVideo = ai.defineTool(
+  {
+    name: 'generateVideo',
+    description: 'Generates visual rendering parameters for a procedural video/animation.',
+    inputSchema: z.object({
+      prompt: z.string().describe('The theme or prompt describing the animation scene.'),
+      title: z.string().describe('Short title for the animation (max 3 words).'),
+      style: z.enum(['stars', 'matrix', 'tunnel', 'waves', 'particles', 'fractal']).describe('The base animation technique.'),
+      primaryColor: z.string().describe('Primary render color (hex or hsl).'),
+      secondaryColor: z.string().describe('Secondary render color (hex or hsl).'),
+      speed: z.number().describe('Speed multiplier between 0.5 and 3.0.'),
+      caption: z.string().describe('A text caption overlay to display on screen.'),
+    }),
+    outputSchema: z.object({
+      title: z.string(),
+      style: z.string(),
+      primaryColor: z.string(),
+      secondaryColor: z.string(),
+      speed: z.number(),
+      caption: z.string(),
+      generatedAt: z.string(),
+    }),
+  },
+  async (input) => {
+    return {
+      ...input,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+);
+
 export async function chatWithXakAI(input: ChatInput): Promise<ChatOutput> {
   return chatFlow(input);
 }
@@ -168,7 +224,27 @@ CRITICAL GUIDELINES:
 - When asked to build an app, provide the complete HTML/CSS/JS in a single block for instant preview.
 - You remember every detail of this conversation.
 - The current user is ${signedIn ? `signed in with ID ${input.userId}` : 'not signed in'}.
-- Only use tools that save data when the user is signed in.`
+- Only use tools that save data when the user is signed in.
+- You can generate images using the generateImage tool and videos using the generateVideo tool.
+- When you generate an image, display it in markdown like: ![prompt](imageUrl).
+- When you generate a video, display the configuration returned exactly in a JSON block marked with \`\`\`video-config.
+- If generating a 3D scene (Three.js), write a JSON block marked with \`\`\`3d-config containing:
+{
+  "type": "box" | "sphere" | "torus" | "knot" | "plane",
+  "color": "#color",
+  "wireframe": boolean,
+  "autoRotate": boolean
+}
+- If building a multi-file app bundle, output files in a JSON block marked with \`\`\`multi-file containing:
+{
+  "files": [{ "name": "file.html", "content": "..." }]
+}
+- If playing an RPG, output the choices in a JSON block marked with \`\`\`rpg-config containing:
+{
+  "title": "...",
+  "description": "...",
+  "choices": ["Choice A", "Choice B"]
+}`
       : `You are Xak AI, the professional assistant for the Xakteir platform. You help users manage data, write code, and organize tasks.
 
 CRITICAL GUIDELINES:
@@ -178,7 +254,31 @@ CRITICAL GUIDELINES:
 - ALWAYS wrap code in triple backticks.
 - You remember previous context in this session.
 - The current user is ${signedIn ? `signed in with ID ${input.userId}` : 'not signed in'}.
-- You can create documents, tasks, and files only when the user is signed in.`;
+- You can create documents, tasks, and files only when the user is signed in.
+- You can generate images using the generateImage tool and videos using the generateVideo tool.
+- When you generate an image, display it in markdown like: ![prompt](imageUrl).
+- When you generate a video, display the configuration returned exactly in a JSON block marked with \`\`\`video-config.
+- If generating a 3D scene (Three.js), write a JSON block marked with \`\`\`3d-config containing:
+{
+  "type": "box" | "sphere" | "torus" | "knot" | "plane",
+  "color": "#color",
+  "wireframe": boolean,
+  "autoRotate": boolean
+}
+- If building a multi-file app bundle, output files in a JSON block marked with \`\`\`multi-file containing:
+{
+  "files": [{ "name": "file.html", "content": "..." }]
+}
+- If playing an RPG, output the choices in a JSON block marked with \`\`\`rpg-config containing:
+{
+  "title": "...",
+  "description": "...",
+  "choices": ["Choice A", "Choice B"]
+}`;
+
+    const activeTools = signedIn 
+      ? [createDocument, createGoal, createFile, generateImage, generateVideo] 
+      : [generateImage, generateVideo];
 
     while (retries > 0) {
       try {
@@ -189,7 +289,7 @@ CRITICAL GUIDELINES:
             ...(input.history || []),
             { role: 'user', content: [{ text: input.message }] }
           ],
-          tools: signedIn ? [createDocument, createGoal, createFile] : [],
+          tools: activeTools,
           output: { schema: ChatOutputSchema },
         });
 

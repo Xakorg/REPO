@@ -168,7 +168,7 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className={cn("fixed inset-0 top-0 z-[50] flex flex-col overflow-hidden select-none font-sans transition-colors duration-300", themeClasses[theme] || themeClasses.dracula)}>
+    <div className={cn("fixed inset-0 top-0 z-[200] flex flex-col overflow-hidden select-none font-sans transition-colors duration-300", themeClasses[theme] || themeClasses.dracula)}>
       
       {/* IDE Header Controls */}
       <header className="h-14 border-b border-white/5 bg-[#090915]/95 backdrop-blur-xl px-6 flex items-center justify-between shadow-lg relative z-[60] shrink-0">

@@ -475,29 +475,56 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const handleDeploy = async () => {
     if (!activeProject || !user || !firestore) return;
     setIsDeploying(true);
-    setTimeout(async () => {
+    try {
+      // Update project deployment status
       const activeProjRef = doc(firestore, "users", user.uid, "code_projects", activeProject.id);
       await updateDoc(activeProjRef, {
         "deployment.status": 'live',
         "deployment.liveAt": serverTimestamp()
       });
 
-      try {
-        await setDoc(doc(firestore, "publishedProjects", activeProject.id), {
+      // Build a safe, size-limited snapshot of files for the public index
+      const safeFiles: Record<string, string> = {};
+      let totalSize = 0;
+      for (const [name, content] of Object.entries(projectFiles)) {
+        const chunk = content ? String(content).slice(0, 50000) : "";
+        totalSize += chunk.length;
+        if (totalSize > 900000) break; // Stay well under Firestore 1MB limit
+        safeFiles[name] = chunk;
+      }
+
+      const domainName =
+        activeProject.deployment?.customDomain ||
+        activeProject.deployment?.domain ||
+        `${(activeProject.name || 'project').toLowerCase().replace(/\s+/g, '-')}.xakteir.app`;
+
+      // Upsert public project index — merge:true means re-deploys update in-place
+      await setDoc(
+        doc(firestore, "publishedProjects", activeProject.id),
+        {
           projectId: activeProject.id,
           ownerId: user.uid,
           ownerName: user.displayName?.replace(/^@+/, "") || "Member",
           name: activeProject.name,
-          domain: activeProject.deployment?.customDomain || activeProject.deployment?.domain || `${(activeProject.name || 'project').toLowerCase().replace(/\s+/g, '-')}.xakteir.app`,
+          domain: domainName,
           publishedAt: serverTimestamp(),
           status: 'published',
-          files: projectFiles
-        });
-      } catch (e) {}
+          files: safeFiles,
+        },
+        { merge: true }
+      );
 
+      toast({ title: "Unit Published! 🚀", description: `Live at ${domainName}` });
+    } catch (e: any) {
+      console.error("Deploy error:", e);
+      toast({
+        variant: "destructive",
+        title: "Publish Failed",
+        description: e?.message || "Could not deploy. Check your connection and try again.",
+      });
+    } finally {
       setIsDeploying(false);
-      toast({ title: "Unit Published!", description: `Live at ${activeProject.deployment?.customDomain || activeProject.deployment?.domain || 'the Hub'}` });
-    }, 2000);
+    }
   };
 
   // Log Interception Helpers

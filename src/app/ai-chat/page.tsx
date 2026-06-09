@@ -17,18 +17,36 @@ import {
   Lock,
   Trash2,
   Copy,
-  CheckCircle2
+  CheckCircle2,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import { chatWithXakAI } from "@/ai/flows/xak-ai-chat-assistant-flow";
 import { cn } from "@/lib/utils";
 import { copyToClipboard } from "@/lib/clipboard";
+import { 
+  IframeSandbox, 
+  ProceduralVideoPlayer, 
+  ThreeViewer, 
+  MultiFileExplorer, 
+  RpgConsole, 
+  InteractiveSpreadsheet 
+} from "./chat-widgets";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
-function FormattedContent({ content }: { content: string }) {
+function FormattedContent({ 
+  content, 
+  onSelectChoice 
+}: { 
+  content: string; 
+  onSelectChoice?: (choice: string) => void;
+}) {
   const { toast } = useToast();
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
@@ -53,6 +71,35 @@ function FormattedContent({ content }: { content: string }) {
           const lang = match?.[1] || "code";
           const code = match?.[2] || "";
 
+          // Render custom configurations if parsed successfully
+          if (lang === "video-config") {
+            try {
+              const cfg = JSON.parse(code.trim());
+              return <ProceduralVideoPlayer key={i} config={cfg} />;
+            } catch (e) {}
+          }
+          if (lang === "3d-config") {
+            try {
+              const cfg = JSON.parse(code.trim());
+              return <ThreeViewer key={i} config={cfg} />;
+            } catch (e) {}
+          }
+          if (lang === "multi-file") {
+            try {
+              const cfg = JSON.parse(code.trim());
+              return <MultiFileExplorer key={i} files={cfg.files} />;
+            } catch (e) {}
+          }
+          if (lang === "rpg-config") {
+            try {
+              const cfg = JSON.parse(code.trim());
+              return <RpgConsole key={i} config={cfg} onSelectChoice={onSelectChoice || (() => {})} />;
+            } catch (e) {}
+          }
+          if (lang === "html") {
+            return <IframeSandbox key={i} code={code} />;
+          }
+
           return (
             <div key={i} className="my-6 rounded-2xl overflow-hidden border-2 border-white/10 bg-zinc-950 shadow-2xl group/code">
               <div className="flex items-center justify-between px-6 py-2 bg-white/5 border-b border-white/5">
@@ -73,6 +120,36 @@ function FormattedContent({ content }: { content: string }) {
             </div>
           );
         }
+
+        // Parse markdown table in normal text parts
+        const lines = part.split("\n");
+        const tableStartIndex = lines.findIndex(l => l.trim().startsWith("|"));
+        if (tableStartIndex !== -1) {
+          const tableLines: string[] = [];
+          let idx = tableStartIndex;
+          while (idx < lines.length && lines[idx].trim().startsWith("|")) {
+            tableLines.push(lines[idx]);
+            idx++;
+          }
+          if (tableLines.length >= 3) {
+            const headers = tableLines[0].split("|").map(h => h.trim()).filter(Boolean);
+            const rows = tableLines.slice(2).map(line => {
+              return line.split("|").map(c => c.trim()).filter((_, colIdx) => colIdx > 0 && colIdx <= headers.length);
+            });
+
+            const beforeText = lines.slice(0, tableStartIndex).join("\n");
+            const afterText = lines.slice(idx).join("\n");
+
+            return (
+              <div key={i} className="space-y-4">
+                {beforeText.trim() && <div className="whitespace-pre-wrap leading-relaxed">{beforeText}</div>}
+                <InteractiveSpreadsheet initialTable={{ headers, rows }} />
+                {afterText.trim() && <div className="whitespace-pre-wrap leading-relaxed">{afterText}</div>}
+              </div>
+            );
+          }
+        }
+
         return <div key={i} className="whitespace-pre-wrap leading-relaxed">{part}</div>;
       })}
     </div>
@@ -91,7 +168,74 @@ export default function XakAIPage() {
   const [mounted, setMounted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setMounted(true); }, []);
+  const [isListening, setIsListening] = useState(false);
+  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => { 
+    setMounted(true); 
+    return () => {
+      if (typeof window !== "undefined") window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.lang = "en-US";
+      rec.onstart = () => setIsListening(true);
+      rec.onend = () => setIsListening(false);
+      rec.onresult = (event: any) => {
+        const resultText = event.results[0][0].transcript;
+        setInput(prev => (prev ? prev + " " : "") + resultText);
+      };
+      recognitionRef.current = rec;
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      toast({ title: "Speech Recognition not supported in this browser" });
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+    }
+  };
+
+  const handleSpeak = (text: string, index: number) => {
+    if (typeof window === "undefined") return;
+    if (speakingIndex === index) {
+      window.speechSynthesis.cancel();
+      setSpeakingIndex(null);
+    } else {
+      window.speechSynthesis.cancel();
+      // clean markdown formatting for pronunciation
+      const cleanText = text
+        .replace(/```[\s\S]*?```/g, "[code block]")
+        .replace(/[*_#`|]/g, " ")
+        .substring(0, 400);
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.onend = () => setSpeakingIndex(null);
+      utterance.onerror = () => setSpeakingIndex(null);
+      window.speechSynthesis.speak(utterance);
+      setSpeakingIndex(index);
+    }
+  };
+
+  const handleSelectChoice = (choiceText: string) => {
+    setInput(choiceText);
+    setTimeout(() => {
+      const submitBtn = document.querySelector('form button[type="submit"]') as HTMLButtonElement | null;
+      if (submitBtn) submitBtn.click();
+    }, 150);
+  };
 
   const sessionsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -275,16 +419,25 @@ export default function XakAIPage() {
             {messages.map((msg, i) => (
               <div key={i} className={cn("flex gap-6", msg.role === 'user' ? "flex-row-reverse" : "")}>
                 <div className={cn(
-                  "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border-2 shadow-2xl",
+                  "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border-2 shadow-2xl relative",
                   msg.role === 'user' ? "bg-white/5 border-white/10" : "bg-primary/20 border-primary/40"
                 )}>
                   {msg.role === 'user' ? <User className="w-6 h-6 text-white/40" /> : <Bot className="w-6 h-6 text-primary" />}
                 </div>
                 <div className={cn(
-                  "p-10 rounded-[3rem] text-lg font-medium leading-relaxed italic max-w-[90%] shadow-2xl border",
+                  "p-10 rounded-[3rem] text-lg font-medium leading-relaxed italic max-w-[90%] shadow-2xl border relative group/msg",
                   msg.role === 'user' ? "bg-white/5 border-white/10 rounded-tr-none" : "bg-black/60 border-white/10 rounded-tl-none"
                 )}>
-                   <FormattedContent content={msg.content} />
+                   {msg.role === 'model' && (
+                     <button 
+                       onClick={() => handleSpeak(msg.content, i)} 
+                       className="absolute top-4 right-4 opacity-0 group-hover/msg:opacity-40 hover:!opacity-100 p-1.5 rounded-lg hover:bg-white/10 text-white transition-all z-10"
+                       title="Read aloud"
+                     >
+                       {speakingIndex === i ? <VolumeX className="w-4 h-4 text-primary" /> : <Volume2 className="w-4 h-4" />}
+                     </button>
+                   )}
+                   <FormattedContent content={msg.content} onSelectChoice={handleSelectChoice} />
                 </div>
               </div>
             ))}
@@ -310,8 +463,19 @@ export default function XakAIPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask Xak AI anything..."
-              className="h-20 w-full bg-black/60 border-4 border-white/10 focus-visible:border-primary focus-visible:ring-0 rounded-full px-12 pr-24 font-bold italic text-base shadow-2xl transition-all text-white placeholder:text-white/20"
+              className="h-20 w-full bg-black/60 border-4 border-white/10 focus-visible:border-primary focus-visible:ring-0 rounded-full px-12 pr-40 font-bold italic text-base shadow-2xl transition-all text-white placeholder:text-white/20"
             />
+            <button 
+              type="button"
+              onClick={toggleListening}
+              className={cn(
+                "absolute right-20 top-3 h-14 w-14 rounded-full transition-all flex items-center justify-center shadow-xl active:scale-90",
+                isListening ? "bg-rose-500 text-white animate-pulse" : "bg-white/10 hover:bg-white/20 text-white/60 hover:text-white"
+              )}
+              title={isListening ? "Stop listening" : "Start voice input"}
+            >
+              {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+            </button>
             <button 
               type="submit" 
               disabled={loading || !input.trim()}
