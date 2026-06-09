@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { 
   Hash, 
@@ -24,7 +24,17 @@ import {
   ArrowDown,
   Settings,
   Sparkles,
-  Volume2
+  Volume2,
+  Copy,
+  Bookmark,
+  Share2,
+  MessageSquare,
+  Mic,
+  MicOff,
+  Clock,
+  ChevronRight,
+  BookMarked,
+  BarChart2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -35,13 +45,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, serverTimestamp, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc, where, getDocs } from "firebase/firestore";
+import { collection, serverTimestamp, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc, where, getDocs, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { RenderHat } from "@/components/RenderHat";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import Link from "next/link";
 
 const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
+
+// Sticker set
+const STICKERS = ["😂", "🔥", "💀", "👀", "🚀", "🎉", "💯", "❤️"];
 
 export default function ServerChatPage() {
   const params = useParams();
@@ -115,7 +128,77 @@ export default function ServerChatPage() {
   const [isSavingChannel, setIsSavingChannel] = useState(false);
   const [isDeletingChannel, setIsDeletingChannel] = useState(false);
 
-  // Listen to viewport scrolling for scroll-to-bottom anchor visibility
+  // ── NEW FEATURE STATES ────────────────────────────────────────────────────
+
+  // Feature 2: Image Lightbox
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+  // Feature 4: Profile Card
+  const [profileCard, setProfileCard] = useState<any | null>(null);
+
+  // Feature 6: Poll state (handled via message type)
+
+  // Feature 7: Message Forwarding
+  const [forwardMsg, setForwardMsg] = useState<any | null>(null);
+  const [forwardDest, setForwardDest] = useState("");
+
+  // Feature 8: Sticker Picker
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
+
+  // Feature 10: Voice recording
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+
+  // Feature 11: Message scheduling
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+  const [scheduleDateTime, setScheduleDateTime] = useState("");
+
+  // Feature 12: Thread side panel
+  const [activeThread, setActiveThread] = useState<any | null>(null);
+  const [threadInput, setThreadInput] = useState("");
+
+  // Thread replies query
+  const threadRepliesQuery = useMemoFirebase(() => {
+    if (!firestore || !activeThread) return null;
+    return query(
+      collection(firestore, "chats", channelId, "threads", activeThread.id, "replies"),
+      orderBy("timestamp", "asc"),
+      limit(50)
+    );
+  }, [firestore, channelId, activeThread]);
+  const { data: threadReplies } = useCollection(threadRepliesQuery);
+
+  // Feature 13: Slow mode
+  const [slowModeUntil, setSlowModeUntil] = useState(0);
+  const [slowModeCountdown, setSlowModeCountdown] = useState(0);
+
+  useEffect(() => {
+    if (slowModeUntil <= 0) return;
+    const interval = setInterval(() => {
+      const remaining = Math.ceil((slowModeUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setSlowModeCountdown(0);
+        setSlowModeUntil(0);
+        clearInterval(interval);
+      } else {
+        setSlowModeCountdown(remaining);
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [slowModeUntil]);
+
+  // Feature 14: Server rules / welcome screen
+  const [showRulesModal, setShowRulesModal] = useState(false);
+  const [rulesAccepted, setRulesAccepted] = useState(false);
+
+  // Feature 15: Reaction analytics tooltip
+  const [reactionTooltip, setReactionTooltip] = useState<{ msgId: string, emoji: string, x: number, y: number } | null>(null);
+
+  // Member List Panel
+  const [showMemberPanel, setShowMemberPanel] = useState(false);
+
+  // ── LISTEN TO VIEWPORT SCROLLING ─────────────────────────────────────────
   useEffect(() => {
     if (!scrollRef.current) return;
     const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -282,7 +365,6 @@ export default function ServerChatPage() {
       const q = match[1].toLowerCase();
       setMentionQuery(q);
       setShowMentionList(true);
-      // Filter all visible server members (from allUsers query already loaded)
     } else {
       setShowMentionList(false);
       setMentionQuery("");
@@ -337,6 +419,45 @@ export default function ServerChatPage() {
     }
   };
 
+  // Feature 9: @everyone / @here notifications
+  const dispatchEveryoneNotifications = async (content: string) => {
+    if (!firestore || !serverDoc?.members || !user) return;
+    const memberUids: string[] = serverDoc.members || [];
+    for (const uid of memberUids) {
+      if (uid === user.uid) continue;
+      try {
+        await addDoc(collection(firestore, "users", uid, "notifications"), {
+          title: `📣 @everyone in #${channelName}`,
+          message: content.slice(0, 100),
+          type: "mention_everyone",
+          read: false,
+          timestamp: serverTimestamp()
+        });
+      } catch(e) {}
+    }
+  };
+
+  // Feature 1: Wrap selected text in formatting syntax
+  const chatInputRef = useRef<HTMLInputElement>(null);
+  const wrapSelection = (wrapper: string) => {
+    const el = chatInputRef.current;
+    if (!el) return;
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const selected = chatInput.slice(start, end);
+    const before = chatInput.slice(0, start);
+    const after = chatInput.slice(end);
+    const newVal = selected
+      ? `${before}${wrapper}${selected}${wrapper}${after}`
+      : `${before}${wrapper}${wrapper}${after}`;
+    setChatInput(newVal);
+    setTimeout(() => {
+      el.focus();
+      const newPos = selected ? end + wrapper.length * 2 : start + wrapper.length;
+      el.setSelectionRange(newPos, newPos);
+    }, 0);
+  };
+
   const renderMarkdown = (text: string) => {
     if (!text) return "";
     let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -344,6 +465,8 @@ export default function ServerChatPage() {
     escaped = escaped.replace(/_([^_]+)_/g, "<em>$1</em>");
     escaped = escaped.replace(/~([^~]+)~/g, "<del>$1</del>");
     escaped = escaped.replace(/`([^`]+)`/g, "<code class='bg-black/50 px-1 py-0.5 rounded text-pink-400 font-mono text-xs'>$1</code>");
+    // Feature 9: Highlight @everyone / @here
+    escaped = escaped.replace(/@(everyone|here)/g, "<span class='inline-flex items-center bg-yellow-500/20 text-yellow-300 font-black px-1.5 py-0.5 rounded-md text-xs'>@$1</span>");
     // Highlight @mentions as styled pills
     escaped = escaped.replace(/@([\w]+)/g, "<span class='inline-flex items-center bg-primary/20 text-primary font-black px-1.5 py-0.5 rounded-md text-xs cursor-pointer hover:bg-primary/30 transition-colors'>@$1</span>");
     escaped = escaped.replace(/(https?:\/\/[^\s]+)/g, (url) => {
@@ -584,6 +707,36 @@ export default function ServerChatPage() {
   }, [firestore]);
   const { data: allUsers } = useCollection(allUsersQuery);
 
+  // Hub members (online status) — declared after serverDoc & userData
+  const hubMembersQuery = useMemoFirebase(() => {
+    if (!firestore || !serverDoc?.members?.length) return null;
+    return query(collection(firestore, "users"), limit(100));
+  }, [firestore, serverDoc]);
+  const { data: hubMembers } = useCollection(hubMembersQuery);
+
+  // ── SERVER RULES CHECK ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!serverDoc?.rules || !userData || rulesAccepted) return;
+    const accepted = userData?.acceptedRules?.[serverName];
+    if (!accepted) {
+      setShowRulesModal(true);
+    }
+  }, [serverDoc, userData, serverName, rulesAccepted]);
+
+  const handleAcceptRules = async () => {
+    if (!firestore || !user) return;
+    try {
+      await updateDoc(doc(firestore, "users", user.uid), {
+        [`acceptedRules.${serverName}`]: true
+      });
+      setShowRulesModal(false);
+      setRulesAccepted(true);
+      toast({ title: "Rules accepted! Welcome 🎉" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Failed to accept rules" });
+    }
+  };
+
 
   // Auto-scroll chat to bottom
   useEffect(() => {
@@ -617,6 +770,152 @@ export default function ServerChatPage() {
       fetchGifs(gifSearch);
     }
   }, [showGifPicker, gifSearch]);
+
+  // Feature 3: Copy message content
+  const handleCopyMessage = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast({ title: "Copied!" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Copy failed" });
+    }
+  };
+
+  // Feature 5: Bookmark message
+  const handleBookmarkMessage = async (msg: any) => {
+    if (!firestore || !user) return;
+    try {
+      await addDoc(collection(firestore, "users", user.uid, "bookmarks"), {
+        messageId: msg.id,
+        channelId,
+        channelName,
+        serverName,
+        content: msg.content,
+        senderName: msg.senderName,
+        senderPhoto: msg.senderPhoto,
+        timestamp: serverTimestamp()
+      });
+      toast({ title: "Bookmarked!" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Bookmark failed" });
+    }
+  };
+
+  // Feature 7: Forward message
+  const handleForwardMessage = async () => {
+    if (!firestore || !user || !forwardMsg || !forwardDest.trim()) return;
+    try {
+      const destChannelId = forwardDest.trim();
+      await addDoc(collection(firestore, "chats", destChannelId, "messages"), {
+        content: forwardMsg.content,
+        senderId: user.uid,
+        senderName: user.displayName?.replace(/^@+/, "") || "Member",
+        senderPhoto: user.photoURL || "",
+        senderHat: userData?.hat || null,
+        channelId: destChannelId,
+        channelName: destChannelId,
+        timestamp: serverTimestamp(),
+        forwardedFrom: {
+          senderName: forwardMsg.senderName,
+          channelName,
+          serverName
+        }
+      });
+      toast({ title: "Message forwarded!" });
+      setForwardMsg(null);
+      setForwardDest("");
+    } catch (e) {
+      toast({ variant: "destructive", title: "Forward failed" });
+    }
+  };
+
+  // Feature 8: Send sticker
+  const handleSendSticker = async (sticker: string) => {
+    if (!user || !firestore) return;
+    setShowStickerPicker(false);
+    try {
+      await addDocumentNonBlocking(collection(firestore, "chats", channelId, "messages"), {
+        content: sticker,
+        type: "sticker",
+        senderId: user.uid,
+        senderName: user.displayName?.replace(/^@+/, "") || "Member",
+        senderPhoto: user.photoURL || "",
+        senderHat: userData?.hat || null,
+        channelId,
+        channelName,
+        timestamp: serverTimestamp()
+      });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Sticker send failed" });
+    }
+  };
+
+  // Feature 10: Voice recording
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64 = reader.result as string;
+          if (!user || !firestore) return;
+          try {
+            await addDocumentNonBlocking(collection(firestore, "chats", channelId, "messages"), {
+              content: base64,
+              type: "audio",
+              senderId: user.uid,
+              senderName: user.displayName?.replace(/^@+/, "") || "Member",
+              senderPhoto: user.photoURL || "",
+              senderHat: userData?.hat || null,
+              channelId,
+              channelName,
+              timestamp: serverTimestamp()
+            });
+            toast({ title: "Voice message sent!" });
+          } catch (err) {
+            toast({ variant: "destructive", title: "Voice send failed" });
+          }
+        };
+        reader.readAsDataURL(blob);
+      };
+      recorder.start();
+      setIsRecording(true);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Microphone access denied" });
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  // Feature 12: Send thread reply
+  const handleSendThreadReply = async () => {
+    if (!firestore || !user || !activeThread || !threadInput.trim()) return;
+    try {
+      await addDoc(collection(firestore, "chats", channelId, "threads", activeThread.id, "replies"), {
+        content: threadInput.trim(),
+        senderId: user.uid,
+        senderName: user.displayName?.replace(/^@+/, "") || "Member",
+        senderPhoto: user.photoURL || "",
+        timestamp: serverTimestamp()
+      });
+      setThreadInput("");
+    } catch (e) {
+      toast({ variant: "destructive", title: "Thread reply failed" });
+    }
+  };
 
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -660,9 +959,53 @@ export default function ServerChatPage() {
       toast({ variant: "destructive", title: "Spam Detected", description: "You are sending messages too fast. Muted for 5s." });
       return;
     }
+
+    // Feature 13: Slow mode check
+    if (activeChannelDoc?.slowMode > 0 && now < slowModeUntil) {
+      const remaining = Math.ceil((slowModeUntil - now) / 1000);
+      toast({ variant: "destructive", title: "Slow Mode", description: `⏳ Wait ${remaining}s` });
+      return;
+    }
+
     setLastMessageSentAt(now);
 
+    // Apply slow mode after sending
+    if (activeChannelDoc?.slowMode > 0) {
+      setSlowModeUntil(now + activeChannelDoc.slowMode * 1000);
+    }
+
     let content = chatInput.trim();
+
+    // Feature 11: Scheduled message
+    if (scheduleDateTime && showSchedulePicker) {
+      if (!content) {
+        toast({ variant: "destructive", title: "Type a message to schedule" });
+        return;
+      }
+      try {
+        await addDoc(collection(firestore, "chats", channelId, "messages"), {
+          content,
+          senderId: user.uid,
+          senderName: user.displayName?.replace(/^@+/, "") || "Member",
+          senderPhoto: user.photoURL || "",
+          senderHat: userData?.hat || null,
+          channelId,
+          channelName,
+          timestamp: serverTimestamp(),
+          scheduledFor: scheduleDateTime,
+          status: "scheduled"
+        });
+        toast({ title: `Message scheduled for ${new Date(scheduleDateTime).toLocaleString()}` });
+        setChatInput("");
+        setScheduleDateTime("");
+        setShowSchedulePicker(false);
+        return;
+      } catch (e) {
+        toast({ variant: "destructive", title: "Schedule failed" });
+        return;
+      }
+    }
+
     if (imagePreview) {
       content = imagePreview;
       setImagePreview(null);
@@ -674,6 +1017,31 @@ export default function ServerChatPage() {
     setIsSending(true);
 
     try {
+      // Feature 6: Poll syntax parsing
+      if (content.startsWith("/poll ")) {
+        const pollRaw = content.slice(6);
+        const parts = pollRaw.split("|").map(p => p.trim());
+        if (parts.length >= 3) {
+          const [pollQuestion, ...optionTexts] = parts;
+          const pollOptions = optionTexts.map(text => ({ text, votes: 0, voters: [] }));
+          await addDocumentNonBlocking(collection(firestore, "chats", channelId, "messages"), {
+            content: pollQuestion,
+            type: "poll",
+            pollQuestion,
+            pollOptions,
+            senderId: user.uid,
+            senderName: user.displayName?.replace(/^@+/, "") || "Member",
+            senderPhoto: user.photoURL || "",
+            senderHat: userData?.hat || null,
+            channelId,
+            channelName,
+            timestamp: serverTimestamp()
+          });
+          setIsSending(false);
+          return;
+        }
+      }
+
       const payload: any = {
         content,
         senderId: user.uid,
@@ -695,9 +1063,15 @@ export default function ServerChatPage() {
       }
 
       await addDocumentNonBlocking(collection(firestore, "chats", channelId, "messages"), payload);
+
       // Dispatch @mention notifications after message is saved
       if (content.includes("@")) {
         dispatchMentionNotifications(content, user.displayName?.replace(/^@+/, "") || "Member");
+      }
+
+      // Feature 9: @everyone / @here notifications
+      if (content.includes("@everyone") || content.includes("@here")) {
+        dispatchEveryoneNotifications(content);
       }
     } catch (error) {
       if (!imagePreview) setChatInput(content);
@@ -729,6 +1103,23 @@ export default function ServerChatPage() {
     }
   };
 
+  // Feature 6: Poll vote
+  const handlePollVote = async (msgId: string, optionIndex: number, currentOptions: any[]) => {
+    if (!firestore || !user) return;
+    try {
+      const updated = currentOptions.map((opt, i) => {
+        if (i !== optionIndex) return opt;
+        const alreadyVoted = (opt.voters || []).includes(user.uid);
+        if (alreadyVoted) return opt;
+        return { ...opt, votes: (opt.votes || 0) + 1, voters: [...(opt.voters || []), user.uid] };
+      });
+      await updateDoc(doc(firestore, "chats", channelId, "messages", msgId), {
+        pollOptions: updated
+      });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Vote failed" });
+    }
+  };
 
   const handleCatchUp = async () => {
     if (!messages || messages.length === 0) {
@@ -948,6 +1339,16 @@ export default function ServerChatPage() {
     );
   };
 
+  // Feature 15: get reactor names
+  const getReactorNames = (uids: string[]) => {
+    if (!hubMembers && !allUsers) return uids.map(u => u.slice(0, 6));
+    const members = hubMembers || allUsers || [];
+    return uids.map(uid => {
+      const m = members.find((u: any) => u.id === uid);
+      return m?.displayName || m?.username || uid.slice(0, 6);
+    });
+  };
+
   return (
     <main className="flex-1 flex flex-col bg-zinc-950 relative overflow-hidden h-full">
       <style>{`
@@ -979,6 +1380,128 @@ export default function ServerChatPage() {
           </span>
         ))}
       </div>
+
+      {/* Feature 14: Server Rules Modal */}
+      <Dialog open={showRulesModal} onOpenChange={() => {}}>
+        <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-lg text-white p-8 bg-zinc-950/95 backdrop-blur-2xl" onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase italic text-white flex items-center gap-2">
+              📋 Server Rules
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400 text-xs font-bold uppercase tracking-widest">
+              You must accept these rules to continue.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-60 mt-4">
+            <div className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line p-4 bg-white/5 rounded-2xl border border-white/5">
+              {serverDoc?.rules || "No rules provided."}
+            </div>
+          </ScrollArea>
+          <Button
+            onClick={handleAcceptRules}
+            className="w-full mt-4 h-12 bg-primary hover:bg-primary/90 text-black font-black uppercase text-xs tracking-widest rounded-xl border-none"
+          >
+            Accept & Continue
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Feature 2: Image Lightbox */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 bg-black/90 z-[999] flex items-center justify-center"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white/60 hover:text-white z-10"
+            onClick={() => setLightboxImage(null)}
+          >
+            <X className="w-8 h-8" />
+          </button>
+          <img
+            src={lightboxImage}
+            alt="lightbox"
+            className="max-w-[90vw] max-h-[90vh] rounded-2xl border border-white/10 shadow-2xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      {/* Feature 4: Profile Card Modal */}
+      <Dialog open={!!profileCard} onOpenChange={() => setProfileCard(null)}>
+        <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-sm text-white p-8 bg-zinc-950/95 backdrop-blur-2xl text-center">
+          <Avatar className="w-20 h-20 rounded-[2rem] border-4 border-white/10 mx-auto">
+            <AvatarImage src={profileCard?.senderPhoto} className="object-cover" />
+            <AvatarFallback className="bg-primary/20 text-primary font-black text-2xl">{profileCard?.senderName?.[0]}</AvatarFallback>
+          </Avatar>
+          <div className="mt-4 space-y-1">
+            <p className="text-lg font-black uppercase italic tracking-tight text-white">{profileCard?.senderName}</p>
+            {profileCard?.username && (
+              <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest">@{profileCard.username}</p>
+            )}
+            {profileCard?.statusEmoji && (
+              <p className="text-2xl">{profileCard.statusEmoji}</p>
+            )}
+            {profileCard?.bio && (
+              <p className="text-xs text-zinc-300 mt-2 leading-relaxed italic">"{profileCard.bio}"</p>
+            )}
+          </div>
+          <Button
+            onClick={() => {
+              router.push(`/chat/dm/${profileCard?.username || profileCard?.senderId}`);
+              setProfileCard(null);
+            }}
+            className="w-full mt-6 h-11 bg-primary hover:bg-primary/90 text-black font-black uppercase text-xs tracking-widest rounded-xl border-none"
+          >
+            Start DM
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Feature 7: Forward Message Modal */}
+      <Dialog open={!!forwardMsg} onOpenChange={() => { setForwardMsg(null); setForwardDest(""); }}>
+        <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-white p-8 bg-zinc-950/95 backdrop-blur-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-black uppercase italic text-white flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-primary" /> Forward Message
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 p-4 bg-white/5 border border-white/5 rounded-2xl text-xs text-zinc-300 italic">
+            "{forwardMsg?.content?.slice(0, 120)}"
+          </div>
+          <div className="mt-4 space-y-2">
+            <label className="text-[9px] font-black uppercase text-zinc-500">Destination Channel ID</label>
+            <Input
+              value={forwardDest}
+              onChange={e => setForwardDest(e.target.value)}
+              placeholder="e.g. myserver-general or dm-userId"
+              className="bg-black/60 border-white/5 text-xs text-white animate-none"
+            />
+            <p className="text-[9px] text-zinc-600 font-bold">Enter the channelId of the destination channel or DM.</p>
+          </div>
+          <Button
+            onClick={handleForwardMessage}
+            className="w-full mt-4 h-11 bg-primary hover:bg-primary/90 text-black font-black uppercase text-xs tracking-widest rounded-xl border-none"
+          >
+            Forward
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Feature 15: Reaction tooltip */}
+      {reactionTooltip && (
+        <div
+          className="fixed z-[998] pointer-events-none"
+          style={{ left: reactionTooltip.x, top: reactionTooltip.y - 8 }}
+        >
+          <div className="bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-bold text-zinc-300 shadow-2xl -translate-y-full">
+            {reactionTooltip.emoji} reacted by:{" "}
+            {getReactorNames(
+              (messages?.find(m => m.id === reactionTooltip.msgId)?.reactions?.find((r: any) => r.emoji === reactionTooltip.emoji)?.uids) || []
+            ).join(", ")}
+          </div>
+        </div>
+      )}
 
       {/* CHANNEL HEADER */}
       <header className="h-16 border-b border-white/5 flex items-center justify-between px-4 md:px-8 bg-black/20 backdrop-blur-xl z-20 shadow-lg shrink-0">
@@ -1031,6 +1554,16 @@ export default function ServerChatPage() {
               </Button>
             )}
 
+            {/* Member List Toggle */}
+            <Button
+              onClick={() => setShowMemberPanel(p => !p)}
+              variant="ghost"
+              className={cn("h-9 w-9 p-0 hover:bg-white/5 rounded-xl transition-colors", showMemberPanel ? "text-primary" : "text-zinc-400 hover:text-white")}
+              title="Member List"
+            >
+              <Users className="w-4 h-4" />
+            </Button>
+
             <Button onClick={handleCatchUp} variant="ghost" className="h-9 px-4 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-[9px] font-black uppercase tracking-widest gap-2 hidden sm:flex">
                <Brain className="w-3.5 h-3.5" /> Catch Me Up
             </Button>
@@ -1048,161 +1581,361 @@ export default function ServerChatPage() {
         </div>
       )}
 
-      {/* MESSAGES SCROLL AREA */}
-      <ScrollArea className="flex-1 p-8" ref={scrollRef}>
-         <div className="max-w-5xl mx-auto space-y-8 pb-20 relative">
-            {isMessagesLoading ? (
-              <div className="flex justify-center p-20"><Loader2 className="w-10 h-10 animate-spin text-primary opacity-20" /></div>
-            ) : filteredMessages.length === 0 ? (
-              <div className="py-40 text-center space-y-6 opacity-20 italic">
-                 <MessageCircle className="w-16 h-16 mx-auto text-primary" />
-                 <p className="text-sm font-black uppercase tracking-[0.4em]">{messageSearchQuery.trim() ? "No results found" : "Initialize Conversation"}</p>
-              </div>
-            ) : (
-              filteredMessages.map((msg) => {
-                const isOwn = msg.senderId === user.uid;
-                const translated = translatedTexts[msg.id];
-                
-                return (
-                  <div 
-                    key={msg.id} 
-                    id={`msg-${msg.id}`}
-                    className={cn("flex gap-5 group relative transition-all duration-500", isOwn && "flex-row-reverse")}
-                  >
-                     <div className="relative shrink-0 text-left">
-                       <RenderHat hatKey={msg.senderHat} />
-                       <Avatar className="w-11 h-11 rounded-[1.1rem] border-2 border-white/5 bg-zinc-900">
-                          <AvatarImage src={msg.senderPhoto} className="object-cover" />
-                          <AvatarFallback className="bg-primary/20 text-primary font-black text-xs">{msg.senderName?.[0]}</AvatarFallback>
-                       </Avatar>
-                     </div>
-                     <div className={cn("flex flex-col space-y-1.5 max-w-[70%]", isOwn && "items-end")}>
-                        <span className={cn("text-[9px] font-black uppercase italic tracking-widest px-2", getSenderColor(msg.senderId))}>{msg.senderName}</span>
-                        
-                        {/* Reply reference block */}
-                        {msg.replyTo && (
-                          <div 
-                            onClick={() => {
-                              const originEl = document.getElementById(`msg-${msg.replyTo.id}`);
-                              if (originEl) {
-                                originEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                originEl.classList.add('bg-white/10');
-                                setTimeout(() => originEl.classList.remove('bg-white/10'), 1500);
-                              } else {
-                                toast({ description: "Original message not found." });
-                              }
-                            }}
-                            className="text-[10px] text-zinc-400 bg-white/5 border-l-2 border-primary/45 px-3 py-1 rounded-r-lg max-w-md cursor-pointer hover:bg-white/10 transition-colors italic mb-0.5 flex items-center gap-1.5"
-                            title="Jump to reply origin"
+      {/* Main layout: messages + optional side panels */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* MESSAGES SCROLL AREA */}
+        <ScrollArea className="flex-1 p-8" ref={scrollRef}>
+           <div className="max-w-5xl mx-auto space-y-8 pb-20 relative">
+              {isMessagesLoading ? (
+                <div className="flex justify-center p-20"><Loader2 className="w-10 h-10 animate-spin text-primary opacity-20" /></div>
+              ) : filteredMessages.length === 0 ? (
+                <div className="py-40 text-center space-y-6 opacity-20 italic">
+                   <MessageCircle className="w-16 h-16 mx-auto text-primary" />
+                   <p className="text-sm font-black uppercase tracking-[0.4em]">{messageSearchQuery.trim() ? "No results found" : "Initialize Conversation"}</p>
+                </div>
+              ) : (
+                filteredMessages.map((msg) => {
+                  const isOwn = msg.senderId === user.uid;
+                  const translated = translatedTexts[msg.id];
+                  
+                  return (
+                    <div 
+                      key={msg.id} 
+                      id={`msg-${msg.id}`}
+                      className={cn("flex gap-5 group relative transition-all duration-500", isOwn && "flex-row-reverse")}
+                    >
+                       <div className="relative shrink-0 text-left">
+                         <RenderHat hatKey={msg.senderHat} />
+                         <button
+                           type="button"
+                           onClick={() => setProfileCard(msg)}
+                           className="block focus:outline-none"
+                           title="View Profile"
+                         >
+                           <Avatar className="w-11 h-11 rounded-[1.1rem] border-2 border-white/5 bg-zinc-900 hover:border-primary/40 transition-colors">
+                              <AvatarImage src={msg.senderPhoto} className="object-cover" />
+                              <AvatarFallback className="bg-primary/20 text-primary font-black text-xs">{msg.senderName?.[0]}</AvatarFallback>
+                           </Avatar>
+                         </button>
+                       </div>
+                       <div className={cn("flex flex-col space-y-1.5 max-w-[70%]", isOwn && "items-end")}>
+                          <button
+                            type="button"
+                            onClick={() => setProfileCard(msg)}
+                            className={cn("text-[9px] font-black uppercase italic tracking-widest px-2 focus:outline-none hover:underline", getSenderColor(msg.senderId))}
                           >
-                            <span className="font-black text-primary">@{msg.replyTo.senderName}</span>
-                            <span className="truncate font-medium">"{msg.replyTo.content}"</span>
-                          </div>
-                        )}
-
-                        <div className="relative">
-                          {editingMessageId === msg.id ? (
-                            <div className="p-3 bg-zinc-900 border border-primary/30 rounded-[1.5rem] space-y-2 text-left">
-                              <Input 
-                                value={editInput} 
-                                onChange={(e) => setEditInput(e.target.value)} 
-                                className="bg-black text-xs text-white border-white/10 h-8"
-                              />
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => handleSaveEdit(msg.id)} className="h-7 text-[9px] uppercase font-black bg-emerald-600 hover:bg-emerald-500">Save</Button>
-                                <Button size="sm" variant="ghost" onClick={() => setEditingMessageId(null)} className="h-7 text-[9px] uppercase font-black text-zinc-400 border border-white/5">Cancel</Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className={cn(
-                              "p-5 rounded-[1.8rem] shadow-2xl border transition-all text-sm font-medium leading-relaxed text-left",
-                              isOwn ? "bg-primary text-white border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none text-foreground/90"
-                            )}>
-                               {isImageUrl(msg.content) ? (
-                                 <img src={msg.content} alt="media" className="rounded-2xl max-w-full max-h-60 object-contain border border-white/10" />
-                               ) : (
-                                 renderMarkdown(msg.content)
-                               )}
-
-                               {/* Edited Tag */}
-                               {msg.edited && <span className="text-[7px] opacity-40 ml-2 font-black uppercase italic">(edited)</span>}
-                               
-                               {/* Pinned Icon Tag */}
-                               {msg.pinned && <Pin className="w-3 h-3 text-amber-500 absolute top-2 right-2 rotate-45" />}
-
-                               {/* Translated text overlay */}
-                               {translated && (
-                                 <div className="mt-3 pt-2 border-t border-white/10 text-xs text-emerald-400 font-bold">
-                                   <Globe className="w-3 h-3 inline mr-1.5 animate-pulse" /> {translated}
-                                 </div>
-                               )}
+                            {msg.senderName}
+                          </button>
+                          
+                          {/* Reply reference block */}
+                          {msg.replyTo && (
+                            <div 
+                              onClick={() => {
+                                const originEl = document.getElementById(`msg-${msg.replyTo.id}`);
+                                if (originEl) {
+                                  originEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                  originEl.classList.add('bg-white/10');
+                                  setTimeout(() => originEl.classList.remove('bg-white/10'), 1500);
+                                } else {
+                                  toast({ description: "Original message not found." });
+                                }
+                              }}
+                              className="text-[10px] text-zinc-400 bg-white/5 border-l-2 border-primary/45 px-3 py-1 rounded-r-lg max-w-md cursor-pointer hover:bg-white/10 transition-colors italic mb-0.5 flex items-center gap-1.5"
+                              title="Jump to reply origin"
+                            >
+                              <span className="font-black text-primary">@{msg.replyTo.senderName}</span>
+                              <span className="truncate font-medium">"{msg.replyTo.content}"</span>
                             </div>
                           )}
 
-                          {/* Action Hover Tool Bar (Feature 1, 4, 5, 6, 39) */}
-                          {!editingMessageId && (
-                            <div className={cn(
-                              "absolute -top-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center bg-[#0a0a15] border border-white/10 rounded-full px-2.5 py-1.5 shadow-2xl gap-2 z-30",
-                              isOwn ? "left-0" : "right-0"
-                            )}>
-                              {/* Quick reaction emojis */}
-                              {['👍', '❤️', '🔥', '😂'].map(emoji => (
-                                <button key={emoji} onClick={() => handleReact(msg.id, emoji)} className="hover:scale-125 transition-transform text-xs">{emoji}</button>
-                              ))}
-                              <div className="w-px h-3 bg-white/10 mx-1" />
-                              <button onClick={() => setReplyingToMessage(msg)} className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="Threaded Reply"><CornerUpLeft className="w-3 h-3" /></button>
-                              <button onClick={() => handleTogglePin(msg.id, msg.pinned)} className={cn("text-zinc-400 hover:text-white hover:scale-110 transition-all", msg.pinned && "text-amber-500")} title="Pin Message"><Pin className="w-3 h-3" /></button>
-                              
-                              {/* Translation menu dropdown */}
-                              <div className="relative group/lang">
-                                <button className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="AI Translate"><Globe className="w-3 h-3" /></button>
-                                <div className="absolute bottom-full mb-2 hidden group-hover/lang:flex flex-col bg-zinc-950 border border-white/10 rounded-xl p-1 shadow-2xl text-[8px] font-black uppercase text-left whitespace-nowrap z-50">
-                                  {['Spanish', 'French', 'Japanese', 'Arabic'].map(l => (
-                                    <button key={l} onClick={() => handleTranslate(msg.id, msg.content, l)} className="px-2 py-1 rounded hover:bg-white/5 text-zinc-300 hover:text-white">{l}</button>
-                                  ))}
+                          {/* Feature 7: Forwarded header */}
+                          {msg.forwardedFrom && (
+                            <div className="text-[9px] text-zinc-500 font-black uppercase italic px-2 flex items-center gap-1">
+                              <Share2 className="w-2.5 h-2.5" /> ↩ Forwarded from #{msg.forwardedFrom.channelName} · {msg.forwardedFrom.serverName}
+                            </div>
+                          )}
+
+                          {/* Feature 11: Scheduled label */}
+                          {msg.status === "scheduled" && msg.scheduledFor && (
+                            <div className="text-[9px] text-amber-400 font-black uppercase italic px-2 flex items-center gap-1">
+                              <Clock className="w-2.5 h-2.5" /> [Scheduled for {new Date(msg.scheduledFor).toLocaleString()}]
+                            </div>
+                          )}
+
+                          <div className="relative">
+                            {editingMessageId === msg.id ? (
+                              <div className="p-3 bg-zinc-900 border border-primary/30 rounded-[1.5rem] space-y-2 text-left">
+                                <Input 
+                                  value={editInput} 
+                                  onChange={(e) => setEditInput(e.target.value)} 
+                                  className="bg-black text-xs text-white border-white/10 h-8"
+                                />
+                                <div className="flex gap-2">
+                                  <Button size="sm" onClick={() => handleSaveEdit(msg.id)} className="h-7 text-[9px] uppercase font-black bg-emerald-600 hover:bg-emerald-500">Save</Button>
+                                  <Button size="sm" variant="ghost" onClick={() => setEditingMessageId(null)} className="h-7 text-[9px] uppercase font-black text-zinc-400 border border-white/5">Cancel</Button>
                                 </div>
                               </div>
+                            ) : (
+                              <>
+                                {/* Feature 6: Poll render */}
+                                {msg.type === "poll" ? (
+                                  <div className="p-4 bg-[#18181b] border border-white/5 rounded-[1.8rem] space-y-3 min-w-[220px] max-w-[320px] text-left">
+                                    <div className="text-[9px] font-black uppercase text-primary tracking-widest flex items-center gap-1">
+                                      <BarChart2 className="w-3 h-3" /> POLL
+                                    </div>
+                                    <p className="text-sm font-black text-white">{msg.pollQuestion}</p>
+                                    <div className="space-y-2">
+                                      {(msg.pollOptions || []).map((opt: any, idx: number) => {
+                                        const totalVotes = (msg.pollOptions || []).reduce((acc: number, o: any) => acc + (o.votes || 0), 0);
+                                        const pct = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+                                        const voted = (opt.voters || []).includes(user.uid);
+                                        return (
+                                          <button
+                                            key={idx}
+                                            onClick={() => handlePollVote(msg.id, idx, msg.pollOptions)}
+                                            disabled={voted}
+                                            className={cn(
+                                              "w-full relative text-left px-3 py-2 rounded-xl text-xs font-bold border transition-all overflow-hidden",
+                                              voted ? "border-primary/40 text-white" : "border-white/10 text-zinc-400 hover:border-primary/30 hover:text-white"
+                                            )}
+                                          >
+                                            <div className="absolute inset-0 rounded-xl bg-primary/10 transition-all" style={{ width: `${pct}%` }} />
+                                            <span className="relative z-10 flex justify-between">
+                                              <span>{opt.text}</span>
+                                              <span className="text-[9px] font-black text-primary">{pct}% ({opt.votes})</span>
+                                            </span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ) : msg.type === "audio" ? (
+                                  /* Feature 10: Audio message */
+                                  <div className="p-3 bg-[#18181b] border border-white/5 rounded-[1.8rem]">
+                                    <div className="text-[9px] font-black uppercase text-primary mb-2 flex items-center gap-1">
+                                      <Mic className="w-3 h-3" /> VOICE MESSAGE
+                                    </div>
+                                    <audio controls src={msg.content} className="max-w-[260px] h-8" style={{ filter: 'invert(1) hue-rotate(180deg)' }} />
+                                  </div>
+                                ) : msg.type === "sticker" ? (
+                                  /* Feature 8: Sticker */
+                                  <div className="text-6xl select-none p-2">{msg.content}</div>
+                                ) : (
+                                  <div className={cn(
+                                    "p-5 rounded-[1.8rem] shadow-2xl border transition-all text-sm font-medium leading-relaxed text-left",
+                                    isOwn ? "bg-primary text-white border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none text-foreground/90"
+                                  )}>
+                                     {isImageUrl(msg.content) ? (
+                                       <img
+                                         src={msg.content}
+                                         alt="media"
+                                         className="rounded-2xl max-w-full max-h-60 object-contain border border-white/10 cursor-zoom-in hover:opacity-90 transition-opacity"
+                                         onClick={() => setLightboxImage(msg.content)}
+                                       />
+                                     ) : (
+                                       renderMarkdown(msg.content)
+                                     )}
 
-                              {isOwn && (
-                                <>
-                                  <button onClick={() => { setEditingMessageId(msg.id); setEditInput(msg.content); }} className="text-zinc-400 hover:text-emerald-400 hover:scale-110 transition-all" title="Edit message"><Edit className="w-3 h-3" /></button>
-                                  <button onClick={() => handleDeleteMessage(msg.id)} className="text-zinc-400 hover:text-red-500 hover:scale-110 transition-all" title="Delete message"><Trash2 className="w-3 h-3" /></button>
-                                </>
-                              )}
+                                     {/* Edited Tag */}
+                                     {msg.edited && <span className="text-[7px] opacity-40 ml-2 font-black uppercase italic">(edited)</span>}
+                                     
+                                     {/* Pinned Icon Tag */}
+                                     {msg.pinned && <Pin className="w-3 h-3 text-amber-500 absolute top-2 right-2 rotate-45" />}
+
+                                     {/* Translated text overlay */}
+                                     {translated && (
+                                       <div className="mt-3 pt-2 border-t border-white/10 text-xs text-emerald-400 font-bold">
+                                         <Globe className="w-3 h-3 inline mr-1.5 animate-pulse" /> {translated}
+                                       </div>
+                                     )}
+                                  </div>
+                                )}
+                              </>
+                            )}
+
+                            {/* Action Hover Tool Bar */}
+                            {!editingMessageId && (
+                              <div className={cn(
+                                "absolute -top-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center bg-[#0a0a15] border border-white/10 rounded-full px-2.5 py-1.5 shadow-2xl gap-2 z-30",
+                                isOwn ? "left-0" : "right-0"
+                              )}>
+                                {/* Quick reaction emojis */}
+                                {['👍', '❤️', '🔥', '😂'].map(emoji => (
+                                  <button key={emoji} onClick={() => handleReact(msg.id, emoji)} className="hover:scale-125 transition-transform text-xs">{emoji}</button>
+                                ))}
+                                <div className="w-px h-3 bg-white/10 mx-1" />
+                                <button onClick={() => setReplyingToMessage(msg)} className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="Threaded Reply"><CornerUpLeft className="w-3 h-3" /></button>
+                                <button onClick={() => handleTogglePin(msg.id, msg.pinned)} className={cn("text-zinc-400 hover:text-white hover:scale-110 transition-all", msg.pinned && "text-amber-500")} title="Pin Message"><Pin className="w-3 h-3" /></button>
+                                
+                                {/* Feature 3: Copy */}
+                                <button onClick={() => handleCopyMessage(msg.content)} className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="Copy Message"><Copy className="w-3 h-3" /></button>
+
+                                {/* Feature 5: Bookmark */}
+                                <button onClick={() => handleBookmarkMessage(msg)} className="text-zinc-400 hover:text-amber-400 hover:scale-110 transition-all" title="Bookmark"><Bookmark className="w-3 h-3" /></button>
+
+                                {/* Feature 7: Forward */}
+                                <button onClick={() => setForwardMsg(msg)} className="text-zinc-400 hover:text-primary hover:scale-110 transition-all" title="Forward"><Share2 className="w-3 h-3" /></button>
+
+                                {/* Feature 12: Thread */}
+                                <button onClick={() => setActiveThread(msg)} className="text-zinc-400 hover:text-emerald-400 hover:scale-110 transition-all" title="Open Thread"><MessageSquare className="w-3 h-3" /></button>
+                                
+                                {/* Translation menu dropdown */}
+                                <div className="relative group/lang">
+                                  <button className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="AI Translate"><Globe className="w-3 h-3" /></button>
+                                  <div className="absolute bottom-full mb-2 hidden group-hover/lang:flex flex-col bg-zinc-950 border border-white/10 rounded-xl p-1 shadow-2xl text-[8px] font-black uppercase text-left whitespace-nowrap z-50">
+                                    {['Spanish', 'French', 'Japanese', 'Arabic'].map(l => (
+                                      <button key={l} onClick={() => handleTranslate(msg.id, msg.content, l)} className="px-2 py-1 rounded hover:bg-white/5 text-zinc-300 hover:text-white">{l}</button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {isOwn && (
+                                  <>
+                                    <button onClick={() => { setEditingMessageId(msg.id); setEditInput(msg.content); }} className="text-zinc-400 hover:text-emerald-400 hover:scale-110 transition-all" title="Edit message"><Edit className="w-3 h-3" /></button>
+                                    <button onClick={() => handleDeleteMessage(msg.id)} className="text-zinc-400 hover:text-red-500 hover:scale-110 transition-all" title="Delete message"><Trash2 className="w-3 h-3" /></button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Render Reactions display badges */}
+                          {msg.reactions && msg.reactions.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                              {msg.reactions.map((r: any) => {
+                                const reacted = r.uids?.includes(user.uid);
+                                return (
+                                  <button
+                                    key={r.emoji}
+                                    onClick={() => handleReact(msg.id, r.emoji)}
+                                    onMouseEnter={(e) => {
+                                      const rect = (e.target as HTMLElement).getBoundingClientRect();
+                                      setReactionTooltip({ msgId: msg.id, emoji: r.emoji, x: rect.left, y: rect.top });
+                                    }}
+                                    onMouseLeave={() => setReactionTooltip(null)}
+                                    className={cn(
+                                      "px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 transition-all",
+                                      reacted 
+                                        ? "bg-primary/20 border-primary text-white scale-105" 
+                                        : "bg-white/5 border-white/5 text-zinc-400 hover:bg-white/10"
+                                    )}
+                                  >
+                                    <span>{r.emoji}</span>
+                                    <span className="text-[8px] font-black">{r.uids?.length || 0}</span>
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
-                        </div>
+                       </div>
+                    </div>
+                  );
+                })
+              )}
+           </div>
+        </ScrollArea>
 
-                        {/* Render Reactions display badges */}
-                        {msg.reactions && msg.reactions.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mt-1.5">
-                            {msg.reactions.map((r: any) => {
-                              const reacted = r.uids?.includes(user.uid);
-                              return (
-                                <button
-                                  key={r.emoji}
-                                  onClick={() => handleReact(msg.id, r.emoji)}
-                                  className={cn(
-                                    "px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 transition-all",
-                                    reacted 
-                                      ? "bg-primary/20 border-primary text-white scale-105" 
-                                      : "bg-white/5 border-white/5 text-zinc-400 hover:bg-white/10"
-                                  )}
-                                >
-                                  <span>{r.emoji}</span>
-                                  <span className="text-[8px] font-black">{r.uids?.length || 0}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                     </div>
-                  </div>
-                );
-              })
-            )}
-         </div>
-      </ScrollArea>
+        {/* Feature 12: Thread Side Panel */}
+        {activeThread && (
+          <div className="absolute right-0 top-0 h-full w-80 bg-zinc-950 border-l border-white/5 z-40 flex flex-col">
+            <div className="p-4 border-b border-white/5 flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-primary">Thread</p>
+                <p className="text-xs font-bold text-zinc-400 truncate max-w-[200px]">
+                  {activeThread.senderName}: {activeThread.content?.slice(0, 40)}
+                </p>
+              </div>
+              <button onClick={() => setActiveThread(null)} className="text-white/40 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {/* Root message */}
+                <div className="p-3 bg-white/5 border border-white/5 rounded-2xl text-xs text-zinc-300 italic">
+                  <span className="text-[8px] font-black text-primary uppercase">{activeThread.senderName}</span>
+                  <br />
+                  {activeThread.content}
+                </div>
+                {/* Thread replies */}
+                {threadReplies && threadReplies.length > 0 ? (
+                  threadReplies.map((r: any) => (
+                    <div key={r.id} className="flex gap-2">
+                      <Avatar className="w-7 h-7 rounded-xl shrink-0">
+                        <AvatarImage src={r.senderPhoto} />
+                        <AvatarFallback className="bg-primary/20 text-primary font-black text-[8px]">{r.senderName?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-[8px] font-black uppercase text-zinc-400">{r.senderName}</p>
+                        <p className="text-xs text-zinc-300">{r.content}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-[10px] text-zinc-600 italic text-center py-4">No replies yet. Be first!</p>
+                )}
+              </div>
+            </ScrollArea>
+            <div className="p-3 border-t border-white/5 flex gap-2">
+              <Input
+                value={threadInput}
+                onChange={e => setThreadInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSendThreadReply(); }}
+                placeholder="Reply in thread..."
+                className="flex-1 bg-black/40 border-white/5 text-xs text-white animate-none h-9"
+              />
+              <Button size="icon" onClick={handleSendThreadReply} className="h-9 w-9 bg-primary rounded-xl shrink-0 border-none">
+                <Send className="w-3.5 h-3.5 text-white" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Member List Panel */}
+        {showMemberPanel && (
+          <div className="w-60 border-l border-white/5 bg-zinc-950/80 backdrop-blur-xl flex flex-col shrink-0">
+            <div className="p-4 border-b border-white/5">
+              <p className="text-[9px] font-black uppercase tracking-widest text-primary">Members</p>
+              <p className="text-[8px] text-zinc-600 font-bold">{(serverDoc?.members || []).length} total</p>
+            </div>
+            <ScrollArea className="flex-1 p-3">
+              <div className="space-y-1">
+                {(hubMembers || allUsers || [])
+                  .filter((u: any) => !serverDoc?.members || serverDoc.members.includes(u.id))
+                  .map((member: any) => {
+                    const isOnline = member.lastSeen
+                      ? (Date.now() / 1000 - (member.lastSeen?.seconds || 0)) < 300
+                      : false;
+                    return (
+                      <button
+                        key={member.id}
+                        type="button"
+                        onClick={() => setProfileCard({ ...member, senderName: member.displayName || member.username, senderPhoto: member.photoURL })}
+                        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-colors text-left"
+                      >
+                        <div className="relative shrink-0">
+                          <Avatar className="w-7 h-7 rounded-xl">
+                            <AvatarImage src={member.photoURL} />
+                            <AvatarFallback className="bg-primary/20 text-primary font-black text-[8px]">
+                              {(member.displayName || member.username || "?")?.[0]?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className={cn(
+                            "absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-zinc-950",
+                            isOnline ? "bg-emerald-500" : "bg-zinc-600"
+                          )} />
+                        </div>
+                        <span className="text-[10px] font-bold text-zinc-300 truncate">
+                          {member.displayName || member.username || "Member"}
+                        </span>
+                      </button>
+                    );
+                  })}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+      </div>
 
       {/* Floating Scroll to Bottom button */}
       {showScrollBottomBtn && (
@@ -1337,6 +2070,45 @@ export default function ServerChatPage() {
         </div>
       )}
 
+      {/* Feature 8: Sticker Picker */}
+      {showStickerPicker && (
+        <div className="absolute bottom-24 right-20 bg-[#0a0a15] border-2 border-white/10 rounded-[2rem] p-4 shadow-[0_25px_60px_rgba(0,0,0,0.8)] z-50">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-[9px] font-black uppercase tracking-widest text-primary">Stickers</span>
+            <button onClick={() => setShowStickerPicker(false)} className="text-white/40 hover:text-white"><X className="w-3.5 h-3.5" /></button>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {STICKERS.map(s => (
+              <button
+                key={s}
+                onClick={() => handleSendSticker(s)}
+                className="text-4xl hover:scale-110 transition-transform w-12 h-12 flex items-center justify-center rounded-xl hover:bg-white/5"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Feature 11: Schedule picker overlay */}
+      {showSchedulePicker && (
+        <div className="absolute bottom-24 right-36 bg-[#0a0a15] border-2 border-white/10 rounded-[2rem] p-4 shadow-2xl z-50 w-72">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-[9px] font-black uppercase tracking-widest text-primary">Schedule Message</span>
+            <button onClick={() => setShowSchedulePicker(false)} className="text-white/40 hover:text-white"><X className="w-3.5 h-3.5" /></button>
+          </div>
+          <input
+            type="datetime-local"
+            value={scheduleDateTime}
+            onChange={e => setScheduleDateTime(e.target.value)}
+            className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
+            style={{ colorScheme: 'dark' }}
+          />
+          <p className="text-[8px] text-zinc-600 font-bold mt-2">Message will be marked as scheduled. Send as normal to save.</p>
+        </div>
+      )}
+
       {/* INPUT PORTAL */}
       <div className="p-4 md:p-6 bg-zinc-950 border-t border-white/5 shrink-0 z-20">
          {isReadOnly ? (
@@ -1347,6 +2119,13 @@ export default function ServerChatPage() {
             </div>
          ) : (
            <div className="max-w-5xl mx-auto space-y-3">
+             {/* Feature 13: Slow mode countdown */}
+             {slowModeCountdown > 0 && (
+               <div className="text-[10px] text-amber-400 font-black uppercase tracking-widest pl-2 flex items-center gap-1 animate-pulse">
+                 <Clock className="w-3 h-3" /> ⏳ Wait {slowModeCountdown}s (Slow Mode)
+               </div>
+             )}
+
              {/* Replying indicator */}
              {replyingToMessage && (
                <div className="px-5 py-2.5 bg-black/40 border border-white/5 border-b-0 rounded-t-[1.8rem] flex items-center justify-between text-xs text-zinc-400">
@@ -1409,6 +2188,28 @@ export default function ServerChatPage() {
                </div>
              )}
 
+             {/* Feature 1: Formatting toolbar */}
+             <div className="flex gap-1.5 px-2">
+               {[
+                 { label: "B", wrapper: "*", title: "Bold" },
+                 { label: "I", wrapper: "_", title: "Italic" },
+                 { label: "S", wrapper: "~", title: "Strikethrough" },
+                 { label: "</>", wrapper: "`", title: "Code" }
+               ].map(({ label, wrapper, title }) => (
+                 <button
+                   key={label}
+                   type="button"
+                   onClick={() => wrapSelection(wrapper)}
+                   title={title}
+                   className="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg text-zinc-400 hover:text-white transition-all"
+                 >
+                   {label}
+                 </button>
+               ))}
+               <div className="flex-1" />
+               <span className="text-[8px] text-zinc-700 font-bold uppercase tracking-widest self-center">Formatting</span>
+             </div>
+
              <form onSubmit={(e) => handleSend(e)} className="flex items-end gap-3 md:gap-4">
                 <div className="flex-1 bg-black/40 border-2 border-white/10 rounded-[1.8rem] p-2 md:p-3 flex items-center gap-3 md:gap-4 relative">
                    <input 
@@ -1432,51 +2233,96 @@ export default function ServerChatPage() {
                       type="button" 
                       onClick={() => setShowGifPicker(!showGifPicker)} 
                       className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-black text-white/40 hover:text-white transition-all shrink-0"
+                      title="GIF Picker"
                    >
-                     <div className="relative flex-1">
-                      {/* @mention autocomplete dropdown */}
-                      {showMentionList && mentionCandidates.length > 0 && (
-                        <div className="absolute bottom-full mb-2 left-0 w-64 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
-                          <div className="px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-primary border-b border-white/5">Mention a member</div>
-                          {mentionCandidates.map((u: any) => (
-                            <button
-                              key={u.id}
-                              type="button"
-                              onClick={() => handleSelectMention(u.username)}
-                              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-primary/10 text-left transition-colors"
-                            >
-                              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-black text-primary shrink-0">
-                                {(u.displayName || u.username || "?")[0].toUpperCase()}
-                              </div>
-                              <span className="text-xs font-bold text-white">@{u.username}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      <Input 
-                        value={chatInput} 
-                        onChange={(e) => {
-                          handleInputChange(e.target.value);
-                          // Update mention candidates from already-loaded users list
-                          const m = e.target.value.match(/@([\w]*)$/);
-                          if (m) {
-                            const q = m[1].toLowerCase();
-                            // Use allUsers if available (server members query)
-                            setMentionCandidates(
-                              (allUsers || []).filter((u: any) => 
-                                u.username?.toLowerCase().startsWith(q) ||
-                                u.displayName?.toLowerCase().startsWith(q)
-                              ).slice(0, 6)
-                            );
-                          } else {
-                            setMentionCandidates([]);
-                          }
-                        }} 
-                        placeholder={`Message #${channelName}... (type @ to mention)`} 
-                        className="border-none bg-transparent focus-visible:ring-0 text-white text-sm italic placeholder:text-white/20 animate-none" 
-                      />
-                    </div>
+                     GIF
                    </button>
+
+                   {/* Feature 8: Sticker button */}
+                   <button
+                     type="button"
+                     onClick={() => setShowStickerPicker(!showStickerPicker)}
+                     className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0 text-base"
+                     title="Stickers"
+                   >
+                     😄
+                   </button>
+
+                   {/* Feature 10: Voice recording button */}
+                   <button
+                     type="button"
+                     onClick={isRecording ? handleStopRecording : handleStartRecording}
+                     className={cn(
+                       "w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all shrink-0",
+                       isRecording
+                         ? "bg-red-500/20 text-red-500 hover:bg-red-500/30 animate-pulse"
+                         : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white"
+                     )}
+                     title={isRecording ? "Stop Recording" : "Record Voice Message"}
+                   >
+                     {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                   </button>
+
+                   {/* Feature 11: Schedule button */}
+                   <button
+                     type="button"
+                     onClick={() => setShowSchedulePicker(!showSchedulePicker)}
+                     className={cn(
+                       "w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all shrink-0",
+                       showSchedulePicker || scheduleDateTime
+                         ? "bg-amber-500/20 text-amber-400"
+                         : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white"
+                     )}
+                     title="Schedule Message"
+                   >
+                     <Clock className="w-4 h-4" />
+                   </button>
+
+                   <div className="relative flex-1">
+                     {/* @mention autocomplete dropdown */}
+                     {showMentionList && mentionCandidates.length > 0 && (
+                       <div className="absolute bottom-full mb-2 left-0 w-64 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
+                         <div className="px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-primary border-b border-white/5">Mention a member</div>
+                         {mentionCandidates.map((u: any) => (
+                           <button
+                             key={u.id}
+                             type="button"
+                             onClick={() => handleSelectMention(u.username)}
+                             className="w-full flex items-center gap-2 px-3 py-2 hover:bg-primary/10 text-left transition-colors"
+                           >
+                             <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-black text-primary shrink-0">
+                               {(u.displayName || u.username || "?")[0].toUpperCase()}
+                             </div>
+                             <span className="text-xs font-bold text-white">@{u.username}</span>
+                           </button>
+                         ))}
+                       </div>
+                     )}
+                     <Input
+                       id="server-chat-input"
+                       ref={chatInputRef}
+                       value={chatInput} 
+                       onChange={(e) => {
+                         handleInputChange(e.target.value);
+                         // Update mention candidates from already-loaded users list
+                         const m = e.target.value.match(/@([\w]*)$/);
+                         if (m) {
+                           const q = m[1].toLowerCase();
+                           setMentionCandidates(
+                             (allUsers || []).filter((u: any) => 
+                               u.username?.toLowerCase().startsWith(q) ||
+                               u.displayName?.toLowerCase().startsWith(q)
+                             ).slice(0, 6)
+                           );
+                         } else {
+                           setMentionCandidates([]);
+                         }
+                       }} 
+                       placeholder={`Message #${channelName}... (type @ to mention, /poll Q|A|B for polls)`} 
+                       className="border-none bg-transparent focus-visible:ring-0 text-white text-sm italic placeholder:text-white/20 animate-none" 
+                     />
+                   </div>
+
                    <button type="button" className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"><Smile className="w-4 h-4 md:w-5 md:h-5" /></button>
                 </div>
                 <Button type="submit" size="icon" className="h-12 w-12 md:h-16 md:w-16 bg-primary rounded-[1rem] md:rounded-[1.5rem] shadow-2xl active:scale-90 flex items-center justify-center shrink-0 border-none"><Send className="w-5 h-5 md:w-6 md:h-6 text-white" /></Button>

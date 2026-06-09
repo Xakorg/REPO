@@ -527,6 +527,27 @@ service cloud.firestore {
           resource.data.senderId == request.auth.uid
           || isAdmin()
         );
+
+        // Message threads (replies to a specific message)
+        match /threads/{threadId} {
+          allow read, list: if isPublicChatId(chatId)
+            || (isSignedIn() && chatId.matches(".*-.*"))
+            || isAdmin();
+          allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
+          allow update, delete: if isSignedIn() && (
+            resource.data.senderId == request.auth.uid || isAdmin()
+          );
+        }
+      }
+
+      // Polls are stored as a separate sub-collection of chats
+      match /polls/{pollId} {
+        allow read, list: if isSignedIn();
+        allow create: if isSignedIn() && request.auth.uid == request.resource.data.createdBy;
+        allow update: if isSignedIn(); // Anyone can vote
+        allow delete: if isSignedIn() && (
+          resource.data.createdBy == request.auth.uid || isAdmin()
+        );
       }
     }
   }

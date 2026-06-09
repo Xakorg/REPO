@@ -2548,6 +2548,107 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Global Search Overlay (Ctrl+K) */}
+      {showGlobalSearch && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[300] flex items-start justify-center pt-24 px-4" onClick={() => setShowGlobalSearch(false)}>
+          <div className="w-full max-w-xl bg-[#0d0d1a] border border-white/10 rounded-3xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5">
+              <Search className="w-5 h-5 text-primary shrink-0" />
+              <input
+                autoFocus
+                value={globalSearchQuery}
+                onChange={e => setGlobalSearchQuery(e.target.value)}
+                placeholder="Search messages, channels, members..."
+                className="flex-1 bg-transparent text-white text-sm outline-none placeholder:text-white/30"
+              />
+              <kbd className="text-[9px] bg-white/5 px-2 py-1 rounded text-white/30 font-mono">ESC</kbd>
+            </div>
+            <div className="p-3 max-h-80 overflow-y-auto">
+              {!globalSearchQuery.trim() ? (
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black uppercase text-white/20 px-3 pb-2">Quick Navigation</p>
+                  {activeDms?.slice(0, 5).map(chat => (
+                    <button key={chat.id} onClick={() => { setShowGlobalSearch(false); router.push(`/chat/dm/${chat.participants.find((p: string) => p !== user.uid)}`); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-left transition-colors">
+                      <MessageCircle className="w-4 h-4 text-primary shrink-0" />
+                      <span className="text-sm text-white/70">DM conversation</span>
+                    </button>
+                  ))}
+                  {allServers.map(s => (
+                    <button key={s.id} onClick={() => { setShowGlobalSearch(false); router.push(s.href); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-left transition-colors">
+                      <Hash className="w-4 h-4 text-primary shrink-0" />
+                      <span className="text-sm text-white/70">{s.name}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {hubMembers?.filter((m: any) => m.displayName?.toLowerCase().includes(globalSearchQuery.toLowerCase()) || m.username?.toLowerCase().includes(globalSearchQuery.toLowerCase())).slice(0, 6).map((m: any) => (
+                    <button key={m.id} onClick={() => { setShowGlobalSearch(false); router.push(`/chat/dm/${m.username}`); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-left transition-colors">
+                      <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary shrink-0">{(m.displayName || '?')[0]}</div>
+                      <div>
+                        <p className="text-sm text-white font-bold">{m.displayName}</p>
+                        <p className="text-[9px] text-white/40">@{m.username}</p>
+                      </div>
+                    </button>
+                  ))}
+                  {hubMembers?.filter((m: any) => m.displayName?.toLowerCase().includes(globalSearchQuery.toLowerCase()) || m.username?.toLowerCase().includes(globalSearchQuery.toLowerCase())).length === 0 && (
+                    <p className="text-center text-white/20 text-xs italic py-6">No results for "{globalSearchQuery}"</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Group DM Creation Modal */}
+      <Dialog open={showGroupDmModal} onOpenChange={setShowGroupDmModal}>
+        <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-white p-8 bg-zinc-950">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase italic text-white flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" /> New Group DM
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-black uppercase text-zinc-500">Group Name</label>
+              <Input value={groupDmName} onChange={e => setGroupDmName(e.target.value)} placeholder="e.g. Squad Chat" className="bg-black/60 border-white/5 text-xs text-white" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-black uppercase text-zinc-500">Add Members (click to toggle)</label>
+              <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
+                {hubMembers?.filter((m: any) => m.id !== user.uid).map((m: any) => (
+                  <button key={m.id} onClick={() => setGroupDmMembers(prev => prev.includes(m.id) ? prev.filter(id => id !== m.id) : [...prev, m.id])} className={cn("w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left transition-all text-xs", groupDmMembers.includes(m.id) ? "bg-primary/20 text-primary" : "bg-white/5 text-white/60 hover:bg-white/10")}>
+                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-black text-primary shrink-0">{(m.displayName || '?')[0]}</div>
+                    <span className="font-bold truncate">{m.displayName}</span>
+                    {groupDmMembers.includes(m.id) && <span className="ml-auto text-primary text-[10px]">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Button
+              disabled={isCreatingGroupDm || groupDmMembers.length < 2 || !groupDmName.trim()}
+              onClick={async () => {
+                if (!firestore || !user || groupDmMembers.length < 2 || !groupDmName.trim()) return;
+                setIsCreatingGroupDm(true);
+                try {
+                  const allParticipants = [user.uid, ...groupDmMembers];
+                  const docRef = await addDoc(collection(firestore, "chats"), { participants: allParticipants, public: false, isGroup: true, groupName: groupDmName.trim(), createdBy: user.uid, createdAt: serverTimestamp() });
+                  setShowGroupDmModal(false);
+                  setGroupDmName("");
+                  setGroupDmMembers([]);
+                  toast({ title: `Group '${groupDmName}' created!` });
+                  router.push(`/chat/dm/${docRef.id}`);
+                } catch(e) { toast({ variant: "destructive", title: "Failed to create group" }); } finally { setIsCreatingGroupDm(false); }
+              }}
+              className="w-full h-11 bg-primary hover:bg-primary/90 text-black font-black uppercase text-[10px] rounded-xl shadow-lg border-none"
+            >
+              {isCreatingGroupDm ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null} Create Group ({groupDmMembers.length} members)
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -2586,7 +2687,7 @@ function DMContactItem({ chatId, participants, activeChatId, currentUserId }: { 
         </Avatar>
         <div className={cn(
           "absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-black",
-          friendData.status === 'offline' ? "bg-zinc-500" : "bg-green-500"
+          friendData.online === true ? "bg-emerald-500" : "bg-zinc-500"
         )} />
       </div>
       <div className="overflow-hidden">

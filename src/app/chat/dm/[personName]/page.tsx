@@ -7,7 +7,6 @@ import {
   Send, 
   Smile, 
   Loader2, 
-  Plus, 
   Brain,
   ShieldAlert,
   X,
@@ -21,8 +20,12 @@ import {
   CornerUpLeft,
   Paperclip,
   ArrowDown,
-  Sparkles,
-  Lock
+  Lock,
+  Copy,
+  Bookmark,
+  Forward,
+  Clock,
+  Mic
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -92,6 +95,38 @@ export default function DirectMessagePage() {
   const [showMentionList, setShowMentionList] = useState(false);
   const [mentionCandidates, setMentionCandidates] = useState<any[]>([]);
 
+  // ── Feature 1: Read Receipts ──
+  const [chatDocData, setChatDocData] = useState<any>(null);
+
+  // ── Feature 3: Image Lightbox ──
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+  // ── Feature 5: Profile Card Popup ──
+  const [profileCard, setProfileCard] = useState<any | null>(null);
+
+  // ── Feature 7: Poll creation ──
+  // (no extra state needed beyond messages)
+
+  // ── Feature 8: Sticker Picker ──
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
+  const STICKERS = ["🎉", "🔥", "💯", "👋", "😂", "🤯", "🎮", "❤️"];
+
+  // ── Feature 9: Voice Recording ──
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  // ── Feature 10: Message Scheduling ──
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+  const [scheduleDateTime, setScheduleDateTime] = useState("");
+
+  // ── Feature 11: Message Forwarding ──
+  const [forwardMessage, setForwardMessage] = useState<any | null>(null);
+  const [showForwardModal, setShowForwardModal] = useState(false);
+
+  // ── Feature 12: Reaction Analytics Tooltip ──
+  const [reactionTooltip, setReactionTooltip] = useState<{ msgId: string; emoji: string; names: string[] } | null>(null);
+
   // Users list for @mention autocomplete (loaded lazily)
   const allUsersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -142,6 +177,24 @@ export default function DirectMessagePage() {
     };
     checkAndInitChat();
   }, [firestore, user, friendUser]);
+
+  // ── Feature 1: Subscribe to chat doc for read receipts ──
+  useEffect(() => {
+    if (!firestore || !dmChatId) return;
+    let unsub: (() => void) | undefined;
+    (async () => {
+      try {
+        const { onSnapshot } = await import("firebase/firestore");
+        const dmRef = doc(firestore, "chats", dmChatId);
+        unsub = onSnapshot(dmRef, (snap) => {
+          if (snap.exists()) setChatDocData(snap.data());
+        });
+      } catch (e) {
+        console.error("Read receipt listener error:", e);
+      }
+    })();
+    return () => { if (unsub) unsub(); };
+  }, [firestore, dmChatId]);
 
   // 4. Subscribe to messages inside the private DM chat
   const messagesQuery = useMemoFirebase(() => {
@@ -238,6 +291,21 @@ export default function DirectMessagePage() {
       fetchGifs(gifSearch);
     }
   }, [showGifPicker, gifSearch]);
+
+  // ── Feature 10: Scheduled messages check every 30s ──
+  useEffect(() => {
+    if (!firestore || !dmChatId || !messages) return;
+    const interval = setInterval(async () => {
+      const now = Date.now();
+      const scheduled = messages.filter((m: any) => m.status === "scheduled" && m.scheduledFor && m.scheduledFor.toMillis && m.scheduledFor.toMillis() <= now);
+      for (const m of scheduled) {
+        try {
+          await updateDoc(doc(firestore, "chats", dmChatId, "messages", m.id), { status: "sent" });
+        } catch(e) { console.error("Schedule send error", e); }
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [firestore, dmChatId, messages]);
 
   const handleReact = async (msgId: string, emoji: string) => {
     if (!firestore || !user || !messages || !dmChatId) return;
@@ -439,6 +507,213 @@ export default function DirectMessagePage() {
     }
   };
 
+  // ── Feature 2: Formatting toolbar wrap selection ──
+  const wrapSelection = (wrapper: string) => {
+    const input = document.getElementById('dm-chat-input') as HTMLInputElement | null;
+    if (!input) return;
+    const start = input.selectionStart ?? 0;
+    const end = input.selectionEnd ?? 0;
+    const val = chatInput;
+    const selected = val.slice(start, end);
+    const newVal = val.slice(0, start) + wrapper + (selected || "text") + wrapper + val.slice(end);
+    setChatInput(newVal);
+    setTimeout(() => {
+      input.focus();
+      const newCursor = start + wrapper.length + (selected || "text").length + wrapper.length;
+      input.setSelectionRange(newCursor, newCursor);
+    }, 0);
+  };
+
+  // ── Feature 4: Copy message ──
+  const handleCopyMessage = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast({ title: "Copied!" });
+    } catch(e) {
+      toast({ variant: "destructive", title: "Copy failed" });
+    }
+  };
+
+  // ── Feature 5: Open profile card ──
+  const handleOpenProfile = async (senderId: string) => {
+    if (!firestore) return;
+    try {
+      const snap = await getDoc(doc(firestore, "users", senderId));
+      if (snap.exists()) setProfileCard({ id: snap.id, ...snap.data() });
+    } catch(e) {
+      toast({ variant: "destructive", title: "Could not load profile" });
+    }
+  };
+
+  // ── Feature 6: Bookmark message ──
+  const handleBookmark = async (msg: any) => {
+    if (!firestore || !user || !dmChatId) return;
+    try {
+      await addDoc(collection(firestore, "users", user.uid, "bookmarks"), {
+        messageId: msg.id,
+        content: msg.content,
+        senderName: msg.senderName,
+        channelId: dmChatId,
+        timestamp: serverTimestamp()
+      });
+      toast({ title: "Bookmarked!" });
+    } catch(e) {
+      toast({ variant: "destructive", title: "Bookmark failed" });
+    }
+  };
+
+  // ── Feature 7: Poll vote ──
+  const handlePollVote = async (msgId: string, optionIndex: number, currentOptions: any[], voters: string[]) => {
+    if (!firestore || !user || !dmChatId) return;
+    if (voters.includes(user.uid)) {
+      toast({ description: "You already voted!" });
+      return;
+    }
+    try {
+      const newOptions = currentOptions.map((opt: any, i: number) =>
+        i === optionIndex ? { ...opt, votes: (opt.votes || 0) + 1 } : opt
+      );
+      await updateDoc(doc(firestore, "chats", dmChatId, "messages", msgId), {
+        pollOptions: newOptions,
+        voters: [...voters, user.uid]
+      });
+    } catch(e) {
+      toast({ variant: "destructive", title: "Vote failed" });
+    }
+  };
+
+  // ── Feature 9: Voice recording ──
+  const handleToggleRecording = async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop();
+      setIsRecording(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunksRef.current = [];
+        const recorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = recorder;
+        recorder.ondataavailable = (e) => {
+          if (e.data.size > 0) audioChunksRef.current.push(e.data);
+        };
+        recorder.onstop = async () => {
+          const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+          stream.getTracks().forEach(t => t.stop());
+          try {
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+            if (!firestore || !user || !dmChatId) return;
+            await addDocumentNonBlocking(collection(firestore, "chats", dmChatId, "messages"), {
+              content: base64,
+              type: "audio",
+              senderId: user.uid,
+              senderName: user.displayName?.replace(/^@+/, "") || "Member",
+              senderPhoto: user.photoURL || "",
+              senderHat: currentUserData?.hat || null,
+              channelId: dmChatId,
+              channelName: `DM with ${friendUser?.displayName || personName}`,
+              timestamp: serverTimestamp()
+            });
+            toast({ title: "Voice message sent!" });
+          } catch(e) {
+            toast({ variant: "destructive", title: "Voice send failed" });
+          }
+        };
+        recorder.start();
+        setIsRecording(true);
+      } catch(e) {
+        toast({ variant: "destructive", title: "Microphone access denied" });
+      }
+    }
+  };
+
+  // ── Feature 10: Schedule message send ──
+  const handleScheduleSend = async () => {
+    if (!chatInput.trim() || !scheduleDateTime || !firestore || !user || !dmChatId) return;
+    try {
+      const scheduledFor = new Date(scheduleDateTime);
+      const { Timestamp } = await import("firebase/firestore");
+      await addDocumentNonBlocking(collection(firestore, "chats", dmChatId, "messages"), {
+        content: chatInput.trim(),
+        type: "text",
+        senderId: user.uid,
+        senderName: user.displayName?.replace(/^@+/, "") || "Member",
+        senderPhoto: user.photoURL || "",
+        senderHat: currentUserData?.hat || null,
+        channelId: dmChatId,
+        channelName: `DM with ${friendUser?.displayName || personName}`,
+        timestamp: serverTimestamp(),
+        scheduledFor: Timestamp.fromDate(scheduledFor),
+        status: "scheduled"
+      });
+      setChatInput("");
+      setShowSchedulePicker(false);
+      setScheduleDateTime("");
+      toast({ title: "Message scheduled!" });
+    } catch(e) {
+      toast({ variant: "destructive", title: "Scheduling failed" });
+    }
+  };
+
+  // ── Feature 11: Forward message ──
+  const handleForwardMessage = async (destination: { id: string; name: string; type: "dm" | "channel" }) => {
+    if (!forwardMessage || !firestore || !user) return;
+    try {
+      let collRef;
+      if (destination.type === "dm") {
+        const sortedIds = [user.uid, destination.id].sort();
+        const chatId = `dm_${sortedIds.join("_")}`;
+        collRef = collection(firestore, "chats", chatId, "messages");
+      } else {
+        collRef = collection(firestore, "chats", destination.id, "messages");
+      }
+      await addDoc(collRef, {
+        content: forwardMessage.content,
+        type: forwardMessage.type || "text",
+        senderId: user.uid,
+        senderName: user.displayName?.replace(/^@+/, "") || "Member",
+        senderPhoto: user.photoURL || "",
+        senderHat: currentUserData?.hat || null,
+        channelId: destination.id,
+        channelName: destination.name,
+        timestamp: serverTimestamp(),
+        forwardedFrom: forwardMessage.senderName
+      });
+      setShowForwardModal(false);
+      setForwardMessage(null);
+      toast({ title: "Message forwarded!" });
+    } catch(e) {
+      toast({ variant: "destructive", title: "Forward failed" });
+    }
+  };
+
+  // ── Feature 12: Resolve UIDs to display names for reaction tooltip ──
+  const handleReactionHover = async (msgId: string, emoji: string, uids: string[]) => {
+    if (!firestore || !uids.length) return;
+    try {
+      const names: string[] = [];
+      for (const uid of uids.slice(0, 10)) {
+        const knownUser = (allUsers || []).find((u: any) => u.id === uid);
+        if (knownUser) {
+          names.push(knownUser.displayName || knownUser.username || uid);
+        } else {
+          try {
+            const snap = await getDoc(doc(firestore, "users", uid));
+            if (snap.exists()) {
+              const d = snap.data();
+              names.push(d.displayName || d.username || uid);
+            }
+          } catch { names.push(uid); }
+        }
+      }
+      setReactionTooltip({ msgId, emoji, names });
+    } catch(e) {}
+  };
+
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if ((!chatInput.trim() && !imagePreview) || !user || !firestore || !dmChatId || isSending) return;
@@ -466,6 +741,41 @@ export default function DirectMessagePage() {
     setLastMessageSentAt(now);
 
     let content = chatInput.trim();
+
+    // ── Feature 7: Poll interception ──
+    if (content.startsWith("/poll ")) {
+      const pollBody = content.slice(6).trim();
+      const parts = pollBody.split("|").map(s => s.trim()).filter(Boolean);
+      if (parts.length >= 3) {
+        const [pollQuestion, ...optTexts] = parts;
+        const pollOptions = optTexts.map(t => ({ text: t, votes: 0 }));
+        setIsSending(true);
+        try {
+          await addDocumentNonBlocking(collection(firestore, "chats", dmChatId, "messages"), {
+            content: pollQuestion,
+            type: "poll",
+            pollQuestion,
+            pollOptions,
+            voters: [],
+            senderId: user.uid,
+            senderName: user.displayName?.replace(/^@+/, "") || "Member",
+            senderPhoto: user.photoURL || "",
+            senderHat: currentUserData?.hat || null,
+            channelId: dmChatId,
+            channelName: `DM with ${friendUser?.displayName || personName}`,
+            timestamp: serverTimestamp()
+          });
+          setChatInput("");
+        } catch(e) {
+          toast({ variant: "destructive", title: "Poll creation failed" });
+        } finally { setIsSending(false); }
+        return;
+      } else {
+        toast({ description: "Poll format: /poll Question | Option A | Option B" });
+        return;
+      }
+    }
+
     if (imagePreview) {
       content = imagePreview;
       setImagePreview(null);
@@ -498,6 +808,14 @@ export default function DirectMessagePage() {
       }
 
       await addDocumentNonBlocking(collection(firestore, "chats", dmChatId, "messages"), payload);
+
+      // ── Feature 1: Write read receipt ──
+      try {
+        await updateDoc(doc(firestore, "chats", dmChatId), {
+          lastReadAt: serverTimestamp(),
+          lastReadBy: user.uid
+        });
+      } catch(e) {}
 
       // Notify the recipient that a friend sent them a DM
       if (friendUser?.id) {
@@ -656,6 +974,18 @@ export default function DirectMessagePage() {
     return <span dangerouslySetInnerHTML={{ __html: escaped }} />;
   };
 
+  // ── Feature 1: Determine if friend has seen last own message ──
+  const lastOwnMessage = useMemo(() => {
+    if (!messages || !user) return null;
+    const ownMsgs = messages.filter((m: any) => m.senderId === user.uid);
+    return ownMsgs.length > 0 ? ownMsgs[ownMsgs.length - 1] : null;
+  }, [messages, user]);
+
+  const friendSeenLastMessage = useMemo(() => {
+    if (!chatDocData || !user || !lastOwnMessage) return false;
+    return chatDocData.lastReadBy && chatDocData.lastReadBy !== user.uid;
+  }, [chatDocData, user, lastOwnMessage]);
+
   if (!user) return null;
 
   if (isUserLoading) {
@@ -716,18 +1046,120 @@ export default function DirectMessagePage() {
         ))}
       </div>
 
+      {/* ── Feature 3: Image Lightbox ── */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all z-10"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <img
+            src={lightboxImage}
+            alt="lightbox"
+            className="max-w-[90vw] max-h-[90vh] rounded-2xl object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      {/* ── Feature 5: Profile Card Modal ── */}
+      {profileCard && (
+        <div
+          className="fixed inset-0 bg-black/70 z-[150] flex items-center justify-center p-4"
+          onClick={() => setProfileCard(null)}
+        >
+          <div
+            className="bg-[#0a0a15] border border-white/10 rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl flex flex-col items-center gap-4 text-center"
+            onClick={e => e.stopPropagation()}
+          >
+            <button onClick={() => setProfileCard(null)} className="self-end text-white/40 hover:text-white mb-2">
+              <X className="w-4 h-4" />
+            </button>
+            <Avatar className="w-20 h-20 rounded-[1.5rem] border-2 border-white/10">
+              <AvatarImage src={profileCard.photoURL} className="object-cover" />
+              <AvatarFallback className="bg-primary/20 text-primary font-black text-2xl">
+                {(profileCard.displayName || profileCard.username || "?")[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-1">
+              <h3 className="text-lg font-black uppercase italic tracking-tighter text-white">
+                {profileCard.displayName?.replace(/^@+/, "") || "Member"}
+              </h3>
+              <p className="text-xs text-primary font-bold">@{profileCard.username}</p>
+              {(profileCard.statusEmoji || profileCard.status) && (
+                <p className="text-xs text-zinc-400 italic">
+                  {profileCard.statusEmoji} {profileCard.status}
+                </p>
+              )}
+              {profileCard.bio && (
+                <p className="text-xs text-zinc-300 mt-2 leading-relaxed max-w-xs">{profileCard.bio}</p>
+              )}
+            </div>
+            <button
+              onClick={() => { handleStartCallClick("audio"); setProfileCard(null); }}
+              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2"
+            >
+              <Phone className="w-4 h-4" /> Start Call
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Feature 11: Forward Modal ── */}
+      {showForwardModal && forwardMessage && (
+        <div
+          className="fixed inset-0 bg-black/70 z-[150] flex items-center justify-center p-4"
+          onClick={() => { setShowForwardModal(false); setForwardMessage(null); }}
+        >
+          <div
+            className="bg-[#0a0a15] border border-white/10 rounded-[2.5rem] p-6 max-w-sm w-full shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-black uppercase italic tracking-wider text-white">Forward Message</h3>
+              <button onClick={() => { setShowForwardModal(false); setForwardMessage(null); }} className="text-white/40 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-[10px] text-zinc-400 font-black uppercase tracking-widest mb-3">Select destination</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {(allUsers || []).filter((u: any) => u.id !== user?.uid).slice(0, 10).map((u: any) => (
+                <button
+                  key={u.id}
+                  onClick={() => handleForwardMessage({ id: u.id, name: `DM with ${u.displayName || u.username}`, type: "dm" })}
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 hover:bg-primary/10 rounded-xl text-left transition-all"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center text-primary font-black text-xs shrink-0">
+                    {(u.displayName || u.username || "?")[0].toUpperCase()}
+                  </div>
+                  <span className="text-xs font-bold text-white">{u.displayName?.replace(/^@+/, "") || u.username}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* DM HEADER */}
       <header className="h-16 border-b border-white/5 flex items-center justify-between px-4 md:px-8 bg-black/20 backdrop-blur-xl z-20 shadow-lg shrink-0">
          <div className="flex items-center gap-4">
             <div className="relative shrink-0">
                <RenderHat hatKey={friendUser.hat} />
-               <Avatar className="w-8 h-8 rounded-lg border border-white/10">
-                  <AvatarImage src={friendUser.photoURL} className="object-cover" />
-                  <AvatarFallback className="bg-primary text-xs font-black">{friendDisplayName[0]}</AvatarFallback>
+               <Avatar
+                 className="w-8 h-8 rounded-lg border border-white/10 cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+                 onClick={() => handleOpenProfile(friendUser.id)}
+               >
+                 <AvatarImage src={friendUser.photoURL} className="object-cover" />
+                 <AvatarFallback className="bg-primary text-xs font-black">{friendDisplayName[0]}</AvatarFallback>
                </Avatar>
             </div>
-            <div className="text-left">
-               <h3 className="text-sm font-black italic uppercase tracking-tighter truncate leading-none text-white">{friendDisplayName}</h3>
+            <div className="text-left cursor-pointer" onClick={() => handleOpenProfile(friendUser.id)}>
+               <h3 className="text-sm font-black italic uppercase tracking-tighter truncate leading-none text-white hover:text-primary transition-colors">{friendDisplayName}</h3>
                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Direct Message</span>
             </div>
          </div>
@@ -813,6 +1245,7 @@ export default function DirectMessagePage() {
               filteredMessages.map((msg) => {
                 const isOwn = msg.senderId === user.uid;
                 const translated = translatedTexts[msg.id];
+                const isLastOwn = lastOwnMessage?.id === msg.id;
 
                 return (
                   <div 
@@ -822,13 +1255,19 @@ export default function DirectMessagePage() {
                   >
                      <div className="relative shrink-0 text-left">
                        <RenderHat hatKey={msg.senderHat} />
-                       <Avatar className="w-11 h-11 rounded-[1.1rem] border-2 border-white/5 bg-zinc-900">
+                       <Avatar
+                         className="w-11 h-11 rounded-[1.1rem] border-2 border-white/5 bg-zinc-900 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all"
+                         onClick={() => handleOpenProfile(msg.senderId)}
+                       >
                           <AvatarImage src={msg.senderPhoto} className="object-cover" />
                           <AvatarFallback className="bg-primary/20 text-primary font-black text-xs">{msg.senderName?.[0]}</AvatarFallback>
                        </Avatar>
                      </div>
                      <div className={cn("flex flex-col space-y-1.5 max-w-[70%]", isOwn && "items-end")}>
-                        <span className="text-[9px] font-black uppercase italic tracking-widest px-2 text-white/60">{msg.senderName}</span>
+                        <span
+                          className="text-[9px] font-black uppercase italic tracking-widest px-2 text-white/60 cursor-pointer hover:text-primary transition-colors"
+                          onClick={() => handleOpenProfile(msg.senderId)}
+                        >{msg.senderName}</span>
                         
                         {/* Reply reference block */}
                         {msg.replyTo && (
@@ -851,6 +1290,14 @@ export default function DirectMessagePage() {
                           </div>
                         )}
 
+                        {/* ── Feature 11: Forwarded header ── */}
+                        {msg.forwardedFrom && (
+                          <div className="text-[9px] text-zinc-500 italic flex items-center gap-1 px-1">
+                            <Forward className="w-2.5 h-2.5" />
+                            Forwarded from @{msg.forwardedFrom}
+                          </div>
+                        )}
+
                         <div className="relative">
                           {editingMessageId === msg.id ? (
                             <div className="p-3 bg-zinc-900 border border-primary/30 rounded-[1.5rem] space-y-2 text-left">
@@ -861,16 +1308,69 @@ export default function DirectMessagePage() {
                               />
                               <div className="flex gap-2">
                                 <Button size="sm" onClick={() => handleSaveEdit(msg.id)} className="h-7 text-[9px] uppercase font-black bg-emerald-600 hover:bg-emerald-500">Save</Button>
-                                <Button size="sm" variant="ghost" onClick={() => setEditingMessageId(null)} className="h-7 text-[9px] uppercase font-black text-zinc-400 border border-white/5">Cancel</Button>
+                                <Button size="sm" variant="ghost" onClick={() => setEditingMessageId(null)} className="h-7 text--[9px] uppercase font-black text-zinc-400 border border-white/5">Cancel</Button>
                               </div>
+                            </div>
+                          ) : msg.type === "audio" ? (
+                            /* ── Feature 9: Audio message rendering ── */
+                            <div className={cn(
+                              "p-4 rounded-[1.8rem] shadow-2xl border transition-all text-left",
+                              isOwn ? "bg-primary/20 border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none"
+                            )}>
+                              <audio controls className="max-w-xs" src={msg.content} />
+                            </div>
+                          ) : msg.type === "poll" ? (
+                            /* ── Feature 7: Poll rendering ── */
+                            <div className={cn(
+                              "p-5 rounded-[1.8rem] shadow-2xl border transition-all text-left min-w-[220px]",
+                              isOwn ? "bg-primary/10 border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none"
+                            )}>
+                              <p className="text-xs font-black uppercase text-primary mb-3">📊 Poll</p>
+                              <p className="text-sm font-bold text-white mb-3">{msg.pollQuestion}</p>
+                              <div className="space-y-2">
+                                {(msg.pollOptions || []).map((opt: any, idx: number) => {
+                                  const totalVotes = (msg.pollOptions || []).reduce((acc: number, o: any) => acc + (o.votes || 0), 0);
+                                  const pct = totalVotes > 0 ? Math.round((opt.votes || 0) / totalVotes * 100) : 0;
+                                  const hasVoted = (msg.voters || []).includes(user.uid);
+                                  return (
+                                    <button
+                                      key={idx}
+                                      onClick={() => handlePollVote(msg.id, idx, msg.pollOptions, msg.voters || [])}
+                                      disabled={hasVoted}
+                                      className="w-full text-left px-3 py-2 rounded-xl bg-white/5 hover:bg-primary/20 border border-white/5 transition-all relative overflow-hidden"
+                                    >
+                                      <div
+                                        className="absolute inset-y-0 left-0 bg-primary/20 transition-all"
+                                        style={{ width: `${pct}%` }}
+                                      />
+                                      <span className="relative text-xs font-bold text-white z-10">{opt.text}</span>
+                                      <span className="relative text-[9px] text-zinc-400 ml-2 z-10">{opt.votes || 0} {pct > 0 ? `(${pct}%)` : ""}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <p className="text-[9px] text-zinc-500 mt-2">{(msg.voters || []).length} votes</p>
                             </div>
                           ) : (
                             <div className={cn(
                               "p-5 rounded-[1.8rem] shadow-2xl border transition-all text-sm font-medium leading-relaxed text-left relative",
                               isOwn ? "bg-primary text-white border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none text-foreground/90"
                             )}>
+                               {/* ── Feature 10: Scheduled label ── */}
+                               {msg.status === "scheduled" && msg.scheduledFor && (
+                                 <div className="text-[9px] text-amber-400 font-black uppercase tracking-widest mb-2 flex items-center gap-1">
+                                   <Clock className="w-2.5 h-2.5" />
+                                   Scheduled for {msg.scheduledFor?.toDate ? msg.scheduledFor.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "..."}
+                                 </div>
+                               )}
+
                                {isImageUrl(msg.content) ? (
-                                 <img src={msg.content} alt="media" className="rounded-2xl max-w-full max-h-60 object-contain border border-white/10" />
+                                 <img
+                                   src={msg.content}
+                                   alt="media"
+                                   className="rounded-2xl max-w-full max-h-60 object-contain border border-white/10 cursor-pointer hover:opacity-90 transition-opacity"
+                                   onClick={() => setLightboxImage(msg.content)}
+                                 />
                                ) : (
                                  renderMarkdown(msg.content)
                                )}
@@ -890,6 +1390,13 @@ export default function DirectMessagePage() {
                             </div>
                           )}
 
+                          {/* ── Feature 1: Read receipt ── */}
+                          {isOwn && isLastOwn && friendSeenLastMessage && (
+                            <div className="text-primary text-[9px] font-black mt-0.5 text-right pr-1">
+                              ✓✓ Seen
+                            </div>
+                          )}
+
                           {/* Action Hover Tool Bar */}
                           {!editingMessageId && (
                             <div className={cn(
@@ -903,6 +1410,15 @@ export default function DirectMessagePage() {
                               <div className="w-px h-3 bg-white/10 mx-1" />
                               <button onClick={() => setReplyingToMessage(msg)} className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="Reply"><CornerUpLeft className="w-3 h-3" /></button>
                               <button onClick={() => handleTogglePin(msg.id, msg.pinned)} className={cn("text-zinc-400 hover:text-white hover:scale-110 transition-all", msg.pinned && "text-amber-500")} title="Pin Message"><Pin className="w-3 h-3" /></button>
+                              
+                              {/* ── Feature 4: Copy button ── */}
+                              <button onClick={() => handleCopyMessage(msg.content)} className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="Copy message"><Copy className="w-3 h-3" /></button>
+
+                              {/* ── Feature 6: Bookmark button ── */}
+                              <button onClick={() => handleBookmark(msg)} className="text-zinc-400 hover:text-amber-400 hover:scale-110 transition-all" title="Bookmark"><Bookmark className="w-3 h-3" /></button>
+
+                              {/* ── Feature 11: Forward button ── */}
+                              <button onClick={() => { setForwardMessage(msg); setShowForwardModal(true); }} className="text-zinc-400 hover:text-primary hover:scale-110 transition-all" title="Forward"><Forward className="w-3 h-3" /></button>
                               
                               {/* Translation menu dropdown */}
                               <div className="relative group/lang">
@@ -929,20 +1445,30 @@ export default function DirectMessagePage() {
                           <div className="flex flex-wrap gap-1.5 mt-1.5">
                             {msg.reactions.map((r: any) => {
                               const reacted = r.uids?.includes(user.uid);
+                              const isTooltipActive = reactionTooltip?.msgId === msg.id && reactionTooltip?.emoji === r.emoji;
                               return (
-                                <button
-                                  key={r.emoji}
-                                  onClick={() => handleReact(msg.id, r.emoji)}
-                                  className={cn(
-                                    "px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 transition-all",
-                                    reacted 
-                                      ? "bg-primary/20 border-primary text-white scale-105" 
-                                      : "bg-white/5 border-white/5 text-zinc-400 hover:bg-white/10"
+                                <div key={r.emoji} className="relative">
+                                  {/* ── Feature 12: Reaction tooltip ── */}
+                                  {isTooltipActive && reactionTooltip && reactionTooltip.names.length > 0 && (
+                                    <div className="absolute bottom-full left-0 bg-zinc-800 rounded-lg p-2 text-[9px] text-white/70 z-50 min-w-[80px] shadow-xl mb-1 whitespace-nowrap">
+                                      {reactionTooltip.names.join(", ")}
+                                    </div>
                                   )}
-                                >
-                                  <span>{r.emoji}</span>
-                                  <span className="text-[8px] font-black">{r.uids?.length || 0}</span>
-                                </button>
+                                  <button
+                                    onClick={() => handleReact(msg.id, r.emoji)}
+                                    onMouseEnter={() => handleReactionHover(msg.id, r.emoji, r.uids || [])}
+                                    onMouseLeave={() => setReactionTooltip(null)}
+                                    className={cn(
+                                      "px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 transition-all",
+                                      reacted 
+                                        ? "bg-primary/20 border-primary text-white scale-105" 
+                                        : "bg-white/5 border-white/5 text-zinc-400 hover:bg-white/10"
+                                    )}
+                                  >
+                                    <span>{r.emoji}</span>
+                                    <span className="text-[8px] font-black">{r.uids?.length || 0}</span>
+                                  </button>
+                                </div>
                               );
                             })}
                           </div>
@@ -1033,6 +1559,68 @@ export default function DirectMessagePage() {
         </div>
       )}
 
+      {/* ── Feature 8: Sticker Picker ── */}
+      {showStickerPicker && (
+        <div className="absolute bottom-24 left-6 right-6 md:left-auto md:right-8 max-w-xs w-full bg-[#0a0a15] border-2 border-white/10 rounded-[2rem] p-4 shadow-[0_25px_60px_rgba(0,0,0,0.8)] z-50">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-[9px] font-black uppercase tracking-widest text-primary">Stickers</span>
+            <button onClick={() => setShowStickerPicker(false)} className="text-white/40 hover:text-white"><X className="w-4 h-4" /></button>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {STICKERS.map((sticker) => (
+              <button
+                key={sticker}
+                onClick={async () => {
+                  if (!user || !firestore || !dmChatId) return;
+                  try {
+                    await addDocumentNonBlocking(collection(firestore, "chats", dmChatId, "messages"), {
+                      content: sticker,
+                      type: "sticker",
+                      senderId: user.uid,
+                      senderName: user.displayName?.replace(/^@+/, "") || "Member",
+                      senderPhoto: user.photoURL || "",
+                      senderHat: currentUserData?.hat || null,
+                      channelId: dmChatId,
+                      channelName: `DM with ${friendUser?.displayName || personName}`,
+                      timestamp: serverTimestamp()
+                    });
+                    setShowStickerPicker(false);
+                  } catch(e) {
+                    toast({ variant: "destructive", title: "Sticker send failed" });
+                  }
+                }}
+                className="w-full aspect-square rounded-xl bg-white/5 hover:bg-primary/20 flex items-center justify-center text-3xl hover:scale-110 transition-all"
+              >
+                {sticker}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Feature 10: Schedule picker overlay ── */}
+      {showSchedulePicker && (
+        <div className="absolute bottom-24 left-6 right-6 md:left-auto md:right-8 max-w-xs w-full bg-[#0a0a15] border-2 border-white/10 rounded-[2rem] p-5 shadow-[0_25px_60px_rgba(0,0,0,0.8)] z-50">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-[9px] font-black uppercase tracking-widest text-primary">Schedule Message</span>
+            <button onClick={() => setShowSchedulePicker(false)} className="text-white/40 hover:text-white"><X className="w-4 h-4" /></button>
+          </div>
+          <input
+            type="datetime-local"
+            value={scheduleDateTime}
+            onChange={e => setScheduleDateTime(e.target.value)}
+            className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white mb-3 focus:outline-none focus:border-primary"
+          />
+          <button
+            onClick={handleScheduleSend}
+            disabled={!scheduleDateTime || !chatInput.trim()}
+            className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary/80 text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-40"
+          >
+            Schedule
+          </button>
+        </div>
+      )}
+
       {/* INPUT BAR */}
       <div className="p-4 md:p-6 bg-zinc-950 border-t border-white/5 shrink-0 z-20">
          <div className="max-w-5xl mx-auto space-y-3">
@@ -1084,6 +1672,42 @@ export default function DirectMessagePage() {
               ))}
             </div>
 
+            {/* ── Feature 2: Formatting toolbar ── */}
+            <div className="flex gap-1 px-2 pb-1">
+              <button
+                type="button"
+                onClick={() => wrapSelection("*")}
+                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-primary/20 text-white/50 hover:text-primary text-xs font-black transition-all flex items-center justify-center"
+                title="Bold (*text*)"
+              >
+                B
+              </button>
+              <button
+                type="button"
+                onClick={() => wrapSelection("_")}
+                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-primary/20 text-white/50 hover:text-primary text-xs font-black transition-all flex items-center justify-center italic"
+                title="Italic (_text_)"
+              >
+                I
+              </button>
+              <button
+                type="button"
+                onClick={() => wrapSelection("~")}
+                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-primary/20 text-white/50 hover:text-primary text-xs font-black transition-all flex items-center justify-center line-through"
+                title="Strikethrough (~text~)"
+              >
+                S
+              </button>
+              <button
+                type="button"
+                onClick={() => wrapSelection("`")}
+                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-primary/20 text-white/50 hover:text-primary text-xs font-black transition-all flex items-center justify-center font-mono"
+                title="Code (`text`)"
+              >
+                {"</>"}
+              </button>
+            </div>
+
             {/* Typing status display */}
             {typingDisplay && (
               <div className="text-[10px] text-zinc-400 italic pl-2 text-left animate-pulse">
@@ -1112,11 +1736,47 @@ export default function DirectMessagePage() {
 
                  <button 
                     type="button" 
-                    onClick={() => setShowGifPicker(!showGifPicker)} 
+                    onClick={() => { setShowGifPicker(!showGifPicker); setShowStickerPicker(false); setShowSchedulePicker(false); }} 
                     className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-black text-white/40 hover:text-white transition-all shrink-0"
                  >
                    GIF
                  </button>
+
+                 {/* ── Feature 8: Sticker button ── */}
+                 <button
+                   type="button"
+                   onClick={() => { setShowStickerPicker(!showStickerPicker); setShowGifPicker(false); setShowSchedulePicker(false); }}
+                   className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"
+                   title="Stickers"
+                 >
+                   <Smile className="w-4 h-4 md:w-5 md:h-5" />
+                 </button>
+
+                 {/* ── Feature 9: Voice recording button ── */}
+                 <button
+                   type="button"
+                   onClick={handleToggleRecording}
+                   className={cn(
+                     "w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all shrink-0",
+                     isRecording
+                       ? "bg-red-500 text-white animate-pulse"
+                       : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white"
+                   )}
+                   title={isRecording ? "Stop recording" : "Record voice message"}
+                 >
+                   <Mic className="w-4 h-4" />
+                 </button>
+
+                 {/* ── Feature 10: Schedule button ── */}
+                 <button
+                   type="button"
+                   onClick={() => { setShowSchedulePicker(!showSchedulePicker); setShowGifPicker(false); setShowStickerPicker(false); }}
+                   className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"
+                   title="Schedule message"
+                 >
+                   <Clock className="w-4 h-4" />
+                 </button>
+
                  <div className="relative flex-1">
                     {/* @mention autocomplete dropdown */}
                     {showMentionList && mentionCandidates.length > 0 && (
@@ -1138,13 +1798,13 @@ export default function DirectMessagePage() {
                       </div>
                     )}
                     <Input
+                      id="dm-chat-input"
                       value={chatInput}
                       onChange={(e) => handleInputChange(e.target.value)}
                       placeholder={`Message @${friendDisplayName}... (type @ to mention)`}
                       className="border-none bg-transparent focus-visible:ring-0 text-white text-sm italic placeholder:text-white/20"
                     />
-                  </div>
-                 <button type="button" className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"><Smile className="w-4 h-4 md:w-5 md:h-5" /></button>
+                 </div>
               </div>
               <Button type="submit" size="icon" className="h-12 w-12 md:h-16 md:w-16 bg-primary rounded-[1rem] md:rounded-[1.5rem] shadow-2xl active:scale-90 flex items-center justify-center shrink-0 border-none"><Send className="w-5 h-5 md:w-6 md:h-6 text-white" /></Button>
             </form>
