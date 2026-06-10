@@ -41,7 +41,8 @@ import {
   Eye,
   Map as MapIcon,
   Share2,
-  Activity
+  Activity,
+  Layout
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

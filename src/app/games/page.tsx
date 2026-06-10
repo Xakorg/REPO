@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 import { useState, Suspense, useMemo, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -355,7 +356,7 @@ function ArcadeHubContent() {
               <Card 
                 key={game.id} 
                 onClick={() => {
-                  if (game.isExternalConsole) {
+                  if ((game as any).isExternalConsole) {
                     setSelectedConsoleGame(game);
                     setIsConsoleModalOpen(true);
                   } else {
@@ -369,7 +370,7 @@ function ArcadeHubContent() {
                   <div className="absolute inset-0 arcade-grid opacity-20" />
                   <div className="absolute top-8 left-8 flex gap-2">
                     <Badge className="bg-black/80 backdrop-blur-xl border-2 border-white/10 text-[9px] font-black uppercase px-6 py-2 rounded-full shadow-2xl border-none">
-                      {game.isExternalConsole ? `Console / ${(game as any).platform}` : `by ${game.creator}`}
+                      {(game as any).isExternalConsole ? `Console / ${(game as any).platform}` : `by ${game.creator}`}
                     </Badge>
                     <Badge className="bg-amber-500/20 text-amber-400 border-none px-4 py-2 rounded-full text-[9px] font-black uppercase flex items-center gap-1">
                       <StarIcon className="w-3 h-3 fill-current" /> {game.rating}
@@ -390,7 +391,7 @@ function ArcadeHubContent() {
                      {game.playtime > 50 && <Badge variant="outline" className="border-amber-500/30 text-amber-500 uppercase text-[9px] font-bold">Popular</Badge>}
                    </div>
                    <Button className="w-full bg-primary hover:bg-primary/90 h-16 rounded-[2rem] font-black text-xs uppercase tracking-widest border-b-8 border-primary/20 shadow-2xl group-hover:scale-105 transition-all border-none">
-                     {game.isExternalConsole ? "Launch Protocol" : "Enter Lobby"}
+                     {(game as any).isExternalConsole ? "Launch Protocol" : "Enter Lobby"}
                    </Button>
                 </CardContent>
               </Card>

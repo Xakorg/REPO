@@ -236,7 +236,7 @@ export default function MailPage() {
     setLoadingGmail(true);
     try {
       const listRes = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20", {
-        headers: { Authorization: \`Bearer \${token}\` }
+        headers: { Authorization: `Bearer ${token}` }
       });
       if (!listRes.ok) throw new Error("Auth token expired");
       const listData = await listRes.json();
@@ -244,8 +244,8 @@ export default function MailPage() {
       if (listData.messages) {
         const details = await Promise.all(
           listData.messages.map(async (m: any) => {
-            const detailRes = await fetch(\`https://gmail.googleapis.com/gmail/v1/users/me/messages/\${m.id}\`, {
-              headers: { Authorization: \`Bearer \${token}\` }
+            const detailRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}`, {
+              headers: { Authorization: `Bearer ${token}` }
             });
             const detail = await detailRes.json();
             const headers = detail.payload?.headers || [];
@@ -330,7 +330,7 @@ export default function MailPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={primaryEmail}>{primaryEmail}</SelectItem>
-                      <SelectItem value={\`alias@\${primaryEmail.split('@')[1]}\`}>Alias Email</SelectItem>
+                      <SelectItem value={`alias@${primaryEmail.split('@')[1]}`}>Alias Email</SelectItem>
                     </SelectContent>
                   </Select>
                   <Input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="To: name@email.com" className="bg-[#0b0b14]/60 border-transparent h-12 rounded-xl text-white flex-1" />
@@ -412,7 +412,7 @@ export default function MailPage() {
             <header className="p-4 border-b border-white/5 bg-black/20 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black uppercase tracking-widest text-white">
-                  {unifiedInbox ? 'Unified Inbox' : (mailMode === 'gmail' ? 'Gmail' : \`\${folder}\`)}
+                  {unifiedInbox ? 'Unified Inbox' : (mailMode === 'gmail' ? 'Gmail' : `${folder}`)}
                 </h3>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="icon" onClick={() => setSplitPane(p => p === 'vertical' ? 'horizontal' : 'vertical')} className="h-7 w-7 text-white/50"><Split className="w-3.5 h-3.5" /></Button>

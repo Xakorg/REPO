@@ -121,7 +121,7 @@ export default function ShopPage() {
   const balance = userData?.currencyBalance || 0;
 
   // Rotation Logic
-  const { weekItems, remainingTimeStr } = useMemo(() => {
+  const { weekItems } = useMemo(() => {
     const now = new Date();
     // Get the week number since epoch
     const weekNumber = Math.floor(now.getTime() / (1000 * 60 * 60 * 24 * 7));
