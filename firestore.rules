@@ -573,5 +573,12 @@ service cloud.firestore {
         );
       }
     }
+
+    // ─────────────────────────────────────────────
+    // ADMIN HOTFIXES
+    // ─────────────────────────────────────────────
+    match /admin_hotfixes/{docId} {
+      allow read, write: if isAdmin();
+    }
   }
 }
