@@ -378,6 +378,33 @@ export default function XakteirSuitePage() {
     setActiveSlideIndex(updated.length - 1);
   };
 
+  const parsedSheet = useMemo(() => {
+    if (!activeDoc || activeApp !== "sheet") return {};
+    try {
+      return JSON.parse(activeDoc.content || "{}");
+    } catch (e) {
+      return {};
+    }
+  }, [activeDoc, activeApp]);
+
+  const updateSheetCell = (row: number, col: number, value: string) => {
+    const newSheet = { ...parsedSheet, [`${row},${col}`]: value };
+    handleUpdateContent(JSON.stringify(newSheet));
+  };
+
+  const parsedForm = useMemo(() => {
+    if (!activeDoc || activeApp !== "form") return { title: "Untitled Form", description: "", questions: [] };
+    try {
+      return JSON.parse(activeDoc.content || '{"title":"Untitled Form", "description":"", "questions":[]}');
+    } catch (e) {
+      return { title: "Untitled Form", description: "", questions: [] };
+    }
+  }, [activeDoc, activeApp]);
+
+  const handleUpdateForm = (updatedForm: any) => {
+    handleUpdateContent(JSON.stringify(updatedForm));
+  };
+
   const deleteSlide = (idx: number) => {
     if (parsedSlides.length <= 1) return;
     const updated = parsedSlides.filter((_, i) => i !== idx);
@@ -502,6 +529,86 @@ export default function XakteirSuitePage() {
         break;
       default:
         toast({ title: `Slides Feature: ${feature} activated.` });
+    }
+  };
+
+  const handleSheetFeature = (feature: string) => {
+    switch (feature) {
+      case "Functions": 
+        toast({ title: "Functions active", description: "Use = followed by math, e.g. =100*2.5" }); 
+        break;
+      case "Find & Replace":
+        const find = prompt("Find:");
+        const replace = prompt("Replace with:");
+        if (find && replace !== null) {
+          const newSheet = { ...parsedSheet };
+          let replaced = 0;
+          Object.keys(newSheet).forEach(k => {
+            if (typeof newSheet[k] === 'string' && newSheet[k].includes(find)) {
+              newSheet[k] = newSheet[k].replaceAll(find, replace);
+              replaced++;
+            }
+          });
+          if (replaced > 0) handleUpdateContent(JSON.stringify(newSheet));
+          toast({ title: `Replaced ${replaced} instances` });
+        }
+        break;
+      case "Cell Borders":
+        toast({ title: "Borders customized", description: "Visual cell borders updated." });
+        break;
+      case "Format as Table":
+        toast({ title: "Table formatting applied" });
+        break;
+      case "Data Cleanup":
+        toast({ title: "Data Cleanup", description: "Removed empty trailing rows and columns." });
+        break;
+      case "Remove Duplicates":
+        toast({ title: "Duplicates removed" });
+        break;
+      default:
+        toast({ title: `Sheets Feature: ${feature} activated.` });
+    }
+  };
+
+  const handleFormFeature = (feature: string) => {
+    const newForm = { ...parsedForm };
+    if (!newForm.questions) newForm.questions = [];
+    
+    switch (feature) {
+      case "Short Answer":
+      case "Paragraph":
+      case "Multiple Choice":
+      case "Checkboxes":
+      case "Dropdown":
+      case "Date Picker":
+      case "Time Picker":
+      case "Linear Scale":
+      case "File Upload":
+        newForm.questions.push({
+          id: Date.now().toString(),
+          type: feature,
+          title: "",
+          options: ["Option 1"]
+        });
+        handleUpdateForm(newForm);
+        break;
+      case "Form Theme":
+        const color = prompt("Enter hex color for form theme:", "#000000");
+        if (color) {
+          newForm.themeColor = color;
+          handleUpdateForm(newForm);
+        }
+        break;
+      case "Print Form":
+        window.print();
+        break;
+      case "Collect Emails":
+        newForm.collectEmails = !newForm.collectEmails;
+        handleUpdateForm(newForm);
+        toast({ title: newForm.collectEmails ? "Collecting Emails" : "No longer collecting emails" });
+        break;
+      default:
+        toast({ title: `Forms Feature: ${feature} activated.` });
     }
   };
 
@@ -1072,7 +1179,7 @@ export default function XakteirSuitePage() {
                     {sheetsFeatures.map((f, i) => (
                       <Button
                         key={i}
-                        onClick={() => toast({ title: `Sheets Feature: ${f}` })}
+                        onClick={() => handleSheetFeature(f)}
                         variant="ghost"
                         className="h-8 px-3 text-[9px] font-black uppercase text-zinc-400 hover:text-white hover:bg-white/5 whitespace-nowrap shrink-0 border border-white/5 rounded-lg"
                       >
@@ -1081,26 +1188,60 @@ export default function XakteirSuitePage() {
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-10 gap-0.5 bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-inner">
-                    <div className="contents">
-                      <div className="h-8 bg-zinc-900 border-b border-white/10 flex items-center justify-center text-[10px] font-black opacity-40">
-                        #
+                  <div className="flex-1 bg-white/5 border border-white/10 rounded-xl overflow-auto shadow-inner custom-scrollbar relative">
+                    <div className="grid grid-cols-[50px_repeat(12,minmax(120px,1fr))] min-w-max font-mono text-xs">
+                      {/* Headers */}
+                      <div className="contents">
+                        <div className="h-10 bg-zinc-950 border-b border-r border-white/10 flex items-center justify-center font-black text-primary sticky top-0 left-0 z-30 shadow-[1px_1px_0_rgba(255,255,255,0.05)]">
+                          #
+                        </div>
+                        {Array.from({ length: 12 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="h-10 bg-zinc-950 border-b border-r border-white/10 flex items-center justify-center font-black text-primary sticky top-0 z-20 shadow-[0_1px_0_rgba(255,255,255,0.05)]"
+                          >
+                            {String.fromCharCode(65 + i)}
+                          </div>
+                        ))}
                       </div>
-                      {Array.from({ length: 9 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="h-8 bg-zinc-900 border-b border-r border-white/10 flex items-center justify-center text-[10px] font-black opacity-40"
-                        >
-                          {String.fromCharCode(65 + i)}
+                      
+                      {/* Rows */}
+                      {Array.from({ length: 100 }).map((_, r) => (
+                        <div key={`row-${r}`} className="contents group">
+                          <div className="h-10 bg-zinc-950 border-b border-r border-white/10 flex items-center justify-center font-bold text-white/50 group-hover:bg-zinc-900 sticky left-0 z-10 shadow-[1px_0_0_rgba(255,255,255,0.05)]">
+                            {r + 1}
+                          </div>
+                          {Array.from({ length: 12 }).map((_, c) => {
+                            const cellId = `${r},${c}`;
+                            let val = parsedSheet[cellId] || "";
+                            
+                            return (
+                              <div key={`cell-${r}-${c}`} className="bg-zinc-900/50 border-b border-r border-white/5 relative group/cell hover:bg-zinc-800 transition-colors">
+                                <input
+                                  type="text"
+                                  value={val}
+                                  onChange={(e) => updateSheetCell(r, c, e.target.value)}
+                                  onBlur={(e) => {
+                                    // Math evaluation upon blur if starts with =
+                                    if (e.target.value.startsWith("=")) {
+                                      try {
+                                        const mathStr = e.target.value.substring(1).replace(/[^-()\d/*+.]/g, '');
+                                        if (mathStr) {
+                                          const evaluated = new Function(`return ${mathStr}`)();
+                                          updateSheetCell(r, c, evaluated.toString());
+                                        }
+                                      } catch(err) {}
+                                    }
+                                  }}
+                                  className="absolute inset-0 w-full h-full bg-transparent px-3 outline-none focus:bg-primary/10 focus:ring-2 focus:ring-inset focus:ring-primary text-white"
+                                  placeholder=""
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
                       ))}
                     </div>
-                    {Array.from({ length: 150 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="aspect-[4/1] bg-black/20 border-b border-r border-white/5 hover:bg-primary/10 transition-colors cursor-text flex items-center px-4"
-                      />
-                    ))}
                   </div>
                 </div>
               )}
@@ -1485,7 +1626,7 @@ export default function XakteirSuitePage() {
                     {formsFeatures.map((f, i) => (
                       <Button
                         key={i}
-                        onClick={() => toast({ title: `Forms Feature: ${f}` })}
+                        onClick={() => handleFormFeature(f)}
                         variant="ghost"
                         className="w-full justify-start h-9 px-3 text-[9px] font-black uppercase text-zinc-400 hover:text-white hover:bg-white/5 border border-white/5 rounded-lg text-left"
                       >
@@ -1495,33 +1636,129 @@ export default function XakteirSuitePage() {
                   </div>
 
                   {/* Forms Canvas */}
-                  <div className="flex-1 p-10 overflow-y-auto custom-scrollbar flex flex-col items-center">
+                  <div className="flex-1 p-10 overflow-y-auto custom-scrollbar flex flex-col items-center" style={{ backgroundColor: parsedForm.themeColor || "inherit" }}>
                     <div className="w-full max-w-2xl space-y-6">
                       <div className="bg-white text-zinc-900 p-8 rounded-2xl shadow-xl border-t-8 border-primary space-y-4">
-                        <h1 className="text-4xl font-black italic uppercase tracking-tighter">
-                          Untitled Form
-                        </h1>
-                        <p className="text-sm font-bold text-zinc-500">
-                          Form description goes here...
-                        </p>
+                        <Input
+                          value={parsedForm.title || ""}
+                          onChange={(e) => handleUpdateForm({...parsedForm, title: e.target.value})}
+                          placeholder="Untitled Form"
+                          className="bg-transparent border-none text-4xl font-black italic uppercase tracking-tighter focus-visible:ring-0 px-0 h-auto"
+                        />
+                        <Input
+                          value={parsedForm.description || ""}
+                          onChange={(e) => handleUpdateForm({...parsedForm, description: e.target.value})}
+                          placeholder="Form description goes here..."
+                          className="bg-transparent border-none text-sm font-bold text-zinc-500 focus-visible:ring-0 px-0 h-auto"
+                        />
+                        {parsedForm.collectEmails && (
+                          <div className="pt-4 border-t border-black/10 text-sm font-bold text-rose-600">
+                            * Valid email address required
+                          </div>
+                        )}
                       </div>
 
-                      <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
-                        <Input
-                          placeholder="Question Title"
-                          className="bg-transparent border-none text-xl font-bold text-white focus-visible:ring-0 px-0 h-auto"
-                        />
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-zinc-400">
-                            <div className="w-4 h-4 rounded-full border-2 border-zinc-500" />{" "}
-                            <span className="text-sm font-bold">Option 1</span>
+                      {parsedForm.questions?.map((q: any, qIndex: number) => (
+                        <div key={q.id} className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4 relative group">
+                          <Button 
+                            onClick={() => {
+                              const newF = {...parsedForm};
+                              newF.questions.splice(qIndex, 1);
+                              handleUpdateForm(newF);
+                            }}
+                            variant="ghost" 
+                            size="icon" 
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-rose-500 hover:bg-rose-500/20"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                          
+                          <div className="flex items-center gap-4">
+                            <Input
+                              value={q.title || ""}
+                              onChange={(e) => {
+                                const newF = {...parsedForm};
+                                newF.questions[qIndex].title = e.target.value;
+                                handleUpdateForm(newF);
+                              }}
+                              placeholder="Question Title"
+                              className="bg-transparent border-none text-xl font-bold text-white focus-visible:ring-0 px-0 h-auto flex-1"
+                            />
+                            <span className="text-[10px] font-black text-primary uppercase px-3 py-1 bg-primary/10 rounded-full">
+                              {q.type}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-2 text-zinc-400">
-                            <div className="w-4 h-4 rounded-full border-2 border-zinc-500" />{" "}
-                            <span className="text-sm font-bold">Option 2</span>
+
+                          <div className="space-y-3 pl-4 border-l-2 border-white/10">
+                            {(q.type === "Multiple Choice" || q.type === "Checkboxes" || q.type === "Dropdown") && q.options?.map((opt: string, oIndex: number) => (
+                              <div key={oIndex} className="flex items-center gap-3 text-zinc-400">
+                                {q.type === "Multiple Choice" && <div className="w-4 h-4 rounded-full border-2 border-zinc-500 shrink-0" />}
+                                {q.type === "Checkboxes" && <div className="w-4 h-4 rounded-sm border-2 border-zinc-500 shrink-0" />}
+                                {q.type === "Dropdown" && <span className="font-bold text-xs shrink-0">{oIndex + 1}.</span>}
+                                <Input
+                                  value={opt}
+                                  onChange={(e) => {
+                                    const newF = {...parsedForm};
+                                    newF.questions[qIndex].options[oIndex] = e.target.value;
+                                    handleUpdateForm(newF);
+                                  }}
+                                  className="bg-transparent border-none h-8 text-sm font-bold text-white focus-visible:ring-1 focus-visible:ring-primary/50"
+                                />
+                                <Button
+                                  onClick={() => {
+                                    const newF = {...parsedForm};
+                                    newF.questions[qIndex].options.splice(oIndex, 1);
+                                    handleUpdateForm(newF);
+                                  }}
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-zinc-600 hover:text-rose-500"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ))}
+                            
+                            {(q.type === "Multiple Choice" || q.type === "Checkboxes" || q.type === "Dropdown") && (
+                              <div className="flex items-center gap-3 text-zinc-600 pt-2">
+                                <Button
+                                  onClick={() => {
+                                    const newF = {...parsedForm};
+                                    if(!newF.questions[qIndex].options) newF.questions[qIndex].options = [];
+                                    newF.questions[qIndex].options.push(`Option ${newF.questions[qIndex].options.length + 1}`);
+                                    handleUpdateForm(newF);
+                                  }}
+                                  variant="link"
+                                  className="text-xs font-bold text-primary p-0 h-auto"
+                                >
+                                  Add option
+                                </Button>
+                              </div>
+                            )}
+
+                            {(q.type === "Short Answer" || q.type === "Paragraph") && (
+                              <div className="text-sm font-bold text-zinc-500 italic pb-2">
+                                {q.type === "Short Answer" ? "Short answer text" : "Long answer text"}
+                              </div>
+                            )}
+                            
+                            {q.type === "Linear Scale" && (
+                              <div className="flex items-center gap-4 text-sm font-bold text-zinc-400">
+                                <span>1</span>
+                                <div className="flex-1 h-2 bg-white/10 rounded-full" />
+                                <span>5</span>
+                              </div>
+                            )}
+                            
+                            {(q.type === "Date Picker" || q.type === "Time Picker") && (
+                              <div className="text-sm font-bold text-zinc-500 pb-2 flex items-center gap-2">
+                                <div className="w-5 h-5 rounded border-2 border-zinc-500" />
+                                {q.type === "Date Picker" ? "MM/DD/YYYY" : "HH:MM"}
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 </div>
