@@ -64,6 +64,8 @@ export default function XakteirSuitePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [embedUrlInput, setEmbedUrlInput] = useState("");
+  const contentEditableRef = React.useRef<HTMLDivElement>(null);
+  const [loadedDocId, setLoadedDocId] = useState<string | null>(null);
 
   const writeFeatures = [
     "Rich text",
@@ -383,6 +385,73 @@ export default function XakteirSuitePage() {
     setActiveSlideIndex(Math.max(0, idx - 1));
   };
 
+  const handleWriteFeature = (feature: string) => {
+    if (!activeDoc) return;
+    switch (feature) {
+      case "Bold": document.execCommand("bold"); break;
+      case "Italic": document.execCommand("italic"); break;
+      case "Underline": document.execCommand("underline"); break;
+      case "Strikethrough": document.execCommand("strikeThrough"); break;
+      case "Justify": document.execCommand("justifyFull"); break;
+      case "Align Left": document.execCommand("justifyLeft"); break;
+      case "Align Center": document.execCommand("justifyCenter"); break;
+      case "Align Right": document.execCommand("justifyRight"); break;
+      case "Ordered List": document.execCommand("insertOrderedList"); break;
+      case "Unordered List": document.execCommand("insertUnorderedList"); break;
+      case "Indent": document.execCommand("indent"); break;
+      case "Outdent": document.execCommand("outdent"); break;
+      case "Superscript": document.execCommand("superscript"); break;
+      case "Subscript": document.execCommand("subscript"); break;
+      case "Text Color": 
+        const color = prompt("Enter text color (e.g. red, #ff0000):", "#000000");
+        if (color) document.execCommand("foreColor", false, color);
+        break;
+      case "Background Color":
+      case "Highlight":
+        const bg = prompt("Enter background color:", "#ffff00");
+        if (bg) {
+          try {
+            document.execCommand("hiliteColor", false, bg);
+          } catch(e) {
+            document.execCommand("backColor", false, bg);
+          }
+        }
+        break;
+      case "Insert Table":
+        const html = `<table border="1" style="width:100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 10px;"><tr><td style="padding: 8px;">Cell 1</td><td style="padding: 8px;">Cell 2</td></tr><tr><td style="padding: 8px;">Cell 3</td><td style="padding: 8px;">Cell 4</td></tr></table><br/>`;
+        document.execCommand("insertHTML", false, html);
+        break;
+      case "Rich text":
+      case "Code Block":
+        document.execCommand("formatBlock", false, "PRE");
+        break;
+      case "Blockquote":
+        document.execCommand("formatBlock", false, "BLOCKQUOTE");
+        break;
+      case "Math Equations":
+        const eq = prompt("Enter equation:", "E = mc^2");
+        if (eq) document.execCommand("insertHTML", false, `<code>${eq}</code>`);
+        break;
+      case "Find & Replace":
+        const find = prompt("Find:");
+        if (find) window.find(find);
+        break;
+      case "Word Count":
+        const text = contentEditableRef.current?.innerText || "";
+        const wc = text.split(/\s+/).filter(w => w.length > 0).length;
+        toast({ title: "Word Count", description: `${wc} words` });
+        break;
+      case "PDF Export":
+        window.print();
+        break;
+      default:
+        toast({ title: `Feature ${feature} is active.` });
+    }
+    if (contentEditableRef.current) {
+      handleUpdateContent(contentEditableRef.current.innerHTML);
+    }
+  };
+
   // Keyboard navigation for presentation fullscreen mode
   useEffect(() => {
     if (!isPresenting) return;
@@ -398,6 +467,15 @@ export default function XakteirSuitePage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isPresenting, parsedSlides.length]);
+
+  useEffect(() => {
+    if (activeApp === "write" && activeDoc && contentEditableRef.current) {
+      if (loadedDocId !== activeDoc.id) {
+        contentEditableRef.current.innerHTML = activeDoc.content || "";
+        setLoadedDocId(activeDoc.id);
+      }
+    }
+  }, [activeApp, activeDoc, loadedDocId]);
 
   if (!mounted) return null;
 
@@ -581,7 +659,7 @@ export default function XakteirSuitePage() {
               {writeFeatures.map((f, i) => (
                 <Button
                   key={i}
-                  onClick={() => toast({ title: `Write Feature: ${f}` })}
+                  onClick={() => handleWriteFeature(f)}
                   variant="ghost"
                   className="h-8 px-3 text-[9px] font-black uppercase text-zinc-400 hover:text-white hover:bg-white/5 whitespace-nowrap shrink-0 border border-white/5 rounded-lg"
                 >
@@ -820,12 +898,13 @@ export default function XakteirSuitePage() {
                       />
                       <div className="h-1 bg-zinc-100 rounded-full w-full no-print" />
 
-                      <div className="flex-1 flex flex-col relative">
-                        <textarea
-                          value={activeDoc.content || ""}
-                          onChange={(e) => handleUpdateContent(e.target.value)}
-                          placeholder="Start typing..."
-                          className="print-content flex-1 bg-transparent border-none outline-none resize-none custom-scrollbar text-current"
+                      <div className="flex-1 flex flex-col relative group">
+                        <div
+                          ref={contentEditableRef}
+                          contentEditable={true}
+                          suppressContentEditableWarning={true}
+                          onInput={(e) => handleUpdateContent(e.currentTarget.innerHTML)}
+                          className="print-content flex-1 bg-transparent border-none outline-none resize-none custom-scrollbar text-current prose prose-invert max-w-none focus:outline-none"
                           style={{
                             fontFamily: activeDoc.fontFamily || "Inter",
                             fontSize: activeDoc.fontSize || "16px",

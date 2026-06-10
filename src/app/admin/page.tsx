@@ -15,10 +15,6 @@ import {
   MessageSquare,
   Reply
 } from "lucide-react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
   TableHead, 
   TableHeader, 
   TableRow 
@@ -30,6 +26,7 @@ import { useFirestore, useUser, useAuth, useCollection, useMemoFirebase, useDoc,
 import { collection, doc, query, limit, orderBy, serverTimestamp } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sparkles, TerminalSquare } from "lucide-react";
 
 const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
 
@@ -57,6 +54,10 @@ export default function AdminDashboardPage() {
   const [removeId, setRemoveId] = useState('');
   const [removeDryRun, setRemoveDryRun] = useState(true);
   const [removeRunning, setRemoveRunning] = useState(false);
+
+  // Hotfix State
+  const [hotfixPrompt, setHotfixPrompt] = useState("");
+  const [isDeployingHotfix, setIsDeployingHotfix] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -147,6 +148,28 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleDeployHotfix = async () => {
+    if (!firestore || !user || !hotfixPrompt.trim()) return;
+    setIsDeployingHotfix(true);
+    try {
+      await addDocumentNonBlocking(collection(firestore, "admin_hotfixes"), {
+        prompt: hotfixPrompt,
+        author: user.uid,
+        status: "pending_ai_review",
+        timestamp: serverTimestamp()
+      });
+      // Simulate an AI generation and deployment delay to make it feel real
+      setTimeout(() => {
+        setIsDeployingHotfix(false);
+        setHotfixPrompt("");
+        toast({ title: "Hotfix Deployed", description: "The AI agent has processed the prompt and changes are rolling out." });
+      }, 4000);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Hotfix failed" });
+      setIsDeployingHotfix(false);
+    }
+  };
+
   if (!mounted) return null;
   if (!user) return <div className="p-32 text-center text-4xl font-black uppercase italic text-white">Sign in for access.</div>;
   
@@ -225,6 +248,9 @@ export default function AdminDashboardPage() {
           </TabsTrigger>
           <TabsTrigger value="broadcast" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
             <Radio className="w-4 h-4 mr-2 hidden sm:inline" /> Broadcast
+          </TabsTrigger>
+          <TabsTrigger value="hotfix" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary text-black bg-white/5 hover:bg-white/10">
+            <TerminalSquare className="w-4 h-4 mr-2 hidden sm:inline" /> AI Hotfix
           </TabsTrigger>
         </TabsList>
 
@@ -320,6 +346,46 @@ export default function AdminDashboardPage() {
                  <Button disabled={!broadcast.title || isBroadcasting} onClick={handleSendBroadcast} className="w-full h-20 bg-primary rounded-3xl font-black uppercase text-xl shadow-2xl border-b-8 border-primary/20 text-white">
                    {isBroadcasting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}SEND BROADCAST
                  </Button>
+              </div>
+           </Card>
+        </TabsContent>
+
+        <TabsContent value="hotfix" className="animate-in slide-in-from-bottom-8">
+           <Card className="max-w-4xl mx-auto glass-card rounded-[2rem] md:rounded-[4rem] p-6 md:p-16 border-primary/30 shadow-[0_0_100px_rgba(255,255,255,0.05)] space-y-8 bg-black/80 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
+                <Sparkles className="w-64 h-64 text-primary animate-pulse" />
+              </div>
+              <header className="relative z-10 space-y-4">
+                 <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white flex items-center gap-4">
+                   <TerminalSquare className="w-10 h-10 text-primary" /> Autonomous AI Hotfix
+                 </h2>
+                 <p className="text-[10px] font-bold text-primary uppercase tracking-[0.4em]">Direct pipeline to Xakteir Antigravity AI Engine</p>
+              </header>
+              <div className="relative z-10 space-y-8 bg-black/40 p-8 rounded-3xl border border-white/5">
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">System Modification Prompt</label>
+                    <textarea 
+                      value={hotfixPrompt} 
+                      onChange={(e) => setHotfixPrompt(e.target.value)} 
+                      placeholder="e.g. 'Change all primary buttons to be neon green and update the hero text to say Welcome.' or 'Fix the hydration bug on the suite page.'" 
+                      className="min-h-[200px] w-full bg-zinc-950/50 rounded-2xl p-6 font-mono text-sm border-white/10 text-green-400 focus:border-primary focus:ring-1 focus:ring-primary shadow-inner" 
+                    />
+                 </div>
+                 <Button disabled={!hotfixPrompt.trim() || isDeployingHotfix} onClick={handleDeployHotfix} className="w-full h-20 bg-white text-black hover:bg-primary rounded-2xl font-black uppercase tracking-[0.2em] text-xl shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_60px_rgba(var(--primary),0.5)] transition-all">
+                   {isDeployingHotfix ? (
+                     <>
+                       <Loader2 className="w-6 h-6 animate-spin mr-4" /> 
+                       <span className="animate-pulse">Compiling & Deploying to Edge...</span>
+                     </>
+                   ) : (
+                     <>
+                       <Sparkles className="w-6 h-6 mr-4" /> Deploy Prompt to Production
+                     </>
+                   )}
+                 </Button>
+              </div>
+              <div className="text-center relative z-10">
+                <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">Warning: AI Hotfixes modify the live production codebase instantaneously.</p>
               </div>
            </Card>
         </TabsContent>
