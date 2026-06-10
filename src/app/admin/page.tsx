@@ -15,6 +15,10 @@ import {
   MessageSquare,
   Reply
 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
   TableHead, 
   TableHeader, 
   TableRow 
