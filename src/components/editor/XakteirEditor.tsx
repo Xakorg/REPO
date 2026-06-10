@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Bold, Italic, Strikethrough, Heading1, Heading2, List, ListOrdered, Quote } from 'lucide-react';
@@ -34,7 +34,7 @@ export function XakteirEditor() {
   return (
     <div className="relative w-full">
       {editor && (
-        <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="flex overflow-hidden bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-1 gap-1">
+        <div className="sticky top-0 z-10 flex flex-wrap gap-1 p-2 bg-black/40 backdrop-blur-xl border-b border-white/10 shadow-2xl mb-4 rounded-xl opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity">
           <Toggle
             size="sm"
             pressed={editor.isActive('bold')}
@@ -93,7 +93,7 @@ export function XakteirEditor() {
           >
             <Quote className="w-4 h-4" />
           </Toggle>
-        </BubbleMenu>
+        </div>
       )}
 
       {/* Editor Canvas */}

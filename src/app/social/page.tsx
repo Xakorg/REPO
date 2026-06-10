@@ -49,6 +49,9 @@ export default function XakSocialPage() {
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [chatInput, setChatInput] = useState("");
   const [isReporting, setIsReporting] = useState(false);
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupDesc, setNewGroupDesc] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
@@ -103,6 +106,7 @@ export default function XakSocialPage() {
       const userDataDoc = allUsers?.find(u => u.id === user.uid);
       await addDoc(collection(firestore, "globalMessages"), {
         content,
+        uid: user.uid,
         senderId: user.uid,
         senderName: cleanName,
         senderPhoto: user.photoURL || "",
@@ -165,6 +169,26 @@ export default function XakSocialPage() {
       toast({ variant: "destructive", title: "Transmission Failed" });
     } finally {
       setIsReporting(false);
+    }
+  };
+
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim() || !user || !firestore) return;
+    try {
+      await addDoc(collection(firestore, "groups"), {
+        name: newGroupName,
+        description: newGroupDesc,
+        category: "GENERAL",
+        ownerId: user.uid,
+        memberCount: 1,
+        timestamp: serverTimestamp()
+      });
+      setIsCreatingGroup(false);
+      setNewGroupName("");
+      setNewGroupDesc("");
+      toast({ title: "Group Created!" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error Creating Group" });
     }
   };
 
@@ -255,7 +279,7 @@ export default function XakSocialPage() {
 
         <TabsContent value="groups" className="animate-in fade-in duration-700">
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-32">
-              <Card className="glass-card rounded-[3rem] border-4 border-dashed border-white/10 p-10 flex flex-col items-center justify-center text-center space-y-6 group hover:border-primary/40 transition-all cursor-pointer">
+              <Card onClick={() => setIsCreatingGroup(true)} className="glass-card rounded-[3rem] border-4 border-dashed border-white/10 p-10 flex flex-col items-center justify-center text-center space-y-6 group hover:border-primary/40 transition-all cursor-pointer">
                  <div className="w-20 h-20 rounded-[2.5rem] bg-secondary/50 flex items-center justify-center group-hover:bg-primary/20 transition-all shadow-xl">
                     <Plus className="w-10 h-10 text-muted-foreground group-hover:text-primary" />
                  </div>
@@ -408,6 +432,38 @@ export default function XakSocialPage() {
               </div>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreatingGroup} onOpenChange={setIsCreatingGroup}>
+        <DialogContent className="sm:max-w-[425px] bg-[#111214] border-white/10 text-white rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black italic tracking-tighter">Create New Group</DialogTitle>
+            <DialogDescription className="text-zinc-400">Build a community in the Xakteir Hub.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Group Name</label>
+              <Input 
+                value={newGroupName} 
+                onChange={(e) => setNewGroupName(e.target.value)} 
+                placeholder="E.g., Logic Lab" 
+                className="bg-black/40 border-white/10 text-white h-12" 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Description</label>
+              <Input 
+                value={newGroupDesc} 
+                onChange={(e) => setNewGroupDesc(e.target.value)} 
+                placeholder="What is this group about?" 
+                className="bg-black/40 border-white/10 text-white h-12" 
+              />
+            </div>
+          </div>
+          <Button onClick={handleCreateGroup} className="w-full h-12 font-black uppercase tracking-widest bg-primary text-black">
+            Deploy Group
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
