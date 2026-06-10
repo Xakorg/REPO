@@ -33,8 +33,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, where } from "firebase/firestore";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, setDocumentNonBlocking } from "@/firebase";
+import { collection, query, orderBy, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, where, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -70,7 +70,19 @@ export default function XakteirAuthPage() {
   const [secondsLeft, setSecondsLeft] = useState(30);
   const [isMobile, setIsMobile] = useState(false);
 
+  const [setupStep, setSetupStep] = useState(1);
+  const [setupPin, setSetupPin] = useState("");
+  const [setupPinConfirm, setSetupPinConfirm] = useState("");
+
   useEffect(() => { setMounted(true); }, []);
+
+  // Firestore Config
+  const configRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid, "auth_settings", "config");
+  }, [firestore, user]);
+  
+  const { data: authConfig, isLoading: isConfigLoading } = useDoc(configRef);
 
   // Firestore Accounts
   const accountsQuery = useMemoFirebase(() => {
@@ -97,6 +109,20 @@ export default function XakteirAuthPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [mounted]);
+
+  const handleSaveConfig = async () => {
+    if (!firestore || !user || setupPin.length < 6 || setupPin !== setupPinConfirm) return;
+    try {
+      await setDocumentNonBlocking(doc(firestore, "users", user.uid, "auth_settings", "config"), {
+        masterPin: setupPin,
+        hasPasskey: false,
+        timestamp: serverTimestamp()
+      });
+      toast({ title: "Setup Complete", description: "Your vault is now secure." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to save configuration." });
+    }
+  };
 
   // REAL Biometrics via WebAuthn API
   const handleRealBiometric = async () => {
@@ -155,6 +181,78 @@ export default function XakteirAuthPage() {
   const activeAccount = useMemo(() => accounts?.find(a => a.id === activeAccountId) || accounts?.[0], [accounts, activeAccountId]);
 
   if (!mounted) return null;
+
+  if (isConfigLoading) {
+    return <div className="fixed inset-0 z-[1000] bg-[#05030d] flex items-center justify-center"><Loader2 className="w-12 h-12 text-primary animate-spin" /></div>;
+  }
+
+  // FIRST-TIME ONBOARDING
+  if (!authConfig && user) {
+    return (
+      <div className="fixed inset-0 z-[1000] bg-[#05030d] flex flex-col items-center justify-center p-6 animate-fade-in text-white overflow-y-auto">
+         <div className="absolute inset-0 arcade-grid opacity-10 pointer-events-none" />
+         <div className="relative z-10 w-full max-w-lg space-y-12 py-12">
+            {setupStep === 1 && (
+              <div className="text-center space-y-8 animate-in slide-in-from-bottom-8">
+                 <div className="w-40 h-40 rounded-[4rem] bg-primary/10 border-4 border-primary/40 flex items-center justify-center mx-auto shadow-[0_0_100px_rgba(var(--primary),0.3)] animate-float">
+                    <ShieldCheck className="w-20 h-20 text-primary" />
+                 </div>
+                 <div className="space-y-4">
+                    <h1 className="text-5xl font-black italic uppercase tracking-tighter">Welcome to Xakteir Auth</h1>
+                    <p className="text-muted-foreground font-medium text-lg max-w-md mx-auto">A secure, encrypted vault for all your passwords, passkeys, and 2FA codes.</p>
+                 </div>
+                 <Button onClick={() => setSetupStep(2)} className="h-16 px-12 bg-primary rounded-2xl font-black uppercase text-sm tracking-widest shadow-[0_20px_40px_rgba(var(--primary),0.4)] transition-all hover:scale-105 active:scale-95">Get Started <ChevronRight className="w-5 h-5 ml-2" /></Button>
+              </div>
+            )}
+
+            {setupStep === 2 && (
+              <div className="space-y-10 animate-in slide-in-from-right-8">
+                 <div className="text-center space-y-2">
+                    <h2 className="text-4xl font-black italic uppercase tracking-tighter">Set Master PIN</h2>
+                    <p className="text-muted-foreground text-sm uppercase tracking-widest font-black opacity-60">This secures your vault</p>
+                 </div>
+                 <div className="space-y-6">
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-4">Choose a 6-8 digit PIN</label>
+                       <Input type="password" placeholder="Enter PIN" value={setupPin} onChange={(e) => setSetupPin(e.target.value.replace(/\D/g, '').slice(0,8))} className="h-20 text-center text-4xl tracking-[1em] font-black bg-white/5 border-white/10 rounded-3xl focus:border-primary" />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-4">Confirm PIN</label>
+                       <Input type="password" placeholder="Confirm PIN" value={setupPinConfirm} onChange={(e) => setSetupPinConfirm(e.target.value.replace(/\D/g, '').slice(0,8))} className="h-20 text-center text-4xl tracking-[1em] font-black bg-white/5 border-white/10 rounded-3xl focus:border-primary" />
+                    </div>
+                 </div>
+                 <div className="flex gap-4">
+                    <Button variant="ghost" onClick={() => setSetupStep(1)} className="h-16 w-16 rounded-2xl text-muted-foreground bg-white/5"><ArrowLeft className="w-6 h-6" /></Button>
+                    <Button 
+                      disabled={setupPin.length < 6 || setupPin !== setupPinConfirm} 
+                      onClick={() => setSetupStep(3)} 
+                      className="h-16 flex-1 bg-primary rounded-2xl font-black uppercase tracking-widest"
+                    >
+                      Continue
+                    </Button>
+                 </div>
+              </div>
+            )}
+
+            {setupStep === 3 && (
+              <div className="text-center space-y-10 animate-in slide-in-from-right-8">
+                 <div className="w-32 h-32 rounded-[3rem] bg-emerald-500/10 border-4 border-emerald-500/40 flex items-center justify-center mx-auto shadow-[0_0_80px_rgba(16,185,129,0.3)]">
+                    <Fingerprint className="w-16 h-16 text-emerald-500" />
+                 </div>
+                 <div className="space-y-4">
+                    <h2 className="text-4xl font-black italic uppercase tracking-tighter">Enable Biometrics</h2>
+                    <p className="text-muted-foreground font-medium text-sm max-w-sm mx-auto">Use Face ID, Touch ID, or Windows Hello for instant access to your vault.</p>
+                 </div>
+                 <div className="flex flex-col gap-4">
+                    <Button onClick={async () => { await handleRealBiometric(); await handleSaveConfig(); }} className="h-16 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-black uppercase tracking-widest shadow-[0_20px_40px_rgba(16,185,129,0.3)] transition-all">Register Device Passkey</Button>
+                    <Button variant="ghost" onClick={handleSaveConfig} className="h-16 rounded-2xl font-black uppercase tracking-widest text-muted-foreground hover:bg-white/5 hover:text-white">Skip for now</Button>
+                 </div>
+              </div>
+            )}
+         </div>
+      </div>
+    );
+  }
 
   // LOCK SCREEN
   if (!isUnlocked) {
@@ -224,7 +322,15 @@ export default function XakteirAuthPage() {
                 <p className="text-[9px] font-bold text-muted-foreground uppercase opacity-60">Unlock with OS Security or 6-8 digit PIN</p>
                 {pin.length >= 6 && (
                   <Button 
-                    onClick={() => { setIsUnlocked(true); toast({ title: "Authorized", description: "Registry link active." }); }}
+                    onClick={() => { 
+                      if (authConfig?.masterPin === pin) {
+                        setIsUnlocked(true); 
+                        toast({ title: "Authorized", description: "Registry link active." }); 
+                      } else {
+                        toast({ variant: "destructive", title: "Access Denied", description: "Incorrect master PIN." });
+                        setPin("");
+                      }
+                    }}
                     className="h-10 px-8 bg-emerald-600 rounded-xl text-[10px] font-black uppercase animate-in fade-in slide-in-from-bottom-2"
                   >
                     Enter Registry
