@@ -127,9 +127,9 @@ export default function GamePlayPage() {
             
             {/* Stage Canvas */}
             <div className="flex-1 relative bg-[#0e0e1a] flex items-center justify-center overflow-hidden">
-              {isPlaying ? (
-                <GameComponent onExit={handleExit} />
-              ) : (
+              <GameComponent onExit={handleExit} isPlaying={isPlaying} />
+              
+              {!isPlaying && (
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50">
                   <button 
                     onClick={() => setIsPlaying(true)} 

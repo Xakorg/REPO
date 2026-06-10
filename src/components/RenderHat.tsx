@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { cn } from "@/lib/utils";
 
 export function RenderHat({ hatKey }: { hatKey?: string }) {
   if (!hatKey) return null;
@@ -112,5 +113,67 @@ export function RenderHat({ hatKey }: { hatKey?: string }) {
       );
     default:
       return null;
+  }
+}
+
+export function RenderAura({ auraKey }: { auraKey?: string }) {
+  if (!auraKey) return null;
+  switch (auraKey) {
+    case 'neon':
+      return <div className="absolute inset-0 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.6)] animate-pulse pointer-events-none" />;
+    case 'gold':
+      return <div className="absolute inset-0 rounded-full shadow-[0_0_30px_rgba(251,191,36,0.8)] animate-pulse pointer-events-none border-2 border-amber-400/50" />;
+    case 'glitch':
+      return <div className="absolute inset-0 rounded-full shadow-[0_0_25px_rgba(168,85,247,0.7)] animate-bounce pointer-events-none mix-blend-color-dodge" />;
+    default:
+      return null;
+  }
+}
+
+export function RenderDecor({ decorKey }: { decorKey?: string }) {
+  if (!decorKey) return null;
+  switch (decorKey) {
+    case 'stars':
+      return (
+        <div className="absolute -inset-4 pointer-events-none animate-spin-slow">
+           <div className="absolute top-0 left-0 w-2 h-2 bg-yellow-400 rounded-full shadow-[0_0_5px_rgba(250,204,21,1)]" />
+           <div className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-yellow-300 rounded-full shadow-[0_0_5px_rgba(250,204,21,1)]" />
+        </div>
+      );
+    case 'sakura':
+      return (
+        <div className="absolute -inset-6 pointer-events-none animate-spin-slow opacity-80">
+           <div className="absolute top-2 left-2 w-3 h-3 bg-pink-400 rounded-full blur-[1px]" />
+           <div className="absolute bottom-2 right-4 w-2 h-2 bg-pink-300 rounded-full blur-[1px]" />
+           <div className="absolute top-8 -right-2 w-2.5 h-2.5 bg-pink-500 rounded-full blur-[1px]" />
+        </div>
+      );
+    case 'ghost':
+      return (
+        <div className="absolute -right-4 -top-4 w-6 h-6 bg-white/50 rounded-full animate-bounce pointer-events-none blur-[2px] shadow-[0_0_10px_white]">
+           <div className="absolute top-2 left-1 w-1 h-1 bg-black rounded-full" />
+           <div className="absolute top-2 right-1 w-1 h-1 bg-black rounded-full" />
+        </div>
+      );
+    case 'cat':
+      return (
+        <div className="absolute -inset-8 pointer-events-none animate-spin-slow">
+           <div className="absolute top-0 left-1/2 w-6 h-6 bg-rose-500 rounded-full border border-white/20 flex items-center justify-center -translate-x-1/2">
+             <span className="text-[10px]">🐱</span>
+           </div>
+        </div>
+      );
+    default:
+      return null;
+  }
+}
+
+export function getNameplateClass(nameplateKey?: string, defaultClass: string = "text-white") {
+  if (!nameplateKey) return defaultClass;
+  switch (nameplateKey) {
+    case 'gold': return "text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)] font-black";
+    case 'blue': return "text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)] font-black";
+    case 'pro': return "text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 font-black drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]";
+    default: return defaultClass;
   }
 }

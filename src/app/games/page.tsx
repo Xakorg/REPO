@@ -237,6 +237,69 @@ function ArcadeHubContent() {
         <h1 className="text-3xl font-black text-white tracking-wide">Explore</h1>
       </header>
 
+      {/* Tabs */}
+      <div className="flex justify-center border-b border-[#d9d9d9] bg-white">
+        <div className="flex gap-8 px-4 h-12">
+          <button className="flex items-center gap-2 border-b-4 border-[#4cb715] text-[#4cb715] font-bold px-2 text-[15px]">
+             Projects
+          </button>
+          <button className="flex items-center gap-2 text-[#575e75] font-bold px-2 opacity-50 hover:opacity-100 transition-opacity text-[15px]">
+             Studios
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        {/* Filters */}
+        <div className="flex items-center justify-between mb-8">
+           <div className="flex flex-wrap gap-2">
+             {["All", "Animations", "Art", "Games", "Music", "Stories", "Tutorials"].map(cat => (
+               <button 
+                 key={cat}
+                 onClick={() => setActiveCategory(cat === "All" ? "Discovery" : cat)}
+                 className={cn(
+                   "px-4 py-1.5 rounded-full font-bold text-[13px] transition-colors border",
+                   (activeCategory === cat || (activeCategory === "Discovery" && cat === "All")) 
+                     ? "bg-[#855cd6] text-white border-[#855cd6]" 
+                     : "bg-white text-[#855cd6] border-[#855cd6] hover:bg-[#f0eaff]"
+                 )}
+               >
+                 {cat}
+               </button>
+             ))}
+           </div>
+           <div className="flex items-center gap-2 cursor-pointer border border-[#d9d9d9] rounded px-3 py-1.5 hover:bg-zinc-50">
+             <span className="font-bold text-[13px] text-[#575e75]">Trending</span>
+             <ChevronDown className="w-4 h-4 text-[#575e75]" />
+           </div>
+        </div>
+
+        {/* Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {filteredGames.slice(0, 30).map(game => (
+            <div key={game.id} onClick={() => router.push(`/games/play/${game.id}`)} className="bg-white rounded overflow-hidden border border-[#d9d9d9] hover:shadow-md transition-shadow cursor-pointer flex flex-col group">
+               <div className="aspect-[4/3] bg-zinc-100 flex items-center justify-center border-b border-[#d9d9d9] relative p-4">
+                 <game.icon className={cn("w-16 h-16", game.color)} />
+                 <div className="absolute top-2 left-2 bg-[#855cd6] text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">
+                   {game.type}
+                 </div>
+               </div>
+               <div className="p-3 bg-white">
+                 <h3 className="font-bold text-[#575e75] text-sm truncate group-hover:text-[#4cb715] transition-colors">{game.name}</h3>
+                 <div className="flex items-center gap-2 mt-2">
+                   <div className="w-6 h-6 bg-[#4cb715] rounded flex items-center justify-center shrink-0">
+                     <span className="text-[10px] text-white font-bold uppercase">{game.creator.charAt(0)}</span>
+                   </div>
+                   <span className="text-[11px] font-bold text-[#575e75] truncate hover:underline">{game.creator}</span>
+                 </div>
+               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function GamesHubPage() {
   return (

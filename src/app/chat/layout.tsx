@@ -46,7 +46,7 @@ import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, query, where, doc, addDoc, serverTimestamp, getDocs, limit, orderBy, updateDoc, deleteDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { RenderHat } from "@/components/RenderHat";
+import { RenderHat, RenderAura, RenderDecor, getNameplateClass } from "@/components/RenderHat";
 import { Card } from "@/components/ui/card";
 import { getIceServers } from "@/lib/webrtc/config";
 import { IceCandidateBuffer } from "@/lib/webrtc/ice-buffer";
@@ -1454,6 +1454,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                   activeFriendData ? (
                     <div className="space-y-8 text-center animate-in fade-in duration-300">
                       <div className="relative w-28 h-28 mx-auto">
+                        <RenderAura auraKey={activeFriendData.aura} />
+                        <RenderDecor decorKey={activeFriendData.decor} />
                         <RenderHat hatKey={activeFriendData.hat} />
                         <Avatar className="w-full h-full border-4 border-white/10 rounded-[2rem] bg-zinc-900">
                           <AvatarImage src={activeFriendData.photoURL} className="object-cover" />
@@ -1461,7 +1463,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                         </Avatar>
                       </div>
                       <div className="space-y-2">
-                        <h4 className="text-2xl font-black uppercase italic tracking-tighter text-white">
+                        <h4 className={cn("text-2xl font-black uppercase italic tracking-tighter", getNameplateClass(activeFriendData.nameplate, "text-white"))}>
                           {activeFriendData.displayName?.replace(/^@+/, "")}
                         </h4>
                         <Badge className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[8px] font-black uppercase tracking-widest px-4 py-1 rounded-full">
@@ -1506,6 +1508,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                               className="p-3 rounded-xl hover:bg-white/5 flex items-center gap-3 transition-all cursor-pointer group"
                             >
                               <div className="relative shrink-0">
+                                <RenderAura auraKey={m.aura} />
+                                <RenderDecor decorKey={m.decor} />
                                 <RenderHat hatKey={m.hat} />
                                 <Avatar className={cn("w-9 h-9 border transition-all", isSpeaking ? "border-emerald-500 ring-2 ring-emerald-500/45" : "border-white/10")}>
                                   <AvatarImage src={m.photoURL} />
@@ -1514,7 +1518,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                                 <div className={cn("absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-black", m.status === 'offline' ? "bg-zinc-500" : "bg-green-500")} />
                               </div>
                               <div className="overflow-hidden">
-                                <p className={cn("text-[11px] font-bold uppercase truncate", roleDetails.color)}>{name}</p>
+                                <p className={cn("text-[11px] font-bold uppercase truncate", getNameplateClass(m.nameplate, roleDetails.color))}>{name}</p>
                                 <p className="text-[8px] font-bold text-muted-foreground uppercase italic">{roleDetails.name}</p>
                               </div>
                             </div>
@@ -1545,6 +1549,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                                  className="p-3 rounded-xl hover:bg-white/5 flex items-center gap-3 transition-all cursor-pointer group"
                                >
                                   <div className="relative shrink-0">
+                                     <RenderAura auraKey={m.aura} />
+                                     <RenderDecor decorKey={m.decor} />
                                      <RenderHat hatKey={m.hat} />
                                      <Avatar className={cn("w-9 h-9 border transition-all", isSpeaking ? "border-emerald-500 ring-2 ring-emerald-500/45" : "border-white/10")}>
                                        <AvatarImage src={m.photoURL} />
@@ -1553,7 +1559,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                                      <div className={cn("absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-black", m.status === 'offline' ? "bg-zinc-500" : "bg-green-500")} />
                                   </div>
                                   <div className="overflow-hidden">
-                                     <p className="text-[11px] font-bold text-white/80 uppercase truncate">{name}</p>
+                                     <p className={cn("text-[11px] font-bold uppercase truncate", getNameplateClass(m.nameplate, "text-white/80"))}>{name}</p>
                                      <p className="text-[8px] font-bold text-muted-foreground uppercase italic">Level {m.level || 1}</p>
                                   </div>
                                </div>
@@ -2234,11 +2240,13 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                 <div className="relative p-6 rounded-2xl bg-white/5 border border-white/5 flex flex-col items-center text-center space-y-3 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
                   
-                  <div className="relative w-20 h-20">
+                  <div className="relative w-24 h-24 mb-4 mt-2">
+                    <RenderAura auraKey={selectedProfileUser.aura} />
+                    <RenderDecor decorKey={selectedProfileUser.decor} />
                     <RenderHat hatKey={selectedProfileUser.hat} />
-                    <Avatar className="w-full h-full border-2 border-white/10 rounded-2xl bg-zinc-900">
+                    <Avatar className="w-full h-full border-4 border-white/10 rounded-2xl bg-zinc-900">
                       <AvatarImage src={selectedProfileUser.photoURL} className="object-cover" />
-                      <AvatarFallback className="bg-primary text-2xl font-black">{name[0]}</AvatarFallback>
+                      <AvatarFallback className="text-3xl font-black bg-primary">{selectedProfileUser.displayName?.[0] || '?'}</AvatarFallback>
                     </Avatar>
                     <div className={cn(
                       "absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-black",
@@ -2723,6 +2731,85 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Global Settings Modal */}
+      <Dialog open={showGlobalSettingsModal} onOpenChange={setShowGlobalSettingsModal}>
+        <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-white p-8 bg-zinc-950">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase italic text-white flex items-center gap-2">
+              <Settings className="w-5 h-5 text-emerald-400" /> Global Settings
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">Manage your XakChat preferences across all servers.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 pt-4">
+            <div className="space-y-3">
+              <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Notification Preferences</h4>
+              <div className="space-y-2">
+                {['all', 'pings', 'specific', 'none'].map((pref) => (
+                  <button 
+                    key={pref}
+                    onClick={() => setNotificationPref(pref)}
+                    className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all text-left",
+                      notificationPref === pref ? "border-emerald-500 bg-emerald-500/10" : "border-white/5 bg-black/40 hover:border-white/20"
+                    )}
+                  >
+                    <div>
+                      <p className={cn("text-sm font-bold uppercase", notificationPref === pref ? "text-emerald-400" : "text-white")}>
+                        {pref === 'all' ? 'All Messages' : pref === 'pings' ? 'Pings Everywhere' : pref === 'specific' ? 'Pings in Specific Servers' : 'Mute All'}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {pref === 'all' ? 'Receive push notifications for every new message.' : pref === 'pings' ? 'Only notify me when I am explicitly @mentioned.' : pref === 'specific' ? 'Only receive pings from selected servers.' : 'Disable all notifications completely.'}
+                      </p>
+                    </div>
+                    <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0", notificationPref === pref ? "border-emerald-500" : "border-zinc-600")}>
+                      {notificationPref === pref && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {notificationPref === 'specific' && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Select Servers</h4>
+                <div className="max-h-32 overflow-y-auto space-y-1 bg-black/40 p-2 rounded-xl border border-white/5">
+                   {hubs.map((hub) => (
+                     <button 
+                       key={hub.id} 
+                       onClick={() => setSelectedNotificationServers(prev => prev.includes(hub.id) ? prev.filter(id => id !== hub.id) : [...prev, hub.id])}
+                       className={cn("w-full flex items-center justify-between p-2 rounded-lg text-left transition-colors", selectedNotificationServers.includes(hub.id) ? "bg-emerald-500/20" : "hover:bg-white/5")}
+                     >
+                       <span className={cn("text-xs font-bold", selectedNotificationServers.includes(hub.id) ? "text-emerald-400" : "text-white")}>{hub.name}</span>
+                       {selectedNotificationServers.includes(hub.id) && <span className="text-emerald-400 text-[10px]">✓</span>}
+                     </button>
+                   ))}
+                </div>
+              </div>
+            )}
+
+            <Button 
+              disabled={isSavingSettings}
+              onClick={async () => {
+                if (!firestore || !user) return;
+                setIsSavingSettings(true);
+                try {
+                  const userRef = doc(firestore, "users", user.uid);
+                  await updateDoc(userRef, {
+                    notificationPref,
+                    selectedNotificationServers: notificationPref === 'specific' ? selectedNotificationServers : []
+                  });
+                  toast({ title: "Settings Saved", description: "Your global preferences have been updated." });
+                  setShowGlobalSettingsModal(false);
+                } catch(e) { toast({ variant: "destructive", title: "Error saving settings" }); } finally { setIsSavingSettings(false); }
+              }}
+              className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-black font-black uppercase text-[10px] tracking-widest rounded-xl shadow-lg border-none"
+            >
+              {isSavingSettings ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null} Save Preferences
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -2754,6 +2841,8 @@ function DMContactItem({ chatId, participants, activeChatId, currentUserId }: { 
       )}
     >
       <div className="relative shrink-0">
+        <RenderAura auraKey={friendData.aura} />
+        <RenderDecor decorKey={friendData.decor} />
         <RenderHat hatKey={friendData.hat} />
         <Avatar className="w-8 h-8 rounded-lg border border-white/10">
           <AvatarImage src={friendData.photoURL} />
