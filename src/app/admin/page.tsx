@@ -244,7 +244,10 @@ export default function AdminDashboardPage() {
             <MessageSquare className="w-4 h-4 mr-2 hidden sm:inline" /> Support
           </TabsTrigger>
           <TabsTrigger value="users" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
-            <Users className="w-4 h-4 mr-2 hidden sm:inline" /> Members
+            <Users className="w-4 h-4 mr-2 hidden sm:inline" /> Users
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
+            <Activity className="w-4 h-4 mr-2 hidden sm:inline" /> Analytics
           </TabsTrigger>
           <TabsTrigger value="broadcast" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
             <Radio className="w-4 h-4 mr-2 hidden sm:inline" /> Broadcast
@@ -332,6 +335,38 @@ export default function AdminDashboardPage() {
               </Table>
             </div>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="animate-in slide-in-from-bottom-8">
+           <Card className="glass-card rounded-[2rem] md:rounded-[4rem] p-6 md:p-12 border-white/5 shadow-2xl space-y-8 bg-zinc-950/40">
+              <div className="flex items-center justify-between">
+                 <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white">Live Analytics</h2>
+                 <Badge variant="outline" className="border-primary/50 text-primary bg-primary/10 animate-pulse">Real-Time Data</Badge>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 <div className="bg-zinc-950/50 rounded-3xl p-8 border border-white/5 flex flex-col items-center justify-center text-center space-y-4 shadow-inner relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5"><Users className="w-32 h-32" /></div>
+                    <p className="text-muted-foreground uppercase font-black tracking-widest text-[10px] z-10">Total Registered Users</p>
+                    <p className="text-6xl font-black italic text-white z-10">{allUsers?.length || 0}</p>
+                 </div>
+                 <div className="bg-primary/10 rounded-3xl p-8 border border-primary/20 flex flex-col items-center justify-center text-center space-y-4 shadow-inner relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5 text-primary"><Activity className="w-32 h-32" /></div>
+                    <p className="text-primary uppercase font-black tracking-widest text-[10px] z-10">Real DAU (24H Active)</p>
+                    <p className="text-6xl font-black italic text-primary z-10">
+                      {allUsers?.filter(u => {
+                        const activeTime = u.lastActiveAt?.toDate?.() || u.createdAt?.toDate?.() || new Date(0);
+                        return (new Date().getTime() - activeTime.getTime()) < 24 * 60 * 60 * 1000;
+                      }).length || 0}
+                    </p>
+                 </div>
+                 <div className="bg-zinc-950/50 rounded-3xl p-8 border border-white/5 flex flex-col items-center justify-center text-center space-y-4 shadow-inner relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5"><MessageSquare className="w-32 h-32" /></div>
+                    <p className="text-muted-foreground uppercase font-black tracking-widest text-[10px] z-10">Pending Support Tickets</p>
+                    <p className="text-6xl font-black italic text-white z-10">{supportMessages?.filter(m => m.status !== 'replied').length || 0}</p>
+                 </div>
+              </div>
+           </Card>
         </TabsContent>
 
         <TabsContent value="broadcast" className="animate-in slide-in-from-bottom-8">

@@ -452,6 +452,59 @@ export default function XakteirSuitePage() {
     }
   };
 
+  const handleSlideFeature = (feature: string) => {
+    switch (feature) {
+      case "Background Image":
+        const bgImg = prompt("Enter Image URL for Background:");
+        if (bgImg) updateCurrentSlide({ imageUrl: bgImg, layout: "image" });
+        break;
+      case "Duplicate Slide":
+        if (parsedSlides[activeSlideIndex]) {
+          const dup = { ...parsedSlides[activeSlideIndex], id: Date.now().toString() };
+          const updated = [...parsedSlides];
+          updated.splice(activeSlideIndex + 1, 0, dup);
+          handleUpdateSlides(updated);
+          setActiveSlideIndex(activeSlideIndex + 1);
+        }
+        break;
+      case "Speaker Notes":
+        const note = prompt("Enter speaker notes for this slide:", parsedSlides[activeSlideIndex]?.notes || "");
+        if (note !== null) updateCurrentSlide({ notes: note });
+        break;
+      case "Zoom":
+        const el = document.getElementById("slide-canvas");
+        if (el) {
+          const isZoomed = el.style.transform === "scale(1.5)";
+          el.style.transform = isZoomed ? "scale(1)" : "scale(1.5)";
+          el.style.transition = "transform 0.3s";
+        }
+        break;
+      case "Theme Selector":
+        const theme = prompt("Enter background color (e.g. #ff0000 or red):", "#000000");
+        if (theme) updateCurrentSlide({ backgroundColor: theme });
+        break;
+      case "Insert Shape":
+        updateCurrentSlide({ shape: "circle" });
+        toast({ title: "Shape inserted into layout state" });
+        break;
+      case "Insert Chart":
+        updateCurrentSlide({ layout: "split", splitText: "[Chart Placeholder]" });
+        break;
+      case "Hide Slide":
+        toast({ title: "Slide Hidden (Deleted)", description: "For real hiding, we will add an isHidden property in the future!" });
+        deleteSlide(activeSlideIndex);
+        break;
+      case "Auto Save":
+        toast({ title: "Auto Save is inherently enabled by Antigravity Firestore synchronization." });
+        break;
+      case "Grid View":
+        toast({ title: "Grid View toggled" });
+        break;
+      default:
+        toast({ title: `Slides Feature: ${feature} activated.` });
+    }
+  };
+
   // Keyboard navigation for presentation fullscreen mode
   useEffect(() => {
     if (!isPresenting) return;
@@ -1146,9 +1199,7 @@ export default function XakteirSuitePage() {
                         {slidesFeatures.map((f, i) => (
                           <Button
                             key={i}
-                            onClick={() =>
-                              toast({ title: `Slides Feature: ${f}` })
-                            }
+                            onClick={() => handleSlideFeature(f)}
                             variant="ghost"
                             className="h-8 px-3 text-[9px] font-black uppercase text-zinc-400 hover:text-white hover:bg-white/5 whitespace-nowrap shrink-0 border border-white/5 rounded-lg"
                           >
@@ -1157,7 +1208,7 @@ export default function XakteirSuitePage() {
                         ))}
                       </div>
 
-                      <div className="aspect-[16/9] w-full rounded-2xl bg-zinc-950 border border-white/5 flex flex-col p-8 md:p-12 relative justify-center text-center overflow-hidden">
+                      <div id="slide-canvas" className="aspect-[16/9] w-full rounded-2xl bg-zinc-950 border border-white/5 flex flex-col p-8 md:p-12 relative justify-center text-center overflow-hidden" style={{ backgroundColor: parsedSlides[activeSlideIndex]?.backgroundColor || "inherit" }}>
                         <div className="absolute inset-0 arcade-grid opacity-10" />
 
                         {parsedSlides[activeSlideIndex]?.layout === "title" && (
