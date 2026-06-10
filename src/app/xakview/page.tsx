@@ -322,7 +322,40 @@ export default function XakViewPage() {
 
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
 
+  // Mock Feature States
+  const [theaterMode, setTheaterMode] = useState(false);
+  const [ambientMode, setAmbientMode] = useState(false);
+  const [ccEnabled, setCcEnabled] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
+  const [loopVideo, setLoopVideo] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState("1x");
+  const [quality, setQuality] = useState("1080p");
+  const [pipActive, setPipActive] = useState(false);
+  const [miniplayerActive, setMiniplayerActive] = useState(false);
+
   useEffect(() => { setMounted(true); }, []);
+
+  // Keyboard Shortcuts (J, K, L, Space)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
+      switch(e.key.toLowerCase()) {
+        case 'k':
+        case ' ':
+          e.preventDefault();
+          toast({ title: "Keyboard Shortcut", description: "Play/Pause toggled" });
+          break;
+        case 'j':
+          toast({ title: "Keyboard Shortcut", description: "Rewind 10s" });
+          break;
+        case 'l':
+          toast({ title: "Keyboard Shortcut", description: "Fast forward 10s" });
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toast]);
 
   // Load history on mount
   useEffect(() => {
@@ -625,6 +658,15 @@ export default function XakViewPage() {
             Videos
           </button>
           <button 
+            onClick={() => setActiveViewTab("shorts")}
+            className={cn(
+              "px-8 h-12 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
+              activeViewTab === "shorts" ? "bg-rose-600 text-white shadow-lg shadow-rose-900/30" : "text-muted-foreground hover:bg-white/5"
+            )}
+          >
+            <Flame className="w-3.5 h-3.5 text-rose-500" /> Shorts
+          </button>
+          <button 
             onClick={() => setActiveViewTab("live")}
             className={cn(
               "px-8 h-12 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
@@ -677,10 +719,14 @@ export default function XakViewPage() {
 
       {/* Videos View */}
       {activeViewTab === "videos" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className={cn("grid gap-12", theaterMode ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-12")}>
           {/* Main Video Frame */}
-          <div className="lg:col-span-8 space-y-10">
-            <div className="relative aspect-video rounded-[4rem] overflow-hidden bg-black shadow-2xl border-4 border-white/10">
+          <div className={cn("space-y-10", theaterMode ? "w-full" : "lg:col-span-8")}>
+            <div className={cn(
+              "relative rounded-[4rem] overflow-hidden bg-black shadow-2xl border-4 border-white/10 transition-all duration-500",
+              theaterMode ? "aspect-[21/9] max-h-[80vh]" : "aspect-video",
+              ambientMode ? "shadow-[0_0_100px_rgba(225,29,72,0.3)] border-rose-500/20" : ""
+            )}>
               {isVideosLoading ? (
                 <div className="w-full h-full flex flex-col items-center justify-center space-y-6 bg-zinc-950">
                   <Loader2 className="w-12 h-12 animate-spin text-rose-500 opacity-20" />
@@ -714,6 +760,45 @@ export default function XakViewPage() {
                   <p className="text-[10px] font-black uppercase text-rose-500/40 tracking-widest">Loading video...</p>
                 </div>
               )}
+              
+              {/* Mock Controls Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent flex flex-col gap-2 opacity-0 hover:opacity-100 transition-opacity">
+                {/* Timeline Marker / Chapters */}
+                <div className="w-full h-1 bg-white/20 rounded-full flex overflow-hidden cursor-pointer">
+                  <div className="h-full bg-rose-500 w-1/3 border-r-2 border-black" title="Intro"></div>
+                  <div className="h-full bg-rose-400 w-1/4 border-r-2 border-black" title="Main Content"></div>
+                  <div className="h-full bg-rose-300 w-5/12" title="Outro"></div>
+                </div>
+                <div className="flex items-center justify-between text-white text-xs">
+                  <div className="flex gap-4">
+                    <button onClick={() => setCcEnabled(!ccEnabled)} className={cn("font-bold", ccEnabled ? "text-rose-500" : "text-white")}>CC</button>
+                    <select value={playbackSpeed} onChange={(e) => setPlaybackSpeed(e.target.value)} className="bg-transparent border-none outline-none font-bold">
+                      <option value="0.25x" className="text-black">0.25x</option>
+                      <option value="0.5x" className="text-black">0.5x</option>
+                      <option value="1x" className="text-black">1x</option>
+                      <option value="1.5x" className="text-black">1.5x</option>
+                      <option value="2x" className="text-black">2x</option>
+                    </select>
+                    <select value={quality} onChange={(e) => setQuality(e.target.value)} className="bg-transparent border-none outline-none font-bold">
+                      <option value="4K" className="text-black">4K</option>
+                      <option value="1080p" className="text-black">1080p</option>
+                      <option value="720p" className="text-black">720p</option>
+                      <option value="480p" className="text-black">480p</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-4 items-center">
+                    <button onClick={() => setAutoPlay(!autoPlay)} title="Autoplay Next">{autoPlay ? "Autoplay ON" : "Autoplay OFF"}</button>
+                    <button onClick={() => setLoopVideo(!loopVideo)} title="Loop Video">{loopVideo ? "Loop ON" : "Loop OFF"}</button>
+                    <button onClick={() => toast({ title: "SponsorBlock", description: "Sponsor segments skipped" })} className="text-green-400">SponsorBlock</button>
+                    <button onClick={() => toast({ title: "VR 360", description: "VR Mode enabled" })}>VR 360</button>
+                    <button onClick={() => toast({ title: "Cast", description: "Searching for devices..." })}>Cast to TV</button>
+                    <button onClick={() => setMiniplayerActive(!miniplayerActive)}>Miniplayer</button>
+                    <button onClick={() => setPipActive(!pipActive)}>PiP</button>
+                    <button onClick={() => setTheaterMode(!theaterMode)}>{theaterMode ? "Default View" : "Theater Mode"}</button>
+                    <button onClick={() => setAmbientMode(!ambientMode)}>{ambientMode ? "Ambient OFF" : "Ambient ON"}</button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Video Details */}
@@ -732,11 +817,20 @@ export default function XakViewPage() {
                       <span className="flex items-center gap-2"><ThumbsUp className="w-4 h-4 text-rose-500" /> {activeVideo.likes?.toLocaleString() || 0} likes</span>
                     </div>
                   </div>
-                  <div className="flex gap-3">
+                  </div>
+                  <div className="flex flex-wrap gap-3 mt-4 md:mt-0 justify-end">
                     <Button onClick={() => setIsLiked(!isLiked)} variant="outline" className={cn("rounded-2xl h-12 px-6 font-black text-xs transition-all bg-white/5", isLiked ? "bg-rose-500/10 text-rose-500 border-rose-500/30" : "border-white/10")}>
-                      <ThumbsUp className={cn("w-4 h-4 mr-2", isLiked && "fill-rose-500")} /> {isLiked ? "Saved" : "Like"}
+                      <ThumbsUp className={cn("w-4 h-4 mr-2", isLiked && "fill-rose-500")} /> {activeVideo.likes?.toLocaleString() || 0}
+                    </Button>
+                    <Button variant="outline" className="rounded-2xl border-white/10 h-12 px-6 font-black text-xs bg-white/5" onClick={() => toast({ title: "Disliked" })}>
+                      <ThumbsUp className="w-4 h-4 mr-2 rotate-180" /> Dislike
                     </Button>
                     <Button variant="outline" className="rounded-2xl border-white/10 h-12 px-6 font-black text-xs bg-white/5"><Share2 className="w-4 h-4 mr-2" /> Share</Button>
+                    <Button variant="outline" onClick={() => toast({ title: "Added to Watch Later" })} className="rounded-2xl border-white/10 h-12 px-6 font-black text-xs bg-white/5">Watch Later</Button>
+                    <Button variant="outline" onClick={() => toast({ title: "Saved to Playlist" })} className="rounded-2xl border-white/10 h-12 px-6 font-black text-xs bg-white/5">Save to Playlist</Button>
+                    <Button variant="outline" onClick={() => toast({ title: "Analytics", description: "Showing creator analytics..." })} className="rounded-2xl border-white/10 h-12 px-6 font-black text-xs bg-white/5">
+                      <Activity className="w-4 h-4 mr-2" /> Analytics
+                    </Button>
                     <Button 
                       variant="outline" 
                       onClick={() => {
@@ -772,9 +866,16 @@ export default function XakViewPage() {
                         {activeVideo.author || 'Member'}
                         <CheckCircle2 className="w-4 h-4 text-rose-500 fill-current" />
                       </h4>
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Creator ID: {activeVideo.authorId?.slice(0, 8)}</p>
+                      <div className="flex items-center gap-4 mt-1">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Creator ID: {activeVideo.authorId?.slice(0, 8)}</p>
+                        <span className="text-[10px] font-black text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">1.2M Subscribers</span>
+                      </div>
                     </div>
                   </div>
+                  <div className="flex gap-3">
+                    <Button onClick={() => toast({ title: "Notifications enabled" })} variant="outline" className="h-12 w-12 rounded-xl border-white/10 bg-white/5">
+                      <Bell className="w-4.5 h-4.5" />
+                    </Button>
                   <Button 
                     onClick={() => toggleFollow(activeVideo.authorId || "custom", activeVideo.author || "Member", activeVideo.authorPhoto || "")} 
                     className={cn(
@@ -784,12 +885,13 @@ export default function XakViewPage() {
                         : "bg-white text-black hover:bg-rose-600 hover:text-white"
                     )}
                   >
-                    {isFollowingCreator(activeVideo.authorId) ? (
-                      <><UserMinus className="w-4.5 h-4.5 mr-2" /> Unsubscribe</>
-                    ) : (
-                      <><UserPlus className="w-4.5 h-4.5 mr-2" /> Subscribe</>
-                    )}
-                  </Button>
+                      {isFollowingCreator(activeVideo.authorId) ? (
+                        <><UserMinus className="w-4.5 h-4.5 mr-2" /> Unsubscribe</>
+                      ) : (
+                        <><UserPlus className="w-4.5 h-4.5 mr-2" /> Subscribe</>
+                      )}
+                    </Button>
+                  </div>
                 </Card>
 
                 {/* Comments Section */}
@@ -823,6 +925,11 @@ export default function XakViewPage() {
                               </span>
                             </div>
                             <p className="text-sm font-medium italic opacity-80 text-zinc-200">{comment.text}</p>
+                            <div className="flex gap-4 mt-2">
+                              <button className="text-[10px] font-bold uppercase text-zinc-500 hover:text-white" onClick={() => toast({ title: "Like Comment" })}>Like</button>
+                              <button className="text-[10px] font-bold uppercase text-zinc-500 hover:text-white" onClick={() => toast({ title: "Dislike Comment" })}>Dislike</button>
+                              <button className="text-[10px] font-bold uppercase text-zinc-500 hover:text-white" onClick={() => toast({ title: "Reply to Comment" })}>Reply</button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -834,6 +941,7 @@ export default function XakViewPage() {
           </div>
 
           {/* Recommended Side Rail */}
+          {!theaterMode && (
           <aside className="lg:col-span-4 space-y-10">
             <h3 className="text-2xl font-black text-foreground uppercase tracking-tighter italic flex items-center gap-4 px-4">
               <TrendingUp className="w-6 h-6 text-rose-500" /> Recommended
@@ -875,6 +983,27 @@ export default function XakViewPage() {
               </div>
             </ScrollArea>
           </aside>
+          )}
+        </div>
+      )}
+
+      {/* Shorts / Reels View */}
+      {activeViewTab === "shorts" && (
+        <div className="flex flex-col items-center gap-8 py-10 h-[80vh] overflow-y-auto snap-y snap-mandatory">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="relative w-full max-w-[400px] aspect-[9/16] bg-black rounded-[2rem] border-2 border-white/10 shadow-2xl snap-center shrink-0 flex items-center justify-center overflow-hidden group">
+              <video src="https://www.w3schools.com/html/mov_bbb.mp4" loop autoPlay muted className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute right-4 bottom-20 flex flex-col gap-6">
+                <Button size="icon" variant="ghost" className="rounded-full bg-black/40 backdrop-blur text-white hover:bg-rose-600"><ThumbsUp className="w-5 h-5" /></Button>
+                <Button size="icon" variant="ghost" className="rounded-full bg-black/40 backdrop-blur text-white hover:bg-rose-600"><MessageSquare className="w-5 h-5" /></Button>
+                <Button size="icon" variant="ghost" className="rounded-full bg-black/40 backdrop-blur text-white hover:bg-rose-600"><Share2 className="w-5 h-5" /></Button>
+              </div>
+              <div className="absolute bottom-6 left-6 right-16 text-white">
+                <h4 className="font-black text-lg">Amazing Short {i}</h4>
+                <p className="text-xs opacity-70">@creator_{i} • 1.2M views</p>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -938,14 +1067,19 @@ export default function XakViewPage() {
                 </div>
               </ScrollArea>
 
-              <form onSubmit={handlePostLiveChat} className="p-6 border-t-2 border-white/10 bg-black/40 flex gap-3">
-                <Input 
-                  value={liveChatInput}
-                  onChange={(e) => setLiveChatInput(e.target.value)}
-                  placeholder="Send a live message..."
-                  className="bg-black/60 border-white/5 h-12 rounded-xl text-xs font-bold text-white"
-                />
-                <Button type="submit" size="icon" className="h-12 w-12 rounded-xl bg-rose-600 border-none shrink-0"><Send className="w-5 h-5" /></Button>
+              <form onSubmit={handlePostLiveChat} className="p-6 border-t-2 border-white/10 bg-black/40 flex flex-col gap-3">
+                <div className="flex gap-3">
+                  <Input 
+                    value={liveChatInput}
+                    onChange={(e) => setLiveChatInput(e.target.value)}
+                    placeholder="Send a live message..."
+                    className="bg-black/60 border-white/5 h-12 rounded-xl text-xs font-bold text-white"
+                  />
+                  <Button type="submit" size="icon" className="h-12 w-12 rounded-xl bg-rose-600 border-none shrink-0"><Send className="w-5 h-5" /></Button>
+                </div>
+                <Button type="button" onClick={() => toast({ title: "Super Chat Sent!", description: "Donated $5 to the creator." })} className="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-black uppercase text-xs h-10 rounded-xl">
+                  Send Super Chat ($5)
+                </Button>
               </form>
             </div>
           )}

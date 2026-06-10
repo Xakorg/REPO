@@ -71,14 +71,7 @@ function RemotePlayer({ data }: { data: any }) {
           <planeGeometry args={[2, 2]} />
           <meshBasicMaterial color={isTalking ? "#10b981" : "#fff"} />
         </mesh>
-        {photoURL && (
-          <mesh position={[0, 1, 0.01]}>
-             <planeGeometry args={[1.8, 1.8]} />
-             <meshBasicMaterial>
-               <texture attach="map" image={photoURL} />
-             </meshBasicMaterial>
-          </mesh>
-        )}
+        {/* We removed the <texture> node because it requires an HTMLImageElement, not a string URL, which causes errors */}
         <Text
           position={[0, 2.5, 0]}
           fontSize={0.4}
@@ -211,8 +204,8 @@ export default function Room3D({ serverName }: { serverName: string }) {
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
           <planeGeometry args={[100, 100]} />
           <meshStandardMaterial color="#1f2937" />
-          <gridHelper args={[100, 100, 0x000000, 0x000000]} material-opacity={0.2} material-transparent />
         </mesh>
+        <gridHelper args={[100, 100, 0x000000, 0x000000]} position={[0, -0.09, 0]} material-opacity={0.2} material-transparent />
 
         <LocalPlayer position={localPos} setPosition={setLocalPos} setRotation={setLocalRot} />
         

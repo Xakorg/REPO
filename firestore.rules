@@ -540,6 +540,29 @@ service cloud.firestore {
         }
       }
 
+      // Threads that are a direct subcollection of chats
+      match /threads/{threadId} {
+        allow read, list: if isPublicChatId(chatId)
+          || (isSignedIn() && chatId.matches(".*-.*"))
+          || isAdmin()
+          || (chatExists(chatId) && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
+        allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
+        allow update, delete: if isSignedIn() && (
+          resource.data.senderId == request.auth.uid || isAdmin()
+        );
+
+        match /replies/{replyId} {
+          allow read, list: if isPublicChatId(chatId)
+            || (isSignedIn() && chatId.matches(".*-.*"))
+            || isAdmin()
+            || (chatExists(chatId) && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
+          allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
+          allow update, delete: if isSignedIn() && (
+            resource.data.senderId == request.auth.uid || isAdmin()
+          );
+        }
+      }
+
       // Polls are stored as a separate sub-collection of chats
       match /polls/{pollId} {
         allow read, list: if isSignedIn();

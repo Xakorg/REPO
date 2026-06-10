@@ -21,7 +21,39 @@ import {
   Mic,
   MicOff,
   Volume2,
-  VolumeX
+  VolumeX,
+  Cpu,
+  UserCircle,
+  Paperclip,
+  ImagePlus,
+  Bug,
+  Globe,
+  Calculator,
+  Network,
+  PenTool,
+  Languages,
+  BarChart,
+  Link2,
+  GraduationCap,
+  Briefcase,
+  Smile,
+  AlignLeft,
+  CheckSquare,
+  HelpCircle,
+  Code2,
+  Search,
+  Mail,
+  Calendar,
+  Scan,
+  PhoneCall,
+  Brain,
+  Library,
+  Lightbulb,
+  Sliders,
+  Shield,
+  Download,
+  TerminalSquare,
+  Settings
 } from "lucide-react";
 import { chatWithXakAI } from "@/ai/flows/xak-ai-chat-assistant-flow";
 import { cn } from "@/lib/utils";
@@ -384,12 +416,22 @@ export default function XakAIPage() {
             <span className="text-xl font-black uppercase italic tracking-tighter">Xak AI</span>
           </div>
           <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-2 mr-4">
+              <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-all">
+                <Cpu className="w-3 h-3" /> GPT-4o
+              </button>
+              <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-all">
+                <UserCircle className="w-3 h-3" /> Coder Persona
+              </button>
+            </div>
             {user ? (
               <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[8px] font-black uppercase px-3 py-1">Active</Badge>
             ) : (
               <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[8px] font-black uppercase px-3 py-1">Guest</Badge>
             )}
-            <MoreVertical className="w-4 h-4 text-white/20" />
+            <button className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all">
+              <Settings className="w-4 h-4" />
+            </button>
           </div>
         </header>
 
@@ -457,8 +499,56 @@ export default function XakAIPage() {
           </div>
         </ScrollArea>
 
-        <div className="p-8 bg-black/20 backdrop-blur-3xl border-t border-white/10">
-          <form onSubmit={handleSend} className="max-w-4xl mx-auto relative group">
+        <div className="p-6 bg-black/20 backdrop-blur-3xl border-t border-white/10 flex flex-col gap-4">
+          <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-2 px-2 max-w-5xl mx-auto w-full relative z-10">
+            {[
+              { icon: Paperclip, label: "Upload" },
+              { icon: ImagePlus, label: "Gen Image" },
+              { icon: Scan, label: "Analyze Image" },
+              { icon: Bug, label: "Debug Code" },
+              { icon: PhoneCall, label: "Voice Chat" },
+              { icon: Brain, label: "Memory" },
+              { icon: Library, label: "Prompts" },
+              { icon: Lightbulb, label: "Suggestions" },
+              { icon: Download, label: "Export PDF" },
+              { icon: Globe, label: "Web Browse" },
+              { icon: Calculator, label: "LaTeX Math" },
+              { icon: Network, label: "Mermaid" },
+              { icon: PenTool, label: "Creative" },
+              { icon: Sliders, label: "Tone Adjust" },
+              { icon: Languages, label: "Translate" },
+              { icon: BarChart, label: "Data Viz" },
+              { icon: Link2, label: "Agent Chain" },
+              { icon: Shield, label: "Local Mode" },
+              { icon: GraduationCap, label: "Learn Path" },
+              { icon: Briefcase, label: "Mock Int." },
+              { icon: Smile, label: "Sentiment" },
+              { icon: AlignLeft, label: "Summarize" },
+              { icon: CheckSquare, label: "Fact-Check" },
+              { icon: HelpCircle, label: "Quiz Gen" },
+              { icon: Code2, label: "Code Trans" },
+              { icon: TerminalSquare, label: "Regex" },
+              { icon: Search, label: "SEO Gen" },
+              { icon: Mail, label: "Email Draft" },
+              { icon: Calendar, label: "Daily Brief" },
+            ].map((tool, idx) => {
+              const Icon = tool.icon;
+              return (
+                <button 
+                  key={idx}
+                  type="button"
+                  title={tool.label}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/5 hover:bg-primary/20 hover:border-primary/40 hover:text-primary transition-all text-white/50 text-[10px] font-bold uppercase tracking-wider shrink-0 shadow-lg"
+                  onClick={() => toast({ title: `${tool.label} activated`, description: "This feature is currently in preview mode." })}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {tool.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <form onSubmit={handleSend} className="max-w-4xl mx-auto relative group w-full">
             <Input 
               value={input}
               onChange={(e) => setInput(e.target.value)}

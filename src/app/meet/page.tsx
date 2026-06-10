@@ -29,7 +29,20 @@ export default function XakMeetLobbyPage() {
   const [mounted, setMounted] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [customRoomId, setCustomRoomId] = useState("");
-  const [activeTab, setActiveTab] = useState<"lobby" | "create" | "join">("lobby");
+  const [activeTab, setActiveTab] = useState<"lobby" | "create" | "join" | "settings">("lobby");
+  const [mockSettings, setMockSettings] = useState<Record<string, boolean>>({
+    hdVideo: true,
+    e2eEncryption: true,
+    spatialAudio: false,
+    autoFraming: false,
+    backgroundBlur: false,
+    noiseCancellation: true,
+    lowBandwidth: false,
+    captions: false,
+    waitingRoom: true,
+  });
+
+  const toggleSetting = (key: string) => setMockSettings(p => ({ ...p, [key]: !p[key] }));
 
   // Pre-join lobby stream states
   const [lobbyStream, setLobbyStream] = useState<MediaStream | null>(null);
@@ -185,7 +198,9 @@ export default function XakMeetLobbyPage() {
             <Card className="glass-card p-6 border-white/10 rounded-[2.5rem] bg-zinc-950/60 space-y-4 shadow-2xl flex flex-col text-left">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-black uppercase tracking-widest text-rose-500">Device Hardware Test</span>
-                <Settings className="w-4 h-4 text-zinc-500" />
+                <button onClick={() => setActiveTab("settings")} className="hover:scale-110 transition-transform">
+                  <Settings className="w-5 h-5 text-zinc-400 hover:text-rose-500" />
+                </button>
               </div>
 
               {/* Video preview container */}
@@ -380,6 +395,134 @@ export default function XakMeetLobbyPage() {
           >
             Cancel
           </Button>
+        </Card>
+      )}
+
+      {activeTab === "settings" && (
+        <Card className="glass-card p-8 rounded-[3rem] border-white/10 bg-zinc-950/80 w-full max-w-5xl h-[80vh] flex flex-col z-10 animate-in zoom-in-95 duration-300 shadow-2xl overflow-hidden">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white">Meeting Settings & Features</h2>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-rose-500 mt-1">Configure your experience</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setActiveTab("lobby")}
+              className="border-white/10 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-white"
+            >
+              Back to Lobby
+            </Button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto pr-4 space-y-8 scrollbar-thin scrollbar-thumb-white/10 pb-10">
+            {/* Audio & Video Group */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 border-b border-white/5 pb-2">Audio & Video</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { id: 'hdVideo', label: '1. HD Video & Audio' },
+                  { id: 'spatialAudio', label: '31. Spatial Audio' },
+                  { id: 'autoFraming', label: '30. Auto-framing (Face)' },
+                  { id: 'backgroundBlur', label: '5. Background Blur' },
+                  { id: 'virtualBg', label: '6. Virtual Backgrounds' },
+                  { id: 'noiseCancellation', label: '7. AI Noise Cancellation' },
+                  { id: 'lowBandwidth', label: '20. Low-Bandwidth Mode' },
+                  { id: 'dialIn', label: '21. Dial-in Phone Numbers' }
+                ].map(f => (
+                  <div key={f.id} className="flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+                    <span className="text-xs font-bold text-zinc-300">{f.label}</span>
+                    <button 
+                      onClick={() => toggleSetting(f.id)} 
+                      className={`w-10 h-5 rounded-full transition-colors relative ${mockSettings[f.id] ? 'bg-rose-500' : 'bg-zinc-700'}`}
+                    >
+                      <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-transform ${mockSettings[f.id] ? 'translate-x-[20px] left-0.5' : 'translate-x-0 left-0.5'}`} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* In-Call Features */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 border-b border-white/5 pb-2">In-Call Features</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { id: 'screenShare', label: '3. Screen Sharing (Tab/Win)' },
+                  { id: 'audioShare', label: '4. Audio Share w/ Screen' },
+                  { id: 'captions', label: '8. Live Closed Captions' },
+                  { id: 'translation', label: '9. Real-time Translation' },
+                  { id: 'handRaise', label: '12. Hand Raising' },
+                  { id: 'chat', label: '13. In-meeting Text Chat' },
+                  { id: 'reactions', label: '24. Reactions & Emojis' },
+                  { id: 'remoteDesktop', label: '25. Remote Desktop Control' },
+                  { id: 'pipMode', label: '26. PIP Multitasking' },
+                  { id: 'presentation', label: '28. Presentation Mode' },
+                  { id: 'companion', label: '29. Companion Mode' }
+                ].map(f => (
+                  <div key={f.id} className="flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+                    <span className="text-xs font-bold text-zinc-300">{f.label}</span>
+                    <button 
+                      onClick={() => toggleSetting(f.id)} 
+                      className={`w-10 h-5 rounded-full transition-colors relative ${mockSettings[f.id] ? 'bg-blue-500' : 'bg-zinc-700'}`}
+                    >
+                      <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-transform ${mockSettings[f.id] ? 'translate-x-[20px] left-0.5' : 'translate-x-0 left-0.5'}`} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Management & Tools Group */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 border-b border-white/5 pb-2">Management & Tools</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { id: 'e2eEncryption', label: '2. End-to-end Encryption' },
+                  { id: 'breakout', label: '10. Breakout Rooms' },
+                  { id: 'recording', label: '11. Cloud Recording (Drive)' },
+                  { id: 'polls', label: '14. Polls & Q&A' },
+                  { id: 'whiteboard', label: '15. Whiteboard Integration' },
+                  { id: 'coHost', label: '16. Co-host Management' },
+                  { id: 'waitingRoom', label: '17. Waiting Room / Lobby' },
+                  { id: 'customLinks', label: '27. Custom Meeting Links' },
+                  { id: 'calendar', label: '22. Calendar Integration' },
+                  { id: 'reports', label: '23. Attendance Reports' }
+                ].map(f => (
+                  <div key={f.id} className="flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+                    <span className="text-xs font-bold text-zinc-300">{f.label}</span>
+                    <button 
+                      onClick={() => toggleSetting(f.id)} 
+                      className={`w-10 h-5 rounded-full transition-colors relative ${mockSettings[f.id] ? 'bg-indigo-500' : 'bg-zinc-700'}`}
+                    >
+                      <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-transform ${mockSettings[f.id] ? 'translate-x-[20px] left-0.5' : 'translate-x-0 left-0.5'}`} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Layouts Group */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 border-b border-white/5 pb-2">Views & Layouts</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { id: 'gridView', label: '18. 49-Participant Grid' },
+                  { id: 'spotlight', label: '19. Speaker Spotlight' }
+                ].map(f => (
+                  <div key={f.id} className="flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+                    <span className="text-xs font-bold text-zinc-300">{f.label}</span>
+                    <button 
+                      onClick={() => toggleSetting(f.id)} 
+                      className={`w-10 h-5 rounded-full transition-colors relative ${mockSettings[f.id] ? 'bg-green-500' : 'bg-zinc-700'}`}
+                    >
+                      <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-transform ${mockSettings[f.id] ? 'translate-x-[20px] left-0.5' : 'translate-x-0 left-0.5'}`} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
         </Card>
       )}
     </div>

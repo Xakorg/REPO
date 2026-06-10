@@ -18,7 +18,25 @@ import {
   Code2, 
   Activity, 
   Target, 
-  Palette
+  Palette,
+  Heart,
+  Mic,
+  MicOff,
+  Monitor,
+  Settings,
+  Users,
+  Share2,
+  Clock,
+  PlaySquare,
+  Save,
+  Sliders,
+  Map,
+  Video,
+  FastForward,
+  Wrench,
+  Crown,
+  Calendar,
+  Play
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -29,7 +47,7 @@ import { collection, query, orderBy, limit, where } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-const CATEGORIES = ["Discovery", "Arcade", "Strategy", "Puzzle", "3D", "Sports", "Console"];
+const CATEGORIES = ["Discovery", "Arcade", "Strategy", "Puzzle", "3D", "Sports", "Console", "Favorites"];
 
 const BUILT_IN_GAMES = [
   { id: 'game_0', name: 'Aqua Knight', type: 'Arcade', icon: Zap, color: 'text-purple-500', creator: 'xakteir' },
@@ -143,6 +161,26 @@ function ArcadeHubContent() {
   const [activeCategory, setActiveCategory] = useState("Discovery");
   const [search, setSearch] = useState("");
 
+  // New Global State Features
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [voiceChatEnabled, setVoiceChatEnabled] = useState(false);
+  const [controllerEnabled, setControllerEnabled] = useState(false);
+  const [lowBandwidth, setLowBandwidth] = useState(false);
+  const [fullScreen, setFullScreen] = useState(false);
+  const [devConsole, setDevConsole] = useState(false);
+  const [retroCore, setRetroCore] = useState(false);
+
+  // Pre-Game Lobby Modal States
+  const [selectedLobbyGame, setSelectedLobbyGame] = useState<any>(null);
+  const [lobbyTab, setLobbyTab] = useState("play");
+  const [difficulty, setDifficulty] = useState("Normal");
+  const [sandboxMode, setSandboxMode] = useState(false);
+  const [coopPlayers, setCoopPlayers] = useState(1);
+  const [minimap, setMinimap] = useState(true);
+  const [speedrun, setSpeedrun] = useState(false);
+  const [replay, setReplay] = useState(false);
+  const [modsEnabled, setModsEnabled] = useState(false);
+
   // Console Modal States
   const [selectedConsoleGame, setSelectedConsoleGame] = useState<any>(null);
   const [isConsoleModalOpen, setIsConsoleModalOpen] = useState(false);
@@ -171,16 +209,24 @@ function ArcadeHubContent() {
       color: 'text-sky-400',
       creator: g.ownerName,
       isCommunity: true,
-      isExternalConsole: false
+      isExternalConsole: false,
+      rating: (Math.random() * 2 + 3).toFixed(1),
+      playtime: Math.floor(Math.random() * 100)
     })) || [];
 
-    return [...BUILT_IN_GAMES, ...formattedCommunity];
+    return [...BUILT_IN_GAMES.map(g => ({...g, rating: (Math.random() * 2 + 3).toFixed(1), playtime: Math.floor(Math.random() * 100)})), ...formattedCommunity];
   }, [communityGames]);
 
   const filteredGames = allGames.filter(g => 
-    (activeCategory === "Discovery" || g.type.toLowerCase().includes(activeCategory.toLowerCase())) &&
+    (activeCategory === "Discovery" || 
+     (activeCategory === "Favorites" ? favorites.includes(g.id) : g.type.toLowerCase().includes(activeCategory.toLowerCase()))) &&
     g.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const toggleFavorite = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
+  };
 
   return (
     <div className="space-y-16 animate-fade-in py-12 max-w-[1800px] mx-auto px-8 text-foreground pb-40">
@@ -198,7 +244,29 @@ function ArcadeHubContent() {
         </div>
         
         <div className="flex items-center gap-6 w-full md:w-auto">
-          <div className="relative flex-1 md:w-[500px] group">
+          {/* Global Settings Toggles */}
+          <div className="hidden xl:flex items-center gap-2 mr-4 bg-white/5 p-2 rounded-[2rem] border border-white/10">
+            <Button variant="ghost" size="icon" onClick={() => setVoiceChatEnabled(!voiceChatEnabled)} className={cn("rounded-full transition-all", voiceChatEnabled ? "text-green-400 bg-green-400/20" : "text-muted-foreground hover:bg-white/10")} title="In-Game Voice Chat">
+              {voiceChatEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setControllerEnabled(!controllerEnabled)} className={cn("rounded-full transition-all", controllerEnabled ? "text-primary bg-primary/20" : "text-muted-foreground hover:bg-white/10")} title="Controller API Support">
+              <Gamepad2 className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setLowBandwidth(!lowBandwidth)} className={cn("rounded-full transition-all", lowBandwidth ? "text-yellow-400 bg-yellow-400/20" : "text-muted-foreground hover:bg-white/10")} title="Low Bandwidth Mode">
+              <Activity className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setFullScreen(!fullScreen)} className={cn("rounded-full transition-all", fullScreen ? "text-blue-400 bg-blue-400/20" : "text-muted-foreground hover:bg-white/10")} title="Immersive Full-Screen">
+              <Monitor className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setRetroCore(!retroCore)} className={cn("rounded-full transition-all", retroCore ? "text-rose-400 bg-rose-400/20" : "text-muted-foreground hover:bg-white/10")} title="Retro Emulation Core">
+              <Save className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setDevConsole(!devConsole)} className={cn("rounded-full transition-all", devConsole ? "text-cyan-400 bg-cyan-400/20" : "text-muted-foreground hover:bg-white/10")} title="Developer Console">
+              <Wrench className="w-5 h-5" />
+            </Button>
+          </div>
+
+          <div className="relative flex-1 md:w-[400px] group">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground group-focus-within:text-primary transition-all duration-500" />
             <Input 
               value={search} 
@@ -215,6 +283,57 @@ function ArcadeHubContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
         <main className="lg:col-span-8 space-y-16">
+          
+          {/* Continue Playing Quick Resume */}
+          {filteredGames.length > 0 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-black uppercase italic tracking-widest text-white flex items-center gap-3">
+                <PlaySquare className="w-6 h-6 text-primary" /> Continue Playing
+              </h2>
+              <Card onClick={() => setSelectedLobbyGame(filteredGames[0])} className="glass-card group cursor-pointer hover:bg-white/5 transition-all duration-500 rounded-[3rem] overflow-hidden border-4 border-white/10 bg-zinc-950/40 p-6 flex flex-col md:flex-row items-center gap-8 shadow-2xl">
+                 <div className="w-32 h-32 rounded-[2rem] bg-black/60 flex items-center justify-center relative overflow-hidden shrink-0 border-2 border-white/10">
+                   {React.createElement(filteredGames[0].icon, { className: cn("w-16 h-16", filteredGames[0].color) })}
+                   <div className="absolute inset-0 arcade-grid opacity-20" />
+                 </div>
+                 <div className="flex-1 space-y-4 text-center md:text-left">
+                   <div className="flex items-center justify-center md:justify-start gap-3">
+                     <h3 className="text-4xl font-black text-white uppercase italic">{filteredGames[0].name}</h3>
+                     <Badge className="bg-primary/20 text-primary border-none">Quick Resume</Badge>
+                   </div>
+                   <div className="flex items-center justify-center md:justify-start gap-6 text-sm font-bold text-muted-foreground uppercase">
+                     <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-amber-500" /> {filteredGames[0].playtime}h Playtime</span>
+                     <span className="flex items-center gap-2"><Save className="w-4 h-4 text-emerald-500" /> Cloud Synced</span>
+                   </div>
+                 </div>
+                 <Button className="h-20 px-10 bg-primary hover:bg-primary/90 rounded-[2rem] font-black uppercase text-lg tracking-widest text-white shadow-2xl border-none flex items-center gap-2">
+                   <Play className="w-6 h-6 fill-current" /> Resume
+                 </Button>
+              </Card>
+            </div>
+          )}
+
+          {/* AI Recommendation Engine */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-black uppercase italic tracking-widest text-white flex items-center gap-3">
+              <Sparkles className="w-6 h-6 text-amber-400" /> AI Recommended For You
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               {filteredGames.slice(1, 4).map(game => (
+                 <Card key={`rec-${game.id}`} onClick={() => setSelectedLobbyGame(game)} className="glass-card cursor-pointer hover:border-primary/50 transition-all rounded-[2.5rem] p-6 border-2 border-white/10 bg-black/40 flex flex-col items-center text-center gap-4 relative group">
+                   <div className="absolute top-4 right-4">
+                     <StarIcon className="w-4 h-4 text-amber-400 fill-amber-400" />
+                     <span className="text-xs font-bold text-amber-400 ml-1">{game.rating}</span>
+                   </div>
+                   <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                     <game.icon className={cn("w-8 h-8", game.color)} />
+                   </div>
+                   <h4 className="text-lg font-black text-white uppercase italic">{game.name}</h4>
+                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Match: 98%</span>
+                 </Card>
+               ))}
+            </div>
+          </div>
+
           <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide">
             {CATEGORIES.map(cat => (
               <button 
@@ -225,6 +344,7 @@ function ArcadeHubContent() {
                   activeCategory === cat ? "bg-primary border-white/20 text-white scale-105" : "border-white/5 bg-card/40 text-muted-foreground hover:text-white"
                 )}
               >
+                {cat === "Favorites" && <Heart className="w-4 h-4 inline-block mr-2" />}
                 {cat}
               </button>
             ))}
@@ -239,7 +359,7 @@ function ArcadeHubContent() {
                     setSelectedConsoleGame(game);
                     setIsConsoleModalOpen(true);
                   } else {
-                    router.push(`/games/play/${game.id}`);
+                    setSelectedLobbyGame(game);
                   }
                 }} 
                 className="glass-card group hover:-translate-y-6 transition-all duration-500 rounded-[4rem] overflow-hidden border-4 border-white/10 shadow-[0_40px_80px_rgba(0,0,0,0.5)] flex flex-col cursor-pointer bg-zinc-950/40"
@@ -247,17 +367,30 @@ function ArcadeHubContent() {
                 <div className="aspect-[16/10] flex items-center justify-center relative overflow-hidden bg-black/60">
                   <game.icon className={cn("w-24 h-24 transition-transform duration-1000 group-hover:scale-150", game.color)} />
                   <div className="absolute inset-0 arcade-grid opacity-20" />
-                  <div className="absolute top-8 left-8">
+                  <div className="absolute top-8 left-8 flex gap-2">
                     <Badge className="bg-black/80 backdrop-blur-xl border-2 border-white/10 text-[9px] font-black uppercase px-6 py-2 rounded-full shadow-2xl border-none">
                       {game.isExternalConsole ? `Console / ${(game as any).platform}` : `by ${game.creator}`}
                     </Badge>
+                    <Badge className="bg-amber-500/20 text-amber-400 border-none px-4 py-2 rounded-full text-[9px] font-black uppercase flex items-center gap-1">
+                      <StarIcon className="w-3 h-3 fill-current" /> {game.rating}
+                    </Badge>
                   </div>
+                  <button 
+                    onClick={(e) => toggleFavorite(e, game.id)}
+                    className="absolute top-8 right-8 w-10 h-10 rounded-full bg-black/60 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors z-10"
+                  >
+                    <Heart className={cn("w-5 h-5", favorites.includes(game.id) ? "text-rose-500 fill-rose-500" : "text-white")} />
+                  </button>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
                 <CardContent className="p-12 flex-1 space-y-8">
                    <h3 className="text-4xl font-black text-foreground uppercase tracking-tighter italic leading-none drop-shadow-lg group-hover:text-primary transition-colors text-white">{game.name}</h3>
+                   <div className="flex gap-2 flex-wrap">
+                     <Badge variant="outline" className="border-white/10 text-muted-foreground uppercase text-[9px] font-bold">{game.type}</Badge>
+                     {game.playtime > 50 && <Badge variant="outline" className="border-amber-500/30 text-amber-500 uppercase text-[9px] font-bold">Popular</Badge>}
+                   </div>
                    <Button className="w-full bg-primary hover:bg-primary/90 h-16 rounded-[2rem] font-black text-xs uppercase tracking-widest border-b-8 border-primary/20 shadow-2xl group-hover:scale-105 transition-all border-none">
-                     {game.isExternalConsole ? "Launch Protocol" : "Launch Game"}
+                     {game.isExternalConsole ? "Launch Protocol" : "Enter Lobby"}
                    </Button>
                 </CardContent>
               </Card>
@@ -265,7 +398,8 @@ function ArcadeHubContent() {
           </div>
         </main>
 
-        <aside className="lg:col-span-4 space-y-16">
+        <aside className="lg:col-span-4 space-y-10">
+          {/* Global Hall Leaderboard */}
           <Card className="glass-card rounded-[4.5rem] p-12 border-white/10 bg-gradient-to-br from-amber-500/10 to-transparent shadow-[0_50px_100px_rgba(0,0,0,0.6)] relative overflow-hidden">
              <div className="absolute top-0 right-0 p-8 opacity-5"><Trophy className="w-48 h-48 -rotate-12" /></div>
              <h3 className="text-2xl font-black uppercase italic tracking-tighter flex items-center gap-6 text-amber-400 mb-12 relative z-10">
@@ -289,18 +423,228 @@ function ArcadeHubContent() {
              <Button variant="outline" className="w-full h-14 mt-10 rounded-2xl border-white/10 font-black uppercase text-[10px] tracking-widest text-white hover:bg-amber-500 hover:text-white bg-white/5">Full Registry</Button>
           </Card>
 
-          <Card className="glass-card rounded-[4rem] p-12 border-white/10 bg-black/40 shadow-2xl text-center space-y-10">
-             <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border-4 border-primary/20 flex items-center justify-center mx-auto shadow-2xl animate-float">
-                <Sparkles className="w-10 h-10 text-primary" />
+          {/* Achievements & Trophies */}
+          <Card className="glass-card rounded-[3rem] p-10 border-white/10 bg-black/40 shadow-2xl space-y-8">
+             <h3 className="text-xl font-black uppercase italic tracking-tighter text-white flex items-center gap-3">
+               <Crown className="w-6 h-6 text-yellow-400" /> Recent Trophies
+             </h3>
+             <div className="grid grid-cols-4 gap-4">
+               {[1,2,3,4].map(i => (
+                 <div key={i} className="aspect-square rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-yellow-400/20 hover:border-yellow-400/50 transition-all cursor-help" title={`Achievement ${i}`}>
+                   <Trophy className="w-6 h-6 text-yellow-400/50" />
+                 </div>
+               ))}
+             </div>
+          </Card>
+
+          {/* Tournaments Widget */}
+          <Card className="glass-card rounded-[3rem] p-10 border-white/10 bg-black/40 shadow-2xl space-y-8 relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-4 opacity-10"><Calendar className="w-32 h-32" /></div>
+             <h3 className="text-xl font-black uppercase italic tracking-tighter text-white flex items-center gap-3 relative z-10">
+               <Target className="w-6 h-6 text-rose-500" /> Active Tournaments
+             </h3>
+             <div className="space-y-4 relative z-10">
+               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-rose-500/50 transition-all">
+                 <h4 className="text-sm font-black text-white uppercase">Neon Strike Championship</h4>
+                 <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mt-1">Ends in 2d 14h</p>
+               </div>
+               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-rose-500/50 transition-all">
+                 <h4 className="text-sm font-black text-white uppercase">Puzzle Master League</h4>
+                 <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mt-1">Ends in 5d 02h</p>
+               </div>
+             </div>
+          </Card>
+
+          {/* Daily Challenges */}
+          <Card className="glass-card rounded-[4rem] p-12 border-white/10 bg-primary/5 shadow-2xl text-center space-y-10 border border-primary/20">
+             <div className="w-20 h-20 rounded-[2rem] bg-primary/20 border-4 border-primary/40 flex items-center justify-center mx-auto shadow-2xl animate-float">
+                <Flame className="w-10 h-10 text-primary" />
              </div>
              <div className="space-y-4">
-                <h3 className="text-3xl font-black uppercase italic tracking-tighter text-white">Daily Bonus</h3>
-                <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Login daily to earn 100 XP.</p>
+                <h3 className="text-3xl font-black uppercase italic tracking-tighter text-white">Daily Streak: 5</h3>
+                <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Complete 3 games today.</p>
+                <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden mt-4">
+                  <div className="h-full bg-primary w-2/3 rounded-full" />
+                </div>
              </div>
-             <Button className="w-full h-16 bg-primary rounded-[2rem] font-black uppercase tracking-widest shadow-xl border-none">Claim 100 XP</Button>
+             <Button className="w-full h-16 bg-primary hover:bg-primary/90 rounded-[2rem] font-black uppercase tracking-widest shadow-xl border-none">Claim 100 XP</Button>
           </Card>
         </aside>
       </div>
+
+      {/* Pre-Game Lobby Modal */}
+      <Dialog open={!!selectedLobbyGame} onOpenChange={(open) => !open && setSelectedLobbyGame(null)}>
+        <DialogContent className="bg-zinc-950/95 backdrop-blur-3xl border-4 border-white/10 rounded-[3rem] text-white p-0 max-w-5xl shadow-[0_30px_100px_rgba(0,0,0,0.9)] max-h-[90vh] overflow-hidden flex flex-col">
+          {selectedLobbyGame && (
+            <>
+              {/* Header */}
+              <div className="p-10 pb-6 border-b border-white/5 flex gap-8 items-center bg-black/40 relative overflow-hidden shrink-0">
+                <div className="absolute inset-0 arcade-grid opacity-10" />
+                <div className="w-24 h-24 rounded-3xl bg-white/5 flex items-center justify-center border-2 border-white/10 relative z-10">
+                  <selectedLobbyGame.icon className={cn("w-12 h-12", selectedLobbyGame.color)} />
+                </div>
+                <div className="flex-1 relative z-10">
+                  <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">{selectedLobbyGame.name}</h2>
+                  <div className="flex gap-4 mt-2 text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                    <span className="flex items-center gap-1"><StarIcon className="w-4 h-4 text-amber-400" /> {selectedLobbyGame.rating} Rating</span>
+                    <span className="flex items-center gap-1"><Users className="w-4 h-4 text-blue-400" /> 1.2k Playing</span>
+                    <span className="flex items-center gap-1"><Save className="w-4 h-4 text-emerald-400" /> Synced</span>
+                  </div>
+                </div>
+                <Button className="bg-white/10 hover:bg-white/20 border-none rounded-2xl h-12 px-6 font-black uppercase text-xs">
+                  <Save className="w-4 h-4 mr-2" /> Force Cloud Sync
+                </Button>
+              </div>
+
+              {/* Lobby Tabs */}
+              <div className="flex px-10 border-b border-white/5 bg-black/20 shrink-0">
+                {['play', 'leaderboards', 'matchmaking', 'settings'].map(tab => (
+                  <button 
+                    key={tab}
+                    onClick={() => setLobbyTab(tab)}
+                    className={cn(
+                      "px-8 py-6 font-black uppercase text-sm tracking-widest border-b-4 transition-all",
+                      lobbyTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-white"
+                    )}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab Content */}
+              <div className="p-10 overflow-y-auto flex-1">
+                {lobbyTab === 'play' && (
+                  <div className="space-y-8 animate-fade-in">
+                    <div className="grid grid-cols-2 gap-8">
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-black uppercase text-muted-foreground">Game Mode</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <Button variant="outline" className="h-20 rounded-2xl border-white/10 bg-white/5 hover:bg-primary/20 hover:border-primary/50 font-black uppercase flex flex-col gap-2">
+                            <Gamepad2 className="w-6 h-6" /> Solo Play
+                          </Button>
+                          <Button variant="outline" className="h-20 rounded-2xl border-white/10 bg-white/5 hover:bg-primary/20 hover:border-primary/50 font-black uppercase flex flex-col gap-2">
+                            <Users className="w-6 h-6" /> Co-op
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-black uppercase text-muted-foreground">Local Co-op Players</h4>
+                        <div className="flex gap-4 items-center bg-white/5 p-4 rounded-2xl border border-white/10 h-20">
+                          {[1,2,3,4].map(num => (
+                            <button 
+                              key={num} 
+                              onClick={() => setCoopPlayers(num)}
+                              className={cn("w-12 h-12 rounded-xl font-black text-lg transition-all", coopPlayers === num ? "bg-primary text-white" : "bg-white/10 text-muted-foreground hover:bg-white/20")}
+                            >
+                              {num}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 pt-8 border-t border-white/5">
+                      <Button onClick={() => router.push(`/games/play/${selectedLobbyGame.id}`)} className="flex-1 h-20 bg-primary hover:bg-primary/90 text-white rounded-[2rem] font-black uppercase text-2xl tracking-widest border-none shadow-[0_0_40px_rgba(var(--primary),0.3)]">
+                        Launch Game
+                      </Button>
+                      <Button variant="outline" className="w-20 h-20 rounded-[2rem] border-white/10 bg-white/5 hover:bg-white/10" title="Spectate Mode">
+                        <Video className="w-8 h-8 text-white" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {lobbyTab === 'leaderboards' && (
+                  <div className="space-y-8 animate-fade-in">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-xl font-black uppercase italic">Top Scores</h3>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="bg-white/5 border-white/10 uppercase text-[10px] font-bold">Global</Button>
+                        <Button variant="outline" size="sm" className="bg-transparent border-white/10 uppercase text-[10px] font-bold text-muted-foreground">Friends</Button>
+                        <Button variant="outline" size="sm" className="bg-white/5 border-white/10" title="Share High Score"><Share2 className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      {[1,2,3,4,5].map(i => (
+                        <div key={i} className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10">
+                          <div className="flex items-center gap-4">
+                            <span className="text-lg font-black text-muted-foreground">#{i}</span>
+                            <span className="font-bold uppercase text-white">Player_{Math.floor(Math.random()*9000)+1000}</span>
+                          </div>
+                          <span className="font-black text-amber-400 font-mono">{(10000 - i*500).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {lobbyTab === 'matchmaking' && (
+                  <div className="space-y-8 animate-fade-in flex flex-col items-center justify-center py-10">
+                    <div className="w-32 h-32 rounded-full border-4 border-primary/20 flex items-center justify-center relative">
+                      <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                      <Users className="w-12 h-12 text-primary" />
+                    </div>
+                    <div className="text-center space-y-2">
+                      <h3 className="text-2xl font-black uppercase italic text-white">Looking for Players</h3>
+                      <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Estimated Wait: 0:45</p>
+                    </div>
+                    <Button variant="outline" className="h-12 px-8 rounded-xl border-rose-500/50 text-rose-400 hover:bg-rose-500/10 font-black uppercase text-xs">Cancel Search</Button>
+                  </div>
+                )}
+
+                {lobbyTab === 'settings' && (
+                  <div className="grid grid-cols-2 gap-8 animate-fade-in">
+                    <div className="space-y-6">
+                      <h4 className="text-sm font-black uppercase text-primary border-b border-white/10 pb-2">Gameplay</h4>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-bold uppercase text-muted-foreground">AI Difficulty</span>
+                          <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold uppercase text-white outline-none">
+                            <option>Easy</option>
+                            <option>Normal</option>
+                            <option>Hard</option>
+                            <option>Extreme</option>
+                          </select>
+                        </div>
+                        <label className="flex justify-between items-center cursor-pointer">
+                          <span className="text-xs font-bold uppercase text-muted-foreground">Sandbox Mode</span>
+                          <input type="checkbox" checked={sandboxMode} onChange={(e) => setSandboxMode(e.target.checked)} className="accent-primary w-4 h-4" />
+                        </label>
+                        <label className="flex justify-between items-center cursor-pointer">
+                          <span className="text-xs font-bold uppercase text-muted-foreground">Speedrun Timer</span>
+                          <input type="checkbox" checked={speedrun} onChange={(e) => setSpeedrun(e.target.checked)} className="accent-primary w-4 h-4" />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="space-y-6">
+                      <h4 className="text-sm font-black uppercase text-primary border-b border-white/10 pb-2">Interface & Mods</h4>
+                      <div className="space-y-4">
+                        <label className="flex justify-between items-center cursor-pointer">
+                          <span className="text-xs font-bold uppercase text-muted-foreground">Mini-map Overlay</span>
+                          <input type="checkbox" checked={minimap} onChange={(e) => setMinimap(e.target.checked)} className="accent-primary w-4 h-4" />
+                        </label>
+                        <label className="flex justify-between items-center cursor-pointer">
+                          <span className="text-xs font-bold uppercase text-muted-foreground">Replay Recording</span>
+                          <input type="checkbox" checked={replay} onChange={(e) => setReplay(e.target.checked)} className="accent-primary w-4 h-4" />
+                        </label>
+                        <label className="flex justify-between items-center cursor-pointer">
+                          <span className="text-xs font-bold uppercase text-muted-foreground">Enable Mods / Custom Levels</span>
+                          <input type="checkbox" checked={modsEnabled} onChange={(e) => setModsEnabled(e.target.checked)} className="accent-primary w-4 h-4" />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="col-span-2 pt-4 border-t border-white/10">
+                      <Button variant="outline" className="w-full h-12 bg-white/5 border-white/10 font-black uppercase text-xs tracking-widest hover:bg-white/10">
+                        <Sliders className="w-4 h-4 mr-2" /> Customize Keybinds
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Cloud Gaming Console Launcher Dialog */}
       <Dialog open={isConsoleModalOpen} onOpenChange={setIsConsoleModalOpen}>

@@ -8,7 +8,6 @@ import {
   Square, 
   Plus, 
   MousePointer2, 
-  Wand2, 
   X,
   Zap,
   Clock,
@@ -17,33 +16,49 @@ import {
   Layers,
   Sparkles,
   Loader2,
-  ChevronDown,
   Presentation,
   ArrowLeft,
   Copy,
   Hash,
-  Search,
-  Layout,
-  PlusCircle
+  Users,
+  ArrowRight,
+  WifiOff,
+  History,
+  Download,
+  Grid3X3,
+  MessageSquare,
+  Timer,
+  Smile,
+  Palette,
+  Eraser,
+  Link as LinkIcon,
+  Ruler,
+  Image as ImageIcon,
+  MousePointerClick,
+  MonitorPlay,
+  Lock,
+  Unlock,
+  Eye,
+  Map as MapIcon,
+  Share2,
+  Activity
 } from "lucide-react";
-import { ArrowRight, Users } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
-import { doc, updateDoc, onSnapshot, setDoc, collection, query, where, orderBy, addDoc, serverTimestamp, getDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, collection, query, where, orderBy, addDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 
-type Tool = 'select' | 'draw' | 'sticky' | 'text' | 'shape' | 'widget';
-type WidgetType = 'sheet' | 'video' | 'calendar' | 'weather' | 'ai';
+type Tool = 'select' | 'draw' | 'sticky' | 'text' | 'shape' | 'widget' | 'laser' | 'connector' | 'eraser' | 'image' | 'vote' | 'measure' | 'wireframe';
+type WidgetType = 'sheet' | 'video' | 'calendar' | 'weather' | 'kanban' | 'timer';
 
 interface BoardElement {
   id: string;
-  type: 'path' | 'sticky' | 'text' | 'shape' | 'widget';
+  type: 'path' | 'sticky' | 'text' | 'shape' | 'widget' | 'image';
   x: number;
   y: number;
   width?: number;
@@ -52,6 +67,8 @@ interface BoardElement {
   content?: string;
   points?: { x: number, y: number }[];
   widgetType?: WidgetType;
+  locked?: boolean;
+  layer?: number;
 }
 
 export default function WhiteboardPage() {
@@ -72,10 +89,43 @@ export default function WhiteboardPage() {
   const [joinCode, setJoinCode] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
+  // New Feature States
+  const [isOffline, setIsOffline] = useState(false);
+  const [isPresentationMode, setIsPresentationMode] = useState(false);
+  const [gridEnabled, setGridEnabled] = useState(true);
+  const [showMinimap, setShowMinimap] = useState(false);
+  const [timerActive, setTimerActive] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 mins
+  const [bgColor, setBgColor] = useState("#0a0a15");
+
   const canvasRef = useRef<HTMLDivElement>(null);
   const currentPathRef = useRef<BoardElement | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Offline detection mockup
+  useEffect(() => {
+    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => setIsOffline(false);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    }
+  }, []);
+
+  // Timer logic
+  useEffect(() => {
+    let interval: any;
+    if (timerActive && timeLeft > 0) {
+      interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    } else if (timeLeft === 0) {
+      setTimerActive(false);
+      toast({ title: "Timer Finished!", description: "Time is up." });
+    }
+    return () => clearInterval(interval);
+  }, [timerActive, timeLeft]);
 
   // Dashboard Query: Boards I own
   const myBoardsQuery = useMemoFirebase(() => {
@@ -142,9 +192,20 @@ export default function WhiteboardPage() {
   };
 
   const saveBoardElements = async (newElements: BoardElement[]) => {
-    if (!firestore || !activeBoardId) return;
+    if (!firestore || !activeBoardId || isOffline) return;
     const ref = doc(firestore, "whiteboards", activeBoardId);
     await setDoc(ref, { elements: newElements, lastUpdated: serverTimestamp() }, { merge: true });
+  };
+
+  // Panning
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey) {
+      // Zoom
+      setZoom(z => Math.max(0.1, Math.min(5, z - e.deltaY * 0.01)));
+    } else {
+      // Pan
+      setOffset(o => ({ x: o.x - e.deltaX, y: o.y - e.deltaY }));
+    }
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -162,7 +223,8 @@ export default function WhiteboardPage() {
         type: 'path',
         x, y,
         color: '#8433F3',
-        points: [{ x, y }]
+        points: [{ x, y }],
+        layer: 1
       };
       currentPathRef.current = newPath;
       const nextElements = [...elements, newPath];
@@ -174,7 +236,8 @@ export default function WhiteboardPage() {
         x: x - 50,
         y: y - 50,
         color: '#fef08a',
-        content: ''
+        content: '',
+        layer: 2
       };
       const nextElements = [...elements, newSticky];
       setElements(nextElements);
@@ -216,7 +279,8 @@ export default function WhiteboardPage() {
       x: 100 - offset.x,
       y: 100 - offset.y,
       width: 400,
-      height: 300
+      height: 300,
+      layer: 3
     };
     const nextElements = [...elements, newWidget];
     setElements(nextElements);
@@ -308,13 +372,6 @@ export default function WhiteboardPage() {
                     <span className="text-xl font-black italic text-primary">0</span>
                  </div>
               </Card>
-
-              <Card className="glass-card rounded-[3rem] p-10 border-white/10 bg-gradient-to-br from-primary/10 to-transparent shadow-xl text-center space-y-6">
-                 <Sparkles className="w-12 h-12 text-primary mx-auto animate-pulse" />
-                 <h3 className="text-2xl font-black uppercase italic tracking-tighter">Pro Features</h3>
-                 <p className="text-xs font-medium text-muted-foreground leading-relaxed uppercase italic">Unlock unlimited boards and high-fidelity asset libraries.</p>
-                 <Button variant="outline" className="w-full h-12 rounded-xl border-white/10 font-black uppercase text-[10px]">Upgrade Unit</Button>
-              </Card>
            </aside>
         </div>
       </div>
@@ -323,41 +380,89 @@ export default function WhiteboardPage() {
 
   // Editor Interface
   return (
-    <div className="fixed inset-0 top-20 z-50 bg-[#0a0a15] flex animate-fade-in text-foreground overflow-hidden">
-      <header className="absolute top-0 left-0 right-0 h-16 bg-black/40 backdrop-blur-xl border-b border-white/5 px-10 flex items-center justify-between z-[100] shadow-2xl">
-         <div className="flex items-center gap-8">
-            <Button onClick={() => setActiveBoardId(null)} variant="ghost" size="icon" className="rounded-full h-10 w-10 border border-white/10 text-white"><ArrowLeft className="w-5 h-5" /></Button>
+    <div className={cn(
+      "fixed inset-0 top-20 z-50 flex animate-fade-in text-foreground overflow-hidden",
+      isPresentationMode && "top-0 z-[100]" // Fullscreen presentation mode
+    )}
+    style={{ backgroundColor: bgColor }}
+    >
+      {/* Top Header - Collaboration & Views */}
+      <header className={cn(
+        "absolute top-0 left-0 right-0 h-16 bg-black/40 backdrop-blur-xl border-b border-white/5 px-6 flex items-center justify-between z-[100] shadow-2xl transition-all",
+        isPresentationMode && "translate-y-[-100%]"
+      )}>
+         <div className="flex items-center gap-6">
+            <Button onClick={() => setActiveBoardId(null)} variant="ghost" size="icon" className="rounded-full h-10 w-10 border border-white/10 text-white"><ArrowLeft className="w-4 h-4" /></Button>
             <div className="flex flex-col">
-               <h2 className="text-xl font-black uppercase italic text-white tracking-tighter leading-none">{boardData?.name || 'Untitled Board'}</h2>
-               <span className="text-[8px] font-black text-primary uppercase tracking-[0.4em] mt-1">Status: Online</span>
+               <h2 className="text-lg font-black uppercase italic text-white tracking-tighter leading-none">{boardData?.name || 'Untitled Board'}</h2>
+               <div className="flex items-center gap-2 mt-1">
+                 {isOffline ? (
+                   <span className="text-[8px] font-black text-rose-500 uppercase tracking-[0.4em] flex items-center gap-1"><WifiOff className="w-3 h-3" /> Offline Mode</span>
+                 ) : (
+                   <span className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.4em] flex items-center gap-1"><Activity className="w-3 h-3" /> Real-time Sync</span>
+                 )}
+               </div>
             </div>
          </div>
-         <div className="flex items-center gap-6">
-               <div className="flex items-center gap-4 bg-white/5 px-6 py-2 rounded-xl border border-white/10">
-               <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Code:</span>
-               <span className="text-sm font-black text-white tracking-widest select-all">{boardData?.code}</span>
-               <button onClick={async () => { const ok = await import("@/lib/clipboard").then(m => m.copyToClipboard(boardData?.code || '')); if (ok) toast({ title: "Code Copied" }); else toast({ variant: 'destructive', title: 'Copy Failed' }); }} className="text-muted-foreground hover:text-white transition-colors"><Copy className="w-4 h-4" /></button>
+         
+         {/* Collaboration & Presentation Tools */}
+         <div className="flex items-center gap-4">
+            {/* Timer */}
+            <div className="flex items-center bg-white/5 px-4 py-2 rounded-xl border border-white/10 gap-3">
+              <Clock className={cn("w-4 h-4", timerActive ? "text-primary animate-pulse" : "text-muted-foreground")} />
+              <span className="text-xs font-black font-mono">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
+              <button onClick={() => setTimerActive(!timerActive)} className="text-[9px] uppercase font-black text-primary hover:text-white">{timerActive ? "Pause" : "Start"}</button>
             </div>
-            <Button onClick={() => setElements([])} variant="ghost" className="h-10 px-6 rounded-xl border border-white/5 text-[9px] font-black uppercase text-rose-500 hover:bg-rose-500/10">Clear Canvas</Button>
+
+            {/* Avatars Mock */}
+            <div className="flex -space-x-2">
+              <div className="w-8 h-8 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center text-[10px] font-bold text-primary">ME</div>
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 border-2 border-background flex items-center justify-center text-[10px] font-bold text-emerald-500">JD</div>
+              <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full bg-white/5 border-2 border-background border-dashed text-muted-foreground"><Plus className="w-3 h-3" /></Button>
+            </div>
+
+            <div className="w-px h-6 bg-white/10" />
+            
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-white" title="Version History"><History className="w-4 h-4" /></Button>
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-white" title="Export High-Res"><Download className="w-4 h-4" /></Button>
+            <Button 
+              onClick={() => setIsPresentationMode(true)} 
+              variant="ghost" 
+              size="icon" 
+              className="text-muted-foreground hover:text-white"
+              title="Presentation Mode"
+            ><MonitorPlay className="w-4 h-4" /></Button>
+
+            <Button className="h-9 px-4 bg-primary text-black rounded-xl font-black uppercase text-[10px] tracking-widest gap-2">
+              <Share2 className="w-3 h-3" /> Share
+            </Button>
          </div>
       </header>
 
+      {/* Main Canvas Area */}
       <div 
         ref={canvasRef}
+        onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        className="flex-1 relative overflow-hidden cursor-crosshair bg-[radial-gradient(#1e1e2e_1px,transparent_1px)] [background-size:40px_40px] pt-16"
+        className={cn(
+          "flex-1 relative overflow-hidden",
+          tool === 'draw' || tool === 'eraser' ? "cursor-crosshair" : 
+          tool === 'select' ? "cursor-default" : "cursor-cell",
+          gridEnabled ? "bg-[radial-gradient(#1e1e2e_2px,transparent_2px)] [background-size:40px_40px]" : ""
+        )}
       >
         <div 
           className="absolute inset-0 transition-transform duration-75"
           style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}
         >
+          {/* Elements */}
           {elements.map(el => (
             <div 
               key={el.id}
-              className="absolute"
-              style={{ left: el.x, top: el.y }}
+              className={cn("absolute", el.locked && "pointer-events-none opacity-80")}
+              style={{ left: el.x, top: el.y, zIndex: el.layer || 1 }}
             >
               {el.type === 'path' && (
                 <svg className="overflow-visible" style={{ position: 'absolute', left: -el.x, top: -el.y }}>
@@ -365,16 +470,17 @@ export default function WhiteboardPage() {
                     points={el.points?.map(p => `${p.x},${p.y}`).join(' ')}
                     fill="none"
                     stroke={el.color}
-                    strokeWidth="3"
+                    strokeWidth="4"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    style={{ filter: "drop-shadow(0px 2px 4px rgba(0,0,0,0.2))" }}
                   />
                 </svg>
               )}
 
               {el.type === 'sticky' && (
                 <Card 
-                  className="w-40 h-40 p-4 rounded-xl shadow-2xl flex flex-col border-4 border-black/10 transition-all hover:scale-105"
+                  className="w-48 h-48 p-4 rounded-xl shadow-2xl flex flex-col border-4 border-black/10 transition-all hover:scale-105 group relative"
                   style={{ backgroundColor: el.color }}
                 >
                   <textarea 
@@ -382,9 +488,15 @@ export default function WhiteboardPage() {
                     value={el.content}
                     onBlur={() => saveBoardElements(elements)}
                     onChange={(e) => setElements(prev => prev.map(p => p.id === el.id ? { ...p, content: e.target.value } : p))}
-                    className="flex-1 bg-transparent border-none outline-none resize-none text-black font-bold italic text-sm"
-                    placeholder="Type here..."
+                    className="flex-1 bg-transparent border-none outline-none resize-none text-black/80 font-bold text-sm placeholder:text-black/30"
+                    placeholder="Note..."
                   />
+                  {/* Floating Action Menu for Stickies */}
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black/80 rounded-xl p-1 gap-1 hidden group-hover:flex shadow-xl">
+                     <button className="p-1.5 hover:bg-white/10 rounded-lg text-white"><Palette className="w-3 h-3" /></button>
+                     <button className="p-1.5 hover:bg-white/10 rounded-lg text-white"><LinkIcon className="w-3 h-3" /></button>
+                     <button className="p-1.5 hover:bg-white/10 rounded-lg text-rose-500"><X className="w-3 h-3" /></button>
+                  </div>
                 </Card>
               )}
 
@@ -398,18 +510,22 @@ export default function WhiteboardPage() {
                        <Zap className="w-3.5 h-3.5 text-primary" />
                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{el.widgetType}</span>
                     </div>
-                    <button onClick={() => {
-                        const next = elements.filter(i => i.id !== el.id);
-                        setElements(next);
-                        saveBoardElements(next);
-                    }} className="opacity-0 group-hover:opacity-100 text-rose-500"><X className="w-4 h-4" /></button>
+                    <div className="flex items-center gap-2">
+                      <button className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-white"><Lock className="w-3 h-3" /></button>
+                      <button onClick={() => {
+                          const next = elements.filter(i => i.id !== el.id);
+                          setElements(next);
+                          saveBoardElements(next);
+                      }} className="opacity-0 group-hover:opacity-100 text-rose-500"><X className="w-3 h-3" /></button>
+                    </div>
                   </div>
                   <div className="flex-1 flex flex-col items-center justify-center p-8 text-center opacity-40">
                      {el.widgetType === 'sheet' && <Layers className="w-12 h-12 mb-4" />}
                      {el.widgetType === 'video' && <Video className="w-12 h-12 mb-4" />}
                      {el.widgetType === 'calendar' && <Clock className="w-12 h-12 mb-4" />}
                      {el.widgetType === 'weather' && <CloudSun className="w-12 h-12 mb-4" />}
-                     <p className="text-[10px] font-black uppercase tracking-[0.4em]">Active App Instance</p>
+                     {el.widgetType === 'kanban' && <Grid3X3 className="w-12 h-12 mb-4" />}
+                     <p className="text-[10px] font-black uppercase tracking-[0.4em]">Active Component</p>
                   </div>
                 </Card>
               )}
@@ -418,59 +534,109 @@ export default function WhiteboardPage() {
         </div>
       </div>
 
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50">
-        <Card className="glass-card rounded-full p-2 border-white/10 flex items-center gap-2 shadow-2xl px-4 bg-black/60 backdrop-blur-xl">
+      {/* Floating Presentation Mode Exit */}
+      {isPresentationMode && (
+        <Button 
+          onClick={() => setIsPresentationMode(false)}
+          className="absolute top-6 right-6 z-[200] bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white rounded-full px-6"
+        >
+          Exit Presentation
+        </Button>
+      )}
+
+      {/* Minimap Mock */}
+      {showMinimap && (
+        <Card className="absolute bottom-32 right-6 w-48 h-32 bg-black/60 backdrop-blur-xl border-white/10 z-50 p-2 overflow-hidden shadow-2xl rounded-2xl">
+           <div className="w-full h-full border border-white/5 rounded-xl relative">
+              <div className="absolute inset-0 bg-primary/5" />
+              <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 border-2 border-primary/50 bg-primary/10 rounded-md" />
+           </div>
+        </Card>
+      )}
+
+      {/* Bottom Left Toolbar - Properties & View */}
+      <div className="absolute bottom-6 left-6 z-50 flex gap-2">
+         <Card className="glass-card flex items-center gap-1 p-1 rounded-2xl bg-black/60 backdrop-blur-xl border-white/10">
+            <Button variant="ghost" size="icon" onClick={() => setGridEnabled(!gridEnabled)} className={cn("w-10 h-10 rounded-xl", gridEnabled && "bg-white/10 text-primary")} title="Toggle Grid"><Grid3X3 className="w-4 h-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setShowMinimap(!showMinimap)} className={cn("w-10 h-10 rounded-xl", showMinimap && "bg-white/10 text-primary")} title="Minimap"><MapIcon className="w-4 h-4" /></Button>
+            <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:text-white" title="Layers"><Layers className="w-4 h-4" /></Button>
+            <div className="w-px h-6 bg-white/10 mx-1" />
+            <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:text-white" title="Background Color"><Palette className="w-4 h-4" /></Button>
+            <div className="px-3 flex items-center text-[10px] font-black text-muted-foreground">{Math.round(zoom * 100)}%</div>
+         </Card>
+      </div>
+
+      {/* Main Bottom Toolbar - Tools */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <Card className="glass-card rounded-[2rem] p-2 border-white/10 flex items-center gap-1 shadow-2xl px-3 bg-black/80 backdrop-blur-xl">
           {[
             { id: 'select', icon: MousePointer2, label: 'Select' },
-            { id: 'draw', icon: PenTool, label: 'Draw' },
-            { id: 'sticky', icon: StickyNote, label: 'Sticky' },
+            { id: 'draw', icon: PenTool, label: 'Pen' },
+            { id: 'eraser', icon: Eraser, label: 'Eraser' },
+            { id: 'sticky', icon: StickyNote, label: 'Sticky Note' },
             { id: 'text', icon: Type, label: 'Text' },
             { id: 'shape', icon: Square, label: 'Shape' },
+            { id: 'connector', icon: Activity, label: 'Connector' },
+            { id: 'laser', icon: MousePointerClick, label: 'Laser Pointer' },
+            { id: 'image', icon: ImageIcon, label: 'Image/PDF' },
+            { id: 'vote', icon: Smile, label: 'Voting Dots' },
           ].map(t => (
             <Button
               key={t.id}
               onClick={() => setTool(t.id as Tool)}
               variant="ghost"
+              title={t.label}
               className={cn(
-                "h-14 w-14 rounded-full transition-all",
-                tool === t.id ? "bg-primary text-white shadow-xl scale-110" : "text-muted-foreground hover:bg-white/5"
+                "h-12 w-12 rounded-[1.5rem] transition-all",
+                tool === t.id ? "bg-primary text-black shadow-xl scale-110" : "text-muted-foreground hover:bg-white/10 hover:text-white"
               )}
             >
-              <t.icon className="w-6 h-6" />
+              <t.icon className={cn("w-5 h-5", tool === 'laser' && tool === t.id && "animate-pulse text-rose-500")} />
             </Button>
           ))}
-          <div className="w-px h-10 bg-white/10 mx-2" />
+          <div className="w-px h-8 bg-white/10 mx-2" />
           <Button 
             onClick={() => setIsWidgetSheetOpen(true)}
-            className="h-14 px-8 rounded-full bg-secondary border border-white/10 font-black uppercase text-[10px] tracking-widest italic"
+            className="h-12 px-6 rounded-[1.5rem] bg-white/5 hover:bg-white/10 border border-white/5 font-black uppercase text-[10px] tracking-widest text-white transition-all"
           >
-            <Plus className="w-4 h-4 mr-2" /> Apps
+            <Plus className="w-4 h-4 mr-2" /> More
           </Button>
         </Card>
       </div>
 
+      {/* Cursor Chat Mockup (floating near center if active) */}
+      {/* For real implementation, this tracks cursor position. We just put a mock. */}
+      {false && (
+         <div className="absolute top-1/2 left-1/2 translate-x-10 translate-y-10 bg-primary text-black px-4 py-2 rounded-2xl rounded-tl-none font-black text-xs shadow-xl z-50">
+            Let's move this higher!
+         </div>
+      )}
+
+      {/* Add App Modal */}
       {isWidgetSheetOpen && (
-        <div className="absolute inset-0 z-[100] flex items-end justify-center p-10 animate-in slide-in-from-bottom-20 duration-500">
+        <div className="absolute inset-0 z-[200] flex items-end justify-center p-10 animate-in slide-in-from-bottom-20 duration-500">
            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsWidgetSheetOpen(false)} />
-           <Card className="w-full max-w-2xl glass-card rounded-[3.5rem] p-12 relative z-[110] border-4 border-white/10 shadow-2xl bg-zinc-950">
+           <Card className="w-full max-w-4xl glass-card rounded-[3.5rem] p-12 relative z-[210] border-4 border-white/10 shadow-2xl bg-zinc-950">
               <div className="flex justify-between items-center mb-10">
-                 <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Add App</h2>
+                 <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Whiteboard Apps & Templates</h2>
                  <Button onClick={() => setIsWidgetSheetOpen(false)} variant="ghost" size="icon" className="rounded-full"><X className="w-6 h-6" /></Button>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                  {[
                    { id: 'sheet', icon: Layers, label: 'Sheets' },
                    { id: 'video', icon: Video, label: 'Videos' },
-                   { id: 'calendar', icon: Clock, label: 'Plan' },
+                   { id: 'calendar', icon: Clock, label: 'Calendar' },
                    { id: 'weather', icon: CloudSun, label: 'Weather' },
+                   { id: 'kanban', icon: Grid3X3, label: 'Kanban' },
+                   { id: 'wireframe', icon: Layout, label: 'Wireframes' },
                  ].map(w => (
                    <button 
                     key={w.id} 
                     onClick={() => addWidget(w.id as WidgetType)}
-                    className="p-8 rounded-[2rem] bg-white/5 border-2 border-white/5 hover:border-primary transition-all flex flex-col items-center gap-4 group"
+                    className="p-8 rounded-[2rem] bg-white/5 border-2 border-white/5 hover:border-primary transition-all flex flex-col items-center justify-center gap-4 group"
                    >
-                      <w.icon className="w-10 h-10 text-primary transition-transform group-hover:scale-110" />
-                      <span className="text-[10px] font-black uppercase italic tracking-widest text-white">{w.label}</span>
+                      <w.icon className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-transform group-hover:scale-110" />
+                      <span className="text-[9px] font-black uppercase italic tracking-widest text-white text-center">{w.label}</span>
                    </button>
                  ))}
               </div>
@@ -480,3 +646,4 @@ export default function WhiteboardPage() {
     </div>
   );
 }
+

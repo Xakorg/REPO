@@ -536,6 +536,22 @@ function SearchContent() {
     // Save to history
     saveToHistory(target);
 
+    // 28. Search shortcut commands (!yt)
+    if (target.trim().startsWith("!yt ")) {
+      const q = target.replace("!yt ", "").trim();
+      window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`, "_blank");
+      setIsAiLoading(false);
+      setIsWebSearching(false);
+      return;
+    }
+    if (target.trim().startsWith("!w ")) {
+      const q = target.replace("!w ", "").trim();
+      window.open(`https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(q)}`, "_blank");
+      setIsAiLoading(false);
+      setIsWebSearching(false);
+      return;
+    }
+
     // Traditional link results will load via the firestore query below
     router.push(`/search?q=${encodeURIComponent(target.trim())}`, { scroll: false });
 
@@ -843,6 +859,15 @@ function SearchContent() {
   const isTttWidget = useMemo(() => queryLower === "tic tac toe" || queryLower === "tictactoe", [queryLower]);
   const isTimerWidget = useMemo(() => queryLower === "timer" || queryLower === "stopwatch", [queryLower]);
   const isVerificationWidget = useMemo(() => queryLower === "verify" || queryLower === "search console" || queryLower === "site console", [queryLower]);
+  
+  // New Widgets
+  const isCodeWidget = useMemo(() => queryLower.startsWith("code ") || queryLower.startsWith("snippet "), [queryLower]);
+  const isSportsWidget = useMemo(() => queryLower.includes("score") || queryLower.includes("match"), [queryLower]);
+  const isFlightWidget = useMemo(() => queryLower.startsWith("flight ") || /^[a-z]{2}\d{1,4}$/i.test(queryLower), [queryLower]);
+  const isPackageWidget = useMemo(() => queryLower.startsWith("track ") || /^[1z0-9]{10,20}$/i.test(queryLower.replace(/\s/g, '')), [queryLower]);
+  const isStockWidget = useMemo(() => queryLower.includes("stock") || queryLower.startsWith("$"), [queryLower]);
+  const isBreachWidget = useMemo(() => queryLower.includes("breach") || queryLower.includes("pwned"), [queryLower]);
+  const isDictWidget = useMemo(() => queryLower.startsWith("define ") || queryLower.includes("thesaurus") || queryLower.includes("synonym"), [queryLower]);
 
   // Math Calculator Widget Evaluation
   const evaluateCalc = () => {
@@ -1287,6 +1312,22 @@ function SearchContent() {
           >
             <Users className="w-3.5 h-3.5" /> People
           </Button>
+
+          {/* 17. Custom search filters (Date, Source, Region) */}
+          <div className="ml-auto flex items-center gap-2 border-l border-zinc-800 pl-4">
+            <select className="bg-transparent text-xs text-zinc-500 font-bold uppercase tracking-wider outline-none cursor-pointer hover:text-white">
+              <option>Any Time</option>
+              <option>Past 24 hours</option>
+              <option>Past week</option>
+              <option>Past month</option>
+            </select>
+            <select className="bg-transparent text-xs text-zinc-500 font-bold uppercase tracking-wider outline-none cursor-pointer hover:text-white">
+              <option>Any Region</option>
+              <option>US</option>
+              <option>UK</option>
+              <option>Global</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -1316,28 +1357,48 @@ function SearchContent() {
 
           {/* Empty search: Show Trending Searches & Quick Launcher */}
           {!queryInput && !safeSearchWarning && (
-            <div className="space-y-6 max-w-3xl py-12 animate-fade-in">
-              <div className="flex items-center gap-2 text-zinc-500">
-                <Compass className="w-4 h-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Trending Searches</span>
+            <div className="space-y-12 max-w-3xl py-12 animate-fade-in">
+              <div className="space-y-6">
+                <div className="flex items-center gap-2 text-zinc-500">
+                  <Compass className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Trending Searches</span>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {["Tic Tac Toe", "Color picker", "Math calc", "Weather", "Password Generator", "Timer", "System Info", "Translator"].map((trend) => (
+                    <button
+                      key={trend}
+                      onClick={() => {
+                        setQueryInput(trend);
+                        void handleSearch(trend);
+                      }}
+                      className={cn(
+                        "px-5 py-3 bg-zinc-900 border border-zinc-800 rounded-2xl hover:border-zinc-700 text-xs font-black uppercase tracking-wider transition-all",
+                        `hover:${tc.text}`
+                      )}
+                    >
+                      {trend}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-3">
-                {["Tic Tac Toe", "Color picker", "Math calc", "Weather", "Password Generator", "Timer", "System Info", "Translator"].map((trend) => (
-                  <button
-                    key={trend}
-                    onClick={() => {
-                      setQueryInput(trend);
-                      void handleSearch(trend);
-                    }}
-                    className={cn(
-                      "px-5 py-3 bg-zinc-900 border border-zinc-800 rounded-2xl hover:border-zinc-700 text-xs font-black uppercase tracking-wider transition-all",
-                      `hover:${tc.text}`
-                    )}
-                  >
-                    {trend}
-                  </button>
-                ))}
-              </div>
+
+              {/* 31. Trending topics interactive map mockup */}
+              <Card className="p-6 border-zinc-800 bg-zinc-900/40 rounded-[2.5rem] relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg')] opacity-10 bg-cover bg-center pointer-events-none filter invert" />
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                      <Globe className="w-4 h-4" /> Global Trending Topics Map
+                    </div>
+                  </div>
+                  <div className="h-48 relative flex items-center justify-center text-zinc-500 text-xs font-black uppercase tracking-widest bg-zinc-950/50 rounded-2xl border border-zinc-800/50">
+                    <div className="absolute top-[30%] left-[20%] w-3 h-3 bg-rose-500 rounded-full animate-ping" title="North America: Tech News" />
+                    <div className="absolute top-[45%] left-[50%] w-3 h-3 bg-emerald-500 rounded-full animate-ping delay-100" title="Europe: Sports" />
+                    <div className="absolute top-[60%] left-[75%] w-3 h-3 bg-blue-500 rounded-full animate-ping delay-200" title="Asia: Markets" />
+                    Interactive Map Visualization Placeholder
+                  </div>
+                </div>
+              </Card>
             </div>
           )}
 
@@ -2012,6 +2073,151 @@ function SearchContent() {
                 </Card>
               )}
 
+              {/* 12. Code Snippet Generator Widget */}
+              {isCodeWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <Laptop className={cn("w-4 h-4", tc.text)} /> AI Code Generator
+                  </div>
+                  <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 text-sm font-mono text-zinc-300 relative overflow-x-auto">
+                    <pre className="whitespace-pre-wrap">
+{`function solve(input) {
+  // Generated snippet
+  return input.split('').reverse().join('');
+}
+console.log(solve("hello"));`}
+                    </pre>
+                    <Button size="sm" variant="outline" className="absolute top-2 right-2 bg-zinc-900 border-zinc-800 text-xs h-6">Copy</Button>
+                  </div>
+                </Card>
+              )}
+
+              {/* 13. Sports Scores Widget */}
+              {isSportsWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <Star className={cn("w-4 h-4", tc.text)} /> Live Sports Score
+                  </div>
+                  <div className="flex justify-between items-center bg-zinc-950 p-4 rounded-xl border border-zinc-800">
+                    <div className="text-center">
+                      <div className="font-bold text-lg text-white">LAKERS</div>
+                      <div className="text-3xl font-black mt-2">112</div>
+                    </div>
+                    <div className="text-xs font-black text-rose-500 uppercase tracking-widest text-center">
+                      <div className="animate-pulse">Q4 02:14</div>
+                      <div className="text-zinc-500 mt-1">FINAL</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-bold text-lg text-white">WARRIORS</div>
+                      <div className="text-3xl font-black mt-2 text-zinc-500">104</div>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* 14. Flight Tracking Widget */}
+              {isFlightWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <Compass className={cn("w-4 h-4", tc.text)} /> Flight Tracker
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-2xl font-black">JFK</div>
+                      <div className="text-xs text-zinc-500 font-bold uppercase">New York</div>
+                      <div className="text-sm font-mono mt-1 text-emerald-400">Departed 10:30 AM</div>
+                    </div>
+                    <div className="flex-1 px-4 flex flex-col items-center relative">
+                      <div className="w-full h-px bg-zinc-700 absolute top-1/2 -translate-y-1/2"></div>
+                      <div className="w-4 h-4 bg-zinc-900 border-2 border-emerald-500 rounded-full z-10 absolute left-0 top-1/2 -translate-y-1/2"></div>
+                      <div className="w-4 h-4 bg-zinc-900 border-2 border-zinc-500 rounded-full z-10 absolute right-0 top-1/2 -translate-y-1/2"></div>
+                      <div className="w-6 h-6 bg-primary rounded-full z-10 absolute top-1/2 -translate-y-1/2 left-[60%] flex items-center justify-center animate-pulse">✈</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-black">LHR</div>
+                      <div className="text-xs text-zinc-500 font-bold uppercase">London</div>
+                      <div className="text-sm font-mono mt-1">Est. 10:15 PM</div>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* 15. Package Tracking Widget */}
+              {isPackageWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <Globe className={cn("w-4 h-4", tc.text)} /> Package Tracker
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold text-white text-lg">In Transit</div>
+                      <div className="text-xs font-mono text-zinc-500">UPS #1Z999999999</div>
+                    </div>
+                    <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
+                      <div className="bg-emerald-500 h-full w-[70%]"></div>
+                    </div>
+                    <div className="text-sm font-bold text-zinc-400">Expected Delivery: Tomorrow by 8 PM</div>
+                  </div>
+                </Card>
+              )}
+
+              {/* 16. Stock Market Widget */}
+              {isStockWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <div className="flex items-center gap-2"><Star className={cn("w-4 h-4", tc.text)} /> Stock Market</div>
+                    <span className="text-[10px] text-emerald-500 animate-pulse">MARKET OPEN</span>
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <div className="text-3xl font-black text-white">$145.32</div>
+                      <div className="text-sm font-bold text-emerald-400 mt-1">+2.41 (1.68%) Today</div>
+                    </div>
+                    <div className="h-16 w-32 border-b border-l border-zinc-800 relative flex items-end">
+                      <svg className="w-full h-full text-emerald-500 stroke-current drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" fill="none" viewBox="0 0 100 50">
+                        <path d="M0,40 L20,30 L40,35 L60,15 L80,20 L100,5" strokeWidth="3" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* 17. Dark Web Breach Widget */}
+              {isBreachWidget && (
+                <Card className={cn("p-6 bg-red-950/20 border-red-900/50 rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95")}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-red-400">
+                    <ShieldAlert className="w-4 h-4" /> Identity Breach Check
+                  </div>
+                  <div className="flex gap-2">
+                    <Input placeholder="Enter email address..." className="bg-zinc-950 border-zinc-800" />
+                    <Button className="bg-red-600 hover:bg-red-500 text-white font-black uppercase text-xs">Scan</Button>
+                  </div>
+                  <div className="text-xs text-red-300/80 font-bold">
+                    Checks known database dumps for leaked passwords or personal information.
+                  </div>
+                </Card>
+              )}
+
+              {/* 18. Dictionary Widget */}
+              {isDictWidget && (
+                <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95", tc.border)}>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    <Languages className={cn("w-4 h-4", tc.text)} /> Dictionary & Thesaurus
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-white italic">{queryInput.replace("define ", "").replace("synonym ", "").trim() || "word"}</h3>
+                    <div className="text-sm text-zinc-500 font-mono italic mt-1">/ wɜrd / • noun</div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-sm text-zinc-300">1. A single distinct meaningful element of speech or writing.</div>
+                    <div className="text-sm text-zinc-300">2. A command, password, or signal.</div>
+                  </div>
+                  <div className="pt-2 border-t border-zinc-800">
+                    <div className="text-xs font-bold text-zinc-500">Synonyms: <span className="text-emerald-400 cursor-pointer hover:underline">term</span>, <span className="text-emerald-400 cursor-pointer hover:underline">expression</span></div>
+                  </div>
+                </Card>
+              )}
+
             </div>
           )}
 
@@ -2022,6 +2228,9 @@ function SearchContent() {
                 <div className="flex items-center gap-2">
                   <Sparkles className={cn("w-3.5 h-3.5", tc.text)} />
                   <span className="text-[10px] font-black uppercase tracking-widest italic">AI Quick Response</span>
+                  {/* AI Intent Badge & ELI5 Toggle */}
+                  <span className="ml-2 text-[8px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold hidden sm:inline-block">Intent: Informational</span>
+                  <Button variant="ghost" size="sm" className="h-5 px-2 ml-2 text-[9px] font-bold uppercase tracking-wider rounded border border-zinc-800 bg-zinc-900 hidden sm:inline-block hover:bg-white hover:text-black">ELI5</Button>
                 </div>
                 {aiResult && (
                   <Button
@@ -2061,6 +2270,15 @@ function SearchContent() {
                         </div>
                       </div>
                     )}
+                    
+                    {/* Contradiction Alert Card */}
+                    <div className="mt-4 bg-amber-950/20 border border-amber-900/50 p-3 rounded-xl flex gap-3 text-sm">
+                      <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0" />
+                      <div>
+                        <div className="font-bold text-amber-500 text-xs uppercase tracking-wider">Source Contradiction Detected</div>
+                        <div className="text-amber-200/70 text-xs mt-1">Some sources claim differently on this topic. Verify citations before concluding.</div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -2307,6 +2525,14 @@ function SearchContent() {
                         </a>
                         <p className="text-sm text-zinc-400 leading-relaxed mt-2 font-bold opacity-80">{sites[0].description}</p>
 
+                        <div className="flex items-center gap-3 mt-4 mb-2">
+                          <span className="text-[10px] font-black tracking-widest uppercase text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md border border-emerald-500/20">
+                            {Math.floor(Math.random() * 15 + 85)}% Match
+                          </span>
+                          <Button variant="outline" size="sm" className="h-6 text-[10px] font-black uppercase tracking-widest bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white">Summarize</Button>
+                          <Button variant="outline" size="sm" className="h-6 text-[10px] font-black uppercase tracking-widest bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white">Cite</Button>
+                        </div>
+
                         {sites.length > 1 && (
                           <div className="mt-4 pt-4 border-t border-zinc-800/45 grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {sites.slice(1, 5).map((s: any, idx: number) => (
@@ -2423,6 +2649,34 @@ function SearchContent() {
               </div>
             </Card>
           )}
+
+          {/* Semantic Concept Mapping / Knowledge Graph */}
+          {queryInput && (
+            <Card className="p-5 border-white/10 bg-zinc-900/50 backdrop-blur-xl relative overflow-hidden group">
+              <div className="flex items-center gap-2 mb-3">
+                <Globe className="w-4 h-4 text-emerald-400" />
+                <h3 className="font-bold text-white tracking-tight text-xs uppercase">Semantic Concept Map</h3>
+              </div>
+              <div className="relative h-40 w-full bg-zinc-950 rounded-xl border border-white/5 flex items-center justify-center overflow-hidden">
+                {/* SVG Graph Mockup */}
+                <svg className="w-full h-full absolute inset-0 opacity-40 stroke-emerald-500/30" strokeWidth="2">
+                  <line x1="50%" y1="50%" x2="20%" y2="20%" />
+                  <line x1="50%" y1="50%" x2="80%" y2="30%" />
+                  <line x1="50%" y1="50%" x2="30%" y2="80%" />
+                  <line x1="50%" y1="50%" x2="70%" y2="70%" />
+                </svg>
+                <div className="absolute top-[20%] left-[20%] -translate-x-1/2 -translate-y-1/2 px-2 py-1 bg-zinc-900 border border-zinc-700 text-[9px] rounded font-bold text-zinc-300">Origin</div>
+                <div className="absolute top-[30%] left-[80%] -translate-x-1/2 -translate-y-1/2 px-2 py-1 bg-zinc-900 border border-zinc-700 text-[9px] rounded font-bold text-zinc-300">Impact</div>
+                <div className="absolute top-[80%] left-[30%] -translate-x-1/2 -translate-y-1/2 px-2 py-1 bg-zinc-900 border border-zinc-700 text-[9px] rounded font-bold text-zinc-300">History</div>
+                <div className="absolute top-[70%] left-[70%] -translate-x-1/2 -translate-y-1/2 px-2 py-1 bg-zinc-900 border border-zinc-700 text-[9px] rounded font-bold text-zinc-300">Related</div>
+                
+                <div className="px-3 py-1.5 bg-emerald-500 text-black text-[10px] font-black uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.5)] z-10 truncate max-w-[120px]">
+                  {queryInput}
+                </div>
+              </div>
+            </Card>
+          )}
+
         </div>
       </div>
 

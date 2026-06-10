@@ -1395,7 +1395,16 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                 <p className="text-[8px] text-emerald-400 font-bold">{userData?.statusEmoji || '💬'} {userData?.statusText || 'Online'}</p>
               </div>
            </div>
-           <div className="flex gap-1">
+           <div className="flex gap-1 items-center">
+              <button 
+                onMouseDown={() => setIsMuted(false)} 
+                onMouseUp={() => setIsMuted(true)} 
+                onMouseLeave={() => setIsMuted(true)}
+                className="px-2 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[8px] font-black uppercase text-zinc-400 active:bg-emerald-500/20 active:text-emerald-400 select-none cursor-pointer border border-white/5 transition-all"
+                title="Hold to Talk (PTT)"
+              >
+                PTT
+              </button>
               <button onClick={() => setIsMuted(!isMuted)} className={cn("p-1.5 rounded-lg", isMuted ? "bg-red-500/20 text-red-500" : "text-white/40")}><MicOff className="w-3.5 h-3.5" /></button>
               <button onClick={() => setIsDeafened(!isDeafened)} className={cn("p-1.5 rounded-lg", isDeafened ? "bg-red-500/20 text-red-500" : "text-white/40")}><HeadphoneOff className="w-3.5 h-3.5" /></button>
            </div>
@@ -1598,8 +1607,27 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               disabled={isInviting || !inviteEmail.includes("@")} 
               className="w-full h-16 bg-primary hover:bg-primary/95 text-black rounded-2xl font-black uppercase shadow-xl transition-all"
             >
-              {isInviting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : null} Transmit invitation
+              {isInviting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Transmit Invite"}
             </Button>
+            <div className="space-y-2 pt-4 border-t border-white/10">
+              <label className="text-[10px] font-black uppercase text-muted-foreground ml-2">Or share this link</label>
+              <div className="flex items-center gap-2">
+                <Input 
+                  readOnly
+                  value={inviteLink}
+                  className="bg-[#0b0b14]/60 h-10 rounded-xl font-bold border-white/10 text-white/60 focus:border-primary text-xs" 
+                />
+                <Button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(inviteLink);
+                    toast({ title: "Invite link copied!" });
+                  }}
+                  className="h-10 px-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black uppercase text-[10px]"
+                >
+                  Copy
+                </Button>
+              </div>
+            </div>
             
             {inviteLink && (
               <div className="flex flex-col items-center justify-center p-4 bg-[#0a0a15] border border-white/5 rounded-2xl gap-3">
@@ -2311,6 +2339,29 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                           className="h-10 bg-rose-600/10 hover:bg-rose-600 hover:text-white text-rose-500 font-black uppercase text-[8px] rounded-xl border border-rose-500/20"
                         >
                           Block User
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button 
+                          onClick={() => {
+                            setSelectedProfileUser(null);
+                            handleStartDirectCall(selectedProfileUser.id, name, selectedProfileUser.photoURL, "audio");
+                          }}
+                          variant="ghost" 
+                          className="h-10 bg-emerald-500/10 hover:bg-emerald-500 hover:text-black text-emerald-400 font-black uppercase text-[8px] rounded-xl border border-emerald-500/20 transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <Phone className="w-3 h-3" /> Voice Call
+                        </Button>
+                        <Button 
+                          onClick={() => {
+                            setSelectedProfileUser(null);
+                            handleStartDirectCall(selectedProfileUser.id, name, selectedProfileUser.photoURL, "video");
+                          }}
+                          variant="ghost" 
+                          className="h-10 bg-indigo-500/10 hover:bg-indigo-500 hover:text-white text-indigo-400 font-black uppercase text-[8px] rounded-xl border border-indigo-500/20 transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <Video className="w-3 h-3" /> Video Call
                         </Button>
                       </div>
 

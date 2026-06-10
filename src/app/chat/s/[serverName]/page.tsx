@@ -174,6 +174,10 @@ export default function ServerChatPage() {
   const [slowModeUntil, setSlowModeUntil] = useState(0);
   const [slowModeCountdown, setSlowModeCountdown] = useState(0);
 
+  // Feature 1 + 2: E2E Encryption and Disappearing messages
+  const [e2eEnabled, setE2eEnabled] = useState(false);
+  const [disappearingMessages, setDisappearingMessages] = useState(false);
+
   useEffect(() => {
     if (slowModeUntil <= 0) return;
     const interval = setInterval(() => {
@@ -2213,7 +2217,28 @@ export default function ServerChatPage() {
                  </button>
                ))}
                <div className="flex-1" />
-               <span className="text-[8px] text-zinc-700 font-bold uppercase tracking-widest self-center">Formatting</span>
+               
+               {/* Privacy Toggles */}
+               <div className="flex gap-2 mr-2">
+                 <button
+                   type="button"
+                   onClick={() => setE2eEnabled(!e2eEnabled)}
+                   className={cn("px-2.5 py-0.5 text-[8px] font-black uppercase tracking-widest border rounded-lg transition-all flex items-center gap-1", e2eEnabled ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40" : "bg-white/5 text-zinc-500 border-white/5 hover:text-white")}
+                   title="End-to-End Encryption"
+                 >
+                   E2E
+                 </button>
+                 <button
+                   type="button"
+                   onClick={() => setDisappearingMessages(!disappearingMessages)}
+                   className={cn("px-2.5 py-0.5 text-[8px] font-black uppercase tracking-widest border rounded-lg transition-all flex items-center gap-1", disappearingMessages ? "bg-amber-500/20 text-amber-400 border-amber-500/40" : "bg-white/5 text-zinc-500 border-white/5 hover:text-white")}
+                   title="Disappearing Messages (24h)"
+                 >
+                   <Clock className="w-2.5 h-2.5" /> 24H
+                 </button>
+               </div>
+
+               <span className="text-[8px] text-zinc-700 font-bold uppercase tracking-widest self-center">Formatting & Privacy</span>
              </div>
 
              <form onSubmit={(e) => handleSend(e)} className="flex items-end gap-3 md:gap-4">
