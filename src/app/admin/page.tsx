@@ -30,7 +30,7 @@ import { useFirestore, useUser, useAuth, useCollection, useMemoFirebase, useDoc,
 import { collection, doc, query, limit, orderBy, serverTimestamp } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, TerminalSquare } from "lucide-react";
+import { Sparkles, TerminalSquare, Activity } from "lucide-react";
 
 const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
 
