@@ -2,6 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useXakCode } from "./context";
+import Editor, { useMonaco } from '@monaco-editor/react';
+import * as Y from 'yjs';
+import { WebrtcProvider } from 'y-webrtc';
+import { MonacoBinding } from 'y-monaco';
+import { XakteirEditor } from "@/components/editor/XakteirEditor";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -108,6 +113,88 @@ export default function WorkspacePage() {
   const [viewMode, setViewMode] = useState<'code' | 'ai'>('code');
   const [resolution, setResolution] = useState<'desktop' | 'laptop' | 'tablet' | 'mobile'>('desktop');
   const [zenMode, setZenMode] = useState(false);
+
+  // Collaboration and Editor State
+  const editorRef = useRef<any>(null);
+  const [yDoc, setYDoc] = useState<Y.Doc | null>(null);
+  const [provider, setProvider] = useState<WebrtcProvider | null>(null);
+  const [binding, setBinding] = useState<MonacoBinding | null>(null);
+
+  // Initialize WebRTC and Yjs when multiplayer is active
+  useEffect(() => {
+    if (!activeProject || !multiplayerActive) {
+      if (provider) provider.destroy();
+      if (yDoc) yDoc.destroy();
+      setYDoc(null);
+      setProvider(null);
+      return;
+    }
+
+    const doc = new Y.Doc();
+    const roomName = `xakcode-${activeProject.id}-room`;
+    const webrtcProvider = new WebrtcProvider(roomName, doc, {
+      signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com']
+    });
+
+    webrtcProvider.awareness.setLocalStateField('user', {
+      name: 'Collaborator',
+      color: '#' + Math.floor(Math.random()*16777215).toString(16)
+    });
+
+    setYDoc(doc);
+    setProvider(webrtcProvider);
+
+    return () => {
+      webrtcProvider.destroy();
+      doc.destroy();
+    };
+  }, [activeProject?.id, multiplayerActive]);
+
+  // Handle Monaco Editor Mounting
+  const handleEditorDidMount = (editor: any, monaco: any) => {
+    editorRef.current = editor;
+    setupLanguage(editor, monaco);
+    if (yDoc && provider) {
+      setupBinding(editor, yDoc, provider);
+    }
+  };
+
+  const setupLanguage = (editor: any, monaco: any) => {
+    const ext = activeFile.split('.').pop();
+    let lang = 'javascript';
+    if (ext === 'css') lang = 'css';
+    if (ext === 'html') lang = 'html';
+    if (ext === 'json') lang = 'json';
+    monaco.editor.setModelLanguage(editor.getModel(), lang);
+  };
+
+  const setupBinding = (editor: any, doc: Y.Doc, prov: WebrtcProvider) => {
+    if (binding) binding.destroy();
+    const ytext = doc.getText(activeFile);
+    
+    if (ytext.toString() === "" && codeText !== "") {
+      ytext.insert(0, codeText);
+    }
+
+    const newBinding = new MonacoBinding(ytext, editor.getModel(), new Set([editor]), prov.awareness);
+    setBinding(newBinding);
+    
+    ytext.observe(() => {
+       handleFileChange(ytext.toString());
+    });
+  };
+
+  // Re-bind when switching files
+  useEffect(() => {
+    if (editorRef.current && yDoc && provider) {
+       setupBinding(editorRef.current, yDoc, provider);
+    } else if (editorRef.current && (!yDoc || !provider)) {
+       if (binding) {
+         binding.destroy();
+         setBinding(null);
+       }
+    }
+  }, [activeFile, yDoc, provider]);
 
   // Search & Replace Overlay State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -587,48 +674,35 @@ export default function WorkspacePage() {
             {/* Editor Canvas Area */}
             <div className="flex-1 flex overflow-hidden relative">
               
-              {/* Multiplayer Overlay */}
-              {multiplayerActive && multiplayerLogs.length > 0 && (
-                <div className="absolute top-4 right-6 z-50 pointer-events-none flex flex-col gap-2 items-end">
-                  {multiplayerLogs.slice(0, 3).map((log, i) => (
-                    <div key={i} className="bg-sky-500/20 border border-sky-500/30 text-sky-200 text-[10px] px-3 py-1 rounded-full backdrop-blur-sm animate-fade-in flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse"></span>
-                      {log.replace(/\[.*?\]\s*/, '')}
-                    </div>
-                  ))}
-                </div>
-              )}
+
 
               {activeFile.endsWith('.md') ? (
                 <MarkdownRender text={codeText} />
               ) : (
                 <>
-                  {/* Line Numbers */}
-                  <div 
-                    ref={gutterRef}
-                    className="w-10 bg-black/25 text-white/25 text-right pr-2.5 pt-4 font-mono text-[10.5px] leading-relaxed border-r border-white/5 select-none overflow-hidden h-full shrink-0"
-                  >
-                    {lineNumbersArray.map(n => (
-                      <div key={n} className="h-5">{n}</div>
-                    ))}
-                  </div>
-
-                  {/* Input TextArea */}
-                  <textarea
-                    ref={textareaRef}
-                    value={codeText}
-                    onChange={(e) => handleFileChange(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onScroll={(e) => {
-                      if (gutterRef.current) gutterRef.current.scrollTop = e.currentTarget.scrollTop;
+                  {/* Input TextArea / Monaco Editor */}
+                  <Editor
+                    height="100%"
+                    width="100%"
+                    theme={theme === 'vscode' ? 'vs-dark' : 'hc-black'}
+                    value={!yDoc ? codeText : undefined}
+                    onChange={(value) => {
+                      if (!yDoc && value !== undefined) {
+                        handleFileChange(value);
+                      }
                     }}
-                    style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily }}
-                    className={cn(
-                      "flex-1 bg-transparent p-4 pt-4 leading-relaxed text-white outline-none border-none resize-none overflow-y-auto whitespace-pre h-full",
-                      wordWrap ? "whitespace-pre-wrap" : "whitespace-pre"
-                    )}
-                    spellCheck={false}
-                    placeholder="// Initialize coding drafts..."
+                    onMount={handleEditorDidMount}
+                    options={{
+                      fontSize: fontSize,
+                      fontFamily: fontFamily || 'Consolas, monospace',
+                      wordWrap: wordWrap ? 'on' : 'off',
+                      tabSize: tabSize,
+                      minimap: { enabled: false },
+                      scrollBeyondLastLine: false,
+                      smoothScrolling: true,
+                      cursorBlinking: "smooth",
+                      padding: { top: 16 }
+                    }}
                   />
                 </>
               )}

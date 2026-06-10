@@ -317,42 +317,7 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
   }, [pomodoroActive, pomodoroTime, pomodoroSession]);
 
-  // Multiplayer simulation effect
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    if (multiplayerActive) {
-      const users = ["XakBuddy", "CyberCoder", "BabelChef", "DnsNinja", "TailwindPro"];
-      const messages = [
-        "joined the session.",
-        "is refactoring components/Button.jsx",
-        "saved code snapshot.",
-        "ran speed build (32ms)",
-        "injected custom utilities layer",
-        "changed font setting to 14px",
-        "triggered mock DNS resolve request"
-      ];
-      
-      const simulateAction = () => {
-        const randomUser = users[Math.floor(Math.random() * users.length)];
-        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-        setMultiplayerLogs(prev => [
-          `[${new Date().toLocaleTimeString()}] ${randomUser} ${randomMsg}`,
-          ...prev.slice(0, 15)
-        ]);
-        
-        // Random interval between 4 and 10 seconds
-        const nextTime = Math.random() * 6000 + 4000;
-        timer = setTimeout(simulateAction, nextTime);
-      };
 
-      timer = setTimeout(simulateAction, 2000);
-    } else {
-      setMultiplayerLogs([]);
-    }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [multiplayerActive]);
 
   // DNS nameserver resolution
   const checkNameservers = async () => {

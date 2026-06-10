@@ -1264,6 +1264,20 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             </header>
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-4">
+                  {/* 3D ROOM BUTTON */}
+                  <div className="space-y-1 mb-4">
+                    <button 
+                      onClick={() => router.push(`/chat/s/${activeServer}?room3d=true`)} 
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-all bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-white font-bold hover:from-indigo-500/40 hover:to-purple-500/40 border border-white/5",
+                        searchParams.get("room3d") === "true" ? "ring-2 ring-purple-500" : ""
+                      )}
+                    >
+                      <Sparkles className="w-4 h-4 shrink-0 text-purple-400" />
+                      <span className="truncate uppercase italic">{serverHeaderTitle} 3D ROOM</span>
+                    </button>
+                  </div>
+
                   {channelCategories.map(cat => {
                     const catChannels = serverChannelsList.filter(c => c.category === cat);
                     const isCollapsed = collapsedCategories[cat];

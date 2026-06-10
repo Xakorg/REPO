@@ -50,6 +50,7 @@ import { useToast } from "@/hooks/use-toast";
 import { RenderHat } from "@/components/RenderHat";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import Link from "next/link";
+import Room3D from "./Room3D";
 
 const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
 
@@ -197,6 +198,11 @@ export default function ServerChatPage() {
 
   // Member List Panel
   const [showMemberPanel, setShowMemberPanel] = useState(false);
+
+  // If room3d is active, render Room3D instead of Chat
+  if (searchParams.get("room3d") === "true") {
+    return <Room3D serverName={serverName} />;
+  }
 
   // ── LISTEN TO VIEWPORT SCROLLING ─────────────────────────────────────────
   useEffect(() => {

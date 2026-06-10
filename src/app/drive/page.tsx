@@ -221,6 +221,35 @@ export default function XakDrivePage() {
     toast({ title: "Folder Disconnected" });
   };
 
+  useEffect(() => {
+    if (driveMode === 'local' && hasFolderPermission && driveFiles && localFiles.length > 0) {
+      // Check for missing files and upload
+      const missingFiles = localFiles.filter(lf => 
+        lf.type !== 'directory' && !driveFiles.some(cf => cf.name === lf.name)
+      );
+
+      missingFiles.forEach(lf => {
+        if (!storage || !user || !firestore) return;
+        const storageRef = ref(storage, `drive/${user.uid}/${Date.now()}_${lf.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, lf.fileObject);
+        uploadTask.on('state_changed', null, null, async () => {
+            const url = await getDownloadURL(uploadTask.snapshot.ref);
+            addDocumentNonBlocking(collection(firestore, "users", user.uid, "drive_files"), {
+              name: lf.name,
+              size: lf.size,
+              type: lf.type || "unknown",
+              url,
+              timestamp: serverTimestamp()
+            });
+        });
+      });
+
+      if (missingFiles.length > 0) {
+        toast({ title: "Auto Sync", description: `Syncing ${missingFiles.length} new files to cloud.` });
+      }
+    }
+  }, [driveFiles, localFiles, driveMode, hasFolderPermission, user, firestore, storage, toast]);
+
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || !user || !firestore || !storage) return;
     setIsUploading(true);

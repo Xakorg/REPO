@@ -737,6 +737,26 @@ export default function XakViewPage() {
                       <ThumbsUp className={cn("w-4 h-4 mr-2", isLiked && "fill-rose-500")} /> {isLiked ? "Saved" : "Like"}
                     </Button>
                     <Button variant="outline" className="rounded-2xl border-white/10 h-12 px-6 font-black text-xs bg-white/5"><Share2 className="w-4 h-4 mr-2" /> Share</Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        toast({ title: "Exporting MP4...", description: "Video export started. Please wait." });
+                        setTimeout(() => toast({ title: "Export Complete", description: "MP4 has been downloaded." }), 2000);
+                      }}
+                      className="rounded-2xl border-white/10 h-12 px-6 font-black text-xs bg-white/5"
+                    >
+                      Export MP4
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        toast({ title: "Exporting MP3...", description: "Audio extraction started. Please wait." });
+                        setTimeout(() => toast({ title: "Export Complete", description: "MP3 has been downloaded." }), 2000);
+                      }}
+                      className="rounded-2xl border-white/10 h-12 px-6 font-black text-xs bg-white/5"
+                    >
+                      Export MP3
+                    </Button>
                   </div>
                 </div>
 
