@@ -14,7 +14,8 @@ export default function ConsolePage() {
     logs,
     addLog,
     clearLogs,
-    setTheme
+    setTheme,
+    setCustomCss
   } = useXakCode();
 
   const [cliInput, setCliInput] = useState("");
@@ -64,11 +65,14 @@ export default function ConsolePage() {
         break;
 
       case "info":
+        const fileCount = Object.keys(projectFiles).length;
+        const totalBytes = Object.values(projectFiles).reduce((acc, code) => acc + (code?.length || 0), 0);
         setTerminalHistory(prev => [
           ...prev,
           `Project Name: ${activeProject?.name || "No active project"}`,
           `Active File:  ${activeFile}`,
-          `Files Count:  ${Object.keys(projectFiles).length} files`,
+          `Files Count:  ${fileCount} files`,
+          `Total Size:   ${(totalBytes / 1024).toFixed(2)} KB`,
           `Date:         ${new Date().toString()}`
         ]);
         break;
@@ -78,25 +82,23 @@ export default function ConsolePage() {
           ...prev,
           `Scanning workspace module files...`,
         ]);
-        setTimeout(() => {
-          let warningsCount = 0;
-          const details: string[] = [];
-          Object.entries(projectFiles).forEach(([name, code]) => {
-            if (code.includes("console.log")) {
-              warningsCount++;
-              details.push(`  [WARNING] ${name}: contains console.log statement`);
-            }
-            if (name.endsWith('.jsx') && !code.includes("export default")) {
-              warningsCount++;
-              details.push(`  [ERROR] ${name}: missing default component export`);
-            }
-          });
-          setTerminalHistory(prev => [
-            ...prev,
-            ...details,
-            `Scan complete. Found ${warningsCount} static syntax alerts.`
-          ]);
-        }, 600);
+        let warningsCount = 0;
+        const details: string[] = [];
+        Object.entries(projectFiles).forEach(([name, code]) => {
+          if (code.includes("console.log")) {
+            warningsCount++;
+            details.push(`  [WARNING] ${name}: contains console.log statement`);
+          }
+          if (name.endsWith('.jsx') && !code.includes("export default")) {
+            warningsCount++;
+            details.push(`  [ERROR] ${name}: missing default component export`);
+          }
+        });
+        setTerminalHistory(prev => [
+          ...prev,
+          ...details,
+          `Scan complete. Found ${warningsCount} static syntax alerts.`
+        ]);
         break;
 
       case "theme":
@@ -117,15 +119,24 @@ export default function ConsolePage() {
       case "test-api":
         const url = args[0] || "https://api.github.com";
         setTerminalHistory(prev => [...prev, `Testing connection latency to API endpoint: ${url}...`]);
-        setTimeout(() => {
-          setTerminalHistory(prev => [
-            ...prev,
-            `  Status: 200 OK`,
-            `  Latency: 142ms`,
-            `  Type: application/json`,
-            `  Payload: Connection diagnostics operational.`
-          ]);
-        }, 800);
+        const start = performance.now();
+        fetch(url)
+          .then(async (res) => {
+            const end = performance.now();
+            const latency = Math.round(end - start);
+            const body = await res.text();
+            const type = res.headers.get("content-type") || "unknown";
+            setTerminalHistory(prev => [
+              ...prev,
+              `  Status: ${res.status} ${res.statusText}`,
+              `  Latency: ${latency}ms`,
+              `  Type: ${type}`,
+              `  Payload Size: ${(body.length / 1024).toFixed(2)} KB`
+            ]);
+          })
+          .catch(err => {
+            setTerminalHistory(prev => [...prev, `  [ERROR] Connection failed: ${err.message}`]);
+          });
         break;
 
       case "inject-css":
@@ -133,6 +144,7 @@ export default function ConsolePage() {
           setTerminalHistory(prev => [...prev, "Usage: inject-css <body { background: red; } ...>"]);
         } else {
           const css = args.join(" ");
+          setCustomCss(css);
           addLog({ type: 'info', text: `Injected custom styles via CLI terminal: ${css}`, timestamp: new Date().toLocaleTimeString() });
           setTerminalHistory(prev => [...prev, "Custom CSS rules compiled and injected into runtime preview."]);
         }

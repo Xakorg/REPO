@@ -99,7 +99,9 @@ export default function WorkspacePage() {
     aiExplanation,
     setAiExplanation,
     aiPromptHistory,
-    handleGenerateCode
+    handleGenerateCode,
+    multiplayerActive,
+    multiplayerLogs
   } = useXakCode();
 
   // Multi-view states
@@ -584,6 +586,19 @@ export default function WorkspacePage() {
 
             {/* Editor Canvas Area */}
             <div className="flex-1 flex overflow-hidden relative">
+              
+              {/* Multiplayer Overlay */}
+              {multiplayerActive && multiplayerLogs.length > 0 && (
+                <div className="absolute top-4 right-6 z-50 pointer-events-none flex flex-col gap-2 items-end">
+                  {multiplayerLogs.slice(0, 3).map((log, i) => (
+                    <div key={i} className="bg-sky-500/20 border border-sky-500/30 text-sky-200 text-[10px] px-3 py-1 rounded-full backdrop-blur-sm animate-fade-in flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse"></span>
+                      {log.replace(/\[.*?\]\s*/, '')}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {activeFile.endsWith('.md') ? (
                 <MarkdownRender text={codeText} />
               ) : (
