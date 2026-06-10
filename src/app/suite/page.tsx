@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { 
-  FileText, 
-  FileSpreadsheet, 
-  Presentation, 
-  FileJson, 
-  Plus, 
-  Layers, 
-  Loader2, 
-  Trash2, 
+import {
+  FileText,
+  FileSpreadsheet,
+  Presentation,
+  FileJson,
+  Plus,
+  Layers,
+  Loader2,
+  Trash2,
   File,
   Bold,
   Italic,
@@ -22,7 +22,7 @@ import {
   ChevronLeft,
   X,
   Play,
-  Printer
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,30 +30,149 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
-import { collection, query, orderBy, limit, serverTimestamp, doc } from "firebase/firestore";
+import {
+  useUser,
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  useDoc,
+  updateDocumentNonBlocking,
+  deleteDocumentNonBlocking,
+  addDocumentNonBlocking,
+} from "@/firebase";
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  serverTimestamp,
+  doc,
+} from "firebase/firestore";
 import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-type SuiteApp = 'write' | 'sheet' | 'slide' | 'form';
+type SuiteApp = "write" | "sheet" | "slide" | "form";
 
 export default function XakteirSuitePage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [activeApp, setActiveApp] = useState<SuiteApp>('write');
+  const [activeApp, setActiveApp] = useState<SuiteApp>("write");
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [embedUrlInput, setEmbedUrlInput] = useState("");
 
-  const writeFeatures = ["Rich text", "Strikethrough", "Highlight", "Text Color", "Background Color", "Superscript", "Subscript", "Code Block", "Blockquote", "Align Left", "Align Center", "Align Right", "Justify", "Ordered List", "Unordered List", "Indent", "Outdent", "Version History", "Math Equations", "Table of Contents", "Find & Replace", "Word Count", "PDF Export", "Paginated View", "Insert Table"];
-  const sheetsFeatures = ["Formulas Parsing", "Charts", "Cell Formatting", "Freezing Rows", "Freezing Columns", "Filter Data", "Sort Ascending", "Sort Descending", "Merge Cells", "Wrap Text", "Number Format", "Conditional Formatting", "Data Validation", "Insert Row Above", "Insert Row Below", "Insert Col Left", "Insert Col Right", "Delete Row", "Delete Col", "Hide Row", "Hide Col", "Protect Sheet", "VLOOKUP", "Pivot Tables", "Macros"];
-  const slidesFeatures = ["Animations", "Laser Pointer", "Slide Master", "Slide Transitions", "Embedded Audio", "Speaker Notes", "Grid View", "Arrange Objects", "Group Objects", "Align Objects", "Background Image", "Aspect Ratio", "Insert Shape", "Insert Chart", "Theme Selector", "Record Presentation", "Rehearse Timings", "Add Comment", "Duplicate Slide", "Hide Slide", "Outline View", "Zoom", "Spell Check", "Auto Save", "Export to Video"];
-  const formsFeatures = ["Drag/Drop Builder", "Conditional Logic", "Pie Charts", "Bar Charts", "Text Input Field", "Multiple Choice Field", "Checkbox Field", "Dropdown Field", "File Upload Field", "Date/Time Field", "Rating Field", "Scale Field", "Section Break", "Required Toggle", "Email Notifications", "Accept Responses Toggle", "Response Limit", "Thank You Message", "Custom Theme Color", "Cover Image", "Shuffle Questions", "Progress Bar", "Quiz Mode", "Point Values", "Export to CSV"];
-
+  const writeFeatures = [
+    "Rich text",
+    "Strikethrough",
+    "Highlight",
+    "Text Color",
+    "Background Color",
+    "Superscript",
+    "Subscript",
+    "Code Block",
+    "Blockquote",
+    "Align Left",
+    "Align Center",
+    "Align Right",
+    "Justify",
+    "Ordered List",
+    "Unordered List",
+    "Indent",
+    "Outdent",
+    "Version History",
+    "Math Equations",
+    "Table of Contents",
+    "Find & Replace",
+    "Word Count",
+    "PDF Export",
+    "Paginated View",
+    "Insert Table",
+  ];
+  const sheetsFeatures = [
+    "Formulas Parsing",
+    "Charts",
+    "Cell Formatting",
+    "Freezing Rows",
+    "Freezing Columns",
+    "Filter Data",
+    "Sort Ascending",
+    "Sort Descending",
+    "Merge Cells",
+    "Wrap Text",
+    "Number Format",
+    "Conditional Formatting",
+    "Data Validation",
+    "Insert Row Above",
+    "Insert Row Below",
+    "Insert Col Left",
+    "Insert Col Right",
+    "Delete Row",
+    "Delete Col",
+    "Hide Row",
+    "Hide Col",
+    "Protect Sheet",
+    "VLOOKUP",
+    "Pivot Tables",
+    "Macros",
+  ];
+  const slidesFeatures = [
+    "Animations",
+    "Laser Pointer",
+    "Slide Master",
+    "Slide Transitions",
+    "Embedded Audio",
+    "Speaker Notes",
+    "Grid View",
+    "Arrange Objects",
+    "Group Objects",
+    "Align Objects",
+    "Background Image",
+    "Aspect Ratio",
+    "Insert Shape",
+    "Insert Chart",
+    "Theme Selector",
+    "Record Presentation",
+    "Rehearse Timings",
+    "Add Comment",
+    "Duplicate Slide",
+    "Hide Slide",
+    "Outline View",
+    "Zoom",
+    "Spell Check",
+    "Auto Save",
+    "Export to Video",
+  ];
+  const formsFeatures = [
+    "Drag/Drop Builder",
+    "Conditional Logic",
+    "Pie Charts",
+    "Bar Charts",
+    "Text Input Field",
+    "Multiple Choice Field",
+    "Checkbox Field",
+    "Dropdown Field",
+    "File Upload Field",
+    "Date/Time Field",
+    "Rating Field",
+    "Scale Field",
+    "Section Break",
+    "Required Toggle",
+    "Email Notifications",
+    "Accept Responses Toggle",
+    "Response Limit",
+    "Thank You Message",
+    "Custom Theme Color",
+    "Cover Image",
+    "Shuffle Questions",
+    "Progress Bar",
+    "Quiz Mode",
+    "Point Values",
+    "Export to CSV",
+  ];
 
   // Slides States
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
@@ -64,7 +183,8 @@ export default function XakteirSuitePage() {
     setMounted(true);
     const fontLink = document.createElement("link");
     fontLink.rel = "stylesheet";
-    fontLink.href = "https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Fira+Code:wght@500&family=Lora:ital,wght@0,500;1,500&family=Outfit:wght@400;900&display=swap";
+    fontLink.href =
+      "https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Fira+Code:wght@500&family=Lora:ital,wght@0,500;1,500&family=Outfit:wght@400;900&display=swap";
     document.head.appendChild(fontLink);
     return () => {
       try {
@@ -81,12 +201,14 @@ export default function XakteirSuitePage() {
       }
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   const getEmbedUrl = (url: string) => {
     if (!url) return "";
-    const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const reg =
+      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = url.match(reg);
     return match ? `https://www.youtube.com/embed/${match[1]}` : url;
   };
@@ -111,7 +233,7 @@ export default function XakteirSuitePage() {
     return query(
       collection(firestore, "users", user.uid, "suite_docs"),
       orderBy("updatedAt", "desc"),
-      limit(100)
+      limit(100),
     );
   }, [firestore, user]);
 
@@ -134,16 +256,31 @@ export default function XakteirSuitePage() {
   const handleCreateDoc = async () => {
     if (!user || !firestore) return;
     try {
-      const defaultContent = activeApp === 'slide' ? JSON.stringify([
-        { id: "1", title: "Welcome Slide", subtitle: "Designed in Xakteir Suite", content: "Double-click a slide layout options to begin.", layout: "title" }
-      ]) : "";
+      const defaultContent =
+        activeApp === "slide"
+          ? JSON.stringify([
+              {
+                id: "1",
+                title: "Welcome Slide",
+                subtitle: "Designed in Xakteir Suite",
+                content: "Double-click a slide layout options to begin.",
+                layout: "title",
+              },
+            ])
+          : "";
 
-      const newDoc = await addDocumentNonBlocking(collection(firestore, "users", user.uid, "suite_docs"), {
-        title: activeApp === 'slide' ? "Untitled Presentation" : "Untitled Document",
-        content: defaultContent,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
+      const newDoc = await addDocumentNonBlocking(
+        collection(firestore, "users", user.uid, "suite_docs"),
+        {
+          title:
+            activeApp === "slide"
+              ? "Untitled Presentation"
+              : "Untitled Document",
+          content: defaultContent,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
+      );
       if (newDoc) setSelectedDocId(newDoc.id);
       toast({ title: "Document created" });
     } catch (e) {
@@ -156,17 +293,22 @@ export default function XakteirSuitePage() {
     setIsSaving(true);
     updateDocumentNonBlocking(activeDocRef, {
       content,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     });
     setTimeout(() => setIsSaving(false), 500);
   };
 
-  const handleUpdateStyle = (styleFields: { fontFamily?: string; fontSize?: string; margins?: string; embeds?: string[] }) => {
+  const handleUpdateStyle = (styleFields: {
+    fontFamily?: string;
+    fontSize?: string;
+    margins?: string;
+    embeds?: string[];
+  }) => {
     if (!activeDocRef) return;
     setIsSaving(true);
     updateDocumentNonBlocking(activeDocRef, {
       ...styleFields,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     });
     setTimeout(() => setIsSaving(false), 500);
   };
@@ -175,30 +317,39 @@ export default function XakteirSuitePage() {
     if (!activeDocRef) return;
     updateDocumentNonBlocking(activeDocRef, {
       title,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     });
   };
 
   const handleDeleteDoc = async (id: string) => {
     if (!user || !firestore) return;
-    deleteDocumentNonBlocking(doc(firestore, "users", user.uid, "suite_docs", id));
+    deleteDocumentNonBlocking(
+      doc(firestore, "users", user.uid, "suite_docs", id),
+    );
     if (selectedDocId === id) setSelectedDocId(null);
     toast({ title: "Document deleted" });
   };
 
-  const filteredDocs = myDocs?.filter(d => 
-    d.title.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  const filteredDocs =
+    myDocs?.filter((d) =>
+      d.title.toLowerCase().includes(searchQuery.toLowerCase()),
+    ) || [];
 
   // Parse active slides JSON content
   const parsedSlides = useMemo(() => {
-    if (!activeDoc || activeApp !== 'slide') return [];
+    if (!activeDoc || activeApp !== "slide") return [];
     try {
       const data = JSON.parse(activeDoc.content);
       if (Array.isArray(data)) return data;
     } catch (e) {}
     return [
-      { id: "1", title: "Welcome Slide", subtitle: "Designed in Xakteir Suite", content: "Double-click a slide layout options to begin.", layout: "title" }
+      {
+        id: "1",
+        title: "Welcome Slide",
+        subtitle: "Designed in Xakteir Suite",
+        content: "Double-click a slide layout options to begin.",
+        layout: "title",
+      },
     ];
   }, [activeDoc, activeApp]);
 
@@ -213,7 +364,13 @@ export default function XakteirSuitePage() {
   };
 
   const addSlide = () => {
-    const newSlide = { id: Date.now().toString(), title: "New Slide", subtitle: "Subtitle", content: "Details...", layout: "content" };
+    const newSlide = {
+      id: Date.now().toString(),
+      title: "New Slide",
+      subtitle: "Subtitle",
+      content: "Details...",
+      layout: "content",
+    };
     const updated = [...parsedSlides, newSlide];
     handleUpdateSlides(updated);
     setActiveSlideIndex(updated.length - 1);
@@ -230,16 +387,16 @@ export default function XakteirSuitePage() {
   useEffect(() => {
     if (!isPresenting) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === 'Space') {
-        setActiveSlideIndex(p => Math.min(parsedSlides.length - 1, p + 1));
-      } else if (e.key === 'ArrowLeft') {
-        setActiveSlideIndex(p => Math.max(0, p - 1));
-      } else if (e.key === 'Escape') {
+      if (e.key === "ArrowRight" || e.key === "Space") {
+        setActiveSlideIndex((p) => Math.min(parsedSlides.length - 1, p + 1));
+      } else if (e.key === "ArrowLeft") {
+        setActiveSlideIndex((p) => Math.max(0, p - 1));
+      } else if (e.key === "Escape") {
         stopPresenting();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isPresenting, parsedSlides.length]);
 
   if (!mounted) return null;
@@ -250,13 +407,18 @@ export default function XakteirSuitePage() {
         <section className="flex-1 flex flex-col items-center justify-center text-center px-6 relative overflow-hidden py-32">
           <div className="absolute inset-0 arcade-grid opacity-10" />
           <div className="relative z-10 space-y-12 max-w-5xl">
-            <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5 px-6 py-2 rounded-full font-black uppercase tracking-widest text-xs">
+            <Badge
+              variant="outline"
+              className="border-primary/20 text-primary bg-primary/5 px-6 py-2 rounded-full font-black uppercase tracking-widest text-xs"
+            >
               Professional Suite
             </Badge>
             <div className="space-y-6">
               <h1 className="text-6xl md:text-[8rem] font-black tracking-tighter uppercase italic leading-[0.9] text-white">
                 Work <br />
-                <span className="text-primary flex items-center justify-center gap-4">Better</span>
+                <span className="text-primary flex items-center justify-center gap-4">
+                  Better
+                </span>
               </h1>
               <p className="text-xl md:text-3xl text-muted-foreground font-bold uppercase tracking-widest max-w-3xl mx-auto italic opacity-60">
                 A simple and powerful space for all your documents.
@@ -283,24 +445,28 @@ export default function XakteirSuitePage() {
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
               <Layers className="w-6 h-6 text-white" />
             </div>
-            <h2 className="text-xl font-black text-white uppercase italic tracking-tighter leading-none">Suite</h2>
+            <h2 className="text-xl font-black text-white uppercase italic tracking-tighter leading-none">
+              Suite
+            </h2>
           </div>
           <nav className="flex bg-black/40 p-1 rounded-xl border border-white/10 ml-4">
             {[
-              { id: 'write', icon: FileText, label: 'Write' },
-              { id: 'sheet', icon: FileSpreadsheet, label: 'Sheets' },
-              { id: 'slide', icon: Presentation, label: 'Slides' },
-              { id: 'form', icon: FileJson, label: 'Forms' },
-            ].map(app => (
-              <button 
-                key={app.id} 
+              { id: "write", icon: FileText, label: "Write" },
+              { id: "sheet", icon: FileSpreadsheet, label: "Sheets" },
+              { id: "slide", icon: Presentation, label: "Slides" },
+              { id: "form", icon: FileJson, label: "Forms" },
+            ].map((app) => (
+              <button
+                key={app.id}
                 onClick={() => {
                   setActiveApp(app.id as SuiteApp);
                   setSelectedDocId(null);
                 }}
                 className={cn(
                   "px-5 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-3",
-                  activeApp === app.id ? "bg-primary text-white shadow-xl" : "text-muted-foreground hover:bg-white/5"
+                  activeApp === app.id
+                    ? "bg-primary text-white shadow-xl"
+                    : "text-muted-foreground hover:bg-white/5",
                 )}
               >
                 <app.icon className="w-3.5 h-3.5" />
@@ -312,13 +478,25 @@ export default function XakteirSuitePage() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-[10px] font-black text-white/40 uppercase tracking-widest">
             {isSaving ? (
-              <><Loader2 className="w-3 h-3 animate-spin" /> Saving...</>
+              <>
+                <Loader2 className="w-3 h-3 animate-spin" /> Saving...
+              </>
             ) : (
-              <><Save className="w-3 h-3" /> Last saved: {activeDoc?.updatedAt ? new Date(activeDoc.updatedAt.seconds * 1000).toLocaleTimeString() : '...'} </>
+              <>
+                <Save className="w-3 h-3" /> Last saved:{" "}
+                {activeDoc?.updatedAt
+                  ? new Date(
+                      activeDoc.updatedAt.seconds * 1000,
+                    ).toLocaleTimeString()
+                  : "..."}{" "}
+              </>
             )}
           </div>
-          <Button onClick={handleCreateDoc} className="bg-primary hover:bg-primary/90 h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest text-white shadow-xl">
-             <Plus className="w-4 h-4 mr-2" /> New Document
+          <Button
+            onClick={handleCreateDoc}
+            className="bg-primary hover:bg-primary/90 h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest text-white shadow-xl"
+          >
+            <Plus className="w-4 h-4 mr-2" /> New Document
           </Button>
         </div>
       </header>
@@ -328,43 +506,64 @@ export default function XakteirSuitePage() {
         <aside className="w-72 border-r border-white/5 bg-zinc-950 flex flex-col z-10 shadow-2xl shrink-0">
           <div className="p-6 border-b border-white/5 bg-white/5 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-white italic">Directory</h3>
-              <Badge variant="outline" className="text-[8px] border-white/10 text-primary">{myDocs?.length || 0}</Badge>
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-white italic">
+                Directory
+              </h3>
+              <Badge
+                variant="outline"
+                className="text-[8px] border-white/10 text-primary"
+              >
+                {myDocs?.length || 0}
+              </Badge>
             </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-              <Input 
+              <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search documents..." 
-                className="h-8 bg-black/40 border-white/5 pl-8 text-[10px] font-bold text-white" 
+                placeholder="Search documents..."
+                className="h-8 bg-black/40 border-white/5 pl-8 text-[10px] font-bold text-white"
               />
             </div>
           </div>
           <ScrollArea className="flex-1">
             <div className="p-4 space-y-2">
               {loadingDocs ? (
-                <div className="py-10 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary opacity-20" /></div>
+                <div className="py-10 flex justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary opacity-20" />
+                </div>
               ) : filteredDocs.length === 0 ? (
-                <div className="py-10 text-center text-[10px] font-black uppercase text-white/20 italic">No items found</div>
+                <div className="py-10 text-center text-[10px] font-black uppercase text-white/20 italic">
+                  No items found
+                </div>
               ) : (
-                filteredDocs.map(d => (
-                  <div 
-                    key={d.id} 
+                filteredDocs.map((d) => (
+                  <div
+                    key={d.id}
                     onClick={() => {
                       setSelectedDocId(d.id);
                       setActiveSlideIndex(0);
                     }}
                     className={cn(
                       "p-4 rounded-2xl flex items-center justify-between group cursor-pointer transition-all border-2",
-                      selectedDocId === d.id ? "bg-primary/10 border-primary/20 text-primary shadow-lg" : "bg-white/5 border-transparent text-muted-foreground hover:bg-white/10"
+                      selectedDocId === d.id
+                        ? "bg-primary/10 border-primary/20 text-primary shadow-lg"
+                        : "bg-white/5 border-transparent text-muted-foreground hover:bg-white/10",
                     )}
                   >
                     <div className="flex items-center gap-3 truncate">
                       <File className="w-4 h-4 shrink-0" />
-                      <span className="text-[11px] font-black uppercase truncate italic">{d.title}</span>
+                      <span className="text-[11px] font-black uppercase truncate italic">
+                        {d.title}
+                      </span>
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); handleDeleteDoc(d.id); }} className="opacity-0 group-hover:opacity-100 text-rose-500 hover:text-rose-400 transition-all p-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteDoc(d.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-rose-500 hover:text-rose-400 transition-all p-1"
+                    >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -378,30 +577,56 @@ export default function XakteirSuitePage() {
         <main className="flex-1 bg-[#0a0a1f] flex flex-col relative overflow-hidden">
           <div className="absolute inset-0 arcade-grid opacity-5 pointer-events-none" />
           {activeApp === "write" && (
-            {/* WRITE FEATURES TOOLBAR */}
             <div className="h-12 border-b border-white/5 bg-zinc-900/30 flex items-center px-6 gap-2 z-20 overflow-x-auto no-print custom-scrollbar shrink-0">
               {writeFeatures.map((f, i) => (
-                <Button key={i} onClick={() => toast({ title: `Write Feature: ${f}` })} variant="ghost" className="h-8 px-3 text-[9px] font-black uppercase text-zinc-400 hover:text-white hover:bg-white/5 whitespace-nowrap shrink-0 border border-white/5 rounded-lg">
+                <Button
+                  key={i}
+                  onClick={() => toast({ title: `Write Feature: ${f}` })}
+                  variant="ghost"
+                  className="h-8 px-3 text-[9px] font-black uppercase text-zinc-400 hover:text-white hover:bg-white/5 whitespace-nowrap shrink-0 border border-white/5 rounded-lg"
+                >
                   {f}
                 </Button>
               ))}
             </div>
-)}
-          
-          {activeApp === 'write' && (
+          )}
+
+          {activeApp === "write" && (
             <div className="h-12 border-b border-white/5 bg-zinc-900/50 flex items-center px-6 gap-4 z-20 overflow-x-auto no-print">
               <div className="flex items-center gap-1 pr-4 border-r border-white/10 shrink-0">
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5 text-white"><Bold className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5 text-white"><Italic className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5 text-white"><Underline className="w-4 h-4" /></Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-lg hover:bg-white/5 text-white"
+                >
+                  <Bold className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-lg hover:bg-white/5 text-white"
+                >
+                  <Italic className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-lg hover:bg-white/5 text-white"
+                >
+                  <Underline className="w-4 h-4" />
+                </Button>
               </div>
-              
+
               {/* Font Family selector */}
               <div className="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0">
-                <span className="text-[8px] font-black uppercase text-zinc-500">Font:</span>
+                <span className="text-[8px] font-black uppercase text-zinc-500">
+                  Font:
+                </span>
                 <select
                   value={activeDoc?.fontFamily || "Inter"}
-                  onChange={(e) => handleUpdateStyle({ fontFamily: e.target.value })}
+                  onChange={(e) =>
+                    handleUpdateStyle({ fontFamily: e.target.value })
+                  }
                   className="bg-zinc-900 border border-white/10 rounded-lg text-[10px] font-bold p-1 text-white outline-none"
                 >
                   <option value="Inter">Inter (Sans)</option>
@@ -416,10 +641,14 @@ export default function XakteirSuitePage() {
 
               {/* Font Size selector */}
               <div className="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0">
-                <span className="text-[8px] font-black uppercase text-zinc-500">Size:</span>
+                <span className="text-[8px] font-black uppercase text-zinc-500">
+                  Size:
+                </span>
                 <select
                   value={activeDoc?.fontSize || "16px"}
-                  onChange={(e) => handleUpdateStyle({ fontSize: e.target.value })}
+                  onChange={(e) =>
+                    handleUpdateStyle({ fontSize: e.target.value })
+                  }
                   className="bg-zinc-900 border border-white/10 rounded-lg text-[10px] font-bold p-1 text-white outline-none"
                 >
                   <option value="12px">12px</option>
@@ -435,10 +664,14 @@ export default function XakteirSuitePage() {
 
               {/* Margins selector */}
               <div className="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0">
-                <span className="text-[8px] font-black uppercase text-zinc-500">Margins:</span>
+                <span className="text-[8px] font-black uppercase text-zinc-500">
+                  Margins:
+                </span>
                 <select
                   value={activeDoc?.margins || "1in"}
-                  onChange={(e) => handleUpdateStyle({ margins: e.target.value })}
+                  onChange={(e) =>
+                    handleUpdateStyle({ margins: e.target.value })
+                  }
                   className="bg-zinc-900 border border-white/10 rounded-lg text-[10px] font-bold p-1 text-white outline-none"
                 >
                   <option value="0in">No Margin</option>
@@ -450,7 +683,9 @@ export default function XakteirSuitePage() {
 
               {/* Web Embed form */}
               <div className="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0">
-                <span className="text-[8px] font-black uppercase text-zinc-500">Embed:</span>
+                <span className="text-[8px] font-black uppercase text-zinc-500">
+                  Embed:
+                </span>
                 <Input
                   placeholder="Paste URL (video/website)..."
                   value={embedUrlInput}
@@ -461,7 +696,9 @@ export default function XakteirSuitePage() {
                   onClick={() => {
                     if (!embedUrlInput.trim()) return;
                     const currentEmbeds = activeDoc?.embeds || [];
-                    handleUpdateStyle({ embeds: [...currentEmbeds, embedUrlInput.trim()] });
+                    handleUpdateStyle({
+                      embeds: [...currentEmbeds, embedUrlInput.trim()],
+                    });
                     setEmbedUrlInput("");
                     toast({ title: "Media Embedded!" });
                   }}
@@ -482,7 +719,9 @@ export default function XakteirSuitePage() {
           )}
 
           <div className="flex-1 overflow-y-auto custom-scrollbar flex justify-center p-8 print-no-padding">
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style
+              dangerouslySetInnerHTML={{
+                __html: `
               @media print {
                 body, html, #__next, [data-reactroot] {
                   background: white !important;
@@ -554,29 +793,38 @@ export default function XakteirSuitePage() {
                   background: transparent !important;
                 }
               }
-            `}} />
-            <Card className={cn(
-              "card-root-print w-full max-w-5xl rounded-[3.5rem] border-4 border-white/10 shadow-2xl min-h-[650px] relative transition-all duration-700 flex flex-col overflow-hidden",
-              activeApp === 'sheet' || activeApp === 'slide' ? "bg-zinc-950 text-white" : "bg-white text-zinc-900 shadow-[0_50px_100px_rgba(0,0,0,0.4)]"
-            )}>
+            `,
+              }}
+            />
+            <Card
+              className={cn(
+                "card-root-print w-full max-w-5xl rounded-[3.5rem] border-4 border-white/10 shadow-2xl min-h-[650px] relative transition-all duration-700 flex flex-col overflow-hidden",
+                activeApp === "sheet" || activeApp === "slide"
+                  ? "bg-zinc-950 text-white"
+                  : "bg-white text-zinc-900 shadow-[0_50px_100px_rgba(0,0,0,0.4)]",
+              )}
+            >
               {/* WRITE DOCS APP */}
-              {activeApp === 'write' && (
-                <div id="print-area" className="flex-1 flex flex-col p-12 md:p-20 space-y-10 animate-in fade-in slide-in-from-bottom-4">
+              {activeApp === "write" && (
+                <div
+                  id="print-area"
+                  className="flex-1 flex flex-col p-12 md:p-20 space-y-10 animate-in fade-in slide-in-from-bottom-4"
+                >
                   {activeDoc ? (
                     <>
-                      <Input 
+                      <Input
                         value={activeDoc.title}
                         onChange={(e) => handleUpdateTitle(e.target.value)}
-                        placeholder="Untitled Document" 
+                        placeholder="Untitled Document"
                         className="print-title bg-transparent border-none text-4xl md:text-6xl font-black uppercase italic p-0 h-auto focus-visible:ring-0 text-current tracking-tighter"
                       />
                       <div className="h-1 bg-zinc-100 rounded-full w-full no-print" />
-                      
+
                       <div className="flex-1 flex flex-col relative">
-                        <textarea 
+                        <textarea
                           value={activeDoc.content || ""}
                           onChange={(e) => handleUpdateContent(e.target.value)}
-                          placeholder="Start typing..." 
+                          placeholder="Start typing..."
                           className="print-content flex-1 bg-transparent border-none outline-none resize-none custom-scrollbar text-current"
                           style={{
                             fontFamily: activeDoc.fontFamily || "Inter",
@@ -585,11 +833,11 @@ export default function XakteirSuitePage() {
                             lineHeight: "1.6",
                             width: "100%",
                             height: "100%",
-                            minHeight: "400px"
+                            minHeight: "400px",
                           }}
                         />
                         {/* Hidden except during printing, mirrors textarea content */}
-                        <div 
+                        <div
                           className="print-only-block font-medium italic"
                           style={{
                             display: "none",
@@ -598,7 +846,7 @@ export default function XakteirSuitePage() {
                             padding: activeDoc.margins || "0.5in",
                             lineHeight: "1.6",
                             whiteSpace: "pre-wrap",
-                            wordBreak: "break-word"
+                            wordBreak: "break-word",
                           }}
                         >
                           {activeDoc.content || ""}
@@ -608,33 +856,49 @@ export default function XakteirSuitePage() {
                       {/* Embeds container */}
                       {activeDoc.embeds && activeDoc.embeds.length > 0 && (
                         <div className="space-y-4 pt-6 border-t border-zinc-100 no-print">
-                          <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Embedded Websites & Videos</h4>
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                            Embedded Websites & Videos
+                          </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {activeDoc.embeds.map((emb: string, idx: number) => {
-                              const isYoutube = emb.includes("youtube.com") || emb.includes("youtu.be");
-                              let embedUrl = emb;
-                              if (isYoutube) {
-                                const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-                                const match = emb.match(reg);
-                                if (match) {
-                                  embedUrl = `https://www.youtube.com/embed/${match[1]}`;
+                            {activeDoc.embeds.map(
+                              (emb: string, idx: number) => {
+                                const isYoutube =
+                                  emb.includes("youtube.com") ||
+                                  emb.includes("youtu.be");
+                                let embedUrl = emb;
+                                if (isYoutube) {
+                                  const reg =
+                                    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+                                  const match = emb.match(reg);
+                                  if (match) {
+                                    embedUrl = `https://www.youtube.com/embed/${match[1]}`;
+                                  }
                                 }
-                              }
-                              return (
-                                <div key={idx} className="relative group rounded-2xl overflow-hidden border border-zinc-200 aspect-video shadow-md">
-                                  <iframe src={embedUrl} className="w-full h-full border-none bg-white" allowFullScreen />
-                                  <button
-                                    onClick={() => {
-                                      const updated = activeDoc.embeds.filter((_: any, i: number) => i !== idx);
-                                      handleUpdateStyle({ embeds: updated });
-                                    }}
-                                    className="absolute top-2 right-2 bg-rose-600 hover:bg-rose-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="relative group rounded-2xl overflow-hidden border border-zinc-200 aspect-video shadow-md"
                                   >
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              );
-                            })}
+                                    <iframe
+                                      src={embedUrl}
+                                      className="w-full h-full border-none bg-white"
+                                      allowFullScreen
+                                    />
+                                    <button
+                                      onClick={() => {
+                                        const updated = activeDoc.embeds.filter(
+                                          (_: any, i: number) => i !== idx,
+                                        );
+                                        handleUpdateStyle({ embeds: updated });
+                                      }}
+                                      className="absolute top-2 right-2 bg-rose-600 hover:bg-rose-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                );
+                              },
+                            )}
                           </div>
                         </div>
                       )}
@@ -642,24 +906,44 @@ export default function XakteirSuitePage() {
                   ) : (
                     <div className="flex-1 flex flex-col items-center justify-center opacity-10">
                       <FileText className="w-32 h-32 mb-8" />
-                      <h2 className="text-4xl font-black uppercase italic tracking-tighter text-center">Select a document</h2>
-                      <Button onClick={handleCreateDoc} variant="link" className="text-current font-black uppercase mt-4">Create New Page</Button>
+                      <h2 className="text-4xl font-black uppercase italic tracking-tighter text-center">
+                        Select a document
+                      </h2>
+                      <Button
+                        onClick={handleCreateDoc}
+                        variant="link"
+                        className="text-current font-black uppercase mt-4"
+                      >
+                        Create New Page
+                      </Button>
                     </div>
                   )}
                 </div>
               )}
-              
+
               {/* SHEETS APP */}
-              {activeApp === 'sheet' && (
+              {activeApp === "sheet" && (
                 <div className="flex-1 flex flex-col p-10 text-white animate-in fade-in slide-in-from-bottom-4">
                   <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-4xl font-black italic uppercase tracking-tighter leading-none">Sheets</h1>
-                    <Badge variant="outline" className="border-white/10 text-[8px] font-black">ACTIVE</Badge>
+                    <h1 className="text-4xl font-black italic uppercase tracking-tighter leading-none">
+                      Sheets
+                    </h1>
+                    <Badge
+                      variant="outline"
+                      className="border-white/10 text-[8px] font-black"
+                    >
+                      ACTIVE
+                    </Badge>
                   </div>
-                  
+
                   <div className="h-14 border border-white/5 bg-zinc-900/30 rounded-xl mb-4 flex items-center px-4 gap-2 overflow-x-auto custom-scrollbar shrink-0">
                     {sheetsFeatures.map((f, i) => (
-                      <Button key={i} onClick={() => toast({ title: `Sheets Feature: ${f}` })} variant="ghost" className="h-8 px-3 text-[9px] font-black uppercase text-zinc-400 hover:text-white hover:bg-white/5 whitespace-nowrap shrink-0 border border-white/5 rounded-lg">
+                      <Button
+                        key={i}
+                        onClick={() => toast({ title: `Sheets Feature: ${f}` })}
+                        variant="ghost"
+                        className="h-8 px-3 text-[9px] font-black uppercase text-zinc-400 hover:text-white hover:bg-white/5 whitespace-nowrap shrink-0 border border-white/5 rounded-lg"
+                      >
                         {f}
                       </Button>
                     ))}
@@ -667,16 +951,21 @@ export default function XakteirSuitePage() {
 
                   <div className="grid grid-cols-10 gap-0.5 bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-inner">
                     <div className="contents">
-                      <div className="h-8 bg-zinc-900 border-b border-white/10 flex items-center justify-center text-[10px] font-black opacity-40">#</div>
+                      <div className="h-8 bg-zinc-900 border-b border-white/10 flex items-center justify-center text-[10px] font-black opacity-40">
+                        #
+                      </div>
                       {Array.from({ length: 9 }).map((_, i) => (
-                        <div key={i} className="h-8 bg-zinc-900 border-b border-r border-white/10 flex items-center justify-center text-[10px] font-black opacity-40">
+                        <div
+                          key={i}
+                          className="h-8 bg-zinc-900 border-b border-r border-white/10 flex items-center justify-center text-[10px] font-black opacity-40"
+                        >
                           {String.fromCharCode(65 + i)}
                         </div>
                       ))}
                     </div>
                     {Array.from({ length: 150 }).map((_, i) => (
-                      <div 
-                        key={i} 
+                      <div
+                        key={i}
                         className="aspect-[4/1] bg-black/20 border-b border-r border-white/5 hover:bg-primary/10 transition-colors cursor-text flex items-center px-4"
                       />
                     ))}
@@ -685,33 +974,49 @@ export default function XakteirSuitePage() {
               )}
 
               {/* SLIDES APP */}
-              {activeApp === 'slide' && (
-                activeDoc ? (
+              {activeApp === "slide" &&
+                (activeDoc ? (
                   <div className="flex-1 flex flex-col md:flex-row overflow-hidden h-full min-h-[650px] bg-[#0e0e18]">
-                    
                     {/* Slides Thumbnails rail */}
                     <div className="w-48 border-r border-white/5 bg-black/45 flex flex-col p-4 space-y-3 shrink-0 overflow-y-auto">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Slides</span>
-                        <Button onClick={addSlide} size="icon" className="h-6 w-6 bg-primary rounded-md text-black hover:bg-primary/95"><Plus className="w-3.5 h-3.5" /></Button>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                          Slides
+                        </span>
+                        <Button
+                          onClick={addSlide}
+                          size="icon"
+                          className="h-6 w-6 bg-primary rounded-md text-black hover:bg-primary/95"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                       <div className="space-y-2">
                         {parsedSlides.map((slide: any, index: number) => (
-                          <div 
+                          <div
                             key={slide.id || index}
                             onClick={() => setActiveSlideIndex(index)}
                             className={cn(
                               "p-3 rounded-xl border cursor-pointer relative group/thumb transition-all text-left",
-                              activeSlideIndex === index ? "bg-primary/20 border-primary text-white" : "bg-white/5 border-transparent text-muted-foreground hover:bg-white/10 hover:text-white"
+                              activeSlideIndex === index
+                                ? "bg-primary/20 border-primary text-white"
+                                : "bg-white/5 border-transparent text-muted-foreground hover:bg-white/10 hover:text-white",
                             )}
                           >
-                            <span className="text-[8px] font-bold block mb-1 text-white/40">Slide {index + 1}</span>
-                            <span className="text-[10px] font-black uppercase truncate block">{slide.title || "Untitled"}</span>
-                            
+                            <span className="text-[8px] font-bold block mb-1 text-white/40">
+                              Slide {index + 1}
+                            </span>
+                            <span className="text-[10px] font-black uppercase truncate block">
+                              {slide.title || "Untitled"}
+                            </span>
+
                             {/* Slide delete */}
                             {parsedSlides.length > 1 && (
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); deleteSlide(index); }}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteSlide(index);
+                                }}
                                 className="absolute top-2 right-2 opacity-0 group-hover/thumb:opacity-100 hover:text-rose-500 text-white/40 transition-opacity"
                               >
                                 <Trash2 className="w-3 h-3" />
@@ -726,10 +1031,17 @@ export default function XakteirSuitePage() {
                     <div className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto">
                       <div className="flex items-center justify-between border-b border-white/5 pb-4">
                         <div className="flex items-center gap-3">
-                          <label className="text-[9px] font-black uppercase text-white/40">Layout:</label>
-                          <select 
-                            value={parsedSlides[activeSlideIndex]?.layout || 'content'}
-                            onChange={(e) => updateCurrentSlide({ layout: e.target.value })}
+                          <label className="text-[9px] font-black uppercase text-white/40">
+                            Layout:
+                          </label>
+                          <select
+                            value={
+                              parsedSlides[activeSlideIndex]?.layout ||
+                              "content"
+                            }
+                            onChange={(e) =>
+                              updateCurrentSlide({ layout: e.target.value })
+                            }
                             className="bg-zinc-900 border border-white/10 rounded-lg text-[10px] font-black uppercase p-1.5 text-white outline-none"
                           >
                             <option value="title">Title Slide</option>
@@ -740,15 +1052,27 @@ export default function XakteirSuitePage() {
                             <option value="website">Embed Website</option>
                           </select>
                         </div>
-                        <Button onClick={startPresenting} className="h-8 px-4 bg-primary text-black rounded-lg text-[9px] font-black uppercase tracking-widest"><Play className="w-3.5 h-3.5 mr-1.5" /> Present</Button>
+                        <Button
+                          onClick={startPresenting}
+                          className="h-8 px-4 bg-primary text-black rounded-lg text-[9px] font-black uppercase tracking-widest"
+                        >
+                          <Play className="w-3.5 h-3.5 mr-1.5" /> Present
+                        </Button>
                       </div>
 
                       {/* Canvas (Visual Preview of current slide) */}
-                      
+
                       {/* SLIDES FEATURES TOOLBAR */}
                       <div className="h-14 border border-white/5 bg-zinc-900/30 rounded-xl flex items-center px-4 gap-2 overflow-x-auto custom-scrollbar shrink-0 mb-4">
                         {slidesFeatures.map((f, i) => (
-                          <Button key={i} onClick={() => toast({ title: `Slides Feature: ${f}` })} variant="ghost" className="h-8 px-3 text-[9px] font-black uppercase text-zinc-400 hover:text-white hover:bg-white/5 whitespace-nowrap shrink-0 border border-white/5 rounded-lg">
+                          <Button
+                            key={i}
+                            onClick={() =>
+                              toast({ title: `Slides Feature: ${f}` })
+                            }
+                            variant="ghost"
+                            className="h-8 px-3 text-[9px] font-black uppercase text-zinc-400 hover:text-white hover:bg-white/5 whitespace-nowrap shrink-0 border border-white/5 rounded-lg"
+                          >
                             {f}
                           </Button>
                         ))}
@@ -756,68 +1080,104 @@ export default function XakteirSuitePage() {
 
                       <div className="aspect-[16/9] w-full rounded-2xl bg-zinc-950 border border-white/5 flex flex-col p-8 md:p-12 relative justify-center text-center overflow-hidden">
                         <div className="absolute inset-0 arcade-grid opacity-10" />
-                        
-                        {parsedSlides[activeSlideIndex]?.layout === 'title' && (
+
+                        {parsedSlides[activeSlideIndex]?.layout === "title" && (
                           <div className="space-y-4 relative z-10 text-center">
-                            <h1 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">{parsedSlides[activeSlideIndex]?.title || "Untitled Slide"}</h1>
-                            <p className="text-sm md:text-lg italic text-primary/80 font-medium">{parsedSlides[activeSlideIndex]?.subtitle || "Subtitle"}</p>
+                            <h1 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">
+                              {parsedSlides[activeSlideIndex]?.title ||
+                                "Untitled Slide"}
+                            </h1>
+                            <p className="text-sm md:text-lg italic text-primary/80 font-medium">
+                              {parsedSlides[activeSlideIndex]?.subtitle ||
+                                "Subtitle"}
+                            </p>
                           </div>
                         )}
 
-                        {parsedSlides[activeSlideIndex]?.layout === 'content' && (
+                        {parsedSlides[activeSlideIndex]?.layout ===
+                          "content" && (
                           <div className="space-y-4 text-left h-full flex flex-col justify-start relative z-10">
-                            <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white border-b border-white/10 pb-3">{parsedSlides[activeSlideIndex]?.title || "Untitled Slide"}</h2>
-                            <p className="text-sm md:text-base italic text-white/80 leading-relaxed font-medium mt-4 whitespace-pre-wrap">{parsedSlides[activeSlideIndex]?.content || "Details text..."}</p>
+                            <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white border-b border-white/10 pb-3">
+                              {parsedSlides[activeSlideIndex]?.title ||
+                                "Untitled Slide"}
+                            </h2>
+                            <p className="text-sm md:text-base italic text-white/80 leading-relaxed font-medium mt-4 whitespace-pre-wrap">
+                              {parsedSlides[activeSlideIndex]?.content ||
+                                "Details text..."}
+                            </p>
                           </div>
                         )}
 
-                        {parsedSlides[activeSlideIndex]?.layout === 'split' && (
+                        {parsedSlides[activeSlideIndex]?.layout === "split" && (
                           <div className="space-y-4 text-left h-full flex flex-col justify-start relative z-10">
-                            <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white border-b border-white/10 pb-3">{parsedSlides[activeSlideIndex]?.title || "Untitled Slide"}</h2>
+                            <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white border-b border-white/10 pb-3">
+                              {parsedSlides[activeSlideIndex]?.title ||
+                                "Untitled Slide"}
+                            </h2>
                             <div className="grid grid-cols-2 gap-6 mt-4 flex-1">
-                              <p className="text-xs md:text-sm italic text-white/70 leading-relaxed whitespace-pre-wrap">{parsedSlides[activeSlideIndex]?.content || "Left column text..."}</p>
-                              <p className="text-xs md:text-sm italic text-white/50 border-l border-white/5 pl-4 leading-relaxed whitespace-pre-wrap">{parsedSlides[activeSlideIndex]?.splitText || "Right column text..."}</p>
+                              <p className="text-xs md:text-sm italic text-white/70 leading-relaxed whitespace-pre-wrap">
+                                {parsedSlides[activeSlideIndex]?.content ||
+                                  "Left column text..."}
+                              </p>
+                              <p className="text-xs md:text-sm italic text-white/50 border-l border-white/5 pl-4 leading-relaxed whitespace-pre-wrap">
+                                {parsedSlides[activeSlideIndex]?.splitText ||
+                                  "Right column text..."}
+                              </p>
                             </div>
                           </div>
                         )}
 
-                        {parsedSlides[activeSlideIndex]?.layout === 'image' && (
+                        {parsedSlides[activeSlideIndex]?.layout === "image" && (
                           <div className="h-full w-full flex flex-col relative z-10">
                             {parsedSlides[activeSlideIndex]?.imageUrl ? (
-                              <img src={parsedSlides[activeSlideIndex].imageUrl} className="absolute inset-0 w-full h-full object-cover rounded-xl opacity-60" />
+                              <img
+                                src={parsedSlides[activeSlideIndex].imageUrl}
+                                className="absolute inset-0 w-full h-full object-cover rounded-xl opacity-60"
+                              />
                             ) : (
-                              <div className="absolute inset-0 bg-white/5 rounded-xl border border-dashed border-white/10 flex items-center justify-center text-xs text-white/30 uppercase font-black">No Image URL Set</div>
+                              <div className="absolute inset-0 bg-white/5 rounded-xl border border-dashed border-white/10 flex items-center justify-center text-xs text-white/30 uppercase font-black">
+                                No Image URL Set
+                              </div>
                             )}
                             <div className="absolute bottom-4 left-4 bg-black/85 p-3 rounded-lg border border-white/5 max-w-sm">
-                              <h3 className="text-xs font-black uppercase text-white truncate">{parsedSlides[activeSlideIndex]?.title}</h3>
+                              <h3 className="text-xs font-black uppercase text-white truncate">
+                                {parsedSlides[activeSlideIndex]?.title}
+                              </h3>
                             </div>
                           </div>
                         )}
 
-                        {parsedSlides[activeSlideIndex]?.layout === 'video' && (
+                        {parsedSlides[activeSlideIndex]?.layout === "video" && (
                           <div className="h-full w-full flex flex-col relative z-10">
                             {parsedSlides[activeSlideIndex]?.videoUrl ? (
-                              <iframe 
-                                src={getEmbedUrl(parsedSlides[activeSlideIndex].videoUrl)} 
-                                className="absolute inset-0 w-full h-full rounded-xl border-none bg-black" 
+                              <iframe
+                                src={getEmbedUrl(
+                                  parsedSlides[activeSlideIndex].videoUrl,
+                                )}
+                                className="absolute inset-0 w-full h-full rounded-xl border-none bg-black"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
                               />
                             ) : (
-                              <div className="absolute inset-0 bg-white/5 rounded-xl border border-dashed border-white/10 flex items-center justify-center text-xs text-white/30 uppercase font-black">No Video URL Set</div>
+                              <div className="absolute inset-0 bg-white/5 rounded-xl border border-dashed border-white/10 flex items-center justify-center text-xs text-white/30 uppercase font-black">
+                                No Video URL Set
+                              </div>
                             )}
                           </div>
                         )}
 
-                        {parsedSlides[activeSlideIndex]?.layout === 'website' && (
+                        {parsedSlides[activeSlideIndex]?.layout ===
+                          "website" && (
                           <div className="h-full w-full flex flex-col relative z-10">
                             {parsedSlides[activeSlideIndex]?.websiteUrl ? (
-                              <iframe 
-                                src={parsedSlides[activeSlideIndex].websiteUrl} 
+                              <iframe
+                                src={parsedSlides[activeSlideIndex].websiteUrl}
                                 className="absolute inset-0 w-full h-full rounded-xl bg-white border-none"
                               />
                             ) : (
-                              <div className="absolute inset-0 bg-white/5 rounded-xl border border-dashed border-white/10 flex items-center justify-center text-xs text-white/30 uppercase font-black">No Website URL Set</div>
+                              <div className="absolute inset-0 bg-white/5 rounded-xl border border-dashed border-white/10 flex items-center justify-center text-xs text-white/30 uppercase font-black">
+                                No Website URL Set
+                              </div>
                             )}
                           </div>
                         )}
@@ -827,79 +1187,141 @@ export default function XakteirSuitePage() {
                       <div className="bg-white/5 border border-white/5 p-5 rounded-2xl space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <label className="text-[8px] font-black uppercase text-white/40 ml-2">Slide Title</label>
-                            <Input 
-                              value={parsedSlides[activeSlideIndex]?.title || ''} 
-                              onChange={(e) => updateCurrentSlide({ title: e.target.value })} 
-                              placeholder="Slide Title" 
-                              className="bg-black/40 border-white/15 text-xs text-white font-bold" 
+                            <label className="text-[8px] font-black uppercase text-white/40 ml-2">
+                              Slide Title
+                            </label>
+                            <Input
+                              value={
+                                parsedSlides[activeSlideIndex]?.title || ""
+                              }
+                              onChange={(e) =>
+                                updateCurrentSlide({ title: e.target.value })
+                              }
+                              placeholder="Slide Title"
+                              className="bg-black/40 border-white/15 text-xs text-white font-bold"
                             />
                           </div>
-                          {parsedSlides[activeSlideIndex]?.layout === 'title' ? (
+                          {parsedSlides[activeSlideIndex]?.layout ===
+                          "title" ? (
                             <div className="space-y-1">
-                              <label className="text-[8px] font-black uppercase text-white/40 ml-2">Slide Subtitle</label>
-                              <Input 
-                                value={parsedSlides[activeSlideIndex]?.subtitle || ''} 
-                                onChange={(e) => updateCurrentSlide({ subtitle: e.target.value })} 
-                                placeholder="Subtitle" 
-                                className="bg-black/40 border-white/15 text-xs text-white font-bold" 
+                              <label className="text-[8px] font-black uppercase text-white/40 ml-2">
+                                Slide Subtitle
+                              </label>
+                              <Input
+                                value={
+                                  parsedSlides[activeSlideIndex]?.subtitle || ""
+                                }
+                                onChange={(e) =>
+                                  updateCurrentSlide({
+                                    subtitle: e.target.value,
+                                  })
+                                }
+                                placeholder="Subtitle"
+                                className="bg-black/40 border-white/15 text-xs text-white font-bold"
                               />
                             </div>
-                          ) : parsedSlides[activeSlideIndex]?.layout === 'image' ? (
+                          ) : parsedSlides[activeSlideIndex]?.layout ===
+                            "image" ? (
                             <div className="space-y-1">
-                              <label className="text-[8px] font-black uppercase text-white/40 ml-2">Image URL</label>
-                              <Input 
-                                value={parsedSlides[activeSlideIndex]?.imageUrl || ''} 
-                                onChange={(e) => updateCurrentSlide({ imageUrl: e.target.value })} 
-                                placeholder="https://example.com/image.jpg" 
-                                className="bg-black/40 border-white/15 text-xs text-white font-bold" 
+                              <label className="text-[8px] font-black uppercase text-white/40 ml-2">
+                                Image URL
+                              </label>
+                              <Input
+                                value={
+                                  parsedSlides[activeSlideIndex]?.imageUrl || ""
+                                }
+                                onChange={(e) =>
+                                  updateCurrentSlide({
+                                    imageUrl: e.target.value,
+                                  })
+                                }
+                                placeholder="https://example.com/image.jpg"
+                                className="bg-black/40 border-white/15 text-xs text-white font-bold"
                               />
                             </div>
-                          ) : parsedSlides[activeSlideIndex]?.layout === 'video' ? (
+                          ) : parsedSlides[activeSlideIndex]?.layout ===
+                            "video" ? (
                             <div className="space-y-1">
-                              <label className="text-[8px] font-black uppercase text-white/40 ml-2">YouTube Video URL</label>
-                              <Input 
-                                value={parsedSlides[activeSlideIndex]?.videoUrl || ''} 
-                                onChange={(e) => updateCurrentSlide({ videoUrl: e.target.value })} 
-                                placeholder="https://www.youtube.com/watch?v=..." 
-                                className="bg-black/40 border-white/15 text-xs text-white font-bold" 
+                              <label className="text-[8px] font-black uppercase text-white/40 ml-2">
+                                YouTube Video URL
+                              </label>
+                              <Input
+                                value={
+                                  parsedSlides[activeSlideIndex]?.videoUrl || ""
+                                }
+                                onChange={(e) =>
+                                  updateCurrentSlide({
+                                    videoUrl: e.target.value,
+                                  })
+                                }
+                                placeholder="https://www.youtube.com/watch?v=..."
+                                className="bg-black/40 border-white/15 text-xs text-white font-bold"
                               />
                             </div>
-                          ) : parsedSlides[activeSlideIndex]?.layout === 'website' ? (
+                          ) : parsedSlides[activeSlideIndex]?.layout ===
+                            "website" ? (
                             <div className="space-y-1">
-                              <label className="text-[8px] font-black uppercase text-white/40 ml-2">Website URL</label>
-                              <Input 
-                                value={parsedSlides[activeSlideIndex]?.websiteUrl || ''} 
-                                onChange={(e) => updateCurrentSlide({ websiteUrl: e.target.value })} 
-                                placeholder="https://example.com" 
-                                className="bg-black/40 border-white/15 text-xs text-white font-bold" 
+                              <label className="text-[8px] font-black uppercase text-white/40 ml-2">
+                                Website URL
+                              </label>
+                              <Input
+                                value={
+                                  parsedSlides[activeSlideIndex]?.websiteUrl ||
+                                  ""
+                                }
+                                onChange={(e) =>
+                                  updateCurrentSlide({
+                                    websiteUrl: e.target.value,
+                                  })
+                                }
+                                placeholder="https://example.com"
+                                className="bg-black/40 border-white/15 text-xs text-white font-bold"
                               />
                             </div>
                           ) : null}
                         </div>
 
-                        {parsedSlides[activeSlideIndex]?.layout !== 'title' && parsedSlides[activeSlideIndex]?.layout !== 'image' && (
+                        {parsedSlides[activeSlideIndex]?.layout !== "title" &&
+                          parsedSlides[activeSlideIndex]?.layout !==
+                            "image" && (
+                            <div className="space-y-1">
+                              <label className="text-[8px] font-black uppercase text-white/40 ml-2">
+                                {parsedSlides[activeSlideIndex]?.layout ===
+                                "split"
+                                  ? "Left Column Text"
+                                  : "Content Body Text"}
+                              </label>
+                              <textarea
+                                value={
+                                  parsedSlides[activeSlideIndex]?.content || ""
+                                }
+                                onChange={(e) =>
+                                  updateCurrentSlide({
+                                    content: e.target.value,
+                                  })
+                                }
+                                placeholder="Type slide text contents..."
+                                className="w-full bg-black/40 border border-white/15 rounded-lg text-xs p-3 text-white font-bold outline-none focus:border-primary min-h-[80px] resize-none"
+                              />
+                            </div>
+                          )}
+
+                        {parsedSlides[activeSlideIndex]?.layout === "split" && (
                           <div className="space-y-1">
                             <label className="text-[8px] font-black uppercase text-white/40 ml-2">
-                              {parsedSlides[activeSlideIndex]?.layout === 'split' ? 'Left Column Text' : 'Content Body Text'}
+                              Right Column Text
                             </label>
-                            <textarea 
-                              value={parsedSlides[activeSlideIndex]?.content || ''} 
-                              onChange={(e) => updateCurrentSlide({ content: e.target.value })} 
-                              placeholder="Type slide text contents..." 
-                              className="w-full bg-black/40 border border-white/15 rounded-lg text-xs p-3 text-white font-bold outline-none focus:border-primary min-h-[80px] resize-none" 
-                            />
-                          </div>
-                        )}
-
-                        {parsedSlides[activeSlideIndex]?.layout === 'split' && (
-                          <div className="space-y-1">
-                            <label className="text-[8px] font-black uppercase text-white/40 ml-2">Right Column Text</label>
-                            <textarea 
-                              value={parsedSlides[activeSlideIndex]?.splitText || ''} 
-                              onChange={(e) => updateCurrentSlide({ splitText: e.target.value })} 
-                              placeholder="Type right column text contents..." 
-                              className="w-full bg-black/40 border border-white/15 rounded-lg text-xs p-3 text-white font-bold outline-none focus:border-primary min-h-[80px] resize-none" 
+                            <textarea
+                              value={
+                                parsedSlides[activeSlideIndex]?.splitText || ""
+                              }
+                              onChange={(e) =>
+                                updateCurrentSlide({
+                                  splitText: e.target.value,
+                                })
+                              }
+                              placeholder="Type right column text contents..."
+                              className="w-full bg-black/40 border border-white/15 rounded-lg text-xs p-3 text-white font-bold outline-none focus:border-primary min-h-[80px] resize-none"
                             />
                           </div>
                         )}
@@ -909,22 +1331,34 @@ export default function XakteirSuitePage() {
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center opacity-10 text-white p-20">
                     <Presentation className="w-32 h-32 mb-8 animate-pulse" />
-                    <h2 className="text-4xl font-black uppercase italic tracking-tighter text-center">Select or create a deck</h2>
-                    <Button onClick={handleCreateDoc} variant="link" className="text-current font-black uppercase mt-4 text-primary">Create New Slide Deck</Button>
+                    <h2 className="text-4xl font-black uppercase italic tracking-tighter text-center">
+                      Select or create a deck
+                    </h2>
+                    <Button
+                      onClick={handleCreateDoc}
+                      variant="link"
+                      className="text-current font-black uppercase mt-4 text-primary"
+                    >
+                      Create New Slide Deck
+                    </Button>
                   </div>
-                )
-              )}
+                ))}
 
-              
               {/* FORMS APP */}
-              {activeApp === 'form' && (
+              {activeApp === "form" && (
                 <div className="flex-1 flex flex-col md:flex-row h-full min-h-[650px] bg-[#0a0a1f] animate-in fade-in slide-in-from-bottom-4 rounded-[3.5rem] overflow-hidden">
-                  
                   {/* Forms Toolbar Sidebar */}
                   <div className="w-64 border-r border-white/5 bg-zinc-950 p-4 overflow-y-auto shrink-0 flex flex-col gap-2 custom-scrollbar">
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-2 px-2">Form Elements & Tools</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-2 px-2">
+                      Form Elements & Tools
+                    </h3>
                     {formsFeatures.map((f, i) => (
-                      <Button key={i} onClick={() => toast({ title: `Forms Feature: ${f}` })} variant="ghost" className="w-full justify-start h-9 px-3 text-[9px] font-black uppercase text-zinc-400 hover:text-white hover:bg-white/5 border border-white/5 rounded-lg text-left">
+                      <Button
+                        key={i}
+                        onClick={() => toast({ title: `Forms Feature: ${f}` })}
+                        variant="ghost"
+                        className="w-full justify-start h-9 px-3 text-[9px] font-black uppercase text-zinc-400 hover:text-white hover:bg-white/5 border border-white/5 rounded-lg text-left"
+                      >
                         + {f}
                       </Button>
                     ))}
@@ -934,22 +1368,35 @@ export default function XakteirSuitePage() {
                   <div className="flex-1 p-10 overflow-y-auto custom-scrollbar flex flex-col items-center">
                     <div className="w-full max-w-2xl space-y-6">
                       <div className="bg-white text-zinc-900 p-8 rounded-2xl shadow-xl border-t-8 border-primary space-y-4">
-                        <h1 className="text-4xl font-black italic uppercase tracking-tighter">Untitled Form</h1>
-                        <p className="text-sm font-bold text-zinc-500">Form description goes here...</p>
+                        <h1 className="text-4xl font-black italic uppercase tracking-tighter">
+                          Untitled Form
+                        </h1>
+                        <p className="text-sm font-bold text-zinc-500">
+                          Form description goes here...
+                        </p>
                       </div>
-                      
+
                       <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
-                        <Input placeholder="Question Title" className="bg-transparent border-none text-xl font-bold text-white focus-visible:ring-0 px-0 h-auto" />
+                        <Input
+                          placeholder="Question Title"
+                          className="bg-transparent border-none text-xl font-bold text-white focus-visible:ring-0 px-0 h-auto"
+                        />
                         <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-zinc-400"><div className="w-4 h-4 rounded-full border-2 border-zinc-500" /> <span className="text-sm font-bold">Option 1</span></div>
-                          <div className="flex items-center gap-2 text-zinc-400"><div className="w-4 h-4 rounded-full border-2 border-zinc-500" /> <span className="text-sm font-bold">Option 2</span></div>
+                          <div className="flex items-center gap-2 text-zinc-400">
+                            <div className="w-4 h-4 rounded-full border-2 border-zinc-500" />{" "}
+                            <span className="text-sm font-bold">Option 1</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-zinc-400">
+                            <div className="w-4 h-4 rounded-full border-2 border-zinc-500" />{" "}
+                            <span className="text-sm font-bold">Option 2</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
-</Card>
+            </Card>
           </div>
         </main>
       </div>
@@ -958,11 +1405,11 @@ export default function XakteirSuitePage() {
       {isPresenting && (
         <div className="fixed inset-0 z-[9999] bg-[#07070d] text-white flex flex-col justify-center items-center p-10 select-none animate-in fade-in">
           <div className="absolute inset-0 arcade-grid opacity-10 pointer-events-none" />
-          
-          <Button 
-            onClick={stopPresenting} 
-            variant="ghost" 
-            size="icon" 
+
+          <Button
+            onClick={stopPresenting}
+            variant="ghost"
+            size="icon"
             className="absolute top-6 right-6 h-12 w-12 rounded-full bg-white/5 text-white hover:bg-rose-600 hover:text-white transition-all z-[999]"
           >
             <X className="w-5 h-5" />
@@ -970,67 +1417,93 @@ export default function XakteirSuitePage() {
 
           {/* Slide Body Canvas */}
           <div className="max-w-6xl w-full aspect-[16/9] flex flex-col justify-center text-center p-12 md:p-20 relative">
-            {parsedSlides[activeSlideIndex]?.layout === 'title' && (
+            {parsedSlides[activeSlideIndex]?.layout === "title" && (
               <div className="space-y-6 text-center animate-in zoom-in-95 duration-500">
-                <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter text-white leading-none">{parsedSlides[activeSlideIndex]?.title || "Untitled Slide"}</h1>
-                <p className="text-lg md:text-2xl italic text-primary font-medium">{parsedSlides[activeSlideIndex]?.subtitle || "Subtitle"}</p>
+                <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter text-white leading-none">
+                  {parsedSlides[activeSlideIndex]?.title || "Untitled Slide"}
+                </h1>
+                <p className="text-lg md:text-2xl italic text-primary font-medium">
+                  {parsedSlides[activeSlideIndex]?.subtitle || "Subtitle"}
+                </p>
               </div>
             )}
 
-            {parsedSlides[activeSlideIndex]?.layout === 'content' && (
+            {parsedSlides[activeSlideIndex]?.layout === "content" && (
               <div className="space-y-6 text-left h-full flex flex-col justify-start animate-in fade-in duration-500">
-                <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white border-b border-white/10 pb-4">{parsedSlides[activeSlideIndex]?.title || "Untitled Slide"}</h2>
-                <p className="text-base md:text-xl italic text-white/95 leading-relaxed font-medium mt-6 whitespace-pre-wrap">{parsedSlides[activeSlideIndex]?.content || "Details..."}</p>
+                <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white border-b border-white/10 pb-4">
+                  {parsedSlides[activeSlideIndex]?.title || "Untitled Slide"}
+                </h2>
+                <p className="text-base md:text-xl italic text-white/95 leading-relaxed font-medium mt-6 whitespace-pre-wrap">
+                  {parsedSlides[activeSlideIndex]?.content || "Details..."}
+                </p>
               </div>
             )}
 
-            {parsedSlides[activeSlideIndex]?.layout === 'split' && (
+            {parsedSlides[activeSlideIndex]?.layout === "split" && (
               <div className="space-y-6 text-left h-full flex flex-col justify-start animate-in fade-in duration-500">
-                <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white border-b border-white/10 pb-4">{parsedSlides[activeSlideIndex]?.title || "Untitled Slide"}</h2>
+                <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white border-b border-white/10 pb-4">
+                  {parsedSlides[activeSlideIndex]?.title || "Untitled Slide"}
+                </h2>
                 <div className="grid grid-cols-2 gap-10 mt-6 flex-1">
-                  <p className="text-sm md:text-lg italic text-white/80 leading-relaxed whitespace-pre-wrap">{parsedSlides[activeSlideIndex]?.content || "Left text..."}</p>
-                  <p className="text-sm md:text-lg italic text-white/60 border-l border-white/5 pl-6 leading-relaxed whitespace-pre-wrap">{parsedSlides[activeSlideIndex]?.splitText || "Right text..."}</p>
+                  <p className="text-sm md:text-lg italic text-white/80 leading-relaxed whitespace-pre-wrap">
+                    {parsedSlides[activeSlideIndex]?.content || "Left text..."}
+                  </p>
+                  <p className="text-sm md:text-lg italic text-white/60 border-l border-white/5 pl-6 leading-relaxed whitespace-pre-wrap">
+                    {parsedSlides[activeSlideIndex]?.splitText ||
+                      "Right text..."}
+                  </p>
                 </div>
               </div>
             )}
 
-            {parsedSlides[activeSlideIndex]?.layout === 'image' && (
+            {parsedSlides[activeSlideIndex]?.layout === "image" && (
               <div className="h-full w-full flex flex-col relative animate-in zoom-in-95 duration-500">
                 {parsedSlides[activeSlideIndex]?.imageUrl ? (
-                  <img src={parsedSlides[activeSlideIndex].imageUrl} className="absolute inset-0 w-full h-full object-contain rounded-2xl" />
+                  <img
+                    src={parsedSlides[activeSlideIndex].imageUrl}
+                    className="absolute inset-0 w-full h-full object-contain rounded-2xl"
+                  />
                 ) : (
-                  <div className="absolute inset-0 bg-white/5 rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-sm text-white/30 uppercase font-black">No Image URL Set</div>
+                  <div className="absolute inset-0 bg-white/5 rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-sm text-white/30 uppercase font-black">
+                    No Image URL Set
+                  </div>
                 )}
                 <div className="absolute bottom-6 left-6 bg-black/90 p-4 rounded-xl border border-white/5 max-w-md">
-                  <h3 className="text-base font-black uppercase text-white truncate">{parsedSlides[activeSlideIndex]?.title}</h3>
+                  <h3 className="text-base font-black uppercase text-white truncate">
+                    {parsedSlides[activeSlideIndex]?.title}
+                  </h3>
                 </div>
               </div>
             )}
 
-            {parsedSlides[activeSlideIndex]?.layout === 'video' && (
+            {parsedSlides[activeSlideIndex]?.layout === "video" && (
               <div className="h-full w-full flex flex-col relative animate-in zoom-in-95 duration-500">
                 {parsedSlides[activeSlideIndex]?.videoUrl ? (
-                  <iframe 
-                    src={getEmbedUrl(parsedSlides[activeSlideIndex].videoUrl)} 
-                    className="absolute inset-0 w-full h-full rounded-2xl border-none bg-black" 
+                  <iframe
+                    src={getEmbedUrl(parsedSlides[activeSlideIndex].videoUrl)}
+                    className="absolute inset-0 w-full h-full rounded-2xl border-none bg-black"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-white/5 rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-sm text-white/30 uppercase font-black">No Video URL Set</div>
+                  <div className="absolute inset-0 bg-white/5 rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-sm text-white/30 uppercase font-black">
+                    No Video URL Set
+                  </div>
                 )}
               </div>
             )}
 
-            {parsedSlides[activeSlideIndex]?.layout === 'website' && (
+            {parsedSlides[activeSlideIndex]?.layout === "website" && (
               <div className="h-full w-full flex flex-col relative animate-in zoom-in-95 duration-500">
                 {parsedSlides[activeSlideIndex]?.websiteUrl ? (
-                  <iframe 
-                    src={parsedSlides[activeSlideIndex].websiteUrl} 
+                  <iframe
+                    src={parsedSlides[activeSlideIndex].websiteUrl}
                     className="absolute inset-0 w-full h-full rounded-2xl bg-white border-none"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-white/5 rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-sm text-white/30 uppercase font-black">No Website URL Set</div>
+                  <div className="absolute inset-0 bg-white/5 rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-sm text-white/30 uppercase font-black">
+                    No Website URL Set
+                  </div>
                 )}
               </div>
             )}
@@ -1038,19 +1511,25 @@ export default function XakteirSuitePage() {
 
           {/* Controls Dock */}
           <div className="absolute bottom-10 bg-black/60 backdrop-blur-xl px-6 py-3 rounded-full border border-white/10 flex items-center gap-6">
-            <Button 
-              onClick={() => setActiveSlideIndex(p => Math.max(0, p - 1))} 
-              disabled={activeSlideIndex === 0} 
-              variant="ghost" 
+            <Button
+              onClick={() => setActiveSlideIndex((p) => Math.max(0, p - 1))}
+              disabled={activeSlideIndex === 0}
+              variant="ghost"
               className="text-white hover:text-primary disabled:opacity-20"
             >
               Prev
             </Button>
-            <span className="text-xs font-black uppercase tracking-widest text-white/60">Slide {activeSlideIndex + 1} of {parsedSlides.length}</span>
-            <Button 
-              onClick={() => setActiveSlideIndex(p => Math.min(parsedSlides.length - 1, p + 1))} 
-              disabled={activeSlideIndex === parsedSlides.length - 1} 
-              variant="ghost" 
+            <span className="text-xs font-black uppercase tracking-widest text-white/60">
+              Slide {activeSlideIndex + 1} of {parsedSlides.length}
+            </span>
+            <Button
+              onClick={() =>
+                setActiveSlideIndex((p) =>
+                  Math.min(parsedSlides.length - 1, p + 1),
+                )
+              }
+              disabled={activeSlideIndex === parsedSlides.length - 1}
+              variant="ghost"
               className="text-white hover:text-primary disabled:opacity-20"
             >
               Next
