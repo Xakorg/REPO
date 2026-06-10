@@ -37,7 +37,8 @@ import {
   Wrench,
   Crown,
   Calendar,
-  Play
+  Play,
+  ChevronDown
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -230,135 +231,12 @@ function ArcadeHubContent() {
   };
 
   return (
-    <div className="space-y-16 animate-fade-in py-12 max-w-[1800px] mx-auto px-8 text-foreground pb-40">
-      <header className="flex flex-col md:flex-row justify-between items-end gap-10 border-b-4 border-white/5 pb-16">
-        <div className="space-y-6">
-          <div className="flex items-center gap-8">
-            <div className="w-20 h-20 rounded-[2rem] bg-primary/10 flex items-center justify-center border-4 border-primary/20 shadow-2xl">
-               <Gamepad2 className="w-10 h-10 text-primary" />
-            </div>
-            <div>
-               <h1 className="text-8xl font-black tracking-tighter uppercase italic leading-none drop-shadow-2xl text-white">Games</h1>
-               <p className="text-xl font-bold uppercase tracking-[0.4em] text-primary/60 italic mt-4">Working Platform App</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-6 w-full md:w-auto">
-          {/* Global Settings Toggles */}
-          <div className="hidden xl:flex items-center gap-2 mr-4 bg-white/5 p-2 rounded-[2rem] border border-white/10">
-            <Button variant="ghost" size="icon" onClick={() => setVoiceChatEnabled(!voiceChatEnabled)} className={cn("rounded-full transition-all", voiceChatEnabled ? "text-green-400 bg-green-400/20" : "text-muted-foreground hover:bg-white/10")} title="In-Game Voice Chat">
-              {voiceChatEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setControllerEnabled(!controllerEnabled)} className={cn("rounded-full transition-all", controllerEnabled ? "text-primary bg-primary/20" : "text-muted-foreground hover:bg-white/10")} title="Controller API Support">
-              <Gamepad2 className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setLowBandwidth(!lowBandwidth)} className={cn("rounded-full transition-all", lowBandwidth ? "text-yellow-400 bg-yellow-400/20" : "text-muted-foreground hover:bg-white/10")} title="Low Bandwidth Mode">
-              <Activity className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setFullScreen(!fullScreen)} className={cn("rounded-full transition-all", fullScreen ? "text-blue-400 bg-blue-400/20" : "text-muted-foreground hover:bg-white/10")} title="Immersive Full-Screen">
-              <Monitor className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setRetroCore(!retroCore)} className={cn("rounded-full transition-all", retroCore ? "text-rose-400 bg-rose-400/20" : "text-muted-foreground hover:bg-white/10")} title="Retro Emulation Core">
-              <Save className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setDevConsole(!devConsole)} className={cn("rounded-full transition-all", devConsole ? "text-cyan-400 bg-cyan-400/20" : "text-muted-foreground hover:bg-white/10")} title="Developer Console">
-              <Wrench className="w-5 h-5" />
-            </Button>
-          </div>
-
-          <div className="relative flex-1 md:w-[400px] group">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground group-focus-within:text-primary transition-all duration-500" />
-            <Input 
-              value={search} 
-              onChange={(e) => setSearch(e.target.value)} 
-              placeholder="Find a game..." 
-              className="bg-card/40 backdrop-blur-3xl border-4 border-white/10 h-20 rounded-[2.5rem] pl-16 pr-8 text-xl font-bold italic shadow-inner focus:ring-primary uppercase text-white" 
-            />
-          </div>
-          <Link href="/games/studio">
-            <Button className="bg-primary hover:bg-primary/90 h-20 px-12 rounded-[2.2rem] font-black uppercase text-xl italic tracking-widest shadow-2xl text-white border-b-8 border-primary/20 active:border-b-0 transition-all border-none">STUDIO</Button>
-          </Link>
-        </div>
+    <div className="min-h-screen bg-[#f9f9f9] text-[#575e75] font-sans">
+      {/* Green Header */}
+      <header className="h-14 bg-[#4cb715] flex items-center justify-center relative shadow-sm">
+        <h1 className="text-3xl font-black text-white tracking-wide">Explore</h1>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-        <main className="lg:col-span-8 space-y-16">
-          
-          {/* Continue Playing Quick Resume */}
-          {filteredGames.length > 0 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-black uppercase italic tracking-widest text-white flex items-center gap-3">
-                <PlaySquare className="w-6 h-6 text-primary" /> Continue Playing
-              </h2>
-              <Card onClick={() => setSelectedLobbyGame(filteredGames[0])} className="glass-card group cursor-pointer hover:bg-white/5 transition-all duration-500 rounded-[3rem] overflow-hidden border-4 border-white/10 bg-zinc-950/40 p-6 flex flex-col md:flex-row items-center gap-8 shadow-2xl">
-                 <div className="w-32 h-32 rounded-[2rem] bg-black/60 flex items-center justify-center relative overflow-hidden shrink-0 border-2 border-white/10">
-                   {React.createElement(filteredGames[0].icon, { className: cn("w-16 h-16", filteredGames[0].color) })}
-                   <div className="absolute inset-0 arcade-grid opacity-20" />
-                 </div>
-                 <div className="flex-1 space-y-4 text-center md:text-left">
-                   <div className="flex items-center justify-center md:justify-start gap-3">
-                     <h3 className="text-4xl font-black text-white uppercase italic">{filteredGames[0].name}</h3>
-                     <Badge className="bg-primary/20 text-primary border-none">Quick Resume</Badge>
-                   </div>
-                   <div className="flex items-center justify-center md:justify-start gap-6 text-sm font-bold text-muted-foreground uppercase">
-                     <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-amber-500" /> {filteredGames[0].playtime}h Playtime</span>
-                     <span className="flex items-center gap-2"><Save className="w-4 h-4 text-emerald-500" /> Cloud Synced</span>
-                   </div>
-                 </div>
-                 <Button className="h-20 px-10 bg-primary hover:bg-primary/90 rounded-[2rem] font-black uppercase text-lg tracking-widest text-white shadow-2xl border-none flex items-center gap-2">
-                   <Play className="w-6 h-6 fill-current" /> Resume
-                 </Button>
-              </Card>
-            </div>
-          )}
-
-          {/* AI Recommendation Engine */}
-          <div className="space-y-6">
-            <h2 className="text-2xl font-black uppercase italic tracking-widest text-white flex items-center gap-3">
-              <Sparkles className="w-6 h-6 text-amber-400" /> AI Recommended For You
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-               {filteredGames.slice(1, 4).map(game => (
-                 <Card key={`rec-${game.id}`} onClick={() => setSelectedLobbyGame(game)} className="glass-card cursor-pointer hover:border-primary/50 transition-all rounded-[2.5rem] p-6 border-2 border-white/10 bg-black/40 flex flex-col items-center text-center gap-4 relative group">
-                   <div className="absolute top-4 right-4">
-                     <StarIcon className="w-4 h-4 text-amber-400 fill-amber-400" />
-                     <span className="text-xs font-bold text-amber-400 ml-1">{game.rating}</span>
-                   </div>
-                   <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
-                     <game.icon className={cn("w-8 h-8", game.color)} />
-                   </div>
-                   <h4 className="text-lg font-black text-white uppercase italic">{game.name}</h4>
-                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Match: 98%</span>
-                 </Card>
-               ))}
-            </div>
-          </div>
-
-          <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide">
-            {CATEGORIES.map(cat => (
-              <button 
-                key={cat} 
-                onClick={() => setActiveCategory(cat)} 
-                className={cn(
-                  "rounded-[2rem] px-12 h-16 font-black text-xs uppercase tracking-widest transition-all border-4 shadow-xl whitespace-nowrap", 
-                  activeCategory === cat ? "bg-primary border-white/20 text-white scale-105" : "border-white/5 bg-card/40 text-muted-foreground hover:text-white"
-                )}
-              >
-                {cat === "Favorites" && <Heart className="w-4 h-4 inline-block mr-2" />}
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            {filteredGames.map(game => (
-              <Card 
-                key={game.id} 
-                onClick={() => {
-                  if ((game as any).isExternalConsole) {
-                    setSelectedConsoleGame(game);
-                    setIsConsoleModalOpen(true);
                   } else {
                     setSelectedLobbyGame(game);
                   }

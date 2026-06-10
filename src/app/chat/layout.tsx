@@ -131,6 +131,12 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   const [rolePermissions, setRolePermissions] = useState<string[]>(["sendMessages"]);
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
 
+  // Global Settings states
+  const [showGlobalSettingsModal, setShowGlobalSettingsModal] = useState(false);
+  const [notificationPref, setNotificationPref] = useState("all");
+  const [selectedNotificationServers, setSelectedNotificationServers] = useState<string[]>([]);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
   // Profile modal and search states
   const [selectedProfileUser, setSelectedProfileUser] = useState<any>(null);
   const [memberSearch, setMemberSearch] = useState("");
@@ -1386,16 +1392,19 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         {/* Footer with online presence dot */}
         <footer className="p-4 bg-black/40 border-t border-white/5 flex items-center justify-between shrink-0">
            <div className="flex items-center gap-3">
-              <div className="relative">
+              <div className="relative cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowGlobalSettingsModal(true)}>
                 <Avatar className="w-9 h-9 border border-white/10"><AvatarImage src={user.photoURL || ""} /><AvatarFallback>{user.displayName?.[0] || 'U'}</AvatarFallback></Avatar>
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0a0a15] rounded-full" />
               </div>
-              <div className="text-left">
+              <div className="text-left cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowGlobalSettingsModal(true)}>
                 <p className="text-[10px] font-black italic">{user.displayName}</p>
                 <p className="text-[8px] text-emerald-400 font-bold">{userData?.statusEmoji || '💬'} {userData?.statusText || 'Online'}</p>
               </div>
            </div>
            <div className="flex gap-1 items-center">
+              <button onClick={() => setShowGlobalSettingsModal(true)} className="p-1.5 rounded-lg text-white/40 hover:text-white transition-colors" title="User Settings">
+                <Settings className="w-3.5 h-3.5" />
+              </button>
               <button 
                 onMouseDown={() => setIsMuted(false)} 
                 onMouseUp={() => setIsMuted(true)} 
