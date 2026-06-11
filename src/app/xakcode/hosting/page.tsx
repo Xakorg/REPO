@@ -29,7 +29,8 @@ export default function HostingPage() {
     checkNameservers,
     customDomain,
     setCustomDomain,
-    handleCustomDomain,
+    handleAddDomain,
+    handleRemoveDomain,
     verifyDNS,
     isVerifyingDNS,
     handleAddDnsRecord,
@@ -50,6 +51,12 @@ export default function HostingPage() {
   };
 
   const isDelegated = liveNameservers.includes('ns1.xakteir.com');
+  const domains = activeProject?.deployment?.domains || [];
+  // Migrate on the fly if customDomain string exists but domains array doesn't
+  if (activeProject?.deployment?.customDomain && !domains.includes(activeProject.deployment.customDomain)) {
+    domains.push(activeProject.deployment.customDomain);
+  }
+  const hasCustomDomains = domains.some((d: string) => !d.endsWith('.code.xakteir.com'));
 
   return (
     <div className="flex-1 overflow-y-auto bg-zinc-950/20 p-6 text-left">
@@ -64,9 +71,9 @@ export default function HostingPage() {
         {/* 1. Target Custom Domain setup */}
         <section className="bg-zinc-900/40 border border-white/5 rounded-2.5xl p-6 space-y-4">
           <div className="flex items-center gap-2 text-sky-400 font-bold uppercase text-xs tracking-widest">
-            <Globe className="w-4.5 h-4.5" /> 1. Configure Target Custom Domain
+            <Globe className="w-4.5 h-4.5" /> 1. Connected Domains
           </div>
-          <p className="text-[10px] text-white/40 italic font-medium leading-normal">Enter the web address you want your application to serve from. Save to generate challenges.</p>
+          <p className="text-[10px] text-white/40 italic font-medium leading-normal">Your project automatically receives a free subdomain. You can add additional custom domains below.</p>
           
           <div className="flex gap-2 max-w-md">
             <Input 
@@ -75,18 +82,35 @@ export default function HostingPage() {
               placeholder="e.g. app.myportfolio.com" 
               className="bg-black border-white/10 h-10 text-xs font-bold text-white focus:border-sky-500" 
             />
-            <Button onClick={handleCustomDomain} disabled={!customDomain.trim()} className="bg-sky-600 hover:bg-sky-500 rounded-xl h-10 px-5 font-black uppercase text-[10px] text-white shrink-0">Save Domain</Button>
+            <Button onClick={handleAddDomain} disabled={!customDomain.trim()} className="bg-sky-600 hover:bg-sky-500 rounded-xl h-10 px-5 font-black uppercase text-[10px] text-white shrink-0">Add Domain</Button>
           </div>
 
-          {activeProject?.deployment?.customDomain && (
-            <div className="bg-sky-500/5 border border-sky-500/10 rounded-xl p-3 text-[10px] font-mono flex items-center justify-between text-sky-300">
-              <span>Active Target: <strong className="text-white">{activeProject.deployment.customDomain}</strong></span>
-              <Badge variant="outline" className="border-sky-500/30 text-sky-400 text-[8px] font-mono">{activeProject.deployment.isVerified ? "VERIFIED" : "VERIFICATION PENDING"}</Badge>
+          {domains.length > 0 && (
+            <div className="flex flex-col gap-2 mt-4">
+              {domains.map((domain: string) => {
+                const isDefault = domain.endsWith('.code.xakteir.com');
+                return (
+                  <div key={domain} className="bg-sky-500/5 border border-sky-500/10 rounded-xl p-3 text-[10px] font-mono flex items-center justify-between text-sky-300">
+                    <span className="flex items-center gap-2">
+                      <strong className="text-white">{domain}</strong>
+                      {isDefault && <Badge variant="outline" className="border-sky-500/30 text-sky-400 text-[7px] px-1 font-mono">DEFAULT</Badge>}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="border-sky-500/30 text-sky-400 text-[8px] font-mono">ACTIVE</Badge>
+                      {!isDefault && (
+                        <button onClick={() => handleRemoveDomain(domain)} className="text-red-400 hover:text-red-300 p-1">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
 
-        {activeProject?.deployment?.customDomain && (
+        {hasCustomDomains && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* 2. Nameservers Delegation */}

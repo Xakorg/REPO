@@ -112,7 +112,8 @@ interface XakCodeContextProps {
   checkNameservers: () => Promise<void>;
   customDomain: string;
   setCustomDomain: (domain: string) => void;
-  handleCustomDomain: () => Promise<void>;
+  handleAddDomain: () => Promise<void>;
+  handleRemoveDomain: (domain: string) => Promise<void>;
   verifyDNS: () => Promise<void>;
   isVerifyingDNS: boolean;
   handleAddDnsRecord: (type: 'A' | 'CNAME' | 'TXT' | 'MX', name: string, value: string, ttl: number) => Promise<void>;
@@ -340,14 +341,16 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const handleCustomDomain = async () => {
+  const handleAddDomain = async () => {
     if (!activeProject || !customDomain.trim() || !firestore || !user) return;
     try {
+      const formattedDomain = customDomain.toLowerCase().trim();
+      
       // 1. Programmatically add to Vercel
       const res = await fetch('/api/domain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain: customDomain.toLowerCase().trim() })
+        body: JSON.stringify({ domain: formattedDomain })
       });
       const data = await res.json();
       
@@ -356,15 +359,51 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
-      // 2. Save in Firestore
-      const verificationCode = `xak-verify-${activeProject.id}`;
+      // 2. Save in Firestore domains array
+      const currentDomains = activeProject.deployment?.domains || [];
+      // Fallback migration: if there's a customDomain string but no array, include it
+      if (activeProject.deployment?.customDomain && !currentDomains.includes(activeProject.deployment.customDomain)) {
+         currentDomains.push(activeProject.deployment.customDomain);
+      }
+      
+      if (!currentDomains.includes(formattedDomain)) {
+        currentDomains.push(formattedDomain);
+      }
+
       await updateDoc(doc(firestore, "users", user.uid, "code_projects", activeProject.id), {
-        "deployment.customDomain": customDomain.toLowerCase().trim(),
-        "deployment.verificationCode": verificationCode,
-        "deployment.isVerified": false
+        "deployment.domains": currentDomains
       });
-      toast({ title: "Domain Configured", description: "Successfully linked target domain." });
+      
+      toast({ title: "Domain Added", description: `Successfully linked ${formattedDomain}.` });
       setCustomDomain("");
+    } catch (e) {
+      toast({ variant: "destructive", title: "Protocol Error" });
+    }
+  };
+
+  const handleRemoveDomain = async (domain: string) => {
+    if (!activeProject || !firestore || !user) return;
+    try {
+      // 1. Programmatically remove from Vercel
+      const res = await fetch(`/api/domain?domain=${encodeURIComponent(domain)}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        toast({ variant: "destructive", title: "Domain Error", description: data.error || "Failed to remove domain from server." });
+        return;
+      }
+
+      // 2. Remove from Firestore domains array
+      const currentDomains = activeProject.deployment?.domains || [];
+      const updatedDomains = currentDomains.filter((d: string) => d !== domain);
+
+      await updateDoc(doc(firestore, "users", user.uid, "code_projects", activeProject.id), {
+        "deployment.domains": updatedDomains
+      });
+      
+      toast({ title: "Domain Removed", description: `Successfully removed ${domain}.` });
     } catch (e) {
       toast({ variant: "destructive", title: "Protocol Error" });
     }
@@ -721,7 +760,10 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const handleCreateProject = async (name: string) => {
     if (!user || !firestore || !name.trim()) return;
     try {
-      const docRef = await addDoc(collection(firestore, "users", user.uid, "code_projects"), {
+        const safeSlug = name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        const defaultDomain = `${safeSlug}.code.xakteir.com`;
+        
+        const docRef = await addDoc(collection(firestore, "users", user.uid, "code_projects"), {
         name: name,
         code: `export default function App() {\n  return (\n    <div className="p-20 flex flex-col items-center justify-center min-h-screen bg-black text-white">\n      <h1 className="text-5xl font-black italic uppercase text-sky-400 mb-4">${name}</h1>\n      <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase">Multi-File React Workspace Active</p>\n    </div>\n  );\n}`,
         files: {
@@ -734,8 +776,7 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
         explanation: "Initialized new React project.",
         deployment: {
           status: 'idle',
-          domain: `${name.toLowerCase().replace(/\s+/g, '-')}.xakteir.app`,
-          isVerified: false
+          domains: [defaultDomain]
         },
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -886,7 +927,8 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
       checkNameservers,
       customDomain,
       setCustomDomain,
-      handleCustomDomain,
+      handleAddDomain,
+      handleRemoveDomain,
       verifyDNS,
       isVerifyingDNS,
       handleAddDnsRecord,

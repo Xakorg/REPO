@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useUser, useFirestore, useCollection, useAuth } from "./firebase";
+import { useUser, useFirestore, useCollection, useAuth, useMemoFirebase } from "./firebase";
 import { collection, query, orderBy } from "firebase/firestore";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { ShieldCheck, Loader2, QrCode, Lock, Mail, ArrowRight } from "lucide-react";
@@ -35,7 +35,7 @@ export default function App() {
     });
   }, []);
 
-  const accountsQuery = useMemo(() => {
+  const accountsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(collection(firestore, "users", user.uid, "auth_accounts"), orderBy("timestamp", "desc"));
   }, [firestore, user]);
