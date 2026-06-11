@@ -1,14 +1,7 @@
 'use client';
     
-import {
-  setDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  CollectionReference,
-  DocumentReference,
-  SetOptions,
-} from 'firebase/firestore';
+import { setDoc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import type { CollectionReference, DocumentReference, SetOptions } from "firebase/firestore";
 import { errorEmitter } from '@/firebase/error-emitter';
 import {FirestorePermissionError} from '@/firebase/errors';
 

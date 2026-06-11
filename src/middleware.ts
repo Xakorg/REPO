@@ -1,0 +1,58 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(req: NextRequest) {
+  const url = req.nextUrl;
+  const hostname = req.headers.get('host') || '';
+  const path = url.pathname;
+
+  // Allow static assets, API routes, and files
+  if (path.startsWith('/_next') || path.startsWith('/api') || path.includes('.')) {
+    return NextResponse.next();
+  }
+
+  // 1. Handle wildcard published subdomains (e.g. projectname.code.xakteir.com)
+  if (hostname.endsWith('.code.xakteir.com')) {
+    const slug = hostname.replace('.code.xakteir.com', '');
+    // Rewrite directly to the site viewer route
+    return NextResponse.rewrite(new URL(`/sites/${slug}`, req.url));
+  }
+
+  // 2. Handle XakCode standalone deployment via code.xakteir.com
+  if (hostname === 'code.xakteir.com' || hostname === 'www.code.xakteir.com') {
+    
+    // Serve Authentication flow securely on this subdomain without redirecting back to main
+    if (path === '/auth' || path.startsWith('/auth/')) {
+      return NextResponse.next(); 
+    }
+
+    // Rewrite Root to the IDE
+    if (path === '/') {
+      return NextResponse.rewrite(new URL('/xakcode', req.url));
+    }
+
+    // Explicit requests to /xakcode/... paths are allowed directly 
+    if (path.startsWith('/xakcode')) {
+      return NextResponse.next();
+    }
+
+    // Rewrite XakCode sub-routes (/console, /hosting, /utilities, etc.)
+    const xakcodeRoutes = ['/console', '/hosting', '/utilities', '/settings', '/git'];
+    const rootSegment = '/' + path.split('/')[1]; // handles /console and /console/something
+    if (xakcodeRoutes.includes(rootSegment)) {
+      return NextResponse.rewrite(new URL(`/xakcode${path}`, req.url));
+    }
+
+    // For any OTHER path (like /map, /games, App Launcher navigation), kick them back to the main domain
+    return NextResponse.redirect(`https://xakteir.com${path}`);
+  }
+
+  // Default behavior for xakteir.com (allow everything)
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
+};

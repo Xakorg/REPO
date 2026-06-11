@@ -343,13 +343,27 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const handleCustomDomain = async () => {
     if (!activeProject || !customDomain.trim() || !firestore || !user) return;
     try {
+      // 1. Programmatically add to Vercel
+      const res = await fetch('/api/domain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: customDomain.toLowerCase().trim() })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        toast({ variant: "destructive", title: "Domain Error", description: data.error || "Failed to link domain to server." });
+        return;
+      }
+
+      // 2. Save in Firestore
       const verificationCode = `xak-verify-${activeProject.id}`;
       await updateDoc(doc(firestore, "users", user.uid, "code_projects", activeProject.id), {
         "deployment.customDomain": customDomain.toLowerCase().trim(),
         "deployment.verificationCode": verificationCode,
         "deployment.isVerified": false
       });
-      toast({ title: "Domain Key Generated", description: "Configured target custom domain. Check backup challenges." });
+      toast({ title: "Domain Configured", description: "Successfully linked target domain." });
       setCustomDomain("");
     } catch (e) {
       toast({ variant: "destructive", title: "Protocol Error" });

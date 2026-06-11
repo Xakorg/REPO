@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { useUser, useFirestore, useCollection } from "./firebase";
+import { useUser, useFirestore, useCollection, useAuth } from "./firebase";
 import { collection, query, orderBy } from "firebase/firestore";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "./firebase/provider";
 import { ShieldCheck, Loader2, QrCode, Lock, Mail, ArrowRight } from "lucide-react";
 import * as OTPAuth from "otpauth";
 import './index.css';
@@ -19,6 +18,7 @@ const generateTOTP = (secret: string) => {
 export default function App() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const auth = useAuth();
   const [currentDomain, setCurrentDomain] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -110,9 +110,9 @@ export default function App() {
         {sortedAccounts.map((acc) => {
           const isMatch = currentDomain && acc.website?.toLowerCase().includes(currentDomain.toLowerCase());
           return (
-            <div key={acc.id} onClick={() => injectCredentials(acc)} className={\`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4 \${isMatch ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.2)]' : 'bg-white/5 border-white/5 hover:border-white/20'}\`}>
+            <div key={acc.id} onClick={() => injectCredentials(acc)} className={isMatch ? "p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4 bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.2)]" : "p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4 bg-white/5 border-white/5 hover:border-white/20"}>
                {acc.website ? (
-                 <img src={\`https://www.google.com/s2/favicons?domain=\${acc.website}&sz=64\`} className="w-10 h-10 rounded-full bg-white p-1" />
+                 <img src={"https://www.google.com/s2/favicons?domain=" + acc.website + "&sz=64"} className="w-10 h-10 rounded-full bg-white p-1" />
                ) : (
                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/5"><QrCode className="w-5 h-5 text-primary" /></div>
                )}
