@@ -763,6 +763,17 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const safeSlug = name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         const defaultDomain = `${safeSlug}.code.xakteir.com`;
         
+        // Ensure Vercel knows about the new subdomain
+        try {
+          await fetch('/api/domain', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ domain: defaultDomain })
+          });
+        } catch (e) {
+          console.error("Failed to auto-register default domain on Vercel");
+        }
+
         const docRef = await addDoc(collection(firestore, "users", user.uid, "code_projects"), {
         name: name,
         code: `export default function App() {\n  return (\n    <div className="p-20 flex flex-col items-center justify-center min-h-screen bg-black text-white">\n      <h1 className="text-5xl font-black italic uppercase text-sky-400 mb-4">${name}</h1>\n      <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase">Multi-File React Workspace Active</p>\n    </div>\n  );\n}`,

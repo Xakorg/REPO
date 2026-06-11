@@ -47,6 +47,16 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(`https://xakteir.com${path}`);
   }
 
+  // Redirect xakteir.com/xakcode to code.xakteir.com
+  if (hostname !== 'code.xakteir.com' && hostname !== 'www.code.xakteir.com') {
+    if (path === '/xakcode') {
+      return NextResponse.redirect('https://code.xakteir.com/');
+    }
+    if (path.startsWith('/xakcode/')) {
+      return NextResponse.redirect(`https://code.xakteir.com${path.replace('/xakcode', '')}`);
+    }
+  }
+
   // Default behavior for xakteir.com (allow everything)
   return NextResponse.next();
 }

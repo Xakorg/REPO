@@ -57,8 +57,12 @@ function RemotePlayer({ data }: { data: any }) {
   
   // Smoothly interpolate to target position
   useFrame(() => {
-    if (meshRef.current) {
-      meshRef.current.position.lerp(new THREE.Vector3(position[0], position[1], position[2]), 0.1);
+    if (meshRef.current && position) {
+      meshRef.current.position.lerp(new THREE.Vector3(position[0] || 0, position[1] || 0, position[2] || 0), 0.1);
+    }
+  });
+
+  if (!position) return null;
       // We could also lerp rotation if needed
     }
   });

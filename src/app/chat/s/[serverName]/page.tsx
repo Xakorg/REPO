@@ -109,6 +109,14 @@ export default function ServerChatPage() {
 
   // Spam prevention
   const [lastMessageSentAt, setLastMessageSentAt] = useState(0);
+  const [customContextMenu, setCustomContextMenu] = useState<{msg: any, x: number, y: number} | null>(null);
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setCustomContextMenu(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
   const [spamMuteUntil, setSpamMuteUntil] = useState(0);
 
   // Scroll to bottom btn state
@@ -1612,6 +1620,10 @@ export default function ServerChatPage() {
                     <div 
                       key={msg.id} 
                       id={`msg-${msg.id}`}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setCustomContextMenu({ msg, x: e.clientX, y: e.clientY });
+                      }}
                       className={cn("flex gap-5 group relative transition-all duration-500", isOwn && "flex-row-reverse")}
                     >
                        <div className="relative shrink-0 text-left">
@@ -1844,6 +1856,67 @@ export default function ServerChatPage() {
               )}
            </div>
         </ScrollArea>
+
+        {/* Custom Right-Click Context Menu */}
+        {customContextMenu && (
+          <div 
+            className="fixed z-[1000] bg-zinc-950 border border-white/10 rounded-xl shadow-2xl overflow-hidden py-1 min-w-[160px]"
+            style={{ top: customContextMenu.y, left: customContextMenu.x }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-3 py-2 border-b border-white/5 bg-white/5">
+              <p className="text-[9px] font-black uppercase text-primary tracking-widest truncate">
+                {customContextMenu.msg.senderName}
+              </p>
+            </div>
+            
+            <button 
+              className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-primary/20 text-white flex items-center gap-2"
+              onClick={() => { setReplyingToMessage(customContextMenu.msg); setCustomContextMenu(null); }}
+            >
+              <CornerUpLeft className="w-3.5 h-3.5" /> Reply
+            </button>
+
+            <button 
+              className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-primary/20 text-white flex items-center gap-2"
+              onClick={() => { setActiveThread(customContextMenu.msg); setCustomContextMenu(null); }}
+            >
+              <MessageSquare className="w-3.5 h-3.5" /> Open Thread
+            </button>
+            
+            <button 
+              className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-primary/20 text-white flex items-center gap-2"
+              onClick={() => { handleCopyMessage(customContextMenu.msg.content); setCustomContextMenu(null); }}
+            >
+              <Copy className="w-3.5 h-3.5" /> Copy Text
+            </button>
+
+            <button 
+              className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-amber-500/20 text-white flex items-center gap-2"
+              onClick={() => { handleTogglePin(customContextMenu.msg.id, customContextMenu.msg.pinned); setCustomContextMenu(null); }}
+            >
+              <Pin className="w-3.5 h-3.5" /> {customContextMenu.msg.pinned ? "Unpin" : "Pin Message"}
+            </button>
+
+            {customContextMenu.msg.senderId === user.uid && (
+              <>
+                <div className="h-px bg-white/5 my-1" />
+                <button 
+                  className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-emerald-500/20 text-white flex items-center gap-2"
+                  onClick={() => { setEditingMessageId(customContextMenu.msg.id); setEditInput(customContextMenu.msg.content); setCustomContextMenu(null); }}
+                >
+                  <Edit className="w-3.5 h-3.5" /> Edit Message
+                </button>
+                <button 
+                  className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-red-500/20 text-red-400 flex items-center gap-2"
+                  onClick={() => { handleDeleteMessage(customContextMenu.msg.id); setCustomContextMenu(null); }}
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Delete Message
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Feature 12: Thread Side Panel */}
         {activeThread && (

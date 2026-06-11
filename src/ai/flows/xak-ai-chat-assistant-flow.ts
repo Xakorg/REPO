@@ -283,7 +283,7 @@ CRITICAL GUIDELINES:
     while (retries > 0) {
       try {
         const {output} = await ai.generate({
-          model: googleAI.model('gemini-2.5-flash'),
+          model: googleAI.model('gemini-2.0-flash'),
           system: systemPrompt,
           messages: [
             ...(input.history || []),
