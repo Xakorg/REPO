@@ -25,7 +25,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   LogOut,
-  FolderOpen
+  FolderOpen,
+  Eye,
+  EyeOff,
+  User
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +64,29 @@ const generateTOTP = (secret: string) => {
   }
 };
 
+
+      {/* Reveal Password Prompt */}
+      <Dialog open={revealPrompt} onOpenChange={setRevealPrompt}>
+         <DialogContent className="glass-card border-white/10 rounded-[2rem] max-w-sm text-foreground p-8">
+            <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic text-center">Verify Identity</DialogTitle></DialogHeader>
+            <div className="space-y-6 pt-4">
+               <p className="text-xs text-center text-muted-foreground font-bold uppercase tracking-widest">Enter Master PIN to reveal password</p>
+               <Input type="password" value={revealPin} onChange={e => setRevealPin(e.target.value)} className="h-16 text-center text-3xl tracking-[0.5em] font-black rounded-2xl bg-black/40 border-white/10" autoFocus />
+               <Button onClick={() => {
+                  if (authConfig?.masterPin === revealPin) {
+                     setRevealedPasswords(p => ({...p, [revealTarget]: true}));
+                     setRevealPrompt(false);
+                     setRevealPin("");
+                     toast({ title: "Authorized", description: "Password revealed." });
+                  } else {
+                     toast({ variant: "destructive", title: "Denied", description: "Incorrect Master PIN." });
+                     setRevealPin("");
+                  }
+               }} className="w-full h-14 rounded-xl font-black uppercase tracking-widest bg-primary hover:bg-primary/90 shadow-xl">Confirm</Button>
+            </div>
+         </DialogContent>
+      </Dialog>
+
 export default function XakteirAuthPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -72,9 +98,14 @@ export default function XakteirAuthPage() {
   const [search, setSearch] = useState("");
   const [activeAccountId, setActiveId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
-  const [newAccount, setNewAccount] = useState({ service: "", account: "", secret: "" });
+  const [newAccount, setNewAccount] = useState({ service: "", account: "", password: "", website: "", secret: "", backupCodes: "", notes: "" });
   const [secondsLeft, setSecondsLeft] = useState(30);
   const [isMobile, setIsMobile] = useState(false);
+  const [activeTab, setActiveTab] = useState('vault'); // 'vault' | 'identities'
+  const [revealPrompt, setRevealPrompt] = useState(false);
+  const [revealPin, setRevealPin] = useState("");
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
+  const [newIdentity, setNewIdentity] = useState({ firstName: "", surname: "", middleNames: "", dob: "" });
 
   const [setupStep, setSetupStep] = useState(1);
   const [setupPin, setSetupPin] = useState("");
@@ -97,6 +128,12 @@ export default function XakteirAuthPage() {
   }, [firestore, user]);
 
   const { data: accounts, isLoading } = useCollection(accountsQuery);
+
+  const identitiesQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, "users", user.uid, "auth_identities"), orderBy("timestamp", "desc"));
+  }, [firestore, user]);
+  const { data: identities } = useCollection(identitiesQuery);
 
   useEffect(() => {
     if (!mounted) return;
@@ -164,6 +201,16 @@ export default function XakteirAuthPage() {
     }
   };
 
+  const handleAddIdentity = async () => {
+    if (!user || !firestore || !newIdentity.firstName) return;
+    try {
+      await addDoc(collection(firestore, "users", user.uid, "auth_identities"), { ...newIdentity, timestamp: serverTimestamp() });
+      setIsAdding(false);
+      setNewIdentity({ firstName: "", surname: "", middleNames: "", dob: "" });
+      toast({ title: "Identity Secured" });
+    } catch (e) { toast({ variant: "destructive", title: "Sync Failed" }); }
+  };
+
   const handleAddAccount = async () => {
     if (!user || !firestore || !newAccount.secret) return;
     try {
@@ -172,7 +219,7 @@ export default function XakteirAuthPage() {
         timestamp: serverTimestamp()
       });
       setIsAdding(false);
-      setNewAccount({ service: "", account: "", secret: "" });
+      setNewAccount({ service: "", account: "", password: "", website: "", secret: "", backupCodes: "", notes: "" });
       toast({ title: "Account Secured" });
     } catch (e) { toast({ variant: "destructive", title: "Sync Failed" }); }
   };
@@ -359,11 +406,12 @@ export default function XakteirAuthPage() {
           </div>
           <ScrollArea className="flex-1 p-4">
              <div className="space-y-2">
-                {['All Codes', 'Work', 'Finance', 'Social', 'Gaming'].map((group, i) => (
-                  <button key={group} className={cn("w-full flex items-center gap-4 p-4 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest text-left", i === 0 ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:bg-white/5")}>
-                     <FolderOpen className="w-4 h-4" /> {group}
-                  </button>
-                ))}
+                <button onClick={() => setActiveTab('vault')} className={cn("w-full flex items-center gap-4 p-4 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest text-left", activeTab === 'vault' ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:bg-white/5")}>
+      <FolderOpen className="w-4 h-4" /> Vault
+   </button>
+   <button onClick={() => setActiveTab('identities')} className={cn("w-full flex items-center gap-4 p-4 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest text-left", activeTab === 'identities' ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:bg-white/5")}>
+      <User className="w-4 h-4" /> Identities
+   </button>
              </div>
           </ScrollArea>
           <div className="p-8 border-t border-white/5 bg-black/20">
@@ -404,7 +452,7 @@ export default function XakteirAuthPage() {
                  <p className="text-[10px] font-black uppercase tracking-[0.5em]">Zero 2FA Codes Active</p>
               </div>
             ) : (
-              accounts?.filter(a => a.service.toLowerCase().includes(search.toLowerCase())).map((acc) => {
+              activeTab === 'vault' ? accounts?.filter(a => a.service?.toLowerCase().includes(search.toLowerCase())).map((acc) => {
                 const code = generateTOTP(acc.secret);
                 return (
                   <Card 
@@ -451,7 +499,16 @@ export default function XakteirAuthPage() {
                     </div>
                   </Card>
                 )
-              })
+              }) : identities?.filter(i => i.firstName?.toLowerCase().includes(search.toLowerCase())).map((idDoc) => (
+                <Card key={idDoc.id} className="bg-white/5 border-white/10 p-8 rounded-[2.5rem] space-y-6">
+                   <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center border-2 border-primary/50"><User className="w-8 h-8 text-primary" /></div>
+                   <div>
+                      <h4 className="text-2xl font-black uppercase">{idDoc.firstName} {idDoc.surname}</h4>
+                      <p className="text-sm text-muted-foreground font-bold">{idDoc.middleNames}</p>
+                   </div>
+                   {idDoc.dob && <Badge variant="outline" className="text-[10px] uppercase font-black">DOB: {idDoc.dob}</Badge>}
+                </Card>
+              ))
             )}
           </div>
         </ScrollArea>
@@ -470,20 +527,75 @@ export default function XakteirAuthPage() {
                    </div>
                 </div>
 
-                <div className="space-y-8 bg-black/40 p-10 rounded-[3rem] border-4 border-white/5 shadow-inner">
-                   <div className="flex flex-col items-center gap-4">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-primary">Current Registry Code</span>
-                      <span className="text-7xl font-black italic text-white tabular-nums drop-shadow-2xl">{generateTOTP(activeAccount.secret)}</span>
+                <ScrollArea className="flex-1 -mx-10 px-10">
+                   <div className="space-y-8">
+                      {activeAccount.website && (
+                         <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
+                            <img src={`https://www.google.com/s2/favicons?domain=${activeAccount.website}&sz=64`} className="w-8 h-8 rounded-full bg-white" alt="Favicon" />
+                            <a href={`https://${activeAccount.website}`} target="_blank" rel="noreferrer" className="text-sm font-bold text-blue-400 hover:underline">{activeAccount.website}</a>
+                         </div>
+                      )}
+
+                      {activeAccount.password && (
+                        <div className="space-y-2 bg-white/5 p-6 rounded-[2rem] border border-white/10">
+                           <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-primary">Password</span>
+                              <Button variant="ghost" size="icon" onClick={() => {
+                                 if (revealedPasswords[activeAccount.id]) {
+                                    setRevealedPasswords(p => ({...p, [activeAccount.id]: false}));
+                                 } else {
+                                    setRevealTarget(activeAccount.id);
+                                    setRevealPrompt(true);
+                                 }
+                              }} className="w-8 h-8 text-muted-foreground hover:text-white">
+                                 {revealedPasswords[activeAccount.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </Button>
+                           </div>
+                           <div className="text-xl font-mono tracking-widest text-white flex justify-between items-center">
+                              <span>{revealedPasswords[activeAccount.id] ? activeAccount.password : '••••••••••••'}</span>
+                              {revealedPasswords[activeAccount.id] && <Button variant="ghost" size="icon" onClick={() => handleCopy(activeAccount.password)} className="w-8 h-8 text-white"><Copy className="w-4 h-4" /></Button>}
+                           </div>
+                        </div>
+                      )}
+
+                      {activeAccount.secret && (
+                        <div className="space-y-8 bg-black/40 p-10 rounded-[3rem] border-4 border-white/5 shadow-inner">
+                           <div className="flex flex-col items-center gap-4">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-primary">Current Registry Code</span>
+                              <span className="text-7xl font-black italic text-white tabular-nums drop-shadow-2xl">{generateTOTP(activeAccount.secret)}</span>
+                           </div>
+                           <div className="space-y-4">
+                              <div className="flex justify-between text-[8px] font-black uppercase text-muted-foreground">
+                                 <span>Cycle Integrity</span>
+                                 <span className={cn(secondsLeft < 5 ? "text-red-500" : "text-primary")}>{secondsLeft}s Remaining</span>
+                              </div>
+                              <Progress value={(secondsLeft / 30) * 100} className="h-1.5 bg-white/5" />
+                           </div>
+                           <Button onClick={() => handleCopy(generateTOTP(activeAccount.secret))} className="w-full h-16 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl"><Copy className="w-4 h-4 mr-3" /> Copy Code</Button>
+                        </div>
+                      )}
+
+                      {activeAccount.backupCodes && (
+                        <div className="space-y-4 bg-white/5 p-6 rounded-[2rem] border border-white/10">
+                           <span className="text-[10px] font-black uppercase tracking-widest text-primary">Backup Codes</span>
+                           <div className="grid grid-cols-2 gap-2">
+                              {activeAccount.backupCodes.split(/[,\n]+/).map((code, idx) => {
+                                 const trimmed = code.trim();
+                                 if (!trimmed) return null;
+                                 return <div key={idx} className="bg-black/40 px-3 py-2 rounded-lg font-mono text-xs text-muted-foreground cursor-pointer hover:text-white" onClick={() => handleCopy(trimmed)}>{trimmed}</div>
+                              })}
+                           </div>
+                        </div>
+                      )}
+
+                      {activeAccount.notes && (
+                        <div className="space-y-2 bg-white/5 p-6 rounded-[2rem] border border-white/10">
+                           <span className="text-[10px] font-black uppercase tracking-widest text-primary">Notes</span>
+                           <p className="text-sm text-muted-foreground whitespace-pre-wrap">{activeAccount.notes}</p>
+                        </div>
+                      )}
                    </div>
-                   <div className="space-y-4">
-                      <div className="flex justify-between text-[8px] font-black uppercase text-muted-foreground">
-                         <span>Cycle Integrity</span>
-                         <span className={cn(secondsLeft < 5 ? "text-red-500" : "text-primary")}>{secondsLeft}s Remaining</span>
-                      </div>
-                      <Progress value={(secondsLeft / 30) * 100} className="h-1.5 bg-white/5" />
-                   </div>
-                   <Button onClick={() => handleCopy(generateTOTP(activeAccount.secret))} className="w-full h-16 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl"><Copy className="w-4 h-4 mr-3" /> Copy Code</Button>
-                </div>
+                </ScrollArea>
 
                 <div className="mt-auto grid grid-cols-2 gap-4">
                    <Button variant="outline" className="h-14 rounded-xl border-white/10 text-muted-foreground hover:text-white"><Settings className="w-4 h-4 mr-2" /> Edit</Button>
@@ -501,23 +613,64 @@ export default function XakteirAuthPage() {
                     <Plus className="w-10 h-10 group-hover:rotate-90 transition-transform" />
                  </Button>
               </DialogTrigger>
-              <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-foreground p-10 shadow-2xl">
+              <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-foreground p-10 shadow-2xl max-h-[90vh] overflow-y-auto">
                  <DialogHeader><DialogTitle className="text-3xl font-black uppercase italic tracking-tighter">Add Code</DialogTitle></DialogHeader>
                  <div className="space-y-6 py-6">
                     <div className="grid grid-cols-2 gap-4">
                        <Button variant="outline" className="h-20 rounded-2xl border-white/5 bg-secondary/50 flex flex-col items-center justify-center gap-2"><QrCode className="w-6 h-6 text-primary" /><span className="text-[8px] font-black uppercase">Scan QR</span></Button>
                        <Button variant="outline" className="h-20 rounded-2xl border-white/5 bg-secondary/50 flex flex-col items-center justify-center gap-2"><Keyboard className="w-6 h-6 text-primary" /><span className="text-[8px] font-black uppercase">Manual Key</span></Button>
                     </div>
-                    <div className="space-y-4 pt-4 border-t border-white/5">
-                       <Input value={newAccount.service} onChange={(e) => setNewAccount({...newAccount, service: e.target.value})} placeholder="Service Name (e.g. Google)" className="h-14 bg-secondary/30 rounded-xl" />
-                       <Input value={newAccount.account} onChange={(e) => setNewAccount({...newAccount, account: e.target.value})} placeholder="Account (e.g. name@email.com)" className="h-14 bg-secondary/30 rounded-xl" />
-                       <Input value={newAccount.secret} onChange={(e) => setNewAccount({...newAccount, secret: e.target.value})} placeholder="Secret Base32 Key" className="h-14 bg-secondary/30 rounded-xl font-mono" />
-                    </div>
-                    <Button onClick={handleAddAccount} disabled={!newAccount.secret} className="w-full h-16 bg-primary rounded-2xl font-black uppercase tracking-widest shadow-xl">Secure Logic</Button>
+                    {activeTab === 'vault' ? (
+  <>
+    <div className="space-y-4 pt-4 border-t border-white/5">
+       <Input value={newAccount.service} onChange={(e) => setNewAccount({...newAccount, service: e.target.value})} placeholder="Service Name (e.g. Google)" className="h-14 bg-secondary/30 rounded-xl" />
+       <Input value={newAccount.account} onChange={(e) => setNewAccount({...newAccount, account: e.target.value})} placeholder="Email (e.g. email@gmail.com)" className="h-14 bg-secondary/30 rounded-xl" />
+       <Input value={newAccount.password} type="password" onChange={(e) => setNewAccount({...newAccount, password: e.target.value})} placeholder="Password" className="h-14 bg-secondary/30 rounded-xl" />
+       <Input value={newAccount.website} onChange={(e) => setNewAccount({...newAccount, website: e.target.value})} placeholder="Website (e.g. google.com)" className="h-14 bg-secondary/30 rounded-xl" />
+       <Input value={newAccount.secret} onChange={(e) => setNewAccount({...newAccount, secret: e.target.value})} placeholder="Authenticator Base32 Key" className="h-14 bg-secondary/30 rounded-xl font-mono" />
+       <textarea value={newAccount.backupCodes} onChange={(e) => setNewAccount({...newAccount, backupCodes: e.target.value})} placeholder="Backup codes (one per line or comma separated)" className="w-full bg-secondary/30 rounded-xl p-4 text-sm font-mono border-none" rows={3} />
+       <textarea value={newAccount.notes} onChange={(e) => setNewAccount({...newAccount, notes: e.target.value})} placeholder="Notes" className="w-full bg-secondary/30 rounded-xl p-4 text-sm border-none" rows={2} />
+    </div>
+    <Button onClick={handleAddAccount} disabled={!newAccount.service} className="w-full h-16 bg-primary rounded-2xl font-black uppercase tracking-widest shadow-xl">Secure Account</Button>
+  </>
+) : (
+  <>
+    <div className="space-y-4 pt-4 border-t border-white/5">
+       <Input value={newIdentity.firstName} onChange={(e) => setNewIdentity({...newIdentity, firstName: e.target.value})} placeholder="First Name" className="h-14 bg-secondary/30 rounded-xl" />
+       <Input value={newIdentity.middleNames} onChange={(e) => setNewIdentity({...newIdentity, middleNames: e.target.value})} placeholder="Middle Name(s)" className="h-14 bg-secondary/30 rounded-xl" />
+       <Input value={newIdentity.surname} onChange={(e) => setNewIdentity({...newIdentity, surname: e.target.value})} placeholder="Surname" className="h-14 bg-secondary/30 rounded-xl" />
+       <Input value={newIdentity.dob} type="date" onChange={(e) => setNewIdentity({...newIdentity, dob: e.target.value})} className="h-14 bg-secondary/30 rounded-xl text-muted-foreground" />
+    </div>
+    <Button onClick={handleAddIdentity} disabled={!newIdentity.firstName} className="w-full h-16 bg-primary rounded-2xl font-black uppercase tracking-widest shadow-xl">Secure Identity</Button>
+  </>
+)}
                  </div>
               </DialogContent>
            </Dialog>
         </div>
+
+      {/* Reveal Password Prompt */}
+      <Dialog open={revealPrompt} onOpenChange={setRevealPrompt}>
+         <DialogContent className="glass-card border-white/10 rounded-[2rem] max-w-sm text-foreground p-8">
+            <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic text-center">Verify Identity</DialogTitle></DialogHeader>
+            <div className="space-y-6 pt-4">
+               <p className="text-xs text-center text-muted-foreground font-bold uppercase tracking-widest">Enter Master PIN to reveal password</p>
+               <Input type="password" value={revealPin} onChange={e => setRevealPin(e.target.value)} className="h-16 text-center text-3xl tracking-[0.5em] font-black rounded-2xl bg-black/40 border-white/10" autoFocus />
+               <Button onClick={() => {
+                  if (authConfig?.masterPin === revealPin) {
+                     setRevealedPasswords(p => ({...p, [revealTarget]: true}));
+                     setRevealPrompt(false);
+                     setRevealPin("");
+                     toast({ title: "Authorized", description: "Password revealed." });
+                  } else {
+                     toast({ variant: "destructive", title: "Denied", description: "Incorrect Master PIN." });
+                     setRevealPin("");
+                  }
+               }} className="w-full h-14 rounded-xl font-black uppercase tracking-widest bg-primary hover:bg-primary/90 shadow-xl">Confirm</Button>
+            </div>
+         </DialogContent>
+      </Dialog>
+
       </div>
     </div>
   );
