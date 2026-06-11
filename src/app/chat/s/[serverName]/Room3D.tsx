@@ -59,13 +59,11 @@ function RemotePlayer({ data }: { data: any }) {
   useFrame(() => {
     if (meshRef.current && position) {
       meshRef.current.position.lerp(new THREE.Vector3(position[0] || 0, position[1] || 0, position[2] || 0), 0.1);
+      // We could also lerp rotation if needed
     }
   });
 
   if (!position) return null;
-      // We could also lerp rotation if needed
-    }
-  });
 
   return (
     <group ref={meshRef} position={position as [number, number, number]}>
