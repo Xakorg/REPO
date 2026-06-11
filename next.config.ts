@@ -2,6 +2,25 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  async redirects() {
+    return [
+      {
+        source: '/authentication',
+        destination: '/authenticator',
+        permanent: false,
+      },
+      {
+        source: '/2fa',
+        destination: '/authenticator',
+        permanent: false,
+      },
+      {
+        source: '/games/game',
+        destination: '/games',
+        permanent: false,
+      }
+    ];
+  },
   serverExternalPackages: [
     'genkit',
     '@genkit-ai/core',

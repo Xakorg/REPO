@@ -65,28 +65,6 @@ const generateTOTP = (secret: string) => {
 };
 
 
-      {/* Reveal Password Prompt */}
-      <Dialog open={revealPrompt} onOpenChange={setRevealPrompt}>
-         <DialogContent className="glass-card border-white/10 rounded-[2rem] max-w-sm text-foreground p-8">
-            <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic text-center">Verify Identity</DialogTitle></DialogHeader>
-            <div className="space-y-6 pt-4">
-               <p className="text-xs text-center text-muted-foreground font-bold uppercase tracking-widest">Enter Master PIN to reveal password</p>
-               <Input type="password" value={revealPin} onChange={e => setRevealPin(e.target.value)} className="h-16 text-center text-3xl tracking-[0.5em] font-black rounded-2xl bg-black/40 border-white/10" autoFocus />
-               <Button onClick={() => {
-                  if (authConfig?.masterPin === revealPin) {
-                     setRevealedPasswords(p => ({...p, [revealTarget]: true}));
-                     setRevealPrompt(false);
-                     setRevealPin("");
-                     toast({ title: "Authorized", description: "Password revealed." });
-                  } else {
-                     toast({ variant: "destructive", title: "Denied", description: "Incorrect Master PIN." });
-                     setRevealPin("");
-                  }
-               }} className="w-full h-14 rounded-xl font-black uppercase tracking-widest bg-primary hover:bg-primary/90 shadow-xl">Confirm</Button>
-            </div>
-         </DialogContent>
-      </Dialog>
-
 export default function XakteirAuthPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -103,6 +81,7 @@ export default function XakteirAuthPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState('vault'); // 'vault' | 'identities'
   const [revealPrompt, setRevealPrompt] = useState(false);
+  const [revealTarget, setRevealTarget] = useState<string | null>(null);
   const [revealPin, setRevealPin] = useState("");
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
   const [newIdentity, setNewIdentity] = useState({ firstName: "", surname: "", middleNames: "", dob: "" });
@@ -657,7 +636,7 @@ export default function XakteirAuthPage() {
                <p className="text-xs text-center text-muted-foreground font-bold uppercase tracking-widest">Enter Master PIN to reveal password</p>
                <Input type="password" value={revealPin} onChange={e => setRevealPin(e.target.value)} className="h-16 text-center text-3xl tracking-[0.5em] font-black rounded-2xl bg-black/40 border-white/10" autoFocus />
                <Button onClick={() => {
-                  if (authConfig?.masterPin === revealPin) {
+                  if (authConfig?.masterPin === revealPin && revealTarget) {
                      setRevealedPasswords(p => ({...p, [revealTarget]: true}));
                      setRevealPrompt(false);
                      setRevealPin("");
