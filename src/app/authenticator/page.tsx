@@ -38,21 +38,27 @@ import { collection, query, orderBy, addDoc, serverTimestamp, deleteDoc, doc, up
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import * as OTPAuth from "otpauth";
 
 /**
- * Proper TOTP Logic (Industry Standard Simulation)
- * Generates a deterministic 6-digit code based on a secret and 30-second Unix intervals.
+ * Proper TOTP Logic using otpauth
+ * Generates a real industry-standard 6-digit code based on a Base32 secret.
  */
 const generateTOTP = (secret: string) => {
-  const step = Math.floor(Date.now() / 30000);
-  // Base32-like simple hash for prototype stability that stays synced to the 30s window
-  let hash = 0;
-  for (let i = 0; i < secret.length; i++) {
-    hash = ((hash << 5) - hash) + secret.charCodeAt(i);
-    hash |= 0;
+  try {
+    const totp = new OTPAuth.TOTP({
+      issuer: 'Xakteir',
+      label: 'Auth',
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: secret.replace(/\s+/g, '')
+    });
+    return totp.generate();
+  } catch (e) {
+    console.error("Invalid TOTP Secret", e);
+    return "------";
   }
-  const final = Math.abs((hash ^ step) % 1000000);
-  return final.toString().padStart(6, '0');
 };
 
 export default function XakteirAuthPage() {
