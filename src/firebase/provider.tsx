@@ -83,9 +83,27 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     const unsubAuth = onAuthStateChanged(
       auth,
-      (firebaseUser) => { // Auth state determined
+      async (firebaseUser) => { // Auth state determined
         console.log('FirebaseProvider: onAuthStateChanged ->', firebaseUser ? firebaseUser.uid : 'signed-out');
-        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+        if (firebaseUser) {
+          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+        } else {
+          // Attempt cross-subdomain SSO if a valid session cookie exists
+          try {
+            const res = await fetch('/api/auth/sso');
+            if (res.ok) {
+              const { customToken } = await res.json();
+              if (customToken) {
+                const { signInWithCustomToken } = await import('firebase/auth');
+                await signInWithCustomToken(auth, customToken);
+                return; // The listener will fire again with the new user
+              }
+            }
+          } catch (e) {
+            console.error('SSO fetch failed:', e);
+          }
+          setUserAuthState({ user: null, isUserLoading: false, userError: null });
+        }
       },
       (error) => { // Auth listener error
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
@@ -93,9 +111,27 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     );
 
-    // Listen for token changes so we can detect revocation/refresh issues
-    const unsubToken = onIdTokenChanged(auth, (userWithToken) => {
+    // Sync token to cookie for cross-domain Auth
+    const unsubToken = onIdTokenChanged(auth, async (userWithToken) => {
       console.log('FirebaseProvider: onIdTokenChanged ->', userWithToken ? userWithToken.uid : 'no-token');
+      try {
+        if (userWithToken) {
+          const idToken = await userWithToken.getIdToken();
+          fetch('/api/auth/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken })
+          });
+        } else {
+          fetch('/api/auth/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'clear' })
+          });
+        }
+      } catch (e) {
+        console.error('Token sync failed', e);
+      }
     });
 
     return () => { unsubAuth(); unsubToken(); };

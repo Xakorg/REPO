@@ -72,44 +72,43 @@ import { RenderHat } from "@/components/RenderHat";
 import { useSuiteStore } from "@/lib/store";
 
 const APPS = [
-  { name: "Search", icon: SearchIcon, href: "/search", color: "text-blue-400", bg: "bg-blue-400/10" },
-  { name: "Chat", icon: MessageCircle, href: "/chat", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-  { name: "Xak AI", icon: Bot, href: "/ai-chat", color: "text-primary", bg: "bg-primary/10" },
-  { name: "Whiteboard", icon: Presentation, href: "/whiteboard", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Suite", icon: Layers, href: "/suite", color: "text-primary", bg: "bg-primary/10" },
-  { name: "Mail", icon: Mail, href: "/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
-  { name: "Drive", icon: HardDrive, href: "/drive", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Games", icon: Gamepad2, href: "/games", color: "text-purple-400", bg: "bg-purple-500/10" },
-  { name: "XakCode", icon: Code2, href: "/xakcode", color: "text-sky-400", bg: "bg-sky-500/10" },
-  { name: "XakView", icon: Video, href: "/xakview", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "Xakteir Plan", icon: CalendarIcon, href: "/calendar", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "XakPicks", icon: ImageIcon, href: "/pics", color: "text-pink-500", bg: "bg-pink-500/10" },
-  { name: "Classroom", icon: GraduationCap, href: "/classroom", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "Meet", icon: VideoIcon, href: "/meet", color: "text-rose-400", bg: "bg-rose-400/10" },
-  { name: "Translate", icon: Zap, href: "/translate", color: "text-blue-300", bg: "bg-blue-300/10" },
-  { name: "Calculator", icon: Calculator, href: "/calculator", color: "text-zinc-400", bg: "bg-zinc-400/10" },
-  { name: "Notes", icon: Code2, href: "/notes", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "Social", icon: Users, href: "/social", color: "text-pink-500", bg: "bg-pink-500/10" },
-  { name: "Shop", icon: ShoppingBag, href: "/shop", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  { name: "Search", icon: SearchIcon, href: "https://xakteir.com/search", color: "text-blue-400", bg: "bg-blue-400/10" },
+  { name: "Chat", icon: MessageCircle, href: "https://chat.xakteir.com/", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { name: "Xak AI", icon: Bot, href: "https://xakteir.com/ai-chat", color: "text-primary", bg: "bg-primary/10" },
+  { name: "Whiteboard", icon: Presentation, href: "https://xakteir.com/whiteboard", color: "text-amber-400", bg: "bg-amber-400/10" },
+  { name: "Suite", icon: Layers, href: "https://xakteir.com/suite", color: "text-primary", bg: "bg-primary/10" },
+  { name: "Mail", icon: Mail, href: "https://xakteir.com/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
+  { name: "Drive", icon: HardDrive, href: "https://xakteir.com/drive", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "Games", icon: Gamepad2, href: "https://xakteir.com/games", color: "text-purple-400", bg: "bg-purple-500/10" },
+  { name: "XakCode", icon: Code2, href: "https://code.xakteir.com/", color: "text-sky-400", bg: "bg-sky-500/10" },
+  { name: "XakView", icon: Video, href: "https://xakteir.com/xakview", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Xakteir Plan", icon: CalendarIcon, href: "https://xakteir.com/calendar", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "XakPicks", icon: ImageIcon, href: "https://xakteir.com/pics", color: "text-pink-500", bg: "bg-pink-500/10" },
+  { name: "Classroom", icon: GraduationCap, href: "https://xakteir.com/classroom", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "Meet", icon: VideoIcon, href: "https://xakteir.com/meet", color: "text-rose-400", bg: "bg-rose-400/10" },
+  { name: "Translate", icon: Zap, href: "https://xakteir.com/translate", color: "text-blue-300", bg: "bg-blue-300/10" },
+  { name: "Calculator", icon: Calculator, href: "https://xakteir.com/calculator", color: "text-zinc-400", bg: "bg-zinc-400/10" },
+  { name: "Notes", icon: Code2, href: "https://xakteir.com/notes", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "Social", icon: Users, href: "https://xakteir.com/social", color: "text-pink-500", bg: "bg-pink-500/10" },
+  { name: "Shop", icon: ShoppingBag, href: "https://xakteir.com/shop", color: "text-emerald-500", bg: "bg-emerald-500/10" },
   
   // Newly Added Apps
-  { name: "Art Studio", icon: Palette, href: "/art", color: "text-pink-400", bg: "bg-pink-400/10" },
-  { name: "App Store", icon: LayoutGrid, href: "/apps", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "Archive", icon: Archive, href: "/archive", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Authenticator", icon: ShieldCheck, href: "/authenticator", color: "text-teal-400", bg: "bg-teal-400/10" },
-  { name: "XakBuddy", icon: Heart, href: "/buddy", color: "text-rose-400", bg: "bg-rose-400/10" },
-
-  { name: "XakInstaller", icon: Download, href: "/installer", color: "text-sky-500", bg: "bg-sky-500/10" },
-  { name: "Xakteir Maps", icon: Map, href: "/map", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-  { name: "News", icon: Newspaper, href: "/news", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "Search Console", icon: SearchIcon, href: "/search-console", color: "text-teal-400", bg: "bg-teal-400/10" },
-  { name: "XakSign", icon: CheckSquare, href: "/sign", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Stream Feed", icon: Radio, href: "/stream", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "Tasks Tracker", icon: CheckSquare, href: "/tasks", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-  { name: "Weather", icon: Sun, href: "/weather", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Support", icon: HelpCircle, href: "/contact", color: "text-zinc-400", bg: "bg-zinc-400/10" },
-  { name: "Profile", icon: UserIcon, href: "/profile", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "About", icon: Info, href: "/about", color: "text-zinc-400", bg: "bg-zinc-400/10" }
+  { name: "Art Studio", icon: Palette, href: "https://xakteir.com/art", color: "text-pink-400", bg: "bg-pink-400/10" },
+  { name: "App Store", icon: LayoutGrid, href: "https://xakteir.com/apps", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "Archive", icon: Archive, href: "https://xakteir.com/archive", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "Authenticator", icon: ShieldCheck, href: "https://xakteir.com/authenticator", color: "text-teal-400", bg: "bg-teal-400/10" },
+  { name: "XakBuddy", icon: Heart, href: "https://xakteir.com/buddy", color: "text-rose-400", bg: "bg-rose-400/10" },
+  { name: "XakInstaller", icon: Download, href: "https://xakteir.com/installer", color: "text-sky-500", bg: "bg-sky-500/10" },
+  { name: "Xakteir Maps", icon: Map, href: "https://maps.xakteir.com/", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { name: "News", icon: Newspaper, href: "https://xakteir.com/news", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Search Console", icon: SearchIcon, href: "https://xakteir.com/search-console", color: "text-teal-400", bg: "bg-teal-400/10" },
+  { name: "XakSign", icon: CheckSquare, href: "https://xakteir.com/sign", color: "text-amber-400", bg: "bg-amber-400/10" },
+  { name: "Stream Feed", icon: Radio, href: "https://xakteir.com/stream", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Tasks Tracker", icon: CheckSquare, href: "https://xakteir.com/tasks", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { name: "Weather", icon: Sun, href: "https://xakteir.com/weather", color: "text-amber-400", bg: "bg-amber-400/10" },
+  { name: "Support", icon: HelpCircle, href: "https://xakteir.com/contact", color: "text-zinc-400", bg: "bg-zinc-400/10" },
+  { name: "Profile", icon: UserIcon, href: "https://xakteir.com/profile", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "About", icon: Info, href: "https://xakteir.com/about", color: "text-zinc-400", bg: "bg-zinc-400/10" }
 ];
 
 export function Header() {
@@ -184,7 +183,10 @@ export function Header() {
           {filteredApps.map(app => (
             <button 
               key={app.name}
-              onClick={() => { router.push(app.href); }} 
+              onClick={() => { 
+                if (app.href.startsWith("http")) window.location.href = app.href;
+                else router.push(app.href); 
+              }} 
               className={cn(
                 "p-3 rounded-2xl flex flex-col items-center gap-2 transition-all hover:bg-white/5 hover:scale-105 group/btn border-2 border-transparent hover:border-white/5 shadow-md", 
                 app.bg
@@ -241,7 +243,7 @@ export function Header() {
         </div>
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-          <Link href="/" className="pointer-events-auto group flex items-center gap-3">
+          <Link href="https://xakteir.com/" className="pointer-events-auto group flex items-center gap-3">
             <span className="text-[2.5rem] font-black tracking-tighter text-white uppercase italic leading-none transition-all group-hover:text-primary drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
               Xakteir
             </span>
