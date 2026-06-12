@@ -135,7 +135,8 @@ function injectIcon(passwordInput: HTMLInputElement) {
   wrapper.appendChild(passwordInput);
 
   const icon = document.createElement('img');
-  icon.src = 'https://xakteir.com/favicon.ico';
+  const svgData = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>`;
+  icon.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
   icon.style.position = 'absolute';
   icon.style.right = '10px';
   icon.style.top = '50%';
@@ -396,7 +397,7 @@ function showSavePrompt(email: string, password: string, website: string) {
 
   container.innerHTML = `
     <div class="header">
-      <img src="https://xakteir.com/favicon.ico" />
+      <img src="data:image/svg+xml;base64,${btoa(svgData)}" />
       <div>
         <h3 class="title">Xakteir Vault</h3>
         <p class="subtitle">Save password for ${website}?</p>
