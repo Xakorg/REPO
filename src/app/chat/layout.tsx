@@ -654,6 +654,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             audioEl.autoplay = true;
             audioEl.volume = isDeafened ? 0 : 1;
             audioEl.className = "voice-remote-audio";
+            audioEl.id = `remote-audio-${event.track.id}`;
+            document.body.appendChild(audioEl);
             audioEl.play().catch(e => console.warn(e));
           };
           

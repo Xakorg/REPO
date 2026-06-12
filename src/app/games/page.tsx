@@ -39,7 +39,8 @@ import {
   Play,
   ChevronDown,
   ArrowUp,
-  Calculator
+  Calculator,
+  Award
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -59,7 +60,7 @@ const BUILT_IN_GAMES = [
   { id: 'breaker', name: 'Brick Breaker', type: 'Arcade', icon: Sparkles, color: 'text-blue-500', creator: 'xakteir' },
   { id: 'bubble', name: 'Bubble Shooter', type: 'Puzzle', icon: Palette, color: 'text-purple-500', creator: 'xakteir' },
   { id: 'clickSpeed', name: 'Click Speed', type: 'Arcade', icon: Zap, color: 'text-yellow-500', creator: 'xakteir' },
-  { id: 'clicker', name: 'Idle Clicker', type: 'Strategy', icon: Crown, color: 'text-amber-500', creator: 'xakteir' },
+  { id: 'clicker', name: 'Idle Clicker', type: 'Strategy', icon: Award, color: 'text-amber-500', creator: 'xakteir' },
   { id: 'colorMatch', name: 'Color Match', type: 'Puzzle', icon: Palette, color: 'text-pink-500', creator: 'xakteir' },
   { id: 'connectFour', name: 'Connect Four', type: 'Strategy', icon: Code2, color: 'text-red-500', creator: 'xakteir' },
   { id: 'dodge', name: 'Dodge Objects', type: 'Arcade', icon: Flame, color: 'text-orange-500', creator: 'xakteir' },
@@ -88,7 +89,7 @@ const BUILT_IN_GAMES = [
   { id: 'sequence', name: 'Memory Sequence', type: 'Puzzle', icon: Code2, color: 'text-cyan-500', creator: 'xakteir' },
   { id: 'snake', name: 'Snake Game', type: 'Arcade', icon: Activity, color: 'text-green-500', creator: 'xakteir' },
   { id: 'spinWheel', name: 'Spin The Wheel', type: 'Discovery', icon: Sparkles, color: 'text-purple-500', creator: 'xakteir' },
-  { id: 'stack', name: 'Tower Stacker', type: 'Arcade', icon: Crown, color: 'text-orange-500', creator: 'xakteir' },
+  { id: 'stack', name: 'Tower Stacker', type: 'Arcade', icon: Award, color: 'text-orange-500', creator: 'xakteir' },
   { id: 'sudoku', name: 'Sudoku Classic', type: 'Puzzle', icon: Code2, color: 'text-blue-500', creator: 'xakteir' },
   { id: 'tictactoe', name: 'Tic Tac Toe', type: 'Strategy', icon: Target, color: 'text-red-500', creator: 'xakteir' },
   { id: 'towerDefense', name: 'Tower Defense', type: 'Strategy', icon: Sword, color: 'text-emerald-500', creator: 'xakteir' },

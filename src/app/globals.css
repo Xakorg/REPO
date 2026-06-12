@@ -152,3 +152,11 @@
   from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
   to { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
 }
+
+/* Fullscreen mode hides the footer */
+:fullscreen footer {
+  display: none !important;
+}
+:-webkit-full-screen footer {
+  display: none !important;
+}

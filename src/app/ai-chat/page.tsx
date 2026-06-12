@@ -65,7 +65,8 @@ import {
   MultiFileExplorer, 
   RpgConsole, 
   InteractiveSpreadsheet,
-  IpcFileOpRunner
+  IpcFileOpRunner,
+  IpcTerminalRunner
 } from "./chat-widgets";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit, serverTimestamp, doc, updateDoc } from "firebase/firestore";
@@ -136,6 +137,12 @@ function FormattedContent({
             try {
               const cfg = JSON.parse(code.trim());
               return <IpcFileOpRunner key={i} config={cfg} />;
+            } catch(e) {}
+          }
+          if (lang === "ipc-terminal-op") {
+            try {
+              const cfg = JSON.parse(code.trim());
+              return <IpcTerminalRunner key={i} config={cfg} />;
             } catch(e) {}
           }
 
@@ -540,7 +547,7 @@ export default function XakAIPage() {
                      "Refactor my code", 
                      "Create a task for me"
                    ].map(p => (
-                     <button key={p} onClick={() => setInput(p)} className="p-8 rounded-[2.5rem] bg-black/40 border-2 border-white/5 text-xs font-black uppercase tracking-widest text-left hover:border-primary/40 hover:bg-primary/5 transition-all italic shadow-xl">
+                     <button key={p} onClick={() => handleSelectChoice(p)} className="p-8 rounded-[2.5rem] bg-black/40 border-2 border-white/5 text-xs font-black uppercase tracking-widest text-left hover:border-primary/40 hover:bg-primary/5 transition-all italic shadow-xl">
                        "{p}"
                      </button>
                    ))}
@@ -629,7 +636,10 @@ export default function XakAIPage() {
                   type="button"
                   title={tool.label}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/5 hover:bg-primary/20 hover:border-primary/40 hover:text-primary transition-all text-white/50 text-[10px] font-bold uppercase tracking-wider shrink-0 shadow-lg"
-                  onClick={() => toast({ title: `${tool.label} activated`, description: "This feature is currently in preview mode." })}
+                  onClick={() => {
+                    setInput(prev => prev ? prev + ` [${tool.label}]` : `Help me with ${tool.label}: `);
+                    document.getElementById('ai-chat-input')?.focus();
+                  }}
                 >
                   <Icon className="w-3.5 h-3.5" />
                   {tool.label}

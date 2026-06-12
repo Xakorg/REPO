@@ -20,6 +20,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import JSZip from "jszip";
+import { useUser, useFirestore } from "@/firebase";
+import { collection, addDoc, onSnapshot, doc } from "firebase/firestore";
 
 // ==========================================
 // 1. Sandboxed Iframe Preview (App Runner)
@@ -775,35 +777,65 @@ export interface IpcFileOpConfig {
 export function IpcFileOpRunner({ config }: { config: IpcFileOpConfig }) {
   const [status, setStatus] = useState<"idle" | "running" | "success" | "error">("idle");
   const [result, setResult] = useState<string | null>(null);
+  const { user } = useUser();
+  const firestore = useFirestore();
 
   const handleRun = async () => {
-    if (typeof window === "undefined" || !(window as any).electron) {
-      setStatus("error");
-      setResult("Not running in Xakteir Hub. Electron IPC is unavailable.");
-      return;
-    }
+    if (typeof window === "undefined") return;
     
     setStatus("running");
-    try {
-      let res;
-      if (config.action === "read") {
-        res = await (window as any).electron.fs.readFile(config.filePath);
-      } else if (config.action === "write") {
-        res = await (window as any).electron.fs.writeFile(config.filePath, config.content || "");
-      } else if (config.action === "delete") {
-        res = await (window as any).electron.fs.deleteFile(config.filePath);
-      }
-      
-      if (res && res.success) {
-        setStatus("success");
-        setResult(res.data ? `Read ${res.data.length} bytes.` : "Operation successful.");
-      } else {
+
+    if ((window as any).electron) {
+      try {
+        let res;
+        if (config.action === "read") {
+          res = await (window as any).electron.fs.readFile(config.filePath);
+        } else if (config.action === "write") {
+          res = await (window as any).electron.fs.writeFile(config.filePath, config.content || "");
+        } else if (config.action === "delete") {
+          res = await (window as any).electron.fs.deleteFile(config.filePath);
+        }
+        
+        if (res && res.success) {
+          setStatus("success");
+          setResult(res.data ? `Read ${res.data.length} bytes.` : "Operation successful.");
+        } else {
+          setStatus("error");
+          setResult(res?.error || "Unknown IPC error.");
+        }
+      } catch (err: any) {
         setStatus("error");
-        setResult(res?.error || "Unknown IPC error.");
+        setResult(err.message);
       }
-    } catch (err: any) {
-      setStatus("error");
-      setResult(err.message);
+    } else {
+      // Route through Firestore Desktop Bridge
+      if (!user || !firestore) {
+        setStatus("error");
+        setResult("Sign in to route this command to your Desktop app.");
+        return;
+      }
+      try {
+        const docRef = await addDoc(collection(firestore, "users", user.uid, "desktop_commands"), {
+          type: "file",
+          action: config.action,
+          filePath: config.filePath,
+          content: config.content || null,
+          status: "pending",
+          createdAt: new Date().toISOString()
+        });
+
+        const unsub = onSnapshot(doc(firestore, "users", user.uid, "desktop_commands", docRef.id), (docSnap) => {
+          const data = docSnap.data();
+          if (data && (data.status === "success" || data.status === "error")) {
+            setStatus(data.status);
+            setResult(data.result);
+            unsub();
+          }
+        });
+      } catch (e: any) {
+        setStatus("error");
+        setResult(e.message);
+      }
     }
   };
 
@@ -846,6 +878,109 @@ export function IpcFileOpRunner({ config }: { config: IpcFileOpConfig }) {
         {status === "error" && (
           <div className="flex items-start gap-2 text-rose-400 text-xs font-bold uppercase tracking-wider bg-rose-500/10 p-3 rounded-lg border border-rose-500/20">
             <Trash className="w-4 h-4 shrink-0" /> <span className="break-all">{result}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 8. IPC Terminal Operation Runner
+// ==========================================
+export interface IpcTerminalConfig {
+  action: "run";
+  command: string;
+  cwd?: string;
+}
+
+export function IpcTerminalRunner({ config }: { config: IpcTerminalConfig }) {
+  const [status, setStatus] = useState<"idle" | "running" | "success" | "error">("idle");
+  const [result, setResult] = useState<string | null>(null);
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const handleRun = async () => {
+    if (typeof window === "undefined") return;
+    
+    setStatus("running");
+
+    if ((window as any).electron) {
+      try {
+        const res = await (window as any).electron.fs.runTerminalCommand(config.command, config.cwd);
+        
+        if (res && res.success) {
+          setStatus("success");
+          setResult(res.data || "Command executed successfully.");
+        } else {
+          setStatus("error");
+          setResult(res?.error || "Unknown IPC error.");
+        }
+      } catch (err: any) {
+        setStatus("error");
+        setResult(err.message);
+      }
+    } else {
+      // Route through Firestore Desktop Bridge
+      if (!user || !firestore) {
+        setStatus("error");
+        setResult("Sign in to route this command to your Desktop app.");
+        return;
+      }
+      try {
+        const docRef = await addDoc(collection(firestore, "users", user.uid, "desktop_commands"), {
+          type: "terminal",
+          command: config.command,
+          cwd: config.cwd || null,
+          status: "pending",
+          createdAt: new Date().toISOString()
+        });
+
+        const unsub = onSnapshot(doc(firestore, "users", user.uid, "desktop_commands", docRef.id), (docSnap) => {
+          const data = docSnap.data();
+          if (data && (data.status === "success" || data.status === "error")) {
+            setStatus(data.status);
+            setResult(data.result);
+            unsub();
+          }
+        });
+      } catch (e: any) {
+        setStatus("error");
+        setResult(e.message);
+      }
+    }
+  };
+
+  return (
+    <div className="w-full max-w-lg rounded-2xl overflow-hidden border-2 border-emerald-500/30 bg-zinc-950/90 shadow-2xl my-6 mx-auto">
+      <div className="px-6 py-3 bg-emerald-950/40 border-b border-emerald-500/20 flex items-center justify-between">
+        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Local Terminal</span>
+        <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-2 py-1 bg-black/40 rounded border border-white/5">
+          {config.action}
+        </span>
+      </div>
+      <div className="p-6 space-y-4">
+        <div className="font-mono text-xs text-emerald-200 bg-black/40 p-3 rounded-lg border border-emerald-500/20 truncate" title={config.command}>
+          {config.cwd && <span className="text-white/40 mr-2">{config.cwd} $</span>}
+          {config.command}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={handleRun} 
+            disabled={status === "running"}
+            className="h-10 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all w-full flex items-center gap-2"
+          >
+            {status === "running" ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+            {status === "success" ? "Run Again" : "Execute Command"}
+          </Button>
+        </div>
+
+        {(status === "success" || status === "error") && result && (
+          <div className="mt-4 bg-black/60 p-4 rounded-xl border border-white/5">
+             <pre className={`font-mono text-[10px] whitespace-pre-wrap overflow-x-auto max-h-[200px] custom-scrollbar ${status === "error" ? "text-rose-400" : "text-emerald-400"}`}>
+               {result}
+             </pre>
           </div>
         )}
       </div>

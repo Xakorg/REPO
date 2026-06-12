@@ -13,6 +13,7 @@ import { LockedAccountGuard } from '@/components/LockedAccountGuard';
 import { TimeTravelOverlay } from '@/components/TimeTravelOverlay';
 import { NotificationManager } from '@/components/NotificationManager';
 import { FocusModeListener } from '@/components/FocusModeListener';
+import { DesktopBridge } from '@/components/desktop-bridge';
 
 export const metadata: Metadata = {
   title: 'Xakteir',
@@ -50,6 +51,7 @@ export default function RootLayout({
               <TimeTravelOverlay />
               <FirebaseErrorListener />
               <Toaster />
+              <DesktopBridge />
             </LockedAccountGuard>
           </OnboardingProvider>
         </FirebaseClientProvider>

@@ -53,9 +53,11 @@ import {
   CheckSquare,
   Lock,
   Sun,
-  PenTool
+  PenTool,
+  PlaySquare,
+  Settings,
+  Sparkles
 } from "lucide-react";
-import { Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -76,7 +78,9 @@ const APPS = [
   { name: "Chat", icon: MessageCircle, href: "https://chat.xakteir.com/", color: "text-emerald-400", bg: "bg-emerald-400/10" },
   { name: "Xak AI", icon: Bot, href: "https://xakteir.com/ai-chat", color: "text-primary", bg: "bg-primary/10" },
   { name: "Whiteboard", icon: Presentation, href: "https://xakteir.com/whiteboard", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Suite", icon: Layers, href: "https://xakteir.com/suite", color: "text-primary", bg: "bg-primary/10" },
+  { icon: Sparkles, label: "Studio", href: "/studio", color: "text-purple-500" },
+  { icon: Award, label: "Premium", href: "/premium", color: "text-amber-500" },
+  { icon: Settings, label: "Settings", href: "/settings", color: "text-zinc-500" },
   { name: "Mail", icon: Mail, href: "https://xakteir.com/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
   { name: "Drive", icon: HardDrive, href: "https://xakteir.com/drive", color: "text-amber-500", bg: "bg-amber-500/10" },
   { name: "Games", icon: Gamepad2, href: "https://xakteir.com/games", color: "text-purple-400", bg: "bg-purple-500/10" },
@@ -291,7 +295,7 @@ export function Header() {
 
           {isAdmin && (
             <Button onClick={() => router.push('/admin')} variant="ghost" size="icon" className="w-12 h-12 bg-zinc-900/60 border-2 border-white/10 rounded-2xl relative group shadow-xl">
-              <Crown className="w-6 h-6 text-yellow-400" />
+              <Award className="w-6 h-6 text-yellow-400" />
             </Button>
           )}
 

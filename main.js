@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, globalShortcut, Tray, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs/promises');
+const { exec } = require('child_process');
 const { autoUpdater } = require('electron-updater');
 
 // Basic auto updater configuration
@@ -125,6 +126,18 @@ ipcMain.handle('delete-file', async (event, filePath) => {
   } catch (err) {
     return { success: false, error: err.message };
   }
+});
+
+ipcMain.handle('run-terminal-command', (event, command, cwd) => {
+  return new Promise((resolve) => {
+    exec(command, { cwd: cwd || process.cwd(), maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
+      if (error) {
+        resolve({ success: false, error: error.message, stderr, stdout });
+      } else {
+        resolve({ success: true, data: stdout, stderr });
+      }
+    });
+  });
 });
 
 app.whenReady().then(() => {

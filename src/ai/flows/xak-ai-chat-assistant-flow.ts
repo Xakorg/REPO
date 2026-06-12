@@ -229,6 +229,112 @@ const editLocalFile = ai.defineTool(
   }
 );
 
+// Tool to run terminal commands
+const runTerminalCommand = ai.defineTool(
+  {
+    name: 'runTerminalCommand',
+    description: 'Runs a terminal command on the users local computer via Electron.',
+    inputSchema: z.object({
+      command: z.string().describe('The command to run in the terminal.'),
+      cwd: z.string().optional().describe('The working directory to run the command in.'),
+    }),
+    outputSchema: z.object({
+      instruction: z.string(),
+      ipcPayload: z.any()
+    }),
+  },
+  async (input) => {
+    return {
+      instruction: `Requested terminal command execution: ${input.command}`,
+      ipcPayload: {
+        type: 'LOCAL_TERMINAL_OPERATION',
+        command: input.command,
+        cwd: input.cwd
+      }
+    };
+  }
+);
+
+// Tool to read a webpage
+const readWebpage = ai.defineTool(
+  {
+    name: 'readWebpage',
+    description: 'Fetches the content of a public webpage given its URL. Use this to read documentation or learn new coding languages.',
+    inputSchema: z.object({
+      url: z.string().describe('The URL to fetch.')
+    }),
+    outputSchema: z.string(),
+  },
+  async (input) => {
+    try {
+      const res = await fetch(input.url);
+      const text = await res.text();
+      // Strip HTML simply for AI context
+      const stripped = text.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').slice(0, 15000);
+      return stripped;
+    } catch (e: any) {
+      return `Failed to fetch webpage: ${e.message}`;
+    }
+  }
+);
+
+// Tool to save knowledge
+const saveToMemory = ai.defineTool(
+  {
+    name: 'saveToMemory',
+    description: 'Saves important facts, guidelines, or learned coding languages into the persistent memory bank so you can remember it forever.',
+    inputSchema: z.object({
+      userId: z.string().describe('The user ID.'),
+      title: z.string().describe('Title of the knowledge.'),
+      knowledge: z.string().describe('The detailed text to remember forever.')
+    }),
+    outputSchema: z.string(),
+  },
+  async (input) => {
+    const { FieldValue } = await import('firebase-admin/firestore');
+    const db = getAdminDb();
+    if (!hasUsableUserId(input.userId)) {
+      return 'Sign in to let Xak AI save to memory.';
+    }
+    await db.collection('users').doc(input.userId).collection('xak_knowledge').add({
+      title: input.title,
+      knowledge: input.knowledge,
+      createdAt: FieldValue.serverTimestamp()
+    });
+    return `Saved "${input.title}" to memory successfully.`;
+  }
+);
+
+// Tool to query memory
+const queryMemory = ai.defineTool(
+  {
+    name: 'queryMemory',
+    description: 'Searches the persistent memory bank for previously learned facts, syntax, or knowledge.',
+    inputSchema: z.object({
+      userId: z.string().describe('The user ID.'),
+      query: z.string().describe('The topic or keyword to search for.')
+    }),
+    outputSchema: z.string(),
+  },
+  async (input) => {
+    const db = getAdminDb();
+    if (!hasUsableUserId(input.userId)) return 'Sign in to access memory.';
+    
+    const snapshot = await db.collection('users').doc(input.userId).collection('xak_knowledge').orderBy('createdAt', 'desc').limit(50).get();
+    
+    const results = [];
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      if (data.title.toLowerCase().includes(input.query.toLowerCase()) || data.knowledge.toLowerCase().includes(input.query.toLowerCase())) {
+        results.push(`[${data.title}]: ${data.knowledge}`);
+      }
+    }
+    
+    if (results.length === 0) return 'No matching memory found.';
+    return results.join('\n\n');
+  }
+);
+
 export async function chatWithXakAI(input: ChatInput): Promise<ChatOutput> {
   return chatFlow(input);
 }
@@ -279,7 +385,14 @@ CRITICAL GUIDELINES:
   "action": "read" | "write" | "delete",
   "filePath": "C:/path/...",
   "content": "..."
-}`
+}
+- If running terminal commands, output the operation in a JSON block marked with \`\`\`ipc-terminal-op containing:
+{
+  "action": "run",
+  "command": "echo Hello World",
+  "cwd": "C:/path/..."
+}
+- **Self-Teaching System**: If the user asks you to learn something from a URL, use \`readWebpage\` to read it, then immediately use \`saveToMemory\` to store the facts so you can remember it forever. When asked about a topic you might have learned, use \`queryMemory\`.`
       : `You are Xak AI, the professional assistant for the Xakteir platform. You help users manage data, write code, and organize tasks.
 
 CRITICAL GUIDELINES:
@@ -315,11 +428,20 @@ CRITICAL GUIDELINES:
   "action": "read" | "write" | "delete",
   "filePath": "C:/path/...",
   "content": "..."
-}`;
+}
+- If running terminal commands, output the operation in a JSON block marked with \`\`\`ipc-terminal-op containing:
+{
+  "action": "run",
+  "command": "echo Hello World",
+  "cwd": "C:/path/..."
+}
+- **Self-Teaching System**: If the user asks you to learn something from a URL, use \`readWebpage\` to read it, then immediately use \`saveToMemory\` to store the facts so you can remember it forever. When asked about a topic you might have learned, use \`queryMemory\`.`;
 
     const activeTools = signedIn 
-      ? [createDocument, createGoal, createFile, generateImage, generateVideo, editLocalFile] 
-      : [generateImage, generateVideo, editLocalFile];
+      ? [createDocument, createGoal, createFile, generateImage, generateVideo, editLocalFile, runTerminalCommand, readWebpage, saveToMemory, queryMemory] 
+      : [generateImage, generateVideo, editLocalFile, runTerminalCommand, readWebpage];
+
+    const googleSearchConfig = { googleSearchRetrieval: { dynamicRetrievalConfig: { mode: 'MODE_DYNAMIC', dynamicThreshold: 0.3 } } };
 
     while (retries > 0) {
       try {
@@ -331,6 +453,7 @@ CRITICAL GUIDELINES:
             { role: 'user', content: [{ text: input.message }] }
           ],
           tools: activeTools,
+          config: googleSearchConfig,
           output: { schema: ChatOutputSchema },
         });
 

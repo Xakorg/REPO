@@ -7,7 +7,7 @@ import {
   ShoppingBag, 
   Zap, 
   User, 
-  Crown, 
+  Award, 
   Flame, 
   Loader2, 
   Sparkles, 
@@ -352,7 +352,7 @@ export default function ShopPage() {
                 <div className={cn("h-56 flex items-center justify-center relative overflow-hidden", item.bg)}>
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20" />
                   <div className={cn("w-20 h-20 flex items-center justify-center transition-transform duration-700 group-hover:scale-125 drop-shadow-xl", item.color)}>
-                     {item.type === 'hat' ? <Crown className="w-16 h-16" /> : 
+                     {item.type === 'hat' ? <Award className="w-16 h-16" /> : 
                       item.type === 'decor' ? <Sparkles className="w-16 h-16" /> :
                       item.type === 'aura' ? <Flame className="w-16 h-16" /> :
                       item.type === 'nameplate' ? <User className="w-16 h-16" /> :

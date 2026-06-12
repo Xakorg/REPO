@@ -440,6 +440,8 @@ export default function App() {
   if (activeTab === 'settings') {
     return (
       <div className="w-[450px] h-[600px] bg-[#05030d] text-white flex flex-col relative animate-fade-in">
+        <div className="mesh-background opacity-50" />
+        <div className="auth-bg" />
         <header className="h-16 border-b border-white/5 flex items-center px-4 bg-black/40 gap-3 shrink-0">
           <button onClick={() => setActiveTab('vault')} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
           <div className="flex-1 overflow-hidden">
@@ -513,6 +515,8 @@ export default function App() {
 
     return (
       <div className="w-[450px] h-[600px] bg-[#05030d] text-white flex flex-col relative animate-fade-in">
+        <div className="mesh-background opacity-50" />
+        <div className="auth-bg" />
         <header className="h-16 border-b border-white/5 flex items-center px-6 bg-black/40 gap-3 shrink-0">
           <Fingerprint className="w-6 h-6 text-primary" />
           <h1 className="text-lg font-black italic uppercase tracking-tighter">Identity Personas</h1>
@@ -582,6 +586,8 @@ export default function App() {
   if (activeTab === 'audit') {
     return (
       <div className="w-[450px] h-[600px] bg-[#05030d] text-white flex flex-col relative animate-fade-in">
+        <div className="mesh-background opacity-50" />
+        <div className="auth-bg" />
         <header className="h-16 border-b border-white/5 flex items-center px-6 bg-black/40 gap-3 shrink-0">
           <Activity className="w-6 h-6 text-primary" />
           <h1 className="text-lg font-black italic uppercase tracking-tighter">Security Audit</h1>
