@@ -412,9 +412,15 @@ service cloud.firestore {
     // SERVERS (Xakteir Servers)
     // ─────────────────────────────────────────────
     match /servers/{serverId} {
-      allow read, write: if isSignedIn();
+      allow read: if true;
+      allow write: if isSignedIn();
       match /channels/{channelId} {
-        allow read, write: if isSignedIn();
+        allow read: if true;
+        allow write: if isSignedIn();
+        match /messages/{messageId} {
+          allow read: if true;
+          allow write: if isSignedIn();
+        }
       }
     }
 
