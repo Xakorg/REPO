@@ -41,6 +41,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<any>(null);
+  const [personas, setPersonas] = useState<any[]>([]);
   
   // Tabs
   const [activeTab, setActiveTab] = useState<'vault'|'identities'|'audit'|'settings'>('vault');
@@ -106,6 +107,12 @@ export default function App() {
         } catch (e) {}
       }
     });
+
+    if (chrome?.storage?.local) {
+      chrome.storage.local.get(['personas'], (res) => {
+        if (res.personas) setPersonas(res.personas);
+      });
+    }
   }, []);
 
   const accountsQuery = useMemoFirebase(() => {
@@ -461,18 +468,21 @@ export default function App() {
       const randomString = Math.random().toString(36).substring(2, 10);
       const email = `burner-${randomString}@xakteir.me`;
       
-      const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
-      let password = "";
-      const randomValues = new Uint32Array(20);
-      crypto.getRandomValues(randomValues);
-      for (let i = 0; i < 20; i++) {
-        password += charset[randomValues[i] % charset.length];
+      const newPersona = {
+        id: Date.now(),
+        name: `Burner ${randomString}`,
+        description: `Anonymous forwarder`,
+        email,
+        type: 'burner'
+      };
+
+      const updatedPersonas = [newPersona, ...personas];
+      setPersonas(updatedPersonas);
+      if (chrome?.storage?.local) {
+        chrome.storage.local.set({ personas: updatedPersonas });
       }
       
       copyToClipboard(email, "burner_email");
-      setCreateForm({ ...createForm, email, password, service: "Burner Account" });
-      setActiveTab('vault');
-      setIsCreating(true);
     };
 
     return (
@@ -495,6 +505,28 @@ export default function App() {
           
           <div className="space-y-3 mt-6">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Your Personas</h3>
+            {personas.map(p => (
+              <div key={p.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 hover:border-primary/50 cursor-pointer transition-colors relative">
+                 <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0 border border-orange-500/30">
+                   <Mail className="w-5 h-5 text-orange-500" />
+                 </div>
+                 <div className="flex-1 overflow-hidden">
+                   <h4 className="text-sm font-black uppercase truncate text-orange-400">{p.name}</h4>
+                   <p className="text-[10px] text-zinc-400 truncate">{p.email}</p>
+                 </div>
+                 <button 
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     const updated = personas.filter(x => x.id !== p.id);
+                     setPersonas(updated);
+                     if (chrome?.storage?.local) chrome.storage.local.set({ personas: updated });
+                   }}
+                   className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors"
+                 >
+                   <Trash2 className="w-4 h-4" />
+                 </button>
+              </div>
+            ))}
             <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 hover:border-primary/50 cursor-pointer transition-colors">
                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0 border border-blue-500/30"><ShieldCheck className="w-5 h-5 text-blue-500" /></div>
                <div className="flex-1 overflow-hidden">

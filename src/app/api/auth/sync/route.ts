@@ -5,11 +5,15 @@ export async function POST(req: Request) {
   try {
     const { idToken, action } = await req.json();
 
+    const host = req.headers.get('host') || '';
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+    const cookieDomain = isLocal ? undefined : '.xakteir.com';
+
     if (action === 'clear') {
       const response = NextResponse.json({ success: true });
       response.cookies.delete({
         name: 'xak_session',
-        domain: '.xakteir.com',
+        domain: cookieDomain,
         path: '/',
       });
       return response;
@@ -32,7 +36,7 @@ export async function POST(req: Request) {
       maxAge: expiresIn / 1000,
       httpOnly: true,
       secure: true,
-      domain: '.xakteir.com',
+      domain: cookieDomain,
       path: '/',
       sameSite: 'lax',
     });

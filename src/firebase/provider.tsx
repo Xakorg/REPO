@@ -98,6 +98,10 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
                 await signInWithCustomToken(auth, customToken);
                 return; // The listener will fire again with the new user
               }
+            } else if (res.status === 401) {
+              // Expected if no session exists yet, no need to log an error
+            } else {
+              console.warn('SSO fetch returned unexpected status:', res.status);
             }
           } catch (e) {
             console.error('SSO fetch failed:', e);
