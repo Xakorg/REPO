@@ -378,10 +378,17 @@ export default function MeetingRoomPage() {
     remoteStreams.current[id] = new MediaStream();
 
     peer.ontrack = (event) => {
-      event.streams[0]?.getTracks().forEach((track) => {
+      const track = event.track;
+      if (track) {
         const exists = remoteStreams.current[id].getTracks().some((t) => t.id === track.id);
         if (!exists) remoteStreams.current[id].addTrack(track);
-      });
+      }
+      if (event.streams && event.streams[0]) {
+        event.streams[0].getTracks().forEach((t) => {
+          const exists = remoteStreams.current[id].getTracks().some((tr) => tr.id === t.id);
+          if (!exists) remoteStreams.current[id].addTrack(t);
+        });
+      }
       setRemoteTracksVersion((v) => v + 1);
     };
 
@@ -450,10 +457,17 @@ export default function MeetingRoomPage() {
     }
 
     peer.ontrack = (event) => {
-      event.streams[0]?.getTracks().forEach((track) => {
+      const track = event.track;
+      if (track) {
         const exists = remoteStream.current?.getTracks().some((t) => t.id === track.id);
         if (!exists) remoteStream.current?.addTrack(track);
-      });
+      }
+      if (event.streams && event.streams[0]) {
+        event.streams[0].getTracks().forEach((t) => {
+          const exists = remoteStream.current?.getTracks().some((tr) => tr.id === t.id);
+          if (!exists) remoteStream.current?.addTrack(t);
+        });
+      }
       setRemoteTracksVersion((v) => v + 1);
     };
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Maximize, Minimize, Loader2, Flag, Octagon, MessageSquare, Heart, Star, Share2, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 // Helper mapping to translate ID to component name
 function getGameComponent(id: string) {

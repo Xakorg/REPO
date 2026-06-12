@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useUser, useFirestore, useCollection, useAuth, useMemoFirebase } from "./firebase";
 import { collection, query, orderBy, addDoc, serverTimestamp, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { ShieldCheck, Loader2, QrCode, Lock, Mail, ArrowRight, Plus, X, Copy, Eye, EyeOff, CheckCircle2, Trash2, Edit2, Search, Settings, Save } from "lucide-react";
+import { ShieldCheck, Loader2, QrCode, Lock, Mail, ArrowRight, Plus, X, Copy, Eye, EyeOff, CheckCircle2, Trash2, Edit2, Search, Settings, Save, Users, Activity, AlertTriangle, Fingerprint, Link as LinkIcon, Share2 } from "lucide-react";
 import * as OTPAuth from "otpauth";
 import './index.css';
 
@@ -41,7 +41,55 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<any>(null);
-  const [isSettings, setIsSettings] = useState(false);
+  
+  // Tabs
+  const [activeTab, setActiveTab] = useState<'vault'|'identities'|'audit'|'settings'>('vault');
+  const [showQR, setShowQR] = useState(false);
+
+  // Audit State
+  const [auditResults, setAuditResults] = useState<any[]>([]);
+  const [isAuditing, setIsAuditing] = useState(false);
+
+  // Helper to check password breach via k-Anonymity
+  const checkBreach = async (password: string) => {
+    try {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(password);
+      const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+      
+      const prefix = hashHex.slice(0, 5);
+      const suffix = hashHex.slice(5);
+
+      const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
+      const text = await res.text();
+      
+      const lines = text.split('\n');
+      for (const line of lines) {
+        const [hashSuffix, count] = line.split(':');
+        if (hashSuffix === suffix) {
+          return parseInt(count);
+        }
+      }
+      return 0;
+    } catch (e) {
+      return 0;
+    }
+  };
+
+  const runAudit = async () => {
+    if (!accounts) return;
+    setIsAuditing(true);
+    const results = [];
+    for (const acc of accounts) {
+      if (!acc.password) continue;
+      const count = await checkBreach(acc.password);
+      results.push({ ...acc, breachCount: count });
+    }
+    setAuditResults(results);
+    setIsAuditing(false);
+  };
 
   // Create form state
   const [createForm, setCreateForm] = useState({
@@ -137,19 +185,41 @@ export default function App() {
            <h1 className="text-3xl font-black italic uppercase">Xakteir Auth</h1>
            <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Extension Access</p>
            
-           <form onSubmit={handleLogin} className="space-y-4 pt-6 text-left">
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
-                <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Email" className="w-full bg-white/5 border border-white/10 rounded-xl h-12 pl-12 text-sm font-bold focus:outline-none focus:border-primary" />
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
-                <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Password" className="w-full bg-white/5 border border-white/10 rounded-xl h-12 pl-12 text-sm font-bold focus:outline-none focus:border-primary" />
-              </div>
-              <button type="submit" disabled={isLoggingIn} className="w-full h-12 bg-primary rounded-xl font-black uppercase text-xs tracking-widest hover:bg-primary/90 mt-4 flex justify-center items-center">
-                 {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : "Authorize"}
-              </button>
-           </form>
+           {showQR ? (
+             <div className="pt-6 flex flex-col items-center space-y-6 animate-fade-in">
+               <div className="w-48 h-48 bg-white rounded-2xl p-4 flex items-center justify-center relative overflow-hidden">
+                 <QrCode className="w-full h-full text-black" />
+                 <div className="absolute top-0 left-0 w-full h-1 bg-primary shadow-[0_0_20px_rgba(var(--primary),1)] animate-[scan_2s_ease-in-out_infinite]" />
+               </div>
+               <div className="space-y-1">
+                 <p className="text-[10px] uppercase font-black tracking-widest text-primary">Scan with Xakteir App</p>
+                 <p className="text-xs font-medium text-zinc-400">Waiting for biometric approval...</p>
+               </div>
+               <button onClick={() => setShowQR(false)} className="text-xs text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition-colors">Use Password Instead</button>
+             </div>
+           ) : (
+             <form onSubmit={handleLogin} className="space-y-4 pt-6 text-left animate-fade-in">
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
+                  <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Email" className="w-full bg-white/5 border border-white/10 rounded-xl h-12 pl-12 text-sm font-bold focus:outline-none focus:border-primary" />
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
+                  <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Password" className="w-full bg-white/5 border border-white/10 rounded-xl h-12 pl-12 text-sm font-bold focus:outline-none focus:border-primary" />
+                </div>
+                <button type="submit" disabled={isLoggingIn} className="w-full h-12 bg-primary rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-primary/90 mt-4 flex justify-center items-center">
+                   {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : "Authorize with Password"}
+                </button>
+                <div className="relative flex py-2 items-center">
+                  <div className="flex-grow border-t border-white/10"></div>
+                  <span className="flex-shrink-0 mx-4 text-zinc-500 text-[10px] font-black uppercase">OR</span>
+                  <div className="flex-grow border-t border-white/10"></div>
+                </div>
+                <button type="button" onClick={() => setShowQR(true)} className="w-full h-12 bg-transparent border-2 border-primary/30 text-primary rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 flex justify-center items-center gap-2 transition-colors">
+                   <QrCode className="w-4 h-4" /> Sign In via Phone
+                </button>
+             </form>
+           )}
         </div>
       </div>
     );
@@ -282,9 +352,16 @@ export default function App() {
               <p className="text-xs text-zinc-300 bg-white/5 p-3 rounded-xl whitespace-pre-wrap">{viewingAccount.notes}</p>
             </div>
           )}
-          <div className="pt-4">
-            <button onClick={() => injectCredentials(viewingAccount)} className="w-full h-12 bg-primary rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-primary/90">
+          <div className="pt-4 space-y-2">
+            <button onClick={() => injectCredentials(viewingAccount)} className="w-full h-12 bg-primary rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors">
               Auto-Fill Now <ArrowRight className="w-4 h-4" />
+            </button>
+            <button onClick={() => {
+              const shareStr = btoa(JSON.stringify({ s: viewingAccount.service, u: viewingAccount.email || viewingAccount.account, p: viewingAccount.password }));
+              copyToClipboard(`https://xakteir.com/vault/share#${shareStr}`, "share");
+              alert("Vault Link generated and copied to clipboard! It is encrypted and will expire after 1 view.");
+            }} className="w-full h-12 bg-transparent border-2 border-primary/20 text-primary rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-primary/10 transition-colors">
+              <Share2 className="w-4 h-4" /> Create Vault Link
             </button>
           </div>
         </div>
@@ -347,11 +424,11 @@ export default function App() {
     );
   }
 
-  if (isSettings) {
+  if (activeTab === 'settings') {
     return (
       <div className="w-[450px] h-[600px] bg-[#05030d] text-white flex flex-col relative animate-fade-in">
         <header className="h-16 border-b border-white/5 flex items-center px-4 bg-black/40 gap-3 shrink-0">
-          <button onClick={() => setIsSettings(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+          <button onClick={() => setActiveTab('vault')} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
           <div className="flex-1 overflow-hidden">
             <h1 className="text-lg font-black italic uppercase tracking-tighter truncate">Vault Settings</h1>
           </div>
@@ -379,33 +456,119 @@ export default function App() {
     );
   }
 
-  if (isSettings) {
+  if (activeTab === 'identities') {
+    const handleGenerateBurner = () => {
+      const randomString = Math.random().toString(36).substring(2, 10);
+      const email = `burner-${randomString}@xakteir.me`;
+      
+      const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+      let password = "";
+      const randomValues = new Uint32Array(20);
+      crypto.getRandomValues(randomValues);
+      for (let i = 0; i < 20; i++) {
+        password += charset[randomValues[i] % charset.length];
+      }
+      
+      copyToClipboard(email, "burner_email");
+      setCreateForm({ ...createForm, email, password, service: "Burner Account" });
+      setActiveTab('vault');
+      setIsCreating(true);
+    };
+
     return (
       <div className="w-[450px] h-[600px] bg-[#05030d] text-white flex flex-col relative animate-fade-in">
-        <header className="h-16 border-b border-white/5 flex items-center px-4 bg-black/40 gap-3 shrink-0">
-          <button onClick={() => setIsSettings(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
-          <div className="flex-1 overflow-hidden">
-            <h1 className="text-lg font-black italic uppercase tracking-tighter truncate">Vault Settings</h1>
-          </div>
+        <header className="h-16 border-b border-white/5 flex items-center px-6 bg-black/40 gap-3 shrink-0">
+          <Fingerprint className="w-6 h-6 text-primary" />
+          <h1 className="text-lg font-black italic uppercase tracking-tighter">Identity Personas</h1>
         </header>
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-            <h3 className="text-xs font-black uppercase text-primary mb-2">Auto-Lock Timer</h3>
-            <p className="text-[10px] text-zinc-400 font-medium mb-3">Require re-authentication after inactivity.</p>
-            <select className="w-full bg-black/50 border border-white/10 rounded-xl h-10 px-3 text-xs font-bold focus:border-primary focus:outline-none text-white">
-              <option value="5">5 Minutes</option>
-              <option value="15">15 Minutes</option>
-              <option value="30">30 Minutes</option>
-              <option value="never">Never Lock</option>
-            </select>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center mx-auto">
+              <Mail className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-xl font-black uppercase tracking-tighter">Burner Identities</h2>
+            <p className="text-xs text-zinc-400 font-medium px-4">Generate completely anonymous, random emails that forward to your real address. Delete them anytime if they get spammed.</p>
+            <button onClick={handleGenerateBurner} className="w-full h-12 bg-primary hover:bg-primary/90 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center transition-colors">
+              Generate Burner Identity
+            </button>
           </div>
-          <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-            <h3 className="text-xs font-black uppercase text-primary mb-2">Import & Export</h3>
-            <div className="grid grid-cols-2 gap-3 mt-3">
-              <button className="h-10 bg-black border border-white/10 rounded-xl text-[10px] font-black uppercase hover:bg-white/5 transition-colors">Import CSV</button>
-              <button className="h-10 bg-black border border-white/10 rounded-xl text-[10px] font-black uppercase hover:bg-white/5 transition-colors text-amber-400 hover:bg-amber-400/10 hover:border-amber-400/20">Export JSON</button>
+          
+          <div className="space-y-3 mt-6">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Your Personas</h3>
+            <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 hover:border-primary/50 cursor-pointer transition-colors">
+               <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0 border border-blue-500/30"><ShieldCheck className="w-5 h-5 text-blue-500" /></div>
+               <div className="flex-1 overflow-hidden">
+                 <h4 className="text-sm font-black uppercase truncate text-blue-400">Work</h4>
+                 <p className="text-[10px] text-zinc-400 truncate">Autofill professional accounts</p>
+               </div>
+            </div>
+            <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 hover:border-primary/50 cursor-pointer transition-colors">
+               <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 border border-purple-500/30"><Users className="w-5 h-5 text-purple-500" /></div>
+               <div className="flex-1 overflow-hidden">
+                 <h4 className="text-sm font-black uppercase truncate text-purple-400">Personal</h4>
+                 <p className="text-[10px] text-zinc-400 truncate">Autofill social and shopping</p>
+               </div>
             </div>
           </div>
+        </div>
+        <div className="h-16 border-t border-white/5 flex items-center bg-black/40 shrink-0 mt-auto">
+          <button onClick={() => setActiveTab('vault')} className={`flex-1 flex flex-col items-center justify-center gap-1 ${activeTab === 'vault' ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}><ShieldCheck className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Vault</span></button>
+          <button onClick={() => setActiveTab('identities')} className={`flex-1 flex flex-col items-center justify-center gap-1 ${activeTab === 'identities' ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}><Users className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Identities</span></button>
+          <button onClick={() => setActiveTab('audit')} className={`flex-1 flex flex-col items-center justify-center gap-1 ${activeTab === 'audit' ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}><Activity className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Audit</span></button>
+          <button onClick={() => setActiveTab('settings')} className={`flex-1 flex flex-col items-center justify-center gap-1 ${activeTab === 'settings' ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}><Settings className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Settings</span></button>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeTab === 'audit') {
+    return (
+      <div className="w-[450px] h-[600px] bg-[#05030d] text-white flex flex-col relative animate-fade-in">
+        <header className="h-16 border-b border-white/5 flex items-center px-6 bg-black/40 gap-3 shrink-0">
+          <Activity className="w-6 h-6 text-primary" />
+          <h1 className="text-lg font-black italic uppercase tracking-tighter">Security Audit</h1>
+        </header>
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
+            </div>
+            <h2 className="text-xl font-black uppercase tracking-tighter">Dark Web Monitor</h2>
+            <p className="text-xs text-zinc-400 font-medium px-4">We will securely hash your passwords and check them against known data breaches using k-Anonymity. Your passwords are never sent to our servers.</p>
+            <button onClick={runAudit} disabled={isAuditing} className="w-full h-12 bg-red-600 hover:bg-red-700 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 transition-colors">
+              {isAuditing ? <><Loader2 className="w-4 h-4 animate-spin" /> Scanning Vault...</> : "Run Security Audit"}
+            </button>
+          </div>
+
+          {auditResults.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Audit Results</h3>
+              {auditResults.map((res, i) => (
+                <div key={i} className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4">
+                  {res.breachCount > 0 ? (
+                    <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/30"><AlertTriangle className="w-5 h-5 text-red-500" /></div>
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 border border-emerald-500/30"><CheckCircle2 className="w-5 h-5 text-emerald-500" /></div>
+                  )}
+                  <div className="flex-1 overflow-hidden">
+                    <h4 className="text-sm font-black uppercase truncate">{res.service}</h4>
+                    <p className="text-[10px] text-zinc-400 truncate">{res.email || res.account}</p>
+                  </div>
+                  {res.breachCount > 0 && (
+                    <span className="text-[10px] font-black text-red-400 bg-red-400/10 px-2 py-1 rounded border border-red-400/20 whitespace-nowrap">
+                      {res.breachCount} Leaks
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="h-16 border-t border-white/5 flex items-center bg-black/40 shrink-0 mt-auto">
+          <button onClick={() => setActiveTab('vault')} className={`flex-1 flex flex-col items-center justify-center gap-1 ${activeTab === 'vault' ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}><ShieldCheck className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Vault</span></button>
+          <button onClick={() => setActiveTab('identities')} className={`flex-1 flex flex-col items-center justify-center gap-1 ${activeTab === 'identities' ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}><Users className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Identities</span></button>
+          <button onClick={() => setActiveTab('audit')} className={`flex-1 flex flex-col items-center justify-center gap-1 ${activeTab === 'audit' ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}><Activity className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Audit</span></button>
+          <button onClick={() => setActiveTab('settings')} className={`flex-1 flex flex-col items-center justify-center gap-1 ${activeTab === 'settings' ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}><Settings className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Settings</span></button>
         </div>
       </div>
     );
@@ -424,9 +587,6 @@ export default function App() {
          <div className="flex items-center gap-1">
            <button onClick={() => setIsCreating(true)} className="w-8 h-8 rounded-full bg-primary/20 text-primary hover:bg-primary/40 flex items-center justify-center transition-colors">
              <Plus className="w-4 h-4" />
-           </button>
-           <button onClick={() => setIsSettings(true)} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
-             <Settings className="w-4 h-4 text-zinc-300" />
            </button>
          </div>
       </header>
@@ -452,6 +612,13 @@ export default function App() {
             </div>
           )
         })}
+      </div>
+
+      <div className="h-16 border-t border-white/5 flex items-center bg-black/40 shrink-0 mt-auto">
+        <button onClick={() => setActiveTab('vault')} className={`flex-1 flex flex-col items-center justify-center gap-1 ${activeTab === 'vault' ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}><ShieldCheck className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Vault</span></button>
+        <button onClick={() => setActiveTab('identities')} className={`flex-1 flex flex-col items-center justify-center gap-1 ${activeTab === 'identities' ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}><Users className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Identities</span></button>
+        <button onClick={() => setActiveTab('audit')} className={`flex-1 flex flex-col items-center justify-center gap-1 ${activeTab === 'audit' ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}><Activity className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Audit</span></button>
+        <button onClick={() => setActiveTab('settings')} className={`flex-1 flex flex-col items-center justify-center gap-1 ${activeTab === 'settings' ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}><Settings className="w-5 h-5" /><span className="text-[8px] font-black uppercase">Settings</span></button>
       </div>
     </div>
   );

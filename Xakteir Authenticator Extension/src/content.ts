@@ -12,6 +12,71 @@ const generateTOTP = (secret: string) => {
 
 let savedAccounts: any[] = [];
 
+// Unsafe Website Blacklist Feature
+const BLACKLIST = [
+  "unsafe-website.com",
+  "phishing-example.org",
+  "malicious-login.net",
+  "test-unsafe.com"
+];
+
+function checkSiteSafety() {
+  const currentDomain = window.location.hostname.replace('www.', '');
+  const isHttp = window.location.protocol === 'http:';
+  
+  if (BLACKLIST.includes(currentDomain) || (isHttp && currentDomain !== 'localhost' && currentDomain !== '127.0.0.1')) {
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.backgroundColor = 'rgba(15, 5, 20, 0.98)';
+    overlay.style.backdropFilter = 'blur(10px)';
+    overlay.style.zIndex = '2147483647';
+    overlay.style.display = 'flex';
+    overlay.style.flexDirection = 'column';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.color = 'white';
+    overlay.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+    overlay.style.textAlign = 'center';
+    overlay.style.padding = '40px';
+
+    const provider = isHttp ? "Certificate Authority" : "Xakteir Threat Intelligence";
+    const reason = isHttp ? "It has an invalid or missing SSL certificate (HTTP instead of HTTPS)." : "It is a known phishing or malicious domain.";
+
+    overlay.innerHTML = `
+      <div style="width: 120px; height: 120px; border-radius: 50%; background: rgba(239, 68, 68, 0.2); border: 2px solid rgba(239, 68, 68, 0.5); display: flex; align-items: center; justify-content: center; margin-bottom: 30px; box-shadow: 0 0 50px rgba(239, 68, 68, 0.3);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      </div>
+      <h1 style="font-size: 42px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; margin: 0 0 10px 0; color: #ef4444;">Access Blocked</h1>
+      <p style="font-size: 20px; font-weight: bold; margin: 0 0 20px 0;">This website has been blacklisted by ${provider}.</p>
+      <p style="font-size: 16px; color: #a1a1aa; max-width: 600px; line-height: 1.5; margin: 0 0 40px 0;">${reason}</p>
+      <div style="display: flex; gap: 20px;">
+        <button id="xakteir-go-back" style="padding: 16px 32px; font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; background: #ef4444; color: white; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3); transition: transform 0.2s;">Go Back to Safety</button>
+        <button id="xakteir-proceed" style="padding: 16px 32px; font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; background: transparent; color: #a1a1aa; border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; transition: all 0.2s;">Proceed Anyway (Unsafe)</button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+
+    document.getElementById('xakteir-go-back')?.addEventListener('click', () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = 'https://google.com';
+      }
+    });
+
+    document.getElementById('xakteir-proceed')?.addEventListener('click', () => {
+      overlay.remove();
+      document.body.style.overflow = '';
+    });
+  }
+}
+
+// Run the safety check immediately on inject
+checkSiteSafety();
+
 // Fetch initial accounts
 chrome.storage?.local.get('xakteir_accounts', (res) => {
   if (res.xakteir_accounts) {

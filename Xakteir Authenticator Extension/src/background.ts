@@ -22,6 +22,13 @@ chrome.runtime.onInstalled.addListener(() => {
     title: "Generate Secure Password",
     contexts: ["all"]
   });
+
+  chrome.contextMenus.create({
+    id: "xakteir-burner",
+    parentId: "xakteir-root",
+    title: "Insert Burner Email",
+    contexts: ["all"]
+  });
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
@@ -51,6 +58,25 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         });
       },
       args: [password]
+    });
+  } else if (info.menuItemId === "xakteir-burner") {
+    const randomString = Math.random().toString(36).substring(2, 10);
+    const burnerEmail = `burner-${randomString}@xakteir.me`;
+    
+    chrome.scripting.executeScript({
+      target: { tabId: tab?.id as number },
+      func: (email) => {
+        navigator.clipboard.writeText(email).then(() => {
+          alert("Burner email generated and copied to clipboard!\n\n" + email);
+        });
+        const activeEl = document.activeElement as HTMLInputElement;
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+          activeEl.value = email;
+          activeEl.dispatchEvent(new Event('input', { bubbles: true }));
+          activeEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      },
+      args: [burnerEmail]
     });
   }
 });

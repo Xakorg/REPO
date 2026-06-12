@@ -642,9 +642,11 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           voiceRemoteStreams.current[otherUser.uid] = remoteMs;
           
           peer.ontrack = (event) => {
-            event.streams[0]?.getTracks().forEach((track) => {
-              remoteMs.addTrack(track);
-            });
+            const track = event.track;
+            if (track) remoteMs.addTrack(track);
+            if (event.streams && event.streams[0]) {
+              event.streams[0].getTracks().forEach((t) => remoteMs.addTrack(t));
+            }
             setVoiceRemoteStreamsVersion(v => v + 1);
             
             const audioEl = document.createElement("audio");
@@ -710,7 +712,11 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           voiceRemoteStreams.current[fromId] = remoteMs;
 
           peer.ontrack = (event) => {
-            event.streams[0]?.getTracks().forEach((track) => remoteMs.addTrack(track));
+            const track = event.track;
+            if (track) remoteMs.addTrack(track);
+            if (event.streams && event.streams[0]) {
+              event.streams[0].getTracks().forEach((t) => remoteMs.addTrack(t));
+            }
             setVoiceRemoteStreamsVersion(v => v + 1);
             const audioEl = document.createElement("audio");
             audioEl.srcObject = remoteMs;
@@ -1010,9 +1016,11 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     setRemoteCallStream(remoteMs);
 
     peer.ontrack = (event) => {
-      event.streams[0]?.getTracks().forEach((track) => {
-        remoteMs.addTrack(track);
-      });
+      const track = event.track;
+      if (track) remoteMs.addTrack(track);
+      if (event.streams && event.streams[0]) {
+        event.streams[0].getTracks().forEach((t) => remoteMs.addTrack(t));
+      }
       const remoteVideo = document.getElementById("direct-call-remote-video") as HTMLVideoElement | null;
       if (remoteVideo) {
         remoteVideo.srcObject = remoteMs;
