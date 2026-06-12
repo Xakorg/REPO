@@ -47,14 +47,50 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(`https://xakteir.com${path}`);
   }
 
-  // Redirect xakteir.com/xakcode to code.xakteir.com
-  if (hostname !== 'code.xakteir.com' && hostname !== 'www.code.xakteir.com') {
-    if (path === '/xakcode') {
-      return NextResponse.redirect('https://code.xakteir.com/');
+  // 3. Handle Chat standalone deployment via chat.xakteir.com
+  if (hostname === 'chat.xakteir.com' || hostname === 'www.chat.xakteir.com') {
+    if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+    if (path === '/') return NextResponse.rewrite(new URL('/chat', req.url));
+    if (path.startsWith('/chat')) return NextResponse.next();
+    
+    // Rewrite Chat sub-routes
+    const chatRoutes = ['/s', '/dm', '/settings'];
+    const rootSegment = '/' + path.split('/')[1]; 
+    if (chatRoutes.includes(rootSegment)) {
+      return NextResponse.rewrite(new URL(`/chat${path}`, req.url));
     }
-    if (path.startsWith('/xakcode/')) {
-      return NextResponse.redirect(`https://code.xakteir.com${path.replace('/xakcode', '')}`);
+    return NextResponse.redirect(`https://xakteir.com${path}`);
+  }
+
+  // 4. Handle Maps standalone deployment via maps.xakteir.com
+  if (hostname === 'maps.xakteir.com' || hostname === 'www.maps.xakteir.com') {
+    if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+    if (path === '/') return NextResponse.rewrite(new URL('/map', req.url));
+    if (path.startsWith('/map')) return NextResponse.next();
+    
+    // Rewrite Maps sub-routes (e.g., settings)
+    const mapRoutes = ['/settings'];
+    const rootSegment = '/' + path.split('/')[1]; 
+    if (mapRoutes.includes(rootSegment)) {
+      return NextResponse.rewrite(new URL(`/map${path}`, req.url));
     }
+    return NextResponse.redirect(`https://xakteir.com${path}`);
+  }
+
+  // Redirect paths on xakteir.com to their respective subdomains
+  if (
+    hostname !== 'code.xakteir.com' && hostname !== 'www.code.xakteir.com' &&
+    hostname !== 'chat.xakteir.com' && hostname !== 'www.chat.xakteir.com' &&
+    hostname !== 'maps.xakteir.com' && hostname !== 'www.maps.xakteir.com'
+  ) {
+    if (path === '/xakcode') return NextResponse.redirect('https://code.xakteir.com/');
+    if (path.startsWith('/xakcode/')) return NextResponse.redirect(`https://code.xakteir.com${path.replace('/xakcode', '')}`);
+    
+    if (path === '/chat') return NextResponse.redirect('https://chat.xakteir.com/');
+    if (path.startsWith('/chat/')) return NextResponse.redirect(`https://chat.xakteir.com${path.replace('/chat', '')}`);
+    
+    if (path === '/map') return NextResponse.redirect('https://maps.xakteir.com/');
+    if (path.startsWith('/map/')) return NextResponse.redirect(`https://maps.xakteir.com${path.replace('/map', '')}`);
   }
 
   // Default behavior for xakteir.com (allow everything)
