@@ -653,7 +653,7 @@ export default function XakAIPage() {
               id="ai-chat-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={alwaysOn ? \`Listening for "\${hotword}"...\` : "Ask Xak AI anything..."}
+              placeholder={alwaysOn ? `Listening for "${hotword}"...` : "Ask Xak AI anything..."}
               className={cn(
                 "h-20 w-full border-4 focus-visible:border-primary focus-visible:ring-0 rounded-full px-12 pr-40 font-bold italic text-base shadow-2xl transition-all text-white placeholder:text-white/20",
                 alwaysOn ? "bg-primary/5 border-primary/20" : "bg-black/60 border-white/10"
