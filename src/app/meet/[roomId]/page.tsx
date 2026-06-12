@@ -763,15 +763,16 @@ export default function MeetingRoomPage() {
               }
             }
 
-            // Host handles initiating offers to any newly joined participant
-            if (data.hostId === userIdToUse) {
-              const ids: string[] = data.participantIds || [];
-              ids.forEach((pid) => {
-                if (pid !== userIdToUse && !pcMap.current[pid]) {
+            // In a mesh network, to prevent duplicate offers, we determine the caller
+            // by comparing IDs. The participant with the greater ID will send the offer.
+            const ids: string[] = data.participantIds || [];
+            ids.forEach((pid) => {
+              if (pid !== userIdToUse && !pcMap.current[pid]) {
+                if (userIdToUse > pid) {
                   void createOfferTo(meetingId, pid, userIdToUse).catch((e) => console.warn(e));
                 }
-              });
-            }
+              }
+            });
           }
         })
       );

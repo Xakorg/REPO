@@ -64,7 +64,8 @@ import {
   ThreeViewer, 
   MultiFileExplorer, 
   RpgConsole, 
-  InteractiveSpreadsheet 
+  InteractiveSpreadsheet,
+  IpcFileOpRunner
 } from "./chat-widgets";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit, serverTimestamp, doc, updateDoc } from "firebase/firestore";
@@ -130,6 +131,12 @@ function FormattedContent({
           }
           if (lang === "html") {
             return <IframeSandbox key={i} code={code} />;
+          }
+          if (lang === "ipc-file-op") {
+            try {
+              const cfg = JSON.parse(code.trim());
+              return <IpcFileOpRunner key={i} config={cfg} />;
+            } catch(e) {}
           }
 
           return (
@@ -203,9 +210,28 @@ export default function XakAIPage() {
   const [isListening, setIsListening] = useState(false);
   const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
   const recognitionRef = useRef<any>(null);
+  
+  // Settings
+  const [hotword, setHotword] = useState("hey xak");
+  const [alwaysOn, setAlwaysOn] = useState(false);
+  const alwaysOnRef = useRef(alwaysOn);
+  alwaysOnRef.current = alwaysOn;
+  const hotwordRef = useRef(hotword);
+  hotwordRef.current = hotword;
 
   useEffect(() => { 
     setMounted(true); 
+    
+    // Listen for Electron global shortcut
+    if (typeof window !== 'undefined' && (window as any).electron) {
+      (window as any).electron.onTriggerXakAI(() => {
+        const inputEl = document.getElementById('ai-chat-input');
+        if (inputEl) inputEl.focus();
+        if (!recognitionRef.current) return;
+        recognitionRef.current.start();
+      });
+    }
+
     return () => {
       if (typeof window !== "undefined") window.speechSynthesis.cancel();
     };
@@ -216,18 +242,66 @@ export default function XakAIPage() {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       const rec = new SpeechRecognition();
-      rec.continuous = false;
-      rec.interimResults = false;
+      rec.continuous = true;
+      rec.interimResults = true;
       rec.lang = "en-US";
+      
       rec.onstart = () => setIsListening(true);
-      rec.onend = () => setIsListening(false);
-      rec.onresult = (event: any) => {
-        const resultText = event.results[0][0].transcript;
-        setInput(prev => (prev ? prev + " " : "") + resultText);
+      
+      rec.onend = () => {
+        setIsListening(false);
+        if (alwaysOnRef.current) {
+          // Restart if always on
+          setTimeout(() => {
+            try { rec.start(); } catch(e) {}
+          }, 300);
+        }
       };
+      
+      rec.onresult = (event: any) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        
+        const currentText = (finalTranscript || interimTranscript).toLowerCase();
+        
+        // Hotword check
+        if (alwaysOnRef.current && currentText.includes(hotwordRef.current.toLowerCase())) {
+          // We found the hotword! Remove it from the text to submit.
+          const query = currentText.split(hotwordRef.current.toLowerCase())[1]?.trim();
+          if (query && query.length > 2) {
+             setInput(query);
+             // Auto submit after a short delay to allow final results
+             setTimeout(() => {
+               const submitBtn = document.querySelector('form button[type="submit"]') as HTMLButtonElement | null;
+               if (submitBtn) submitBtn.click();
+             }, 500);
+             // Reset recognition to clear the buffer
+             rec.stop();
+          } else {
+             // Woke up but no command yet
+             setInput("Listening...");
+          }
+        } else if (!alwaysOnRef.current) {
+           // Normal voice typing mode
+           setInput(prev => (prev && !prev.endsWith(' ') ? prev + " " : "") + (finalTranscript || interimTranscript));
+        }
+      };
+      
       recognitionRef.current = rec;
+      
+      if (alwaysOn) {
+        try { rec.start(); } catch(e) {}
+      }
     }
-  }, []);
+  }, [alwaysOn]);
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
@@ -429,9 +503,25 @@ export default function XakAIPage() {
             ) : (
               <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[8px] font-black uppercase px-3 py-1">Guest</Badge>
             )}
-            <button className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all">
-              <Settings className="w-4 h-4" />
-            </button>
+            
+            <div className="flex items-center gap-2 border-l border-white/10 pl-4 ml-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-primary">Always On</span>
+              <button 
+                onClick={() => setAlwaysOn(!alwaysOn)} 
+                className={cn("w-10 h-5 rounded-full relative transition-colors", alwaysOn ? "bg-primary" : "bg-white/10")}
+              >
+                <div className={cn("w-3 h-3 bg-white rounded-full absolute top-1 transition-all", alwaysOn ? "left-6" : "left-1")} />
+              </button>
+              {alwaysOn && (
+                <input 
+                  type="text" 
+                  value={hotword} 
+                  onChange={(e) => setHotword(e.target.value)}
+                  className="bg-black/40 border border-white/10 rounded px-2 py-1 text-[10px] font-bold text-white w-24 outline-none focus:border-primary/50 placeholder:text-white/20 ml-2"
+                  placeholder="Hotword..."
+                />
+              )}
+            </div>
           </div>
         </header>
 
@@ -550,10 +640,14 @@ export default function XakAIPage() {
 
           <form onSubmit={handleSend} className="max-w-4xl mx-auto relative group w-full">
             <Input 
+              id="ai-chat-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask Xak AI anything..."
-              className="h-20 w-full bg-black/60 border-4 border-white/10 focus-visible:border-primary focus-visible:ring-0 rounded-full px-12 pr-40 font-bold italic text-base shadow-2xl transition-all text-white placeholder:text-white/20"
+              placeholder={alwaysOn ? \`Listening for "\${hotword}"...\` : "Ask Xak AI anything..."}
+              className={cn(
+                "h-20 w-full border-4 focus-visible:border-primary focus-visible:ring-0 rounded-full px-12 pr-40 font-bold italic text-base shadow-2xl transition-all text-white placeholder:text-white/20",
+                alwaysOn ? "bg-primary/5 border-primary/20" : "bg-black/60 border-white/10"
+              )}
             />
             <button 
               type="button"

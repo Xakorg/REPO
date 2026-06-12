@@ -762,3 +762,93 @@ export function InteractiveSpreadsheet({ initialTable }: { initialTable: ParsedT
     </div>
   );
 }
+
+// ==========================================
+// 7. IPC File Operation Runner
+// ==========================================
+export interface IpcFileOpConfig {
+  action: "read" | "write" | "delete";
+  filePath: string;
+  content?: string;
+}
+
+export function IpcFileOpRunner({ config }: { config: IpcFileOpConfig }) {
+  const [status, setStatus] = useState<"idle" | "running" | "success" | "error">("idle");
+  const [result, setResult] = useState<string | null>(null);
+
+  const handleRun = async () => {
+    if (typeof window === "undefined" || !(window as any).electron) {
+      setStatus("error");
+      setResult("Not running in Xakteir Hub. Electron IPC is unavailable.");
+      return;
+    }
+    
+    setStatus("running");
+    try {
+      let res;
+      if (config.action === "read") {
+        res = await (window as any).electron.fs.readFile(config.filePath);
+      } else if (config.action === "write") {
+        res = await (window as any).electron.fs.writeFile(config.filePath, config.content || "");
+      } else if (config.action === "delete") {
+        res = await (window as any).electron.fs.deleteFile(config.filePath);
+      }
+      
+      if (res && res.success) {
+        setStatus("success");
+        setResult(res.data ? `Read ${res.data.length} bytes.` : "Operation successful.");
+      } else {
+        setStatus("error");
+        setResult(res?.error || "Unknown IPC error.");
+      }
+    } catch (err: any) {
+      setStatus("error");
+      setResult(err.message);
+    }
+  };
+
+  return (
+    <div className="w-full max-w-lg rounded-2xl overflow-hidden border-2 border-orange-500/30 bg-zinc-950/90 shadow-2xl my-6 mx-auto">
+      <div className="px-6 py-3 bg-orange-950/40 border-b border-orange-500/20 flex items-center justify-between">
+        <span className="text-[10px] font-black uppercase tracking-widest text-orange-400">Local File System</span>
+        <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-2 py-1 bg-black/40 rounded border border-white/5">
+          {config.action}
+        </span>
+      </div>
+      <div className="p-6 space-y-4">
+        <div className="font-mono text-xs text-orange-200 bg-black/40 p-3 rounded-lg border border-orange-500/20 truncate" title={config.filePath}>
+          {config.filePath}
+        </div>
+        
+        {config.action === "write" && (
+          <div className="text-[10px] text-white/50 bg-black/40 p-3 rounded-lg border border-white/5 max-h-[100px] overflow-y-auto custom-scrollbar font-mono whitespace-pre">
+            {config.content?.substring(0, 200)}
+            {config.content && config.content.length > 200 ? "... (truncated)" : ""}
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={handleRun} 
+            disabled={status === "running"}
+            className="h-10 bg-orange-500 hover:bg-orange-600 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all w-full flex items-center gap-2"
+          >
+            {status === "running" ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+            {status === "success" ? "Run Again" : "Execute Local Action"}
+          </Button>
+        </div>
+
+        {status === "success" && (
+          <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
+            <CheckCircle2 className="w-4 h-4" /> {result}
+          </div>
+        )}
+        {status === "error" && (
+          <div className="flex items-start gap-2 text-rose-400 text-xs font-bold uppercase tracking-wider bg-rose-500/10 p-3 rounded-lg border border-rose-500/20">
+            <Trash className="w-4 h-4 shrink-0" /> <span className="break-all">{result}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

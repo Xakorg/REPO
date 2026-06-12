@@ -26,6 +26,10 @@ export function middleware(req: NextRequest) {
       return NextResponse.next(); 
     }
 
+    if (!req.cookies.has('xak_session')) {
+      return NextResponse.redirect(new URL('/auth', req.url));
+    }
+
     // Rewrite Root to the IDE
     if (path === '/') {
       return NextResponse.rewrite(new URL('/xakcode', req.url));
@@ -50,6 +54,11 @@ export function middleware(req: NextRequest) {
   // 3. Handle Chat standalone deployment via chat.xakteir.com
   if (hostname === 'chat.xakteir.com' || hostname === 'www.chat.xakteir.com') {
     if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+    
+    if (!req.cookies.has('xak_session')) {
+      return NextResponse.redirect(new URL('/auth', req.url));
+    }
+
     if (path === '/') return NextResponse.rewrite(new URL('/chat', req.url));
     if (path.startsWith('/chat')) return NextResponse.next();
     
@@ -65,6 +74,11 @@ export function middleware(req: NextRequest) {
   // 4. Handle Maps standalone deployment via maps.xakteir.com
   if (hostname === 'maps.xakteir.com' || hostname === 'www.maps.xakteir.com') {
     if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+
+    if (!req.cookies.has('xak_session')) {
+      return NextResponse.redirect(new URL('/auth', req.url));
+    }
+
     if (path === '/') return NextResponse.rewrite(new URL('/map', req.url));
     if (path.startsWith('/map')) return NextResponse.next();
     

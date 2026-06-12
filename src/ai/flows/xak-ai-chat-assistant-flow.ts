@@ -200,6 +200,35 @@ const generateVideo = ai.defineTool(
   }
 );
 
+// Tool to edit a local file via Electron IPC
+const editLocalFile = ai.defineTool(
+  {
+    name: 'editLocalFile',
+    description: 'Edits, reads, or deletes a local file on the users computer via Electron. Use this to modify project code or text files.',
+    inputSchema: z.object({
+      action: z.enum(['read', 'write', 'delete']).describe('The file operation to perform.'),
+      filePath: z.string().describe('Absolute path to the file to modify.'),
+      content: z.string().optional().describe('Content to write (if action is write).'),
+    }),
+    outputSchema: z.object({
+      instruction: z.string(),
+      ipcPayload: z.any()
+    }),
+  },
+  async (input) => {
+    // We return a payload that the frontend will catch and execute via window.electron.fs
+    return {
+      instruction: `Requested local file ${input.action} on ${input.filePath}`,
+      ipcPayload: {
+        type: 'LOCAL_FILE_OPERATION',
+        action: input.action,
+        filePath: input.filePath,
+        content: input.content
+      }
+    };
+  }
+);
+
 export async function chatWithXakAI(input: ChatInput): Promise<ChatOutput> {
   return chatFlow(input);
 }
@@ -244,6 +273,12 @@ CRITICAL GUIDELINES:
   "title": "...",
   "description": "...",
   "choices": ["Choice A", "Choice B"]
+}
+- If editing local files, output the operation in a JSON block marked with \`\`\`ipc-file-op containing:
+{
+  "action": "read" | "write" | "delete",
+  "filePath": "C:/path/...",
+  "content": "..."
 }`
       : `You are Xak AI, the professional assistant for the Xakteir platform. You help users manage data, write code, and organize tasks.
 
@@ -274,11 +309,17 @@ CRITICAL GUIDELINES:
   "title": "...",
   "description": "...",
   "choices": ["Choice A", "Choice B"]
+}
+- If editing local files, output the operation in a JSON block marked with \`\`\`ipc-file-op containing:
+{
+  "action": "read" | "write" | "delete",
+  "filePath": "C:/path/...",
+  "content": "..."
 }`;
 
     const activeTools = signedIn 
-      ? [createDocument, createGoal, createFile, generateImage, generateVideo] 
-      : [generateImage, generateVideo];
+      ? [createDocument, createGoal, createFile, generateImage, generateVideo, editLocalFile] 
+      : [generateImage, generateVideo, editLocalFile];
 
     while (retries > 0) {
       try {

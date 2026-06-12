@@ -186,6 +186,8 @@ export default function App() {
   if (!user) {
     return (
       <div className="w-[400px] h-[600px] bg-[#05030d] text-white p-8 flex flex-col justify-center animate-fade-in relative overflow-hidden">
+        <div className="mesh-background opacity-50" />
+        <div className="auth-bg" />
         <div className="absolute inset-0 arcade-grid opacity-10 pointer-events-none" />
         <div className="relative z-10 text-center space-y-6">
            <ShieldCheck className="w-16 h-16 text-primary mx-auto" />
@@ -295,6 +297,8 @@ export default function App() {
     const totp = viewingAccount.secret ? generateTOTP(viewingAccount.secret) : null;
     return (
       <div className="w-[450px] h-[600px] bg-[#05030d] text-white flex flex-col relative animate-fade-in">
+        <div className="mesh-background opacity-50" />
+        <div className="auth-bg" />
         <header className="h-16 border-b border-white/5 flex items-center px-4 bg-black/40 gap-3 shrink-0">
           <button onClick={() => setViewingAccount(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
           <div className="flex-1 overflow-hidden">
@@ -379,6 +383,8 @@ export default function App() {
   if (isCreating) {
     return (
       <div className="w-[450px] h-[600px] bg-[#05030d] text-white flex flex-col relative animate-fade-in">
+        <div className="mesh-background opacity-50" />
+        <div className="auth-bg" />
         <header className="h-16 border-b border-white/5 flex items-center px-4 bg-black/40 gap-3 shrink-0">
           <button onClick={() => setIsCreating(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
           <div className="flex-1 overflow-hidden">
@@ -464,25 +470,45 @@ export default function App() {
   }
 
   if (activeTab === 'identities') {
-    const handleGenerateBurner = () => {
-      const randomString = Math.random().toString(36).substring(2, 10);
-      const email = `burner-${randomString}@xakteir.me`;
-      
-      const newPersona = {
-        id: Date.now(),
-        name: `Burner ${randomString}`,
-        description: `Anonymous forwarder`,
-        email,
-        type: 'burner'
-      };
+    const handleGenerateBurner = async () => {
+      try {
+        const res = await fetch("https://www.1secmail.com/api/v1/?action=genRandomMailbox&count=1");
+        const [email] = await res.json();
+        
+        const [login, domain] = email.split('@');
+        
+        const newPersona = {
+          id: Date.now(),
+          name: `Burner ${login.substring(0,6)}`,
+          description: `Real temp mail: ${domain}`,
+          email,
+          type: 'burner'
+        };
 
-      const updatedPersonas = [newPersona, ...personas];
-      setPersonas(updatedPersonas);
-      if (chrome?.storage?.local) {
-        chrome.storage.local.set({ personas: updatedPersonas });
+        const updatedPersonas = [newPersona, ...personas];
+        setPersonas(updatedPersonas);
+        if (chrome?.storage?.local) {
+          chrome.storage.local.set({ personas: updatedPersonas });
+        }
+        
+        copyToClipboard(email, "burner_email");
+      } catch (err) {
+        console.error("Failed to fetch real burner", err);
+        // Fallback
+        const randomString = Math.random().toString(36).substring(2, 10);
+        const email = `burner-${randomString}@xakteir.me`;
+        const newPersona = {
+          id: Date.now(),
+          name: `Burner ${randomString}`,
+          description: `Anonymous forwarder`,
+          email,
+          type: 'burner'
+        };
+        const updatedPersonas = [newPersona, ...personas];
+        setPersonas(updatedPersonas);
+        if (chrome?.storage?.local) chrome.storage.local.set({ personas: updatedPersonas });
+        copyToClipboard(email, "burner_email");
       }
-      
-      copyToClipboard(email, "burner_email");
     };
 
     return (
@@ -608,6 +634,8 @@ export default function App() {
 
   return (
     <div className="w-[450px] h-[600px] bg-[#05030d] text-white flex flex-col relative">
+      <div className="mesh-background opacity-50" />
+      <div className="auth-bg" />
       <header className="h-16 border-b border-white/5 flex items-center px-6 bg-black/40 justify-between gap-4">
          <div className="flex items-center">
            <ShieldCheck className="w-6 h-6 text-primary mr-3" />

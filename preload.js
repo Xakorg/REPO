@@ -10,5 +10,11 @@ contextBridge.exposeInMainWorld('electron', {
     onUpdateAvailable: (callback) => ipcRenderer.on('update_available', () => callback()),
     onUpdateDownloaded: (callback) => ipcRenderer.on('update_downloaded', () => callback()),
     restartApp: () => ipcRenderer.send('restart_app')
-  }
+  },
+  fs: {
+    readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
+    writeFile: (filePath, content) => ipcRenderer.invoke('write-file', filePath, content),
+    deleteFile: (filePath) => ipcRenderer.invoke('delete-file', filePath)
+  },
+  onTriggerXakAI: (callback) => ipcRenderer.on('trigger-xak-ai', () => callback())
 });
