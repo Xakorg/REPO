@@ -55,9 +55,9 @@ export function Footer() {
           <ul className="space-y-3 md:space-y-4">
             {['Mail', 'Games', 'XakView', 'Social', 'Code'].map(item => (
               <li key={item}>
-                <Link href={`/${item.toLowerCase()}`} className="text-xs md:text-sm font-bold text-muted-foreground hover:text-primary transition-colors italic">
+                <a href={`https://xakteir.com/${item.toLowerCase()}`} className="text-xs md:text-sm font-bold text-muted-foreground hover:text-primary transition-colors italic block">
                   {item}
-                </Link>
+                </a>
               </li>
             ))}
           </ul>
@@ -66,11 +66,11 @@ export function Footer() {
         <div className="space-y-6 md:space-y-8">
           <h3 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] text-primary">Company</h3>
           <ul className="space-y-3 md:space-y-4">
-            <li><Link href="/about" className="text-xs md:text-sm font-bold text-muted-foreground hover:text-primary transition-colors italic">About Us</Link></li>
-            <li><Link href="/terms" className="text-xs md:text-sm font-bold text-muted-foreground hover:text-primary transition-colors italic">Terms of Service</Link></li>
-            <li><Link href="/privacy" className="text-xs md:text-sm font-bold text-muted-foreground hover:text-primary transition-colors italic">Privacy Policy</Link></li>
-            <li><Link href="/contact" className="text-xs md:text-sm font-bold text-muted-foreground hover:text-primary transition-colors italic">Contact Support</Link></li>
-            <li><Link href="/download" className="text-xs md:text-sm font-bold text-muted-foreground hover:text-primary transition-colors italic">Downloads</Link></li>
+            <li><a href="https://xakteir.com/about" className="text-xs md:text-sm font-bold text-muted-foreground hover:text-primary transition-colors italic block">About Us</a></li>
+            <li><a href="https://xakteir.com/terms" className="text-xs md:text-sm font-bold text-muted-foreground hover:text-primary transition-colors italic block">Terms of Service</a></li>
+            <li><a href="https://xakteir.com/privacy" className="text-xs md:text-sm font-bold text-muted-foreground hover:text-primary transition-colors italic block">Privacy Policy</a></li>
+            <li><a href="https://xakteir.com/contact" className="text-xs md:text-sm font-bold text-muted-foreground hover:text-primary transition-colors italic block">Contact Support</a></li>
+            <li><a href="https://xakteir.com/download" className="text-xs md:text-sm font-bold text-muted-foreground hover:text-primary transition-colors italic block">Downloads</a></li>
           </ul>
         </div>
 

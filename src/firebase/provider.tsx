@@ -122,12 +122,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idToken })
           });
-        } else {
-          fetch('/api/auth/sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'clear' })
-          });
         }
       } catch (e) {
         console.error('Token sync failed', e);

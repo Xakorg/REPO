@@ -294,7 +294,7 @@ export default function XakteirAuthPage() {
         <div className="relative z-10 w-full max-w-md space-y-12">
            <div className="text-center space-y-6">
               <div className="w-32 h-32 rounded-[3.5rem] bg-primary/10 border-4 border-primary/40 flex items-center justify-center mx-auto shadow-[0_0_80px_rgba(var(--primary),0.3)] animate-float">
-                 <ShieldCheck className="w-16 h-16 text-primary" />
+                 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-primary"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
               </div>
               <div className="space-y-2">
                  <h1 className="text-6xl font-black italic uppercase tracking-tighter text-white">Xakteir Auth</h1>
@@ -631,6 +631,11 @@ export default function XakteirAuthPage() {
       {/* Reveal Password Prompt */}
       <Dialog open={revealPrompt} onOpenChange={setRevealPrompt}>
          <DialogContent className="glass-card border-white/10 rounded-[2rem] max-w-sm text-foreground p-8">
+            <div className="flex justify-center mb-4">
+               <div className="w-16 h-16 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-primary"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
+               </div>
+            </div>
             <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic text-center">Verify Identity</DialogTitle></DialogHeader>
             <div className="space-y-6 pt-4">
                <p className="text-xs text-center text-muted-foreground font-bold uppercase tracking-widest">Enter Master PIN to reveal password</p>

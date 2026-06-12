@@ -1,0 +1,21 @@
+{
+  "name": "xakteir-suite-desktop",
+  "version": "1.0.0",
+  "main": "main.js",
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  },
+  "build": {
+    "appId": "com.xakteir.suite",
+    "productName": "Xakteir Suite",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "devDependencies": {
+    "electron": "^42.4.0"
+  }
+}
