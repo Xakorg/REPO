@@ -216,9 +216,21 @@ function ArcadeHubContent() {
                </button>
              ))}
            </div>
-           <div className="flex items-center gap-2 cursor-pointer border border-[#d9d9d9] rounded px-3 py-1.5 hover:bg-zinc-50">
-             <span className="font-bold text-[13px] text-[#575e75]">Trending</span>
-             <ChevronDown className="w-4 h-4 text-[#575e75]" />
+           </div>
+           <div className="flex items-center gap-4">
+             <div className="relative">
+               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+               <Input 
+                 value={search} 
+                 onChange={(e) => setSearch(e.target.value)} 
+                 placeholder="Search games..." 
+                 className="pl-9 h-9 w-64 text-sm bg-white border-[#d9d9d9]"
+               />
+             </div>
+             <div className="flex items-center gap-2 cursor-pointer border border-[#d9d9d9] bg-white rounded px-3 py-1.5 hover:bg-zinc-50">
+               <span className="font-bold text-[13px] text-[#575e75]">Trending</span>
+               <ChevronDown className="w-4 h-4 text-[#575e75]" />
+             </div>
            </div>
         </div>
 

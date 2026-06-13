@@ -76,6 +76,11 @@ export default function XakStudioPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
   
+  // Publish State
+  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const [publishName, setPublishName] = useState("");
+  const [publishDescription, setPublishDescription] = useState("");
+  
   // AI State
   const [aiInput, setAiInput] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
@@ -263,13 +268,14 @@ export default function XakStudioPage() {
   };
 
   const handlePublish = async () => {
-    if (!activeProject || !user || !firestore) return;
+    if (!activeProject || !user || !firestore || !publishName) return;
     
     setIsCreating(true);
     try {
       await addDocumentNonBlocking(collection(firestore, "publishedProjects"), {
         type: 'game',
-        name: activeProject.name,
+        name: publishName,
+        description: publishDescription,
         ownerName: user.displayName || user.email?.split('@')[0] || "Unknown",
         ownerId: user.uid,
         originalProjectId: activeProject.id,
@@ -280,6 +286,7 @@ export default function XakStudioPage() {
         stars: 0
       });
       toast({ title: "Game Published!", description: "Your game is now live on the Arcade Hub." });
+      setIsPublishDialogOpen(false);
     } catch (e: any) {
       toast({ variant: "destructive", title: "Publish Failed", description: e.message });
     } finally {
@@ -395,9 +402,27 @@ export default function XakStudioPage() {
           <Button onClick={refreshPreview} variant="outline" className="h-10 px-6 rounded-xl border-white/10 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
              <Play className="w-4 h-4 mr-2" /> Run
           </Button>
-          <Button onClick={handlePublish} disabled={isCreating} className="bg-primary hover:bg-primary/90 rounded-xl h-10 font-black text-xs uppercase px-8 shadow-xl text-white">
-            {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish"}
-          </Button>
+          <Dialog open={isPublishDialogOpen} onOpenChange={setIsPublishDialogOpen}>
+             <DialogTrigger asChild>
+                <Button onClick={() => setPublishName(activeProject?.name || "")} className="bg-primary hover:bg-primary/90 rounded-xl h-10 font-black text-xs uppercase px-8 shadow-xl text-white">Publish</Button>
+             </DialogTrigger>
+             <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-white p-12 bg-zinc-950 shadow-2xl">
+                <DialogHeader><DialogTitle className="text-4xl font-black uppercase italic text-center">Publish Game</DialogTitle></DialogHeader>
+                <div className="space-y-6 py-6">
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">Game Name</label>
+                     <Input value={publishName} onChange={(e) => setPublishName(e.target.value)} placeholder="My Awesome Game" className="bg-secondary/50 h-14 rounded-2xl font-bold text-lg italic border-white/10" />
+                  </div>
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">Description</label>
+                     <textarea value={publishDescription} onChange={(e) => setPublishDescription(e.target.value)} placeholder="A fun game about..." className="w-full bg-secondary/50 min-h-[100px] p-4 rounded-2xl font-medium text-sm border border-white/10 text-white outline-none focus:ring-2 focus:ring-primary/50 resize-none" />
+                  </div>
+                  <Button onClick={handlePublish} disabled={isCreating || !publishName} className="w-full h-16 mt-4 bg-primary rounded-3xl font-black uppercase text-white italic shadow-2xl border-b-8 border-primary/20 active:border-b-0">
+                     {isCreating ? <Loader2 className="animate-spin w-6 h-6" /> : "PUBLISH TO ARCADE"}
+                  </Button>
+                </div>
+             </DialogContent>
+          </Dialog>
           <Link href="/apps"><Button size="icon" variant="ghost" className="rounded-full hover:bg-white/5 h-10 w-10 text-white"><X className="w-6 h-6" /></Button></Link>
         </div>
       </header>

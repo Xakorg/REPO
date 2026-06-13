@@ -191,10 +191,9 @@ export default function GamePlayPage() {
         {/* Right Side: Info */}
         <div className="flex-1 flex flex-col gap-6">
           <Card className="bg-white/5 border-none p-6 space-y-4">
-            <h2 className="text-xl font-black uppercase text-[#4d97ff]">Instructions</h2>
-            <p className="text-sm text-zinc-300 font-medium leading-relaxed min-h-[100px]">
-              Click the Green Flag to start playing! Use the mouse or arrow keys depending on the game. 
-              Click the Red Stop Sign at any time to pause and reset the game state.
+            <h2 className="text-xl font-black uppercase text-[#4d97ff]">{communityGame?.description ? "Description" : "Instructions"}</h2>
+            <p className="text-sm text-zinc-300 font-medium leading-relaxed min-h-[100px] whitespace-pre-wrap">
+              {communityGame?.description || "Click the Green Flag to start playing! Use the mouse or arrow keys depending on the game. Click the Red Stop Sign at any time to pause and reset the game state."}
             </p>
           </Card>
           
