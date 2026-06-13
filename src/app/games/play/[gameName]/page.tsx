@@ -83,10 +83,10 @@ export default function GamePlayPage() {
       {/* Scratch Header */}
       <header className="h-14 bg-[#4d97ff] flex items-center justify-between px-6 shrink-0 shadow-md z-10">
         <div className="flex items-center gap-6">
-          <div className="font-black italic text-2xl tracking-tighter cursor-pointer" onClick={handleExit}>XAKCHAT</div>
+          <div className="font-black italic text-2xl tracking-tighter cursor-pointer" onClick={handleExit}>GAMES</div>
           <div className="flex items-center gap-4 text-sm font-bold text-white/90">
             <button className="hover:text-white transition-colors" onClick={handleExit}>Explore</button>
-            <button className="hover:text-white transition-colors">Ideas</button>
+            <button className="hover:text-white transition-colors" onClick={() => router.push('/games/studio')}>Games Studio</button>
             <button className="hover:text-white transition-colors">About</button>
           </div>
         </div>
@@ -173,12 +173,37 @@ export default function GamePlayPage() {
           </Card>
           
           <Card className="bg-white/5 border-none p-6 space-y-4">
-            <h2 className="text-xl font-black uppercase text-[#4d97ff]">Notes and Credits</h2>
-            <p className="text-sm text-zinc-300 font-medium leading-relaxed min-h-[100px]">
-              Created by the XakChat Autonomous Engine. All graphics and logic generated dynamically.
-              Remixing is enabled for this project!
-            </p>
+            <h2 className="text-xl font-black uppercase text-[#4d97ff]">Leaderboard</h2>
+            <div className="flex flex-col gap-2 min-h-[100px]">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between bg-black/20 rounded p-2">
+                  <span className="font-bold text-sm text-zinc-300">Player {i}</span>
+                  <span className="text-amber-400 font-bold">{1000 - i * 50} pts</span>
+                </div>
+              ))}
+            </div>
           </Card>
+        </div>
+      </div>
+      
+      {/* Comments Section */}
+      <div className="max-w-6xl w-full mx-auto p-6 flex flex-col gap-4 mt-2 mb-10">
+        <h2 className="text-2xl font-black uppercase text-[#4cb715]">Comments</h2>
+        <div className="bg-white/5 rounded-xl p-4 flex flex-col gap-4">
+          <div className="flex gap-4">
+            <div className="w-10 h-10 rounded-full bg-white/10 shrink-0"></div>
+            <Input className="bg-black/20 border-white/10 text-white flex-1" placeholder="Add a comment..." />
+            <Button className="bg-[#4cb715] hover:bg-[#3d9510] font-bold">Post</Button>
+          </div>
+          <div className="flex flex-col gap-4 mt-4">
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center font-bold text-blue-400 shrink-0">U</div>
+              <div>
+                <p className="font-bold text-sm text-white/80">User123 <span className="text-xs text-white/40 font-normal">2 days ago</span></p>
+                <p className="text-sm text-zinc-300 mt-1">This game is so fun! I got the high score!</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

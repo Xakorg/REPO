@@ -520,6 +520,9 @@ export default function XakAIPage() {
               <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-all">
                 <UserCircle className="w-3 h-3" /> Coder Persona
               </button>
+              <a href="/download-desktop" className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/20 border border-primary/30 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/30 transition-all ml-2">
+                <Download className="w-3 h-3" /> Get Desktop App
+              </a>
             </div>
             {user ? (
               <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[8px] font-black uppercase px-3 py-1">Active</Badge>

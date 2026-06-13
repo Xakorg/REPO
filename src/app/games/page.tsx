@@ -191,7 +191,7 @@ function ArcadeHubContent() {
           <button className="flex items-center gap-2 border-b-4 border-[#4cb715] text-[#4cb715] font-bold px-2 text-[15px]">
              Projects
           </button>
-          <button className="flex items-center gap-2 text-[#575e75] font-bold px-2 opacity-50 hover:opacity-100 transition-opacity text-[15px]">
+          <button className="flex items-center gap-2 text-[#575e75] font-bold px-2 opacity-50 hover:opacity-100 transition-opacity text-[15px]" onClick={() => router.push('/games/studio')}>
              Studios
           </button>
         </div>
@@ -226,9 +226,16 @@ function ArcadeHubContent() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filteredGames.slice(0, 30).map(game => (
             <div key={game.id} onClick={() => router.push(`/games/play/${game.id}`)} className="bg-white rounded overflow-hidden border border-[#d9d9d9] hover:shadow-md transition-shadow cursor-pointer flex flex-col group">
-               <div className="aspect-[4/3] bg-zinc-100 flex items-center justify-center border-b border-[#d9d9d9] relative p-4">
-                 <game.icon className={cn("w-16 h-16", game.color)} />
-                 <div className="absolute top-2 left-2 bg-[#855cd6] text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">
+               <div className="aspect-[4/3] bg-zinc-100 flex items-center justify-center border-b border-[#d9d9d9] relative p-0 overflow-hidden">
+                 {game.creator === 'xakteir' ? (
+                   /* eslint-disable-next-line @next/next/no-img-element */
+                   <img src={`https://picsum.photos/seed/${game.id}/400/300`} alt={game.name} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300" />
+                 ) : (
+                   <div className="p-4 flex items-center justify-center w-full h-full bg-zinc-100">
+                     <game.icon className={cn("w-16 h-16", game.color)} />
+                   </div>
+                 )}
+                 <div className="absolute top-2 left-2 bg-[#855cd6] text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm z-10">
                    {game.type}
                  </div>
                </div>
