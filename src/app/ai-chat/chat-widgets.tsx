@@ -987,3 +987,69 @@ export function IpcTerminalRunner({ config }: { config: IpcTerminalConfig }) {
     </div>
   );
 }
+
+// ==========================================
+// 6. 3D Model Viewer (React Three Fiber)
+// ==========================================
+import { Canvas, useFrame } from "@react-three/fiber";
+import { OrbitControls, Environment, ContactShadows } from "@react-three/drei";
+
+function SpinningMesh({ modelType, color, wireframe, spinSpeed }: any) {
+  const meshRef = useRef<any>(null);
+  
+  useFrame((state, delta) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.x += delta * spinSpeed * 0.5;
+      meshRef.current.rotation.y += delta * spinSpeed;
+    }
+  });
+
+  const getGeometry = () => {
+    switch (modelType) {
+      case 'cube': return <boxGeometry args={[1.5, 1.5, 1.5]} />;
+      case 'sphere': return <sphereGeometry args={[1, 32, 32]} />;
+      case 'torus': return <torusGeometry args={[1, 0.4, 16, 100]} />;
+      case 'cone': return <coneGeometry args={[1, 2, 32]} />;
+      case 'cylinder': return <cylinderGeometry args={[1, 1, 2, 32]} />;
+      default: return <boxGeometry args={[1.5, 1.5, 1.5]} />;
+    }
+  };
+
+  return (
+    <mesh ref={meshRef} castShadow>
+      {getGeometry()}
+      <meshStandardMaterial color={color || "#06b6d4"} wireframe={wireframe} roughness={0.2} metalness={0.8} />
+    </mesh>
+  );
+}
+
+export function ThreeDViewer({ data }: { data: any }) {
+  const { prompt, modelType, color, wireframe, spinSpeed } = data;
+
+  return (
+    <div className="w-full rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/80 shadow-2xl my-6">
+      <div className="px-6 py-3 bg-white/5 border-b border-white/5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-primary/20 flex items-center justify-center border border-primary/30">
+            <Layers className="w-3.5 h-3.5 text-primary" />
+          </div>
+          <h3 className="text-xs font-black uppercase tracking-widest text-white/90">3D Viewer</h3>
+        </div>
+        <div className="text-[10px] text-zinc-500 font-bold uppercase truncate max-w-[200px]">
+          {prompt}
+        </div>
+      </div>
+      <div className="relative w-full h-[400px] bg-gradient-to-b from-zinc-900 to-black">
+        <Canvas camera={{ position: [0, 0, 4], fov: 50 }}>
+          <ambientLight intensity={0.5} />
+          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
+          <pointLight position={[-10, -10, -10]} intensity={0.5} />
+          <SpinningMesh modelType={modelType} color={color} wireframe={wireframe} spinSpeed={spinSpeed || 1} />
+          <ContactShadows position={[0, -1.5, 0]} opacity={0.4} scale={10} blur={2} far={4} />
+          <OrbitControls enablePan={false} enableZoom={true} autoRotate={false} />
+          <Environment preset="city" />
+        </Canvas>
+      </div>
+    </div>
+  );
+}

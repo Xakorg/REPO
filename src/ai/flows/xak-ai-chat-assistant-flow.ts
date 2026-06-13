@@ -168,6 +168,37 @@ const generateImage = ai.defineTool(
   }
 );
 
+// Tool to generate a 3D Model
+const generate3DObject = ai.defineTool(
+  {
+    name: 'generate3DObject',
+    description: 'Generates parameters for rendering a 3D object/model using React Three Fiber.',
+    inputSchema: z.object({
+      prompt: z.string().describe('Description of the 3D object to generate.'),
+      modelType: z.enum(['cube', 'sphere', 'torus', 'cone', 'cylinder']).describe('The base geometric shape to represent the object.'),
+      color: z.string().describe('Main color of the 3D object (hex or named color).'),
+      wireframe: z.boolean().describe('Whether the object should be rendered as a wireframe.').default(false),
+      spinSpeed: z.number().describe('Speed of the object spinning animation.').default(1.0),
+    }),
+    outputSchema: z.object({
+      prompt: z.string(),
+      modelType: z.string(),
+      color: z.string(),
+      wireframe: z.boolean(),
+      spinSpeed: z.number(),
+    }),
+  },
+  async (input) => {
+    return {
+      prompt: input.prompt,
+      modelType: input.modelType,
+      color: input.color,
+      wireframe: input.wireframe,
+      spinSpeed: input.spinSpeed,
+    };
+  }
+);
+
 // Tool to generate a video/animation configuration
 const generateVideo = ai.defineTool(
   {
@@ -435,11 +466,17 @@ CRITICAL GUIDELINES:
   "command": "echo Hello World",
   "cwd": "C:/path/..."
 }
+
+### Desktop App Integrations
+- **App Launcher**: If the user asks you to open an app (like Microsoft Edge, Calculator, VS Code), use the terminal command block (ipc-terminal-op) to launch it. For example, start msedge on Windows or open -a on macOS.
+- **Voice Games**: If the user wants to play a voice game (Trivia, 20 Questions, RPG), adopt the persona of an interactive Game Master. Ask them one question at a time and respond dynamically to their voice answers!
+- **3D Generation**: If the user asks for a 3D model, output a JSON block marked with ```3d-model containing {"prompt": "their prompt"}.
+
 - **Self-Teaching System**: If the user asks you to learn something from a URL, use \`readWebpage\` to read it, then immediately use \`saveToMemory\` to store the facts so you can remember it forever. When asked about a topic you might have learned, use \`queryMemory\`.`;
 
     const activeTools = signedIn 
-      ? [createDocument, createGoal, createFile, generateImage, generateVideo, editLocalFile, runTerminalCommand, readWebpage, saveToMemory, queryMemory] 
-      : [generateImage, generateVideo, editLocalFile, runTerminalCommand, readWebpage];
+      ? [createDocument, createGoal, createFile, generateImage, generateVideo, editLocalFile, runTerminalCommand, generate3DObject, readWebpage, saveToMemory, queryMemory] 
+      : [generateImage, generateVideo, editLocalFile, runTerminalCommand, generate3DObject, readWebpage];
 
     const googleSearchConfig = { googleSearchRetrieval: { dynamicRetrievalConfig: { mode: 'MODE_DYNAMIC', dynamicThreshold: 0.3 } } };
 

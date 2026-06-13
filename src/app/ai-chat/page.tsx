@@ -66,7 +66,8 @@ import {
   RpgConsole, 
   InteractiveSpreadsheet,
   IpcFileOpRunner,
-  IpcTerminalRunner
+  IpcTerminalRunner,
+  ThreeDViewer
 } from "./chat-widgets";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit, serverTimestamp, doc, updateDoc } from "firebase/firestore";
@@ -143,6 +144,12 @@ function FormattedContent({
             try {
               const cfg = JSON.parse(code.trim());
               return <IpcTerminalRunner key={i} config={cfg} />;
+            } catch(e) {}
+          }
+          if (lang === "3d-model") {
+            try {
+              const cfg = JSON.parse(code.trim());
+              return <ThreeDViewer key={i} data={cfg} />;
             } catch(e) {}
           }
 
@@ -281,6 +288,11 @@ export default function XakAIPage() {
         
         // Hotword check
         if (alwaysOnRef.current && currentText.includes(hotwordRef.current.toLowerCase())) {
+          // Trigger blue overlay
+          if (typeof window !== "undefined" && (window as any).electron) {
+            (window as any).electron.setListeningState(true);
+          }
+
           // We found the hotword! Remove it from the text to submit.
           const query = currentText.split(hotwordRef.current.toLowerCase())[1]?.trim();
           if (query && query.length > 2) {
@@ -373,9 +385,13 @@ export default function XakAIPage() {
     }
   }, [activeSessionId, sessions]);
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!input.trim() || loading) return;
+
+    if (typeof window !== "undefined" && (window as any).electron) {
+      (window as any).electron.setListeningState(false);
+    }
 
     const userMessage = input;
     const currentMessages = [...messages, { role: 'user' as const, content: userMessage }];
@@ -648,7 +664,7 @@ export default function XakAIPage() {
             })}
           </div>
 
-          <form onSubmit={handleSend} className="max-w-4xl mx-auto relative group w-full">
+          <form onSubmit={handleSubmit} className="max-w-4xl mx-auto relative group w-full">
             <Input 
               id="ai-chat-input"
               value={input}

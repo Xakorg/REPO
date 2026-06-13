@@ -51,9 +51,21 @@ export default function AuthPage() {
 
   // Central Redirection Logic: Responds instantly to Auth state changes
   useEffect(() => {
+    let isMounted = true;
     if (existingUser && step !== 'verify-2fa') {
-      router.replace("/");
+      existingUser.getIdToken().then(idToken => {
+        fetch('/api/auth/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken })
+        }).then(() => {
+          if (isMounted) router.replace("/");
+        }).catch(() => {
+          if (isMounted) router.replace("/");
+        });
+      });
     }
+    return () => { isMounted = false; };
   }, [existingUser, router, step]);
 
   const handleGoogleAuth = () => {

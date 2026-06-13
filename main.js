@@ -39,6 +39,43 @@ function createWindow() {
   });
 }
 
+let overlayWindow = null;
+function createOverlayWindow() {
+  const { screen } = require('electron');
+  const primaryDisplay = screen.getPrimaryDisplay();
+  
+  overlayWindow = new BrowserWindow({
+    x: primaryDisplay.bounds.x,
+    y: primaryDisplay.bounds.y,
+    width: primaryDisplay.bounds.width,
+    height: primaryDisplay.bounds.height,
+    transparent: true,
+    frame: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    hasShadow: false,
+    focusable: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    }
+  });
+
+  overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+
+  const startUrl = process.env.ELECTRON_START_URL 
+    ? process.env.ELECTRON_START_URL.replace('/desktop', '/overlay') 
+    : `file://${path.join(__dirname, 'desktop-out/overlay.html')}`; // This won't exist in static export unless Next.js outputs it correctly, we will use the local dev URL for now or just routing
+  
+  // Since we load the same index, we can append a hash or query param or use Next.js routing if static export handles it
+  overlayWindow.loadURL(process.env.ELECTRON_START_URL ? process.env.ELECTRON_START_URL.replace('/desktop', '/overlay') : `file://${path.join(__dirname, 'desktop-out/overlay.html')}`);
+
+  overlayWindow.on('closed', function () {
+    overlayWindow = null;
+  });
+}
+
 function createTray() {
   tray = new Tray(path.join(__dirname, 'public', 'favicon.ico'));
   const contextMenu = Menu.buildFromTemplate([
@@ -100,6 +137,12 @@ ipcMain.on('window-close', () => {
   if (mainWindow) mainWindow.hide(); // Hide instead of close to keep in tray
 });
 
+ipcMain.on('set-listening-state', (event, state) => {
+  if (overlayWindow) {
+    overlayWindow.webContents.send('set-listening-state', state);
+  }
+});
+
 // File System IPC for Xak AI
 ipcMain.handle('read-file', async (event, filePath) => {
   try {
@@ -142,6 +185,7 @@ ipcMain.handle('run-terminal-command', (event, command, cwd) => {
 
 app.whenReady().then(() => {
   createWindow();
+  createOverlayWindow();
   createTray();
 
   // Global Shortcut for Xak AI

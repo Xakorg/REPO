@@ -15,7 +15,9 @@ contextBridge.exposeInMainWorld('electron', {
     readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
     writeFile: (filePath, content) => ipcRenderer.invoke('write-file', filePath, content),
     deleteFile: (filePath) => ipcRenderer.invoke('delete-file', filePath),
-    runTerminalCommand: (command, cwd) => ipcRenderer.invoke('run-terminal-command', command, cwd)
+    runTerminalCommand: (command, cwd) => ipcRenderer.invoke('run-terminal-command', command, cwd),
   },
-  onTriggerXakAI: (callback) => ipcRenderer.on('trigger-xak-ai', () => callback())
+  setListeningState: (state) => ipcRenderer.send('set-listening-state', state),
+  onTriggerXakAI: (callback) => ipcRenderer.on('trigger-xak-ai', () => callback()),
+  onSetListeningState: (callback) => ipcRenderer.on('set-listening-state', (event, state) => callback(state))
 });
