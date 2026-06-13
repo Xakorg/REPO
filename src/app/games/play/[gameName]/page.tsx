@@ -62,8 +62,6 @@ export default function GamePlayPage() {
     router.push("/games");
   };
 
-  if (!mounted) return null;
-
   const firestore = useFirestore();
   const isBuiltIn = ['aim', 'balance', 'basketball', 'breaker', 'bubble', 'clickSpeed', 'clicker', 'colorMatch', 'connectFour', 'dodge', 'drawing', 'fishing', 'flappy', 'football3D', 'football', 'frogger', 'golf', 'gravity', 'invaders', 'jump', 'knife', 'match3', 'math', 'maze', 'memory', 'minesweeper', 'paint', 'parking', 'pinball', 'plinko', 'pong', 'rps', 'reaction', 'sequence', 'snake', 'spinWheel', 'stack', 'sudoku', 'tictactoe', 'towerDefense', 'trivia', 'tunnel3D', 'twoZeroFourEight', 'typing', 'whack', 'word', 'xbr'].includes(gameName);
 
@@ -88,6 +86,8 @@ export default function GamePlayPage() {
       }
     ) as any;
   }, [gameName, isBuiltIn]);
+
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-[#0e0e1a] text-white flex flex-col font-sans overflow-y-auto">
