@@ -173,7 +173,7 @@ export function Header() {
   if (!mounted) return null;
   if (isFocusMode) return null;
 
-  const AppsList = () => (
+  const appsListContent = (
     <div className="flex flex-col h-full bg-[#0a0a15] text-white">
       <div className="p-5 border-b-2 border-white/10 flex items-center justify-between bg-black/40">
         <h3 className="text-lg font-black uppercase italic tracking-tighter text-primary leading-none">Apps</h3>
@@ -218,7 +218,7 @@ export function Header() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[360px] p-0 glass-card rounded-[2rem] mt-6 border-4 border-white/10 overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.8)]" align="start">
-                <AppsList />
+                {appsListContent}
               </PopoverContent>
             </Popover>
           </div>
@@ -234,7 +234,7 @@ export function Header() {
                  <SheetHeader className="sr-only">
                     <SheetTitle>App Launcher</SheetTitle>
                  </SheetHeader>
-                 <AppsList />
+                 {appsListContent}
               </SheetContent>
             </Sheet>
           </div>
