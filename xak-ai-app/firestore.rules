@@ -1,0 +1,590 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn()
+        && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && (
+          request.auth.token.email in ["admin@xakteir.com", "admin2@xakteir.com"]
+          || exists(
+            /databases/$(database)/documents/admins/$(request.auth.uid)
+          )
+        );
+    }
+
+    function isPublicChatId(chatId) {
+      return chatId in ["general", "announcements", "logic-lab", "design", "market"];
+    }
+
+    function chatExists(chatId) {
+      return exists(/databases/$(database)/documents/chats/$(chatId));
+    }
+
+    function isPublicChat(chatId) {
+      return isPublicChatId(chatId)
+        || (
+          chatExists(chatId)
+          && get(/databases/$(database)/documents/chats/$(chatId)).data.public == true
+        );
+    }
+
+    function isChatParticipant(chatId) {
+      return isSignedIn()
+        && chatExists(chatId)
+        && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+    }
+
+    function hasValidUid() {
+      return request.resource.data.uid is string
+        && request.resource.data.uid == request.auth.uid;
+    }
+
+    function resourceOwned() {
+      return resource.data.uid is string
+        && resource.data.uid == request.auth.uid;
+    }
+
+    // ─────────────────────────────────────────────
+    // USERS
+    // ─────────────────────────────────────────────
+
+    match /users/{userId} {
+
+      // Owners or admins may write user documents; any signed-in user can read profiles
+      allow get, list: if isSignedIn();
+      allow write: if isOwner(userId) || isAdmin();
+
+      // ─────────────────────────────────────────
+      // NOTIFICATIONS
+      // ─────────────────────────────────────────
+
+      match /notifications/{docId} {
+
+        // FIXED: Explicit list and get permissions
+        allow list, get: if isOwner(userId);
+
+        allow create: if isOwner(userId)
+          && hasValidUid()
+          || isAdmin();
+
+        allow update, delete: if isOwner(userId)
+          && resourceOwned();
+      }
+      
+      // ─────────────────────────────────────────
+      // CHAT MESSAGES
+      // ─────────────────────────────────────────
+      
+      match /messages/{messageId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && hasValidUid();
+        allow update, delete: if isOwner(userId) && resourceOwned();
+      }
+
+      // Generic match for any user subcollection (e.g. xak_ai_sessions, suite, following, drive_files, code_projects, studio_projects)
+      match /{collectionName}/{docId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // ADMINS
+    // ─────────────────────────────────────────────
+
+    match /admins/{userId} {
+
+      allow get: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
+
+      allow list: if false;
+
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // SYSTEM STATS
+    // ─────────────────────────────────────────────
+
+    match /system_stats/{id} {
+      allow read: if true;
+    }
+
+    // System configuration (app-level settings)
+    match /system/{id} {
+      // Allow admins to read/write system config; allow read for all to simplify app UIs.
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // LEADERBOARD
+    // ─────────────────────────────────────────────
+
+    match /leaderboard/{id} {
+
+      allow read: if true;
+
+      allow create, update: if isSignedIn()
+        && hasValidUid();
+
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // NEWS
+    // ─────────────────────────────────────────────
+
+    match /news/{id} {
+
+      allow read: if true;
+
+      allow write: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // INDEXED SITES
+    // ─────────────────────────────────────────────
+
+    match /indexedSites/{id} {
+
+      allow read: if true;
+
+      allow create: if isSignedIn();
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /searchImages/{id} {
+
+      allow read: if true;
+
+      allow write: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // PUBLISHED PROJECTS
+    // ─────────────────────────────────────────────
+
+    match /publishedProjects/{id} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid
+        || resource.data.uid == request.auth.uid
+        || isAdmin()
+      );
+    }
+
+    // ─────────────────────────────────────────────
+    // FRIENDSHIPS (Real-Time Maps & Friend Locator)
+    // ─────────────────────────────────────────────
+
+    match /friendships/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // ─────────────────────────────────────────────
+    // VIDEOS
+    // ─────────────────────────────────────────────
+
+    match /videos/{id} {
+
+      allow read: if true;
+
+      allow create: if isSignedIn();
+
+      allow update, delete: if isAdmin();
+
+      match /comments/{commentId} {
+
+        allow read: if true;
+
+        allow create: if isSignedIn()
+          && hasValidUid();
+
+        allow update, delete: if isSignedIn()
+          && resourceOwned();
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // CONTACT MESSAGES
+    // ─────────────────────────────────────────────
+
+    match /contact_messages/{msgId} {
+
+      allow create: if isSignedIn();
+
+      allow get, list, update, delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // MEETINGS
+    // ─────────────────────────────────────────────
+
+    match /meetings/{meetingId} {
+      allow read, write: if true;
+
+      match /signals/{signalId} {
+        allow read, write: if true;
+      }
+
+      match /chat/{messageId} {
+        allow read, write: if true;
+      }
+
+      match /chat_messages/{messageId} {
+        allow read, write: if true;
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // GLOBAL MESSAGES
+    // ─────────────────────────────────────────────
+
+    match /globalMessages/{id} {
+
+      allow read: if true;
+
+      allow create: if isSignedIn()
+        && hasValidUid();
+
+      allow update, delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // GLOBAL FEED
+    // ─────────────────────────────────────────────
+
+    match /global_feed/{id} {
+
+      allow read: if true;
+
+      allow write: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // GLOBAL NOTIFICATIONS
+    // ─────────────────────────────────────────────
+
+    match /global_notifications/{id} {
+
+      allow read: if true;
+
+      allow write: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // GROUPS
+    // ─────────────────────────────────────────────
+
+    match /groups/{id} {
+
+      allow read: if true;
+
+      allow create: if isSignedIn();
+
+      allow update, delete: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+    // ─────────────────────────────────────────────
+    // BUDDIES
+    // ─────────────────────────────────────────────
+
+    match /buddies/{id} {
+
+      allow read: if true;
+
+      allow create: if isSignedIn();
+
+      allow update, delete: if isSignedIn()
+        && (
+          resource.data.userA == request.auth.uid
+          || resource.data.userB == request.auth.uid
+        );
+    }
+
+    // ─────────────────────────────────────────────
+    // WHITEBOARDS
+    // ─────────────────────────────────────────────
+
+    match /whiteboards/{id} {
+
+      allow read: if true;
+      allow create: if isSignedIn();
+
+      allow update, delete: if isSignedIn()
+        && request.auth.uid in resource.data.members;
+    }
+    
+    // ─────────────────────────────────────────────
+    // EMAILS
+    // ─────────────────────────────────────────────
+    match /emails/{emailId} {
+      allow read: if isSignedIn() && (
+        resource.data.senderUserId == request.auth.uid
+        || request.auth.token.email == resource.data.senderEmail
+        || request.auth.token.email in resource.data.recipientList
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.senderUserId == request.auth.uid
+      );
+      allow update, delete: if isSignedIn() && (
+        resource.data.senderUserId == request.auth.uid
+      );
+    }
+
+    // ─────────────────────────────────────────────
+    // PUBLIC PICS (XakPicks)
+    // ─────────────────────────────────────────────
+    match /public_pics/{id} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (
+        resource.data.authorId == request.auth.uid
+        || isAdmin()
+      );
+    }
+
+    // ─────────────────────────────────────────────
+    // CLASSROOMS (Xakteir Classroom)
+    // ─────────────────────────────────────────────
+    match /classrooms/{classId} {
+      allow read, create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (
+        resource.data.teacherId == request.auth.uid
+        || isAdmin()
+      );
+
+      match /assignments/{asgId} {
+        allow read: if isSignedIn();
+        allow write: if isSignedIn() && (
+          get(/databases/$(database)/documents/classrooms/$(classId)).data.teacherId == request.auth.uid
+          || isAdmin()
+        );
+      }
+
+      match /submissions/{subId} {
+        allow read: if isSignedIn() && (
+          resource.data.studentId == request.auth.uid
+          || get(/databases/$(database)/documents/classrooms/$(classId)).data.teacherId == request.auth.uid
+          || isAdmin()
+        );
+        allow create: if isSignedIn() && (
+          request.resource.data.studentId == request.auth.uid
+        );
+        allow update: if isSignedIn() && (
+          resource.data.studentId == request.auth.uid
+          || get(/databases/$(database)/documents/classrooms/$(classId)).data.teacherId == request.auth.uid
+          || isAdmin()
+        );
+        allow delete: if isAdmin();
+      }
+
+      match /announcements/{annId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && (
+          get(/databases/$(database)/documents/classrooms/$(classId)).data.teacherId == request.auth.uid
+          || isAdmin()
+        );
+        allow update, delete: if isSignedIn() && (
+          resource.data.authorId == request.auth.uid
+          || isAdmin()
+        );
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // SERVERS (Xakteir Servers)
+    // ─────────────────────────────────────────────
+    match /servers/{serverId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+      match /channels/{channelId} {
+        allow read: if true;
+        allow write: if isSignedIn();
+        match /messages/{messageId} {
+          allow read: if true;
+          allow write: if isSignedIn();
+        }
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // TYPING INDICATORS
+    // Any signed-in user may read typing docs (to show "{user} is typing…")
+    // Only the owner may create/update/delete their own typing doc
+    // ─────────────────────────────────────────────
+    match /typing/{docId} {
+      allow read, list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ─────────────────────────────────────────────
+    // VOICE CHANNEL PRESENCE
+    // Tracks which users are in which voice channels for WebRTC mesh
+    // ─────────────────────────────────────────────
+    match /voice_status/{docId} {
+      allow read, list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ─────────────────────────────────────────────
+    // DIRECT CALLS (WebRTC DM Calling)
+    // Both the caller and recipient need read/write to exchange call state
+    // ─────────────────────────────────────────────
+    match /calls/{callId} {
+      allow read, write: if isSignedIn() && (
+        request.auth.uid == resource.data.callerId
+        || request.auth.uid == resource.data.recipientId
+        || !exists(/databases/$(database)/documents/calls/$(callId))
+      );
+    }
+
+    // ─────────────────────────────────────────────
+    // INVITATIONS
+    // Signed-in users can send invitations; recipients can read their own
+    // ─────────────────────────────────────────────
+    match /invitations/{invId} {
+      allow create: if isSignedIn();
+      allow read, list: if isSignedIn() && (
+        resource.data.fromUid == request.auth.uid
+        || request.auth.token.email == resource.data.toEmail
+      );
+      allow update, delete: if isSignedIn() && (
+        resource.data.fromUid == request.auth.uid
+        || isAdmin()
+      );
+    }
+
+    // ─────────────────────────────────────────────
+    // CHAT ROOMS
+    // Robust rules for chats and messages:
+    // - Users can create chats only if they're included in the participants array
+    // - Chats can be listed by a client when the query filters by participants array-contains the caller
+    // - Public chats are readable by anyone
+    // - Messages creation requires the sender to match auth.uid and membership in the parent chat
+    match /chats/{chatId} {
+      // Create a chat only if the creator is included in participants
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participants;
+
+      // Get a single chat if it's public, the caller is an admin, or the chat exists and they are allowed
+      allow get: if isPublicChatId(chatId);
+      allow get: if isAdmin();
+      allow get: if chatExists(chatId) && (
+        get(/databases/$(database)/documents/chats/$(chatId)).data.get('public', false) == true
+        || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+      );
+
+      // List chats only when the client query includes array-contains with the caller's uid,
+      // or when listing public channels (client must filter accordingly).
+      allow list: if isSignedIn() && (
+        request.auth.uid in resource.data.participants
+        || resource.data.get('public', false) == true
+      ) || isAdmin();
+
+      // Allow updates/deletes only for participants
+      allow update, delete: if isAdmin();
+      allow update, delete: if chatExists(chatId) && isChatParticipant(chatId);
+
+      match /messages/{messageId} {
+        // Read/list messages if the chat ID is a known public channel, a server channel (contains '-'), or a chat they have access to
+        allow get, list: if isPublicChatId(chatId)
+          || (isSignedIn() && chatId.matches(".*-.*"))
+          || (chatExists(chatId) && (
+                get(/databases/$(database)/documents/chats/$(chatId)).data.get('public', false) == true
+                || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+             ))
+          || isAdmin();
+
+        // Create message if admin
+        allow create: if isSignedIn() && isAdmin();
+
+        // Create message if senderId matches auth and it's a known public chat, a server channel (contains '-'), or a chat they have access to
+        allow create: if isSignedIn() 
+          && request.auth.uid == request.resource.data.senderId 
+          && (
+            isPublicChatId(chatId)
+            || chatId.matches(".*-.*")
+            || (chatExists(chatId) && (
+                  get(/databases/$(database)/documents/chats/$(chatId)).data.get('public', false) == true
+                  || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+               ))
+          );
+
+        // Update/delete allowed only to original sender or admins
+        allow update, delete: if isSignedIn() && (
+          resource.data.senderId == request.auth.uid
+          || isAdmin()
+        );
+
+        // Message threads (replies to a specific message)
+        match /threads/{threadId} {
+          allow read, list: if isPublicChatId(chatId)
+            || (isSignedIn() && chatId.matches(".*-.*"))
+            || isAdmin();
+          allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
+          allow update, delete: if isSignedIn() && (
+            resource.data.senderId == request.auth.uid || isAdmin()
+          );
+        }
+      }
+
+      // Threads that are a direct subcollection of chats
+      match /threads/{threadId} {
+        allow read, list: if isPublicChatId(chatId)
+          || (isSignedIn() && chatId.matches(".*-.*"))
+          || isAdmin()
+          || (chatExists(chatId) && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
+        allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
+        allow update, delete: if isSignedIn() && (
+          resource.data.senderId == request.auth.uid || isAdmin()
+        );
+
+        match /replies/{replyId} {
+          allow read, list: if isPublicChatId(chatId)
+            || (isSignedIn() && chatId.matches(".*-.*"))
+            || isAdmin()
+            || (chatExists(chatId) && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
+          allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
+          allow update, delete: if isSignedIn() && (
+            resource.data.senderId == request.auth.uid || isAdmin()
+          );
+        }
+      }
+
+      // Polls are stored as a separate sub-collection of chats
+      match /polls/{pollId} {
+        allow read, list: if isSignedIn();
+        allow create: if isSignedIn() && request.auth.uid == request.resource.data.createdBy;
+        allow update: if isSignedIn(); // Anyone can vote
+        allow delete: if isSignedIn() && (
+          resource.data.createdBy == request.auth.uid || isAdmin()
+        );
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // ADMIN HOTFIXES
+    // ─────────────────────────────────────────────
+    match /admin_hotfixes/{docId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

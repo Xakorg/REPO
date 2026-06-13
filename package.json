@@ -1,6 +1,6 @@
 {
-  "name": "xakteir",
-  "version": "4.2.8",
+  "name": "xak-ai",
+  "version": "1.0.0",
   "private": true,
   "main": "main.js",
   "scripts": {
@@ -49,7 +49,7 @@
     "@tiptap/react": "^3.26.0",
     "@tiptap/starter-kit": "^3.26.0",
     "@vercel/analytics": "^2.0.1",
-    "blockly": "^11.1.1",
+    "blockly": "^11.2.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -64,10 +64,12 @@
     "jsdom": "^26.0.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.475.0",
+    "monaco-editor": "^0.55.1",
     "next": "15.1.11",
     "otpauth": "^9.5.1",
     "patch-package": "^8.0.0",
     "react": "19.0.0",
+    "react-blockly": "^9.0.0",
     "react-day-picker": "^9.11.3",
     "react-dom": "19.0.0",
     "react-hook-form": "^7.54.2",
@@ -105,8 +107,8 @@
     "wait-on": "^9.0.10"
   },
   "build": {
-    "appId": "com.xakteir.suite",
-    "productName": "Xakteir Suite",
+    "appId": "com.xakteir.xakai",
+    "productName": "Xak AI",
     "directories": {
       "output": "dist-electron"
     },

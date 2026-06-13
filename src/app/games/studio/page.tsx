@@ -46,6 +46,15 @@ import { Badge } from "@/components/ui/badge";
 import { chatWithXakAI } from "@/ai/flows/xak-ai-chat-assistant-flow";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import dynamic from "next/dynamic";
+
+const BlocklyWorkspace = dynamic(() => import("react-blockly").then(mod => mod.BlocklyWorkspace), { ssr: false });
+let javascriptGenerator: any;
+if (typeof window !== "undefined") {
+  import("blockly/javascript").then(mod => {
+    javascriptGenerator = mod.javascriptGenerator;
+  });
+}
 
 interface ProjectFile {
   name: string;
@@ -57,6 +66,8 @@ interface StudioProject {
   name: string;
   files: ProjectFile[];
   updatedAt: any;
+  codingMode?: 'text' | 'block';
+  language?: 'html' | 'python' | 'lua';
 }
 
 export default function XakStudioPage() {
@@ -69,7 +80,11 @@ export default function XakStudioPage() {
   const [view, setView] = useState<'dashboard' | 'editor'>('dashboard');
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectMode, setNewProjectMode] = useState<'text'|'block'>('text');
+  const [newProjectLanguage, setNewProjectLanguage] = useState<'html'|'python'|'lua'>('html');
   const [isCreating, setIsCreating] = useState(false);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Editor State
   const [activeFileIndex, setActiveFileIndex] = useState(0);
@@ -106,16 +121,86 @@ export default function XakStudioPage() {
   const { data: publishedVersions } = useCollection(publishedVersionQuery);
   const existingPublishedVersion = publishedVersions?.[0];
 
-  // Update Preview URL
   const refreshPreview = () => {
     if (!activeProject) return;
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     
-    // Find the entry point (usually index.html)
-    const indexFile = activeProject.files.find(f => f.name === 'index.html') || activeProject.files[0];
+    const indexFile = activeProject.files.find(f => f.name === 'index.html' || f.name === 'main.py' || f.name === 'main.lua' || f.name === 'blockly.xml') || activeProject.files[0];
     if (!indexFile) return;
 
-    const blob = new Blob([indexFile.content], { type: 'text/html' });
+    let htmlContent = "";
+
+    if (activeProject.language === 'python') {
+      htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+</head>
+<body style="background: #000; color: #fff; font-family: monospace; white-space: pre-wrap; padding: 20px;">
+  <div id="output">Loading Python Environment...</div>
+  <script>
+    async function runPython() {
+      try {
+        let pyodide = await loadPyodide();
+        document.getElementById('output').innerText = "";
+        pyodide.setStdout({ batched: (msg) => { document.getElementById('output').innerText += msg + "\\n"; } });
+        await pyodide.runPythonAsync(${JSON.stringify(indexFile.content)});
+      } catch(err) {
+        document.getElementById('output').innerText += "\\nError:\\n" + err;
+      }
+    }
+    runPython();
+  </script>
+</body>
+</html>`;
+    } else if (activeProject.language === 'lua') {
+      htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://github.com/fengari-lua/fengari-web/releases/download/v0.1.4/fengari-web.js" type="text/javascript"></script>
+</head>
+<body style="background: #000; color: #fff; font-family: monospace; white-space: pre-wrap; padding: 20px;">
+  <div id="output"></div>
+  <script>
+    const oldLog = console.log;
+    console.log = function(...args) {
+      document.getElementById('output').innerText += args.join(" ") + "\\n";
+      oldLog.apply(console, args);
+    };
+  </script>
+  <script type="application/lua">
+${indexFile.content.replace(/</g, '\\x3C')}
+  </script>
+</body>
+</html>`;
+    } else if (activeProject.codingMode === 'block') {
+      const jsCode = activeProject.files.find(f => f.name === 'generated.js')?.content || "console.log('No code generated yet.');";
+      htmlContent = `
+<!DOCTYPE html>
+<html>
+<body style="background: #000; color: #fff; font-family: monospace; white-space: pre-wrap; padding: 20px;">
+  <div id="output"></div>
+  <script>
+    const oldLog = console.log;
+    console.log = function(...args) {
+      document.getElementById('output').innerText += args.join(" ") + "\\n";
+      oldLog.apply(console, args);
+    };
+    try {
+      ${jsCode}
+    } catch(e) {
+      console.log("Error: " + e.message);
+    }
+  </script>
+</body>
+</html>`;
+    } else {
+      htmlContent = indexFile.content;
+    }
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     setPreviewUrl(url);
   };
@@ -131,14 +216,27 @@ export default function XakStudioPage() {
     if (!user || !firestore || !newProjectName.trim()) return;
     setIsCreating(true);
     
-    const initialFiles = [
-      { name: 'index.html', content: `<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { background: #000; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }\n    #status { padding: 20px; border: 2px solid #8433F3; border-radius: 20px; background: rgba(132, 51, 243, 0.1); }\n  </style>\n</head>\n<body>\n  <div id="status">Project Ready.</div>\n</body>\n</html>` }
-    ];
+    let initialFiles = [];
+    if (newProjectLanguage === 'python') {
+      initialFiles = [{ name: 'main.py', content: `print("Hello from Python!")` }];
+    } else if (newProjectLanguage === 'lua') {
+      initialFiles = [{ name: 'main.lua', content: `print("Hello from Lua!")` }];
+    } else {
+      initialFiles = [
+        { name: 'index.html', content: `<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { background: #000; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }\n    #status { padding: 20px; border: 2px solid #8433F3; border-radius: 20px; background: rgba(132, 51, 243, 0.1); }\n  </style>\n</head>\n<body>\n  <div id="status">Project Ready.</div>\n</body>\n</html>` }
+      ];
+    }
+
+    if (newProjectMode === 'block') {
+      initialFiles.push({ name: 'blockly.xml', content: `<xml xmlns="https://developers.google.com/blockly/xml"></xml>` });
+    }
 
     try {
       const docRef = await addDoc(collection(firestore, "users", user.uid, "studio_projects"), {
         name: newProjectName,
         files: initialFiles,
+        codingMode: newProjectMode,
+        language: newProjectLanguage,
         updatedAt: serverTimestamp(),
         createdAt: serverTimestamp()
       });
@@ -176,6 +274,8 @@ export default function XakStudioPage() {
       const docRef = await addDoc(collection(firestore, "users", user.uid, "studio_projects"), {
         name: folderName,
         files: projectFiles,
+        codingMode: 'text',
+        language: 'html',
         updatedAt: serverTimestamp(),
         createdAt: serverTimestamp()
       });
@@ -187,6 +287,40 @@ export default function XakStudioPage() {
       toast({ variant: "destructive", title: "Upload Failed", description: "Could not process folder." });
     } finally {
       setIsCreating(false);
+      if (folderInputRef.current) folderInputRef.current.value = "";
+    }
+  };
+
+  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !user || !firestore || files.length === 0) return;
+
+    setIsCreating(true);
+    try {
+      const file = files[0];
+      const content = await file.text();
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      let lang: 'html' | 'python' | 'lua' = 'html';
+      if (ext === 'py') lang = 'python';
+      else if (ext === 'lua') lang = 'lua';
+
+      const docRef = await addDoc(collection(firestore, "users", user.uid, "studio_projects"), {
+        name: file.name.replace(/\.[^/.]+$/, ""),
+        files: [{ name: file.name, content }],
+        codingMode: 'text',
+        language: lang,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp()
+      });
+
+      setActiveProjectId(docRef.id);
+      setView('editor');
+      toast({ title: "File Uploaded", description: `Added ${file.name}.` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Upload Failed", description: "Could not process file." });
+    } finally {
+      setIsCreating(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -328,12 +462,13 @@ export default function XakStudioPage() {
           </div>
 
           <div className="flex gap-4 relative z-10 w-full md:w-auto">
-             <label className="cursor-pointer">
-                <Button variant="outline" className="h-16 px-10 rounded-2xl border-white/10 font-black uppercase text-xs tracking-widest hover:bg-white/5">
-                  {isCreating ? <Loader2 className="w-5 h-5 mr-3 animate-spin" /> : <FolderPlus className="w-5 h-5 mr-3" />} Upload Folder
+             <div className="flex gap-2">
+                <Button onClick={() => folderInputRef.current?.click()} disabled={isCreating} variant="outline" className="h-16 px-6 rounded-2xl border-white/10 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
+                  {isCreating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FolderPlus className="w-4 h-4 mr-2" />} Folder
                 </Button>
                 <input 
                   type="file" 
+                  ref={folderInputRef}
                   className="hidden" 
                   multiple
                   /* @ts-ignore */
@@ -345,7 +480,19 @@ export default function XakStudioPage() {
                   onChange={handleUploadFolder} 
                   disabled={isCreating}
                 />
-             </label>
+                
+                <Button onClick={() => fileInputRef.current?.click()} disabled={isCreating} variant="outline" className="h-16 px-6 rounded-2xl border-white/10 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
+                  {isCreating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />} File
+                </Button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  className="hidden" 
+                  onChange={handleUploadFile} 
+                  disabled={isCreating}
+                  accept=".html,.js,.css,.py,.lua,.txt"
+                />
+             </div>
              <Dialog open={isProjectDialogOpen} onOpenChange={setIsProjectDialogOpen}>
                <DialogTrigger asChild>
                  <Button className="h-16 px-12 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl border-b-8 border-primary/20 active:border-b-0 active:translate-y-1 transition-all">
@@ -354,12 +501,30 @@ export default function XakStudioPage() {
                </DialogTrigger>
                <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-white p-12 bg-zinc-950 shadow-2xl">
                   <DialogHeader><DialogTitle className="text-4xl font-black uppercase italic text-center">New Project</DialogTitle></DialogHeader>
-                  <div className="space-y-8 py-6">
+                  <div className="space-y-6 py-6">
                     <div className="space-y-2">
                        <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">App Name</label>
-                       <Input value={newProjectName} onChange={(e) => setNewProjectName(e.target.value)} placeholder="my-app" className="bg-secondary/50 h-16 rounded-2xl font-bold text-lg italic border-white/10" />
+                       <Input value={newProjectName} onChange={(e) => setNewProjectName(e.target.value)} placeholder="my-app" className="bg-secondary/50 h-14 rounded-2xl font-bold text-lg italic border-white/10" />
                     </div>
-                    <Button onClick={handleCreateProject} disabled={isCreating || !newProjectName} className="w-full h-18 bg-primary rounded-3xl font-black uppercase text-white italic shadow-2xl border-b-8 border-primary/20 active:border-b-0">
+                    
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">Language</label>
+                       <div className="grid grid-cols-3 gap-2">
+                         <Button onClick={() => setNewProjectLanguage('html')} variant={newProjectLanguage === 'html' ? 'default' : 'outline'} className={`h-12 rounded-xl text-xs font-black uppercase ${newProjectLanguage === 'html' ? 'bg-primary text-white border-primary' : 'border-white/10'}`}>HTML/JS</Button>
+                         <Button onClick={() => setNewProjectLanguage('python')} variant={newProjectLanguage === 'python' ? 'default' : 'outline'} className={`h-12 rounded-xl text-xs font-black uppercase ${newProjectLanguage === 'python' ? 'bg-primary text-white border-primary' : 'border-white/10'}`}>Python</Button>
+                         <Button onClick={() => setNewProjectLanguage('lua')} variant={newProjectLanguage === 'lua' ? 'default' : 'outline'} className={`h-12 rounded-xl text-xs font-black uppercase ${newProjectLanguage === 'lua' ? 'bg-primary text-white border-primary' : 'border-white/10'}`}>Lua</Button>
+                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">Coding Mode</label>
+                       <div className="grid grid-cols-2 gap-2">
+                         <Button onClick={() => setNewProjectMode('text')} variant={newProjectMode === 'text' ? 'default' : 'outline'} className={`h-12 rounded-xl text-xs font-black uppercase ${newProjectMode === 'text' ? 'bg-primary text-white border-primary' : 'border-white/10'}`}>Text</Button>
+                         <Button onClick={() => setNewProjectMode('block')} variant={newProjectMode === 'block' ? 'default' : 'outline'} className={`h-12 rounded-xl text-xs font-black uppercase ${newProjectMode === 'block' ? 'bg-primary text-white border-primary' : 'border-white/10'}`}>Blocks</Button>
+                       </div>
+                    </div>
+
+                    <Button onClick={handleCreateProject} disabled={isCreating || !newProjectName} className="w-full h-16 bg-primary rounded-3xl font-black uppercase text-white italic shadow-2xl border-b-8 border-primary/20 active:border-b-0 mt-4">
                        {isCreating ? <Loader2 className="animate-spin w-6 h-6" /> : "CREATE PROJECT"}
                     </Button>
                   </div>
@@ -495,12 +660,59 @@ export default function XakStudioPage() {
               </div>
 
               <TabsContent value="code" className="flex-1 m-0">
-                 <textarea 
-                  value={activeProject?.files[activeFileIndex]?.content}
-                  onChange={(e) => handleUpdateFileContent(e.target.value)}
-                  className="w-full h-full bg-transparent p-12 font-mono text-base leading-relaxed text-sky-400 outline-none resize-none custom-scrollbar"
-                  spellCheck={false}
-                 />
+                 {activeProject?.codingMode === 'block' ? (
+                   <div className="w-full h-full bg-white relative">
+                     <BlocklyWorkspace
+                        className="w-full h-full"
+                        toolboxConfiguration={{
+                           kind: 'categoryToolbox',
+                           contents: [
+                             { kind: 'category', name: 'Logic', categorystyle: 'logic_category', contents: [ { kind: 'block', type: 'controls_if' }, { kind: 'block', type: 'logic_compare' }, { kind: 'block', type: 'logic_operation' }, { kind: 'block', type: 'logic_boolean' } ] },
+                             { kind: 'category', name: 'Loops', categorystyle: 'loop_category', contents: [ { kind: 'block', type: 'controls_repeat_ext' }, { kind: 'block', type: 'controls_whileUntil' } ] },
+                             { kind: 'category', name: 'Math', categorystyle: 'math_category', contents: [ { kind: 'block', type: 'math_number' }, { kind: 'block', type: 'math_arithmetic' } ] },
+                             { kind: 'category', name: 'Text', categorystyle: 'text_category', contents: [ { kind: 'block', type: 'text' }, { kind: 'block', type: 'text_print' } ] },
+                           ]
+                        }}
+                        initialXml={activeProject.files.find(f => f.name === 'blockly.xml')?.content || '<xml xmlns="https://developers.google.com/blockly/xml"></xml>'}
+                        onXmlChange={(xml) => {
+                          const newFiles = [...activeProject.files];
+                          const xmlIndex = newFiles.findIndex(f => f.name === 'blockly.xml');
+                          if (xmlIndex >= 0) {
+                            newFiles[xmlIndex].content = xml;
+                          } else {
+                            newFiles.push({ name: 'blockly.xml', content: xml });
+                          }
+                          updateDocumentNonBlocking(doc(firestore, "users", user.uid, "studio_projects", activeProjectId!), {
+                            files: newFiles,
+                            updatedAt: serverTimestamp()
+                          });
+                        }}
+                        onWorkspaceChange={(workspace) => {
+                          if (javascriptGenerator) {
+                             const code = javascriptGenerator.workspaceToCode(workspace);
+                             const newFiles = [...activeProject.files];
+                             const jsIndex = newFiles.findIndex(f => f.name === 'generated.js');
+                             if (jsIndex >= 0) {
+                               newFiles[jsIndex].content = code;
+                             } else {
+                               newFiles.push({ name: 'generated.js', content: code });
+                             }
+                             updateDocumentNonBlocking(doc(firestore, "users", user.uid, "studio_projects", activeProjectId!), {
+                               files: newFiles,
+                               updatedAt: serverTimestamp()
+                             });
+                          }
+                        }}
+                     />
+                   </div>
+                 ) : (
+                   <textarea 
+                    value={activeProject?.files[activeFileIndex]?.content}
+                    onChange={(e) => handleUpdateFileContent(e.target.value)}
+                    className="w-full h-full bg-transparent p-12 font-mono text-base leading-relaxed text-sky-400 outline-none resize-none custom-scrollbar"
+                    spellCheck={false}
+                   />
+                 )}
               </TabsContent>
 
               <TabsContent value="preview" className="flex-1 m-0 bg-white relative overflow-hidden">

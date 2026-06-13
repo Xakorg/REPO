@@ -22,10 +22,10 @@ function createWindow() {
       contextIsolation: true,
     },
     icon: path.join(__dirname, 'public', 'favicon.ico'),
-    title: "Xakteir Hub"
+    title: "Xak AI"
   });
 
-  const startUrl = process.env.ELECTRON_START_URL || `file://${path.join(__dirname, 'desktop-out/index.html')}`;
+  const startUrl = process.env.ELECTRON_START_URL ? process.env.ELECTRON_START_URL.replace('/desktop', '/ai-chat') : `file://${path.join(__dirname, 'desktop-out/ai-chat.html')}`;
   
   mainWindow.loadURL(startUrl);
 
@@ -79,7 +79,7 @@ function createOverlayWindow() {
 function createTray() {
   tray = new Tray(path.join(__dirname, 'public', 'favicon.ico'));
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'Open Xakteir Hub', click: () => {
+    { label: 'Open Xak AI', click: () => {
         if (mainWindow) {
           mainWindow.show();
         } else {
@@ -90,7 +90,7 @@ function createTray() {
     { type: 'separator' },
     { label: 'Quit', click: () => app.quit() }
   ]);
-  tray.setToolTip('Xakteir Hub');
+  tray.setToolTip('Xak AI');
   tray.setContextMenu(contextMenu);
   tray.on('click', () => {
     if (mainWindow) {
