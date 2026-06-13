@@ -262,6 +262,31 @@ export default function XakStudioPage() {
     }
   };
 
+  const handlePublish = async () => {
+    if (!activeProject || !user || !firestore) return;
+    
+    setIsCreating(true);
+    try {
+      await addDocumentNonBlocking(collection(firestore, "publishedProjects"), {
+        type: 'game',
+        name: activeProject.name,
+        ownerName: user.displayName || user.email?.split('@')[0] || "Unknown",
+        ownerId: user.uid,
+        originalProjectId: activeProject.id,
+        files: activeProject.files,
+        createdAt: serverTimestamp(),
+        views: 0,
+        likes: 0,
+        stars: 0
+      });
+      toast({ title: "Game Published!", description: "Your game is now live on the Arcade Hub." });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Publish Failed", description: e.message });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   if (!mounted) return null;
 
   if (view === 'dashboard') {
@@ -370,7 +395,9 @@ export default function XakStudioPage() {
           <Button onClick={refreshPreview} variant="outline" className="h-10 px-6 rounded-xl border-white/10 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
              <Play className="w-4 h-4 mr-2" /> Run
           </Button>
-          <Button className="bg-primary hover:bg-primary/90 rounded-xl h-10 font-black text-xs uppercase px-8 shadow-xl text-white">Publish</Button>
+          <Button onClick={handlePublish} disabled={isCreating} className="bg-primary hover:bg-primary/90 rounded-xl h-10 font-black text-xs uppercase px-8 shadow-xl text-white">
+            {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish"}
+          </Button>
           <Link href="/apps"><Button size="icon" variant="ghost" className="rounded-full hover:bg-white/5 h-10 w-10 text-white"><X className="w-6 h-6" /></Button></Link>
         </div>
       </header>

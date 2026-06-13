@@ -8,6 +8,8 @@ import { Maximize, Minimize, Loader2, Flag, Octagon, MessageSquare, Heart, Star,
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useFirestore, useDoc } from "@/firebase";
+import { doc } from "firebase/firestore";
 
 // Helper mapping to translate ID to component name
 function getGameComponent(id: string) {
@@ -62,21 +64,30 @@ export default function GamePlayPage() {
 
   if (!mounted) return null;
 
-  const componentName = getGameComponent(gameName);
+  const firestore = useFirestore();
+  const isBuiltIn = ['aim', 'balance', 'basketball', 'breaker', 'bubble', 'clickSpeed', 'clicker', 'colorMatch', 'connectFour', 'dodge', 'drawing', 'fishing', 'flappy', 'football3D', 'football', 'frogger', 'golf', 'gravity', 'invaders', 'jump', 'knife', 'match3', 'math', 'maze', 'memory', 'minesweeper', 'paint', 'parking', 'pinball', 'plinko', 'pong', 'rps', 'reaction', 'sequence', 'snake', 'spinWheel', 'stack', 'sudoku', 'tictactoe', 'towerDefense', 'trivia', 'tunnel3D', 'twoZeroFourEight', 'typing', 'whack', 'word', 'xbr'].includes(gameName);
+
+  const { data: communityGame, isLoading: isLoadingCommunityGame } = useDoc(
+    !isBuiltIn && firestore ? doc(firestore, "publishedProjects", gameName) : null
+  );
 
   // Load game component dynamically
-  const GameComponent = dynamic(
-    () => import(`../../components/${componentName}`).then(mod => mod[componentName] || mod.default),
-    {
-      loading: () => (
-        <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6 text-white bg-[#0e0e1a]">
-          <Loader2 className="w-12 h-12 animate-spin text-[#4d97ff]" />
-          <p className="text-sm font-bold text-[#4d97ff]">Loading Blocks...</p>
-        </div>
-      ),
-      ssr: false
-    }
-  ) as any;
+  const GameComponent = React.useMemo(() => {
+    if (!isBuiltIn) return null;
+    const componentName = getGameComponent(gameName);
+    return dynamic(
+      () => import(`../../components/${componentName}`).then(mod => mod[componentName] || mod.default).catch(() => () => <div className="text-white">Game Not Found</div>),
+      {
+        loading: () => (
+          <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6 text-white bg-[#0e0e1a]">
+            <Loader2 className="w-12 h-12 animate-spin text-[#4d97ff]" />
+            <p className="text-sm font-bold text-[#4d97ff]">Loading Blocks...</p>
+          </div>
+        ),
+        ssr: false
+      }
+    ) as any;
+  }, [gameName, isBuiltIn]);
 
   return (
     <div className="min-h-screen bg-[#0e0e1a] text-white flex flex-col font-sans overflow-y-auto">
@@ -128,9 +139,24 @@ export default function GamePlayPage() {
             
             {/* Stage Canvas */}
             <div className="flex-1 relative bg-[#0e0e1a] flex items-center justify-center overflow-hidden">
-              <GameComponent onExit={handleExit} isPlaying={isPlaying} />
+              {isLoadingCommunityGame ? (
+                <Loader2 className="w-12 h-12 animate-spin text-primary" />
+              ) : isBuiltIn && GameComponent ? (
+                <GameComponent onExit={handleExit} isPlaying={isPlaying} />
+              ) : communityGame ? (
+                isPlaying ? (
+                  <iframe srcDoc={communityGame.files?.find((f: any) => f.name === 'index.html')?.content || "No index.html found"} className="w-full h-full border-none" sandbox="allow-scripts allow-same-origin" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-900 text-zinc-500">
+                    <Flag className="w-16 h-16 mb-4 text-[#4cb715]" />
+                    <p className="font-bold uppercase tracking-widest text-sm">Click Go to Start</p>
+                  </div>
+                )
+              ) : (
+                <div className="text-white font-bold">Game Not Found</div>
+              )}
               
-              {!isPlaying && (
+              {!isPlaying && isBuiltIn && (
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50">
                   <button 
                     onClick={() => setIsPlaying(true)} 
@@ -147,17 +173,17 @@ export default function GamePlayPage() {
           <div className="flex items-center justify-between bg-white/5 rounded-xl p-3 px-6 mt-2">
             <div className="flex items-center gap-6">
               <button className="flex items-center gap-2 text-zinc-400 hover:text-rose-500 font-bold transition-colors">
-                <Heart className="w-5 h-5" /> <span>{Math.floor(Math.random() * 1000)}</span>
+                <Heart className="w-5 h-5" /> <span>{communityGame?.likes || 0}</span>
               </button>
               <button className="flex items-center gap-2 text-zinc-400 hover:text-amber-400 font-bold transition-colors">
-                <Star className="w-5 h-5" /> <span>{Math.floor(Math.random() * 500)}</span>
+                <Star className="w-5 h-5" /> <span>{communityGame?.stars || 0}</span>
               </button>
               <button className="flex items-center gap-2 text-zinc-400 hover:text-blue-400 font-bold transition-colors">
                 <Share2 className="w-5 h-5" /> <span>Share</span>
               </button>
             </div>
             <div className="flex items-center gap-2 text-zinc-400 font-bold text-sm">
-              <Eye className="w-5 h-5" /> <span>{Math.floor(Math.random() * 5000) + 1000}</span>
+              <Eye className="w-5 h-5" /> <span>{communityGame?.views || 0}</span>
             </div>
           </div>
         </div>
@@ -174,13 +200,8 @@ export default function GamePlayPage() {
           
           <Card className="bg-white/5 border-none p-6 space-y-4">
             <h2 className="text-xl font-black uppercase text-[#4d97ff]">Leaderboard</h2>
-            <div className="flex flex-col gap-2 min-h-[100px]">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between bg-black/20 rounded p-2">
-                  <span className="font-bold text-sm text-zinc-300">Player {i}</span>
-                  <span className="text-amber-400 font-bold">{1000 - i * 50} pts</span>
-                </div>
-              ))}
+            <div className="flex flex-col gap-2 min-h-[100px] justify-center items-center text-zinc-500 text-sm font-bold">
+              No high scores yet.
             </div>
           </Card>
         </div>
@@ -195,14 +216,8 @@ export default function GamePlayPage() {
             <Input className="bg-black/20 border-white/10 text-white flex-1" placeholder="Add a comment..." />
             <Button className="bg-[#4cb715] hover:bg-[#3d9510] font-bold">Post</Button>
           </div>
-          <div className="flex flex-col gap-4 mt-4">
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center font-bold text-blue-400 shrink-0">U</div>
-              <div>
-                <p className="font-bold text-sm text-white/80">User123 <span className="text-xs text-white/40 font-normal">2 days ago</span></p>
-                <p className="text-sm text-zinc-300 mt-1">This game is so fun! I got the high score!</p>
-              </div>
-            </div>
+          <div className="flex flex-col gap-4 mt-4 text-center py-10 text-zinc-500 font-bold text-sm">
+            No comments yet. Be the first to comment!
           </div>
         </div>
       </div>
