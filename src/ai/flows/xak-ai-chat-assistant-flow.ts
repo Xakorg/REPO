@@ -6,7 +6,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {googleAI} from '@genkit-ai/google-genai';
+import {googleAI, gemini15Flash} from '@genkit-ai/google-genai';
 import { getAdminDb } from '@/lib/firebase-admin';
 
 const MessageSchema = z.object({
@@ -446,7 +446,7 @@ CRITICAL GUIDELINES:
     while (retries > 0) {
       try {
         const {output} = await ai.generate({
-          model: googleAI.model('gemini-2.0-flash'),
+          model: gemini15Flash,
           system: systemPrompt,
           messages: [
             ...(input.history || []),
@@ -462,6 +462,7 @@ CRITICAL GUIDELINES:
         }
         return output;
       } catch (error: any) {
+        console.error('XAK AI ERROR:', error);
         const message = String(error?.message || '');
         retries--;
         if ((message.includes('503') || message.includes('UNAVAILABLE')) && retries > 0) {
