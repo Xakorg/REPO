@@ -48,18 +48,20 @@ import * as OTPAuth from "otpauth";
  * Generates a real industry-standard 6-digit code based on a Base32 secret.
  */
 const generateTOTP = (secret: string) => {
+  if (!secret) return "------";
   try {
+    const cleanSecret = secret.replace(/[^A-Z2-7]/ig, '');
+    if (!cleanSecret) return "------";
     const totp = new OTPAuth.TOTP({
       issuer: 'Xakteir',
       label: 'Auth',
       algorithm: 'SHA1',
       digits: 6,
       period: 30,
-      secret: secret.replace(/\s+/g, '')
+      secret: cleanSecret
     });
     return totp.generate();
   } catch (e) {
-    console.error("Invalid TOTP Secret", e);
     return "------";
   }
 };
@@ -554,12 +556,12 @@ export default function XakteirAuthPage() {
                         </div>
                       )}
 
-                      {activeAccount.backupCodes && (
+                       {activeAccount.backupCodes && (
                         <div className="space-y-4 bg-white/5 p-6 rounded-[2rem] border border-white/10">
                            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Backup Codes</span>
                            <div className="grid grid-cols-2 gap-2">
-                              {activeAccount.backupCodes.split(/[,\n]+/).map((code, idx) => {
-                                 const trimmed = code.trim();
+                              {(Array.isArray(activeAccount.backupCodes) ? activeAccount.backupCodes : String(activeAccount.backupCodes || '').split(/[,\n]+/)).map((code, idx) => {
+                                 const trimmed = typeof code === 'string' ? code.trim() : String(code);
                                  if (!trimmed) return null;
                                  return <div key={idx} className="bg-black/40 px-3 py-2 rounded-lg font-mono text-xs text-muted-foreground cursor-pointer hover:text-white" onClick={() => handleCopy(trimmed)}>{trimmed}</div>
                               })}
