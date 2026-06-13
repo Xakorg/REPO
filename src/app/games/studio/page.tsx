@@ -37,7 +37,7 @@ import {
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { doc, serverTimestamp, collection, query, orderBy, deleteDoc, addDoc } from "firebase/firestore";
+import { doc, serverTimestamp, collection, query, orderBy, deleteDoc, addDoc, where, limit } from "firebase/firestore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -97,6 +97,14 @@ export default function XakStudioPage() {
 
   const { data: projects, isLoading: loadingProjects } = useCollection(projectsQuery);
   const activeProject = projects?.find(p => p.id === activeProjectId) as StudioProject | undefined;
+
+  const publishedVersionQuery = useMemoFirebase(() => {
+    if (!firestore || !activeProject) return null;
+    return query(collection(firestore, "publishedProjects"), where("originalProjectId", "==", activeProject.id), limit(1));
+  }, [firestore, activeProject]);
+
+  const { data: publishedVersions } = useCollection(publishedVersionQuery);
+  const existingPublishedVersion = publishedVersions?.[0];
 
   // Update Preview URL
   const refreshPreview = () => {
@@ -272,20 +280,29 @@ export default function XakStudioPage() {
     
     setIsCreating(true);
     try {
-      await addDocumentNonBlocking(collection(firestore, "publishedProjects"), {
-        type: 'game',
-        name: publishName,
-        description: publishDescription,
-        ownerName: user.displayName || user.email?.split('@')[0] || "Unknown",
-        ownerId: user.uid,
-        originalProjectId: activeProject.id,
-        files: activeProject.files,
-        createdAt: serverTimestamp(),
-        views: 0,
-        likes: 0,
-        stars: 0
-      });
-      toast({ title: "Game Published!", description: "Your game is now live on the Arcade Hub." });
+      if (existingPublishedVersion) {
+        await updateDocumentNonBlocking(doc(firestore, "publishedProjects", existingPublishedVersion.id), {
+          name: publishName,
+          description: publishDescription,
+          files: activeProject.files,
+        });
+        toast({ title: "Game Updated!", description: "Your changes are now live on the Arcade Hub." });
+      } else {
+        await addDocumentNonBlocking(collection(firestore, "publishedProjects"), {
+          type: 'game',
+          name: publishName,
+          description: publishDescription,
+          ownerName: user.displayName || user.email?.split('@')[0] || "Unknown",
+          ownerId: user.uid,
+          originalProjectId: activeProject.id,
+          files: activeProject.files,
+          createdAt: serverTimestamp(),
+          views: 0,
+          likes: 0,
+          stars: 0
+        });
+        toast({ title: "Game Published!", description: "Your game is now live on the Arcade Hub." });
+      }
       setIsPublishDialogOpen(false);
     } catch (e: any) {
       toast({ variant: "destructive", title: "Publish Failed", description: e.message });
@@ -404,10 +421,15 @@ export default function XakStudioPage() {
           </Button>
           <Dialog open={isPublishDialogOpen} onOpenChange={setIsPublishDialogOpen}>
              <DialogTrigger asChild>
-                <Button onClick={() => setPublishName(activeProject?.name || "")} className="bg-primary hover:bg-primary/90 rounded-xl h-10 font-black text-xs uppercase px-8 shadow-xl text-white">Publish</Button>
+                <Button onClick={() => {
+                  setPublishName(existingPublishedVersion?.name || activeProject?.name || "");
+                  setPublishDescription(existingPublishedVersion?.description || "");
+                }} className="bg-primary hover:bg-primary/90 rounded-xl h-10 font-black text-xs uppercase px-8 shadow-xl text-white">
+                  {existingPublishedVersion ? "Update" : "Publish"}
+                </Button>
              </DialogTrigger>
              <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-white p-12 bg-zinc-950 shadow-2xl">
-                <DialogHeader><DialogTitle className="text-4xl font-black uppercase italic text-center">Publish Game</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle className="text-4xl font-black uppercase italic text-center">{existingPublishedVersion ? "Update Game" : "Publish Game"}</DialogTitle></DialogHeader>
                 <div className="space-y-6 py-6">
                   <div className="space-y-2">
                      <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">Game Name</label>
@@ -418,7 +440,7 @@ export default function XakStudioPage() {
                      <textarea value={publishDescription} onChange={(e) => setPublishDescription(e.target.value)} placeholder="A fun game about..." className="w-full bg-secondary/50 min-h-[100px] p-4 rounded-2xl font-medium text-sm border border-white/10 text-white outline-none focus:ring-2 focus:ring-primary/50 resize-none" />
                   </div>
                   <Button onClick={handlePublish} disabled={isCreating || !publishName} className="w-full h-16 mt-4 bg-primary rounded-3xl font-black uppercase text-white italic shadow-2xl border-b-8 border-primary/20 active:border-b-0">
-                     {isCreating ? <Loader2 className="animate-spin w-6 h-6" /> : "PUBLISH TO ARCADE"}
+                     {isCreating ? <Loader2 className="animate-spin w-6 h-6" /> : (existingPublishedVersion ? "UPDATE ON ARCADE" : "PUBLISH TO ARCADE")}
                   </Button>
                 </div>
              </DialogContent>
