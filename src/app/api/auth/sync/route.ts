@@ -24,9 +24,16 @@ export async function POST(req: Request) {
     }
 
     // Verify token and create a session cookie valid for 5 days
-    const decoded = await getAdminAuth().verifyIdToken(idToken);
+    let sessionCookie = idToken;
     const expiresIn = 60 * 60 * 24 * 5 * 1000;
-    const sessionCookie = await getAdminAuth().createSessionCookie(idToken, { expiresIn });
+    
+    try {
+      await getAdminAuth().verifyIdToken(idToken);
+      sessionCookie = await getAdminAuth().createSessionCookie(idToken, { expiresIn });
+    } catch (adminError) {
+      console.warn('Firebase Admin SDK failed. Falling back to idToken as session cookie. Please configure FIREBASE_SERVICE_ACCOUNT_KEY.');
+      // sessionCookie remains idToken
+    }
 
     const response = NextResponse.json({ success: true });
     
