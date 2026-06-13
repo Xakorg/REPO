@@ -15,7 +15,8 @@ import {
   CheckCircle2, 
   ChevronRight, 
   Sliders,
-  HelpCircle
+  HelpCircle,
+  Layers
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -183,6 +183,34 @@ ipcMain.handle('run-terminal-command', (event, command, cwd) => {
   });
 });
 
+ipcMain.handle('create-desktop-shortcuts', async () => {
+  try {
+    const desktopPath = path.join(require('os').homedir(), 'Desktop');
+    const folderPath = path.join(desktopPath, 'Xakteir Apps');
+    
+    // Create folder
+    await fs.mkdir(folderPath, { recursive: true });
+
+    const apps = [
+      { name: 'Xak AI', url: 'http://localhost:9002/ai-chat' }, // or the actual production URL
+      { name: 'Xakteir Hub', url: 'https://hub.xakteir.com' },
+      { name: 'Xakchat', url: 'https://chat.xakteir.com' },
+      { name: 'Xakteir Suite', url: 'https://suite.xakteir.com' }
+    ];
+
+    // Create .url files (Windows standard internet shortcut)
+    for (const app of apps) {
+      const shortcutPath = path.join(folderPath, `${app.name}.url`);
+      const shortcutContent = `[InternetShortcut]\nURL=${app.url}\n`;
+      await fs.writeFile(shortcutPath, shortcutContent, 'utf-8');
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
 app.whenReady().then(() => {
   createWindow();
   createOverlayWindow();

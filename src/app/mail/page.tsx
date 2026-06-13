@@ -9,7 +9,8 @@ import {
   Inbox, Send, Star, Trash2, Plus, Loader2, Mail as MailIcon,
   Globe, RefreshCw, LogOut, MailCheck, Search, Clock, Paperclip, 
   Lock, Calendar, CheckSquare, AlertTriangle, Languages, Split,
-  LayoutDashboard, Settings, MoreVertical, X, Check, Archive, XCircle
+  LayoutDashboard, Settings, MoreVertical, X, Check, Archive, XCircle,
+  Bot, Wand2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -22,8 +23,10 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { chatWithXakAI } from "@/ai/flows/xak-ai-chat-assistant-flow";
 
 import { GoogleAuthProvider, linkWithPopup, signInWithPopup } from "firebase/auth";
 
@@ -40,6 +43,9 @@ export default function MailPage() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [attachments, setAttachments] = useState<{name: string, url: string}[]>([]);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
 
   // New states for features
   const [unifiedInbox, setUnifiedInbox] = useState(false);
@@ -52,6 +58,14 @@ export default function MailPage() {
   const [focusedInbox, setFocusedInbox] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [isGeneratingReply, setIsGeneratingReply] = useState(false);
+
+  useEffect(() => {
+    // Reset summary when email changes
+    setSummary(null);
+  }, [selectedId]);
   
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -83,6 +97,7 @@ export default function MailPage() {
   const folders = useMemo(() => [
     { name: 'Inbox', icon: Inbox, color: 'bg-blue-500' },
     { name: 'Starred', icon: Star, color: 'bg-amber-500' },
+    { name: 'Snoozed', icon: Clock, color: 'bg-orange-500' },
     { name: 'Sent', icon: Send, color: 'bg-green-500' },
     { name: 'Trash', icon: Trash2, color: 'bg-rose-500' },
   ], []);
@@ -139,6 +154,18 @@ export default function MailPage() {
     }
   };
 
+  const handleSnooze = async (hours: number) => {
+    if (!firestore || !selectedEmail || selectedEmail.isGmail) return;
+    try {
+      const emailRef = doc(firestore, "emails", selectedEmail.id);
+      await updateDoc(emailRef, { snoozedUntil: Date.now() + hours * 3600000 });
+      setSelectedId(null);
+      toast({ title: `Snoozed for ${hours} hours` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Action failed" });
+    }
+  };
+
   // Gmail states
   const [mailMode, setMailMode] = useState<'xakteir' | 'gmail'>('xakteir');
   const [gmailToken, setGmailToken] = useState<string | null>(null);
@@ -175,9 +202,10 @@ export default function MailPage() {
     if (!rawEmails) return [];
     let filtered = rawEmails;
     if (folder === "Starred") filtered = filtered.filter(e => e.isStarred && !e.isDeleted);
+    else if (folder === "Snoozed") filtered = filtered.filter(e => !e.isDeleted && e.snoozedUntil && e.snoozedUntil > Date.now());
     else if (folder === "Sent") filtered = filtered.filter(e => !e.isDeleted);
     else if (folder === "Trash") filtered = filtered.filter(e => e.isDeleted);
-    else filtered = filtered.filter(e => !e.isDeleted);
+    else filtered = filtered.filter(e => !e.isDeleted && (!e.snoozedUntil || e.snoozedUntil <= Date.now()));
     
     if (searchQuery) {
       filtered = filtered.filter(e => e.subject?.toLowerCase().includes(searchQuery.toLowerCase()) || e.body?.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -265,8 +293,27 @@ export default function MailPage() {
       localStorage.removeItem("gmail_oauth_token");
       setGmailToken(null);
       setMailMode('xakteir');
-    } finally {
       setLoadingGmail(false);
+    }
+  };
+
+  const storage = useStorage();
+
+  const handleAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !storage) return;
+    setIsUploadingAttachment(true);
+    try {
+      const storageRef = ref(storage, `mail_attachments/${user.uid}/${Date.now()}_${file.name}`);
+      const uploadTask = await uploadBytesResumable(storageRef, file);
+      const url = await getDownloadURL(uploadTask.ref);
+      setAttachments(prev => [...prev, { name: file.name, url }]);
+      toast({ title: "Attachment uploaded" });
+    } catch (err) {
+      toast({ variant: "destructive", title: "Upload failed" });
+    } finally {
+      setIsUploadingAttachment(false);
+      if (attachmentInputRef.current) attachmentInputRef.current.value = '';
     }
   };
 
@@ -279,9 +326,45 @@ export default function MailPage() {
         action: <Button variant="outline" size="sm" onClick={() => toast({title: "Send Undone"})}>Undo</Button> 
       });
       setIsComposeOpen(false);
-      setRecipient(""); setSubject(""); setBody("");
+      setRecipient(""); setSubject(""); setBody(""); setAttachments([]);
     } finally { 
       setIsSending(false); 
+    }
+  };
+
+  const handleSummarize = async () => {
+    if (!selectedEmail) return;
+    setIsSummarizing(true);
+    setSummary(null);
+    try {
+      const response = await chatWithXakAI({
+        message: `Summarize this email briefly: Subject: ${selectedEmail.subject}. Body: ${selectedEmail.body}`,
+        userId: user?.uid
+      });
+      setSummary(response.response);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Failed to summarize" });
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  const handleSmartReply = async () => {
+    if (!selectedEmail) return;
+    setIsGeneratingReply(true);
+    try {
+      const response = await chatWithXakAI({
+        message: `Generate a professional, concise email reply to this email. Just provide the email body, no subject. Email: ${selectedEmail.body}`,
+        userId: user?.uid
+      });
+      setBody(response.response);
+      setRecipient(selectedEmail.senderEmail);
+      setSubject(`Re: ${selectedEmail.subject}`);
+      setIsComposeOpen(true);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Failed to generate reply" });
+    } finally {
+      setIsGeneratingReply(false);
     }
   };
 
@@ -337,13 +420,27 @@ export default function MailPage() {
                 </div>
                 <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" className="bg-[#0b0b14]/60 border-transparent h-12 rounded-xl text-white" />
                 <div className="relative">
-                  <Textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Type message body..." className="bg-[#0b0b14]/60 border-transparent rounded-2xl min-h-[200px] p-6 text-sm italic text-white resize-none" />
-                  <div className="absolute bottom-4 left-4 flex gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white rounded-full"><Paperclip className="w-4 h-4" /></Button>
+                  <RichTextEditor content={body} onChange={setBody} placeholder="Type message body..." className="min-h-[250px]" />
+                  <div className="absolute bottom-4 left-4 flex gap-2 items-center">
+                    <input type="file" ref={attachmentInputRef} className="hidden" onChange={handleAttachmentUpload} />
+                    <Button variant="ghost" size="icon" onClick={() => attachmentInputRef.current?.click()} className="h-8 w-8 text-white/50 hover:text-white rounded-full">
+                      {isUploadingAttachment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white rounded-full"><LayoutDashboard className="w-4 h-4" /> {/* Drive Integration */}</Button>
                     <Button variant="ghost" size="icon" onClick={() => setIsEncrypted(!isEncrypted)} className={cn("h-8 w-8 rounded-full", isEncrypted ? "text-green-400" : "text-white/50")}><Lock className="w-4 h-4" /></Button>
                   </div>
                 </div>
+                {attachments.length > 0 && (
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {attachments.map((att, i) => (
+                      <Badge key={i} variant="outline" className="border-white/20 bg-white/5 text-xs py-1.5 px-3 flex items-center gap-2">
+                         <Paperclip className="w-3 h-3" />
+                         <span className="truncate max-w-[150px]">{att.name}</span>
+                         <X className="w-3 h-3 cursor-pointer hover:text-rose-500" onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
               <DialogFooter className="flex justify-between items-center sm:justify-between">
                 <Button variant="ghost" className="text-xs text-white/50 hover:text-white"><Clock className="w-3 h-3 mr-2" /> Schedule Send</Button>
@@ -497,8 +594,20 @@ export default function MailPage() {
                       <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white">{isTranslating ? "TRANSLATED: " + selectedEmail.subject : selectedEmail.subject}</h2>
                       <div className="flex gap-2 shrink-0">
                         <Button onClick={() => setIsTranslating(!isTranslating)} variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full", isTranslating ? "bg-primary/20 text-primary" : "text-white/50")}><Languages className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-white/50"><Clock className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-white/50"><Archive className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => moveToTrash(selectedEmail)} className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10">
+                            <Trash2 className="w-5 h-5" />
+                          </Button>
+                          <Select onValueChange={(val) => handleSnooze(parseInt(val))}>
+                            <SelectTrigger className="w-10 h-10 p-0 border-0 bg-transparent hover:bg-white/5 flex items-center justify-center [&>svg:last-child]:hidden">
+                              <Clock className="w-5 h-5 text-white/40 hover:text-white" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                              <SelectItem value="2">Snooze 2 Hours</SelectItem>
+                              <SelectItem value="12">Snooze 12 Hours</SelectItem>
+                              <SelectItem value="24">Snooze Tomorrow</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button variant="ghost" size="icon" className="text-white/40 hover:text-white hover:bg-white/5"><MoreVertical className="w-5 h-5" /></Button>
                       </div>
                     </div>
 
@@ -519,6 +628,27 @@ export default function MailPage() {
                     <div className="text-sm leading-relaxed text-white/90 whitespace-pre-wrap">
                       {isTranslating ? "This is a mocked translation of the email body showing how it would look in the users native language.\\n\\n" : ''}
                       {selectedEmail.body}
+                    </div>
+
+                    {/* AI Tools */}
+                    <div className="pt-6 border-t border-white/5 space-y-4">
+                      <div className="flex gap-3">
+                        <Button onClick={handleSummarize} disabled={isSummarizing} variant="outline" className="h-10 bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 font-bold text-xs uppercase tracking-widest">
+                          {isSummarizing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Bot className="w-4 h-4 mr-2" />}
+                          Summarize Thread
+                        </Button>
+                        <Button onClick={handleSmartReply} disabled={isGeneratingReply} variant="outline" className="h-10 bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 font-bold text-xs uppercase tracking-widest">
+                          {isGeneratingReply ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Wand2 className="w-4 h-4 mr-2" />}
+                          Smart Reply
+                        </Button>
+                      </div>
+                      
+                      {summary && (
+                        <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
+                           <div className="flex items-center gap-2 mb-2"><Bot className="w-4 h-4 text-primary" /><span className="text-[10px] font-black uppercase text-primary tracking-widest">AI Summary</span></div>
+                           <p className="text-sm text-white/80">{summary}</p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Attachments Mock */}
@@ -564,10 +694,20 @@ export default function MailPage() {
               <Switch checked={focusedInbox} onCheckedChange={setFocusedInbox} />
             </div>
             <div className="flex justify-between items-center">
-              <div><Label className="font-bold">Read Receipts</Label><p className="text-xs text-white/50">Track when emails are opened</p></div>
+              <div><Label className="font-bold">Read Receipts Tracking</Label><p className="text-xs text-white/50">Track when emails are opened</p></div>
               <Switch defaultChecked />
             </div>
             <div className="space-y-2">
+              <Label className="font-bold flex items-center justify-between">Rules & Filters <Badge variant="secondary" className="bg-primary/20 text-primary hover:bg-primary/30 cursor-pointer">+ New Rule</Badge></Label>
+              <div className="bg-white/5 p-3 rounded-xl border border-white/10 flex items-center justify-between mt-2">
+                 <div>
+                    <p className="text-xs font-bold text-white">If sender is "newsletter@example.com"</p>
+                    <p className="text-[10px] text-white/50">Then move to Trash</p>
+                 </div>
+                 <Trash2 className="w-4 h-4 text-rose-500 cursor-pointer hover:text-rose-400" />
+              </div>
+            </div>
+            <div className="space-y-2 pt-4 border-t border-white/5">
               <Label className="font-bold">Signature Manager</Label>
               <Textarea className="bg-white/5 border-white/10 text-xs h-20" placeholder="Your signature HTML/Text..." />
             </div>

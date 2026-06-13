@@ -1,96 +1,111 @@
 "use client";
 
-import { Download, Monitor, Sparkles, Layers, TerminalSquare, ShieldCheck, ArrowRight } from "lucide-react";
-import Link from "next/link";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Download, Monitor, Sparkles, FolderDown, Loader2, CheckCircle2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function DownloadDesktopPage() {
+  const [downloading, setDownloading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const router = useRouter();
+
+  const handleCreateDesktopShortcuts = async () => {
+    if (typeof window === "undefined") return;
+    
+    setDownloading(true);
+    
+    // Check if we are running inside Electron
+    if ((window as any).electron) {
+      try {
+        const res = await (window as any).electron.invoke('create-desktop-shortcuts');
+        if (res.success) {
+          setSuccess(true);
+        } else {
+          alert("Error creating shortcuts: " + res.error);
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Failed to communicate with desktop app.");
+      }
+    } else {
+      // In a regular browser, we can't create desktop shortcuts natively.
+      // But we can trigger the download of the actual Setup.exe if it's hosted, or notify them.
+      alert("You are currently viewing this in a browser. To install the apps, please download the Xak AI Setup first.");
+    }
+    
+    setDownloading(false);
+  };
+
   return (
-    <div className="min-h-screen bg-[#05030d] text-white flex flex-col relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-600/20 blur-[120px] rounded-full" />
+    <div className="min-h-screen bg-zinc-950 text-white relative overflow-hidden flex flex-col items-center justify-center p-6">
+      {/* Background grids */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-zinc-950/80 to-zinc-950"></div>
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/30 blur-[120px] mix-blend-screen" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/20 blur-[120px] mix-blend-screen" />
       </div>
 
-      <header className="h-20 border-b border-white/5 flex items-center px-8 z-10 bg-black/40 backdrop-blur-xl">
-        <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30 shadow-[0_0_20px_rgba(var(--primary),0.3)]">
-            <Layers className="w-5 h-5 text-primary" />
-          </div>
-          <span className="text-2xl font-black uppercase italic tracking-tighter">Xakteir</span>
-        </Link>
-      </header>
+      <div className="relative z-10 w-full max-w-4xl mx-auto space-y-12">
+        
+        <button 
+          onClick={() => router.back()} 
+          className="absolute top-0 left-0 text-[10px] font-black uppercase tracking-widest text-white/50 hover:text-white transition-colors"
+        >
+          ← Back
+        </button>
 
-      <main className="flex-1 flex flex-col items-center justify-center p-8 z-10 max-w-5xl mx-auto w-full">
-        <div className="text-center space-y-6 mb-16">
-          <Badge />
-          <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-white to-white/40">
-            Xakteir Hub <br /> for Desktop
+        <div className="text-center space-y-6">
+          <div className="inline-flex items-center justify-center p-6 rounded-3xl bg-white/5 border-2 border-white/10 shadow-2xl mb-4">
+            <Monitor className="w-12 h-12 text-primary" />
+          </div>
+          <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter italic drop-shadow-2xl">
+            Get The <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-indigo-500">Suite</span>
           </h1>
-          <p className="text-lg text-white/50 max-w-2xl mx-auto font-medium">
-            Take Xakteir to the next level. Install the native Windows desktop app for system-wide Xak AI overlay, file system integration, and blazing fast performance.
+          <p className="text-lg md:text-xl font-medium text-white/60 max-w-2xl mx-auto italic">
+            Download the Xakteir Apps folder directly to your desktop. It includes instant access to Xak AI, Xakteir Hub, Xakchat, and Xakteir Suite!
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-16">
-          <FeatureCard 
-            icon={<Monitor className="w-6 h-6 text-cyan-400" />}
-            title="Always-On Overlay"
-            desc="Say 'Hey Xak' anywhere in Windows to trigger the glowing screen overlay and ask questions instantly."
-          />
-          <FeatureCard 
-            icon={<TerminalSquare className="w-6 h-6 text-emerald-400" />}
-            title="System Automation"
-            desc="Xak AI can launch apps, create files, and orchestrate terminal commands right on your hard drive."
-          />
-          <FeatureCard 
-            icon={<ShieldCheck className="w-6 h-6 text-purple-400" />}
-            title="Security Vault"
-            desc="Native access to your identity personas and passwords from the system tray."
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
+          {[
+            { name: "Xak AI", desc: "Intelligent Assistant", icon: Sparkles, color: "text-primary", bg: "bg-primary/10" },
+            { name: "Xakteir Hub", desc: "Main Dashboard", icon: Monitor, color: "text-indigo-400", bg: "bg-indigo-500/10" },
+            { name: "Xakchat", desc: "Secure Messaging", icon: Monitor, color: "text-rose-400", bg: "bg-rose-500/10" },
+            { name: "Xakteir Suite", desc: "Productivity Tools", icon: Monitor, color: "text-emerald-400", bg: "bg-emerald-500/10" }
+          ].map((app) => (
+            <Card key={app.name} className="bg-white/5 border border-white/10 rounded-[2rem] p-6 text-center hover:bg-white/10 hover:border-white/20 transition-all shadow-xl group">
+              <div className={`w-16 h-16 mx-auto rounded-2xl ${app.bg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                <app.icon className={`w-8 h-8 ${app.color}`} />
+              </div>
+              <h3 className="font-black uppercase tracking-widest text-sm mb-2">{app.name}</h3>
+              <p className="text-[10px] text-white/50 uppercase font-bold">{app.desc}</p>
+            </Card>
+          ))}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <a 
-            href="/downloads/Xakteir%20Suite%20Setup%204.2.8.exe" 
-            download
-            className="h-16 px-8 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all hover:scale-105 shadow-[0_0_40px_rgba(var(--primary),0.4)]"
+        <div className="flex justify-center mt-16">
+          <Button 
+            onClick={handleCreateDesktopShortcuts}
+            disabled={downloading || success}
+            className={`h-20 px-12 md:px-20 rounded-[2.5rem] font-black uppercase italic text-xl md:text-2xl shadow-[0_20px_60px_rgba(var(--primary),0.4)] transition-all ${
+              success 
+              ? "bg-emerald-500 hover:bg-emerald-600 text-white border-b-8 border-emerald-700" 
+              : "bg-primary hover:bg-primary/90 text-white border-b-8 border-primary/40 active:border-b-0 active:translate-y-2"
+            }`}
           >
-            <Download className="w-5 h-5" />
-            Download for Windows
-          </a>
-          <Link 
-            href="/ai-chat" 
-            className="h-16 px-8 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all"
-          >
-            Open Web Version <ArrowRight className="w-5 h-5" />
-          </Link>
+            {downloading ? (
+              <><Loader2 className="w-8 h-8 mr-3 animate-spin" /> Processing...</>
+            ) : success ? (
+              <><CheckCircle2 className="w-8 h-8 mr-3" /> Added to Desktop!</>
+            ) : (
+              <><FolderDown className="w-8 h-8 mr-3" /> Download App Folder</>
+            )}
+          </Button>
         </div>
-        <p className="text-xs text-white/30 font-bold uppercase tracking-widest mt-6">
-          Version 4.2.8 • Windows 10/11 (x64)
-        </p>
-      </main>
-    </div>
-  );
-}
 
-function Badge() {
-  return (
-    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
-      <Sparkles className="w-4 h-4" />
-      <span className="text-[10px] font-black uppercase tracking-widest">Now Available</span>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
-  return (
-    <div className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all text-left group">
-      <div className="w-12 h-12 rounded-2xl bg-black/50 flex items-center justify-center mb-6 border border-white/5 group-hover:scale-110 transition-transform">
-        {icon}
       </div>
-      <h3 className="text-lg font-black uppercase tracking-widest mb-2">{title}</h3>
-      <p className="text-sm text-white/50 font-medium leading-relaxed">{desc}</p>
     </div>
   );
 }

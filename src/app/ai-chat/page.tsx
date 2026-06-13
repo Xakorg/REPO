@@ -222,16 +222,19 @@ export default function XakAIPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [isListening, setIsListening] = useState(false);
+  const [isGlowActive, setIsGlowActive] = useState(false);
   const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
   const recognitionRef = useRef<any>(null);
   
   // Settings
   const [hotword, setHotword] = useState("hey xak");
-  const [alwaysOn, setAlwaysOn] = useState(false);
+  const [alwaysOn, setAlwaysOn] = useState(true); // Default to true so it works out of the box
   const alwaysOnRef = useRef(alwaysOn);
   alwaysOnRef.current = alwaysOn;
   const hotwordRef = useRef(hotword);
   hotwordRef.current = hotword;
+  const isGlowActiveRef = useRef(isGlowActive);
+  isGlowActiveRef.current = isGlowActive;
 
   useEffect(() => { 
     setMounted(true); 
@@ -262,6 +265,8 @@ export default function XakAIPage() {
       
       rec.onstart = () => setIsListening(true);
       
+      let finalTranscriptBuffer = '';
+      
       rec.onend = () => {
         setIsListening(false);
         if (alwaysOnRef.current) {
@@ -286,24 +291,43 @@ export default function XakAIPage() {
         
         const currentText = (finalTranscript || interimTranscript).toLowerCase();
         
-        // Hotword check
-        if (alwaysOnRef.current && currentText.includes(hotwordRef.current.toLowerCase())) {
-          // Trigger blue overlay
-          if (typeof window !== "undefined" && (window as any).electron) {
-            (window as any).electron.setListeningState(true);
-          }
-
-          // We found the hotword! Remove it from the text to submit.
-          const query = currentText.split(hotwordRef.current.toLowerCase())[1]?.trim();
-          if (query && query.length > 2) {
-             setInput(query);
-             // Auto submit after a short delay to allow final results
+        // If we are already glowing (listening for the actual command after wake word)
+        if (isGlowActiveRef.current) {
+          setInput(finalTranscript || interimTranscript);
+          
+          if (finalTranscript.trim().length > 0) {
+             // User finished speaking the command
+             finalTranscriptBuffer += finalTranscript + " ";
+             setInput(finalTranscriptBuffer.trim());
+             
+             // Auto submit after a short delay
              setTimeout(() => {
                const submitBtn = document.querySelector('form button[type="submit"]') as HTMLButtonElement | null;
                if (submitBtn) submitBtn.click();
-             }, 500);
-             // Reset recognition to clear the buffer
-             rec.stop();
+               setIsGlowActive(false);
+               finalTranscriptBuffer = '';
+             }, 1000);
+          }
+          return;
+        }
+
+        // Hotword check
+        if (alwaysOnRef.current && currentText.includes(hotwordRef.current.toLowerCase())) {
+          setIsGlowActive(true);
+          finalTranscriptBuffer = ''; // Reset buffer
+          
+          // We found the hotword! See if they already said something after it
+          const query = currentText.split(hotwordRef.current.toLowerCase())[1]?.trim();
+          if (query && query.length > 2) {
+             setInput(query);
+             finalTranscriptBuffer = query;
+             // Auto submit after a short delay
+             setTimeout(() => {
+               const submitBtn = document.querySelector('form button[type="submit"]') as HTMLButtonElement | null;
+               if (submitBtn) submitBtn.click();
+               setIsGlowActive(false);
+               finalTranscriptBuffer = '';
+             }, 1000);
           } else {
              // Woke up but no command yet
              setInput("Listening...");
@@ -454,8 +478,12 @@ export default function XakAIPage() {
   if (!mounted) return null;
 
   return (
-    <div className="h-[calc(100vh-80px)] flex overflow-hidden animate-fade-in text-white relative">
-      <aside className={cn(
+    <>
+      {isGlowActive && (
+        <div className="pointer-events-none fixed inset-0 z-50 border-[12px] border-blue-500 shadow-[inset_0_0_150px_rgba(59,130,246,0.8)] animate-pulse rounded-xl" />
+      )}
+      <div className="h-[calc(100vh-80px)] flex overflow-hidden animate-fade-in text-white relative">
+        <aside className={cn(
         "hidden lg:flex w-72 border-r border-white/10 bg-black/40 backdrop-blur-3xl flex-col z-20",
         !user && "opacity-50 pointer-events-none grayscale"
       )}>
@@ -700,5 +728,6 @@ export default function XakAIPage() {
         </div>
       </main>
     </div>
+    </>
   );
 }

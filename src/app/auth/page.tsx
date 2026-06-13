@@ -49,6 +49,12 @@ export default function AuthPage() {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (existingUser) {
+      router.push("/");
+    }
+  }, [existingUser, router]);
+
   // Central Redirection Logic: Responds instantly to Auth state changes
   useEffect(() => {
     let isMounted = true;
