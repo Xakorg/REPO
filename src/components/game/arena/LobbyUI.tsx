@@ -64,7 +64,16 @@ export function LobbyUI({ setGameState, gameMode, setGameMode }: LobbyUIProps) {
 
         {/* Big PLAY Button */}
         <button 
-          onClick={() => setGameState("playing")}
+          onClick={async () => {
+            setGameState("playing");
+            try {
+              if (!document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+              }
+            } catch (err) {
+              console.warn("Fullscreen failed", err);
+            }
+          }}
           className="relative group bg-[#fbbf24] hover:bg-[#f59e0b] text-black font-black italic uppercase tracking-widest text-4xl px-20 py-8 rounded-xl shadow-[0_0_50px_rgba(251,191,36,0.3)] transition-all transform hover:scale-105 active:scale-95"
         >
           <div className="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />

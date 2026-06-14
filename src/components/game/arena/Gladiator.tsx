@@ -32,8 +32,38 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
   const speed = 12;
   const jumpForce = 8;
   
-  // Camera state
-  const cameraOffset = new THREE.Vector3(0, 5, 10);
+  // Camera Orbit Angles
+  const yaw = useRef(0);
+  const pitch = useRef(0.2); // slight downward angle
+
+  // Pointer Lock & Mouse Move
+  useEffect(() => {
+    if (gameState !== "playing") return;
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (document.pointerLockElement) {
+        yaw.current -= e.movementX * 0.002;
+        pitch.current -= e.movementY * 0.002;
+        // Clamp pitch to avoid flipping
+        pitch.current = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch.current));
+      }
+    };
+
+    const onClick = () => {
+      if (!document.pointerLockElement) {
+        document.body.requestPointerLock();
+      }
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("click", onClick);
+
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("click", onClick);
+    };
+  }, [gameState]);
+
   const targetCameraPos = new THREE.Vector3();
 
   useFrame((state, delta) => {
@@ -67,6 +97,10 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
     if (right) moveDir.x += 1;
     
     moveDir.normalize();
+    // Rotate movement vector by camera yaw
+    if (moveDir.lengthSq() > 0) {
+      moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw.current);
+    }
 
     // Fire Weapon / Attack
     if (shoot) {
@@ -123,21 +157,21 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
     playerRef.current.setLinvel(vel, true);
 
     // 2. Player Rotation
-    if (moveDir.length() > 0) {
-      const angle = Math.atan2(moveDir.x, moveDir.z);
-      const euler = new THREE.Euler(0, angle, 0);
-      const quaternion = new THREE.Quaternion().setFromEuler(euler);
-      // smoothly rotate player model towards movement direction
-      playerRef.current.setRotation(quaternion, true);
-    }
+    // Always face away from camera
+    const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw.current, 0));
+    playerRef.current.setRotation(quaternion, true);
 
     // 3. 3rd-Person Camera Follow
     const playerWorldPos = new THREE.Vector3();
     playerWorldPos.copy(playerRef.current.translation());
 
-    // Desired camera position is player pos + offset
-    targetCameraPos.copy(playerWorldPos).add(cameraOffset);
-    camera.position.lerp(targetCameraPos, delta * 5);
+    const radius = 8;
+    const cx = playerWorldPos.x + radius * Math.sin(yaw.current) * Math.cos(pitch.current);
+    const cy = playerWorldPos.y + radius * Math.sin(pitch.current) + 2; 
+    const cz = playerWorldPos.z + radius * Math.cos(yaw.current) * Math.cos(pitch.current);
+    
+    targetCameraPos.set(cx, cy, cz);
+    camera.position.lerp(targetCameraPos, delta * 15);
     
     // Look slightly above the player
     const lookTarget = playerWorldPos.clone().add(new THREE.Vector3(0, 2, 0));
