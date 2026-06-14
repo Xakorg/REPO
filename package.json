@@ -66,6 +66,7 @@
     "jsdom": "^26.0.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.475.0",
+    "mailparser": "^3.9.9",
     "monaco-editor": "^0.55.1",
     "next": "15.1.11",
     "otpauth": "^9.5.1",
@@ -90,6 +91,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@types/mailparser": "^3.4.6",
     "@types/node": "^20",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
