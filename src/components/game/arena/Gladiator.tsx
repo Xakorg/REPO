@@ -9,6 +9,7 @@ import * as THREE from "three";
 interface GladiatorProps {
   position?: [number, number, number];
   activeWeapon: "gun" | "melee" | "wand";
+  gameState?: "lobby" | "playing";
 }
 
 interface Projectile {
@@ -18,7 +19,7 @@ interface Projectile {
   type: "gun" | "wand";
 }
 
-export function Gladiator({ position = [0, 5, 0], activeWeapon }: GladiatorProps) {
+export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "playing" }: GladiatorProps) {
   const playerRef = useRef<any>(null);
   const [, get] = useKeyboardControls();
   const { camera } = useThree();
@@ -38,6 +39,22 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon }: GladiatorProps
   useFrame((state, delta) => {
     if (!playerRef.current) return;
 
+    if (gameState === "lobby") {
+       // Lobby Mode: Slow rotation, fixed camera, no movement
+       playerRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+       
+       // Rotate slowly for showcase
+       const rot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, state.clock.elapsedTime * 0.5, 0));
+       playerRef.current.setRotation(rot, true);
+
+       // Fixed Lobby Camera
+       const targetCamPos = new THREE.Vector3(0, 5, 12);
+       camera.position.lerp(targetCamPos, delta * 2);
+       camera.lookAt(0, 3, 0);
+       return;
+    }
+
+    // --- Playing Mode ---
     // 1. Input & Movement
     const { forward, backward, left, right, jump, shoot } = get();
     const vel = playerRef.current.linvel();

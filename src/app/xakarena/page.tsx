@@ -7,9 +7,13 @@ import { Loader, KeyboardControls } from "@react-three/drei";
 import { ArenaMap } from "@/components/game/arena/ArenaMap";
 import { Gladiator } from "@/components/game/arena/Gladiator";
 import { WeaponUI } from "@/components/game/arena/WeaponUI";
+import { LobbyUI } from "@/components/game/arena/LobbyUI";
+import { FriendsSidebar } from "@/components/game/arena/FriendsSidebar";
 
 export default function XakArenaPage() {
   const [activeWeapon, setActiveWeapon] = useState<"gun" | "melee" | "wand">("gun");
+  const [gameState, setGameState] = useState<"lobby" | "playing">("lobby");
+  const [gameMode, setGameMode] = useState("Free For All");
 
   return (
     <div className="w-full h-screen bg-[#111] overflow-hidden relative font-sans">
@@ -40,7 +44,7 @@ export default function XakArenaPage() {
           <Suspense fallback={null}>
             <Physics debug={false} gravity={[0, -20, 0]}>
               <ArenaMap />
-              <Gladiator activeWeapon={activeWeapon} position={[0, 5, 0]} />
+              <Gladiator activeWeapon={activeWeapon} position={[0, 5, 0]} gameState={gameState} />
             </Physics>
           </Suspense>
         </Canvas>
@@ -48,8 +52,17 @@ export default function XakArenaPage() {
       
       <Loader />
       
-      {/* HUD Overlay */}
-      <WeaponUI activeWeapon={activeWeapon} setActiveWeapon={setActiveWeapon} />
+      {/* HUD & UI Overlays */}
+      {gameState === "playing" && (
+        <WeaponUI activeWeapon={activeWeapon} setActiveWeapon={setActiveWeapon} />
+      )}
+      
+      {gameState === "lobby" && (
+        <>
+          <LobbyUI setGameState={setGameState} gameMode={gameMode} setGameMode={setGameMode} />
+          <FriendsSidebar />
+        </>
+      )}
     </div>
   );
 }
