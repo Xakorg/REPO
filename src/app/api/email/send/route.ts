@@ -4,17 +4,20 @@ import { Resend } from 'resend';
 // Add a fallback so the build doesn't crash if the env var is missing
 const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_123");
 
+import { firebaseConfig } from '@/firebase/config';
+
 async function verifyAuthToken(req: Request) {
   const auth = req.headers.get('authorization') || '';
   if (!auth.startsWith('Bearer ')) throw new Error('Missing auth token');
   const idToken = auth.split(' ')[1];
   
-  if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
-    throw new Error('Firebase API Key missing in environment');
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || firebaseConfig.apiKey;
+  if (!apiKey) {
+    throw new Error('Firebase API Key missing in environment and config');
   }
 
   // Use REST API to verify token without firebase-admin
-  const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`, {
+  const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ idToken })

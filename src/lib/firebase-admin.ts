@@ -17,11 +17,11 @@ function getServiceAccountFromEnv(): ServiceAccountShape | null {
   }
 
   try {
-    const parsed = JSON.parse(raw) as ServiceAccountShape;
+    const parsed = JSON.parse(raw);
     return {
-      projectId: parsed.projectId,
-      clientEmail: parsed.clientEmail,
-      privateKey: parsed.privateKey.replace(/\\n/g, '\n'),
+      projectId: parsed.projectId || parsed.project_id,
+      clientEmail: parsed.clientEmail || parsed.client_email,
+      privateKey: (parsed.privateKey || parsed.private_key).replace(/\\n/g, '\n'),
     };
   } catch (error) {
     console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY:', error);
