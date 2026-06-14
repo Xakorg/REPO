@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth, useStorage } from "@/firebase";
 import { collection, query, where, addDoc, serverTimestamp, limit, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { GoogleAuthProvider, linkWithPopup, signInWithPopup } from "firebase/auth";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
