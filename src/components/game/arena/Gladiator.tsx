@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { RigidBody, CapsuleCollider } from "@react-three/rapier";
-import { useKeyboardControls } from "@react-three/drei";
+import { useKeyboardControls, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 
 interface GladiatorProps {
@@ -27,6 +27,11 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
   const lastFireTime = useRef(0);
   const meleeSwing = useRef(0);
   const meleeWeaponRef = useRef<any>(null);
+  
+  // Mech Animation Refs
+  const pauldronL = useRef<any>(null);
+  const pauldronR = useRef<any>(null);
+  const coreRef = useRef<any>(null);
   
   // Basic attributes
   const speed = 12;
@@ -76,6 +81,14 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
        // Rotate slowly for showcase
        const rot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, state.clock.elapsedTime * 0.5, 0));
        playerRef.current.setRotation(rot, true);
+
+       // Animate Mech Parts
+       if (pauldronL.current && pauldronR.current && coreRef.current) {
+         const float = Math.sin(state.clock.elapsedTime * 3) * 0.05;
+         pauldronL.current.position.y = 0.8 + float;
+         pauldronR.current.position.y = 0.8 + float;
+         coreRef.current.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 5) * 0.1);
+       }
 
        // Fixed Lobby Camera
        const targetCamPos = new THREE.Vector3(0, 5, 12);
@@ -142,6 +155,14 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
         meleeWeaponRef.current.rotation.x = 0.5; // Idle
     }
 
+    // Animate Mech Parts while playing
+    if (pauldronL.current && pauldronR.current && coreRef.current) {
+      const float = Math.sin(state.clock.elapsedTime * 5) * 0.08;
+      pauldronL.current.position.y = 0.8 + float;
+      pauldronR.current.position.y = 0.8 + float;
+      coreRef.current.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 8) * 0.1);
+    }
+
     // Apply speed
     const targetVelX = moveDir.x * speed;
     const targetVelZ = moveDir.z * speed;
@@ -190,23 +211,45 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
       >
         <CapsuleCollider args={[0.5, 0.5]} position={[0, 1, 0]} />
         
-        {/* Gladiator Visuals */}
+        {/* Gladiator Mech Visuals */}
         <group position={[0, 0.5, 0]}>
-          {/* Main Body */}
-          <mesh castShadow>
-            <capsuleGeometry args={[0.5, 1, 4, 16]} />
-            <meshStandardMaterial color={
-              activeWeapon === "gun" ? "#0ea5e9" : 
-              activeWeapon === "melee" ? "#ef4444" : 
-              "#d946ef"
-            } />
+          {/* Main Torso */}
+          <mesh castShadow position={[0, 0, 0]}>
+            <boxGeometry args={[0.7, 0.9, 0.4]} />
+            <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
           </mesh>
           
-          {/* Visor / Face */}
-          <mesh position={[0, 0.4, 0.45]} castShadow>
-            <boxGeometry args={[0.6, 0.2, 0.2]} />
-            <meshStandardMaterial color="#111" />
+          {/* Glowing Energy Core */}
+          <mesh ref={coreRef} castShadow position={[0, 0.1, 0.21]}>
+             <sphereGeometry args={[0.15, 16, 16]} />
+             <meshStandardMaterial color="#0ea5e9" emissive="#0ea5e9" emissiveIntensity={2} />
           </mesh>
+
+          {/* Floating Pauldrons */}
+          <mesh ref={pauldronL} castShadow position={[-0.45, 0.8, 0]} rotation={[0, 0, 0.2]}>
+            <boxGeometry args={[0.3, 0.4, 0.5]} />
+            <meshStandardMaterial color="#855cd6" metalness={0.5} roughness={0.3} />
+          </mesh>
+          <mesh ref={pauldronR} castShadow position={[0.45, 0.8, 0]} rotation={[0, 0, -0.2]}>
+            <boxGeometry args={[0.3, 0.4, 0.5]} />
+            <meshStandardMaterial color="#855cd6" metalness={0.5} roughness={0.3} />
+          </mesh>
+          
+          {/* Head & Visor */}
+          <group position={[0, 0.65, 0]}>
+            <mesh castShadow>
+              <boxGeometry args={[0.5, 0.5, 0.5]} />
+              <meshStandardMaterial color="#1e293b" />
+            </mesh>
+            {/* Cyber Visor */}
+            <mesh position={[0, 0.05, 0.26]} castShadow>
+              <boxGeometry args={[0.4, 0.15, 0.05]} />
+              <meshStandardMaterial color="#0ea5e9" emissive="#0ea5e9" emissiveIntensity={1} />
+            </mesh>
+          </group>
+
+          {/* Particle Trail */}
+          <Sparkles count={20} scale={1.5} size={2} speed={0.4} opacity={0.5} color="#0ea5e9" position={[0, -0.5, -0.2]} />
 
           {/* Weapon Visualizer */}
           {activeWeapon === "gun" && (

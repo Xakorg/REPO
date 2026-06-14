@@ -1,6 +1,7 @@
 "use client";
 
 import { RigidBody, CuboidCollider } from "@react-three/rapier";
+import { Grid, Sparkles, Environment } from "@react-three/drei";
 
 export function ArenaMap() {
   const arenaSize = 50;
@@ -9,11 +10,34 @@ export function ArenaMap() {
 
   return (
     <group>
-      {/* Floor */}
-      <RigidBody type="fixed" friction={1}>
-        <mesh receiveShadow position={[0, -0.5, 0]}>
-          <boxGeometry args={[arenaSize, 1, arenaSize]} />
-          <meshStandardMaterial color="#333" roughness={0.8} />
+      {/* Atmosphere */}
+      <fog attach="fog" args={["#0a0a1a", 10, 60]} />
+      <ambientLight intensity={0.2} color="#855cd6" />
+      <directionalLight position={[10, 20, 10]} intensity={1} color="#ffffff" castShadow />
+      
+      {/* Neon Spotlights */}
+      <spotLight position={[-20, 20, -20]} intensity={500} color="#fbbf24" distance={50} angle={0.5} penumbra={1} castShadow />
+      <spotLight position={[20, 20, 20]} intensity={500} color="#c026d3" distance={50} angle={0.5} penumbra={1} castShadow />
+
+      {/* Cyber Grid Floor */}
+      <Grid 
+        position={[0, 0.01, 0]} 
+        args={[arenaSize, arenaSize]} 
+        cellSize={1} 
+        cellThickness={1} 
+        cellColor="#1a1a3a" 
+        sectionSize={5} 
+        sectionThickness={1.5} 
+        sectionColor="#855cd6" 
+        fadeDistance={40} 
+        fadeStrength={1} 
+      />
+
+      {/* Physical Floor (Invisible or very dark) */}
+      <RigidBody type="fixed" colliders="cuboid" name="floor">
+        <mesh position={[0, -1, 0]} receiveShadow>
+          <boxGeometry args={[arenaSize, 2, arenaSize]} />
+          <meshStandardMaterial color="#05050a" roughness={0.8} />
         </mesh>
       </RigidBody>
 
@@ -21,41 +45,50 @@ export function ArenaMap() {
       <RigidBody type="fixed">
         <mesh receiveShadow position={[0, wallHeight / 2, -arenaSize / 2 - wallThickness / 2]}>
           <boxGeometry args={[arenaSize, wallHeight, wallThickness]} />
-          <meshStandardMaterial color="#444" />
+          <meshStandardMaterial color="#1a1a2e" metalness={0.5} roughness={0.5} />
         </mesh>
         <mesh receiveShadow position={[0, wallHeight / 2, arenaSize / 2 + wallThickness / 2]}>
           <boxGeometry args={[arenaSize, wallHeight, wallThickness]} />
-          <meshStandardMaterial color="#444" />
+          <meshStandardMaterial color="#1a1a2e" metalness={0.5} roughness={0.5} />
         </mesh>
         <mesh receiveShadow position={[-arenaSize / 2 - wallThickness / 2, wallHeight / 2, 0]}>
           <boxGeometry args={[wallThickness, wallHeight, arenaSize]} />
-          <meshStandardMaterial color="#444" />
+          <meshStandardMaterial color="#1a1a2e" metalness={0.5} roughness={0.5} />
         </mesh>
         <mesh receiveShadow position={[arenaSize / 2 + wallThickness / 2, wallHeight / 2, 0]}>
           <boxGeometry args={[wallThickness, wallHeight, arenaSize]} />
-          <meshStandardMaterial color="#444" />
+            <meshStandardMaterial color="#1a1a2e" metalness={0.5} roughness={0.5} />
+          </mesh>
+      </RigidBody>
+
+      {/* Neon Chest */}
+      <RigidBody type="fixed" position={[5, 0.5, -5]} colliders="cuboid" name="chest">
+        <mesh castShadow>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.5} metalness={0.8} roughness={0.2} />
         </mesh>
+        <pointLight position={[0, 1, 0]} color="#fbbf24" intensity={2} distance={5} />
       </RigidBody>
 
       {/* Obstacles / Cover */}
-      <RigidBody type="fixed" position={[5, 2, 5]}>
-        <mesh castShadow receiveShadow>
-          <boxGeometry args={[4, 4, 4]} />
-          <meshStandardMaterial color="#555" />
-        </mesh>
-      </RigidBody>
-      <RigidBody type="fixed" position={[-8, 3, -10]}>
-        <mesh castShadow receiveShadow>
-          <boxGeometry args={[6, 6, 2]} />
-          <meshStandardMaterial color="#666" />
-        </mesh>
-      </RigidBody>
-      <RigidBody type="fixed" position={[10, 1.5, -12]}>
-        <mesh castShadow receiveShadow>
-          <cylinderGeometry args={[2, 2, 3, 16]} />
-          <meshStandardMaterial color="#777" />
-        </mesh>
-      </RigidBody>
+      {[
+        { pos: [5, 2, 5], size: [4, 4, 4] },
+        { pos: [-10, 3, -10], size: [6, 6, 2] },
+        { pos: [15, 1.5, -8], size: [3, 3, 3] },
+        { pos: [-8, 2, 12], size: [2, 4, 8] },
+      ].map((o, i) => (
+        <RigidBody key={i} type="fixed" position={o.pos as any}>
+          <mesh castShadow receiveShadow>
+            <boxGeometry args={o.size as any} />
+            <meshStandardMaterial color="#1a1a2e" metalness={0.5} roughness={0.5} />
+          </mesh>
+          {/* Neon Trim on Obstacles */}
+          <mesh position={[0, o.size[1]/2 + 0.05, 0]}>
+             <boxGeometry args={[o.size[0] + 0.05, 0.1, o.size[2] + 0.05]} />
+             <meshStandardMaterial color="#0ea5e9" emissive="#0ea5e9" emissiveIntensity={0.5} />
+          </mesh>
+        </RigidBody>
+      ))}
 
       {/* Simple XBR Chest (Dynamic) */}
       <RigidBody type="dynamic" mass={5} position={[0, 2, -15]} name="chest">

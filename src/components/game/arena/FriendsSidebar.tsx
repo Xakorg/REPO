@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, limit, where } from "firebase/firestore";
 import { useMemo } from "react";
+import { motion } from "framer-motion";
 
 export function FriendsSidebar() {
   const { user } = useUser();
@@ -39,7 +40,12 @@ export function FriendsSidebar() {
 
   const isLoading = loadingUsers || loadingFriends;
   return (
-    <div className="absolute right-0 top-0 bottom-0 w-80 bg-black/60 backdrop-blur-xl border-l border-white/10 p-6 pointer-events-auto flex flex-col font-sans">
+    <motion.div 
+      initial={{ x: "100%" }}
+      animate={{ x: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      className="absolute right-0 top-0 bottom-0 w-80 bg-black/80 backdrop-blur-2xl border-l border-white/10 p-6 pointer-events-auto flex flex-col font-sans shadow-[-20px_0_50px_rgba(0,0,0,0.5)]"
+    >
       
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -63,8 +69,14 @@ export function FriendsSidebar() {
             No friends online.<br/>Add some friends to play with!
           </div>
         ) : (
-          activeFriends.map(friend => (
-            <div key={friend.id} className="group flex items-center justify-between p-3 rounded-lg hover:bg-white/10 transition-colors border border-transparent hover:border-white/10">
+          activeFriends.map((friend, i) => (
+            <motion.div 
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: i * 0.05 }}
+              key={friend.id} 
+              className="group flex items-center justify-between p-3 rounded-lg hover:bg-white/10 transition-colors border border-transparent hover:border-white/10"
+            >
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-white/10 overflow-hidden flex items-center justify-center">
@@ -90,11 +102,11 @@ export function FriendsSidebar() {
               <button className="opacity-0 group-hover:opacity-100 bg-[#855cd6] hover:bg-[#7042c1] text-white text-xs font-bold px-3 py-1.5 rounded transition-all">
                 Invite
               </button>
-            </div>
+            </motion.div>
           ))
         )}
       </div>
 
-    </div>
+    </motion.div>
   );
 }

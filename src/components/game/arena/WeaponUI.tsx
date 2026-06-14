@@ -3,6 +3,7 @@
 import { Crosshair, Swords, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface WeaponUIProps {
   activeWeapon: "gun" | "melee" | "wand";
@@ -22,40 +23,44 @@ export function WeaponUI({ activeWeapon, setActiveWeapon }: WeaponUIProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [setActiveWeapon]);
 
+  const weapons = [
+    { id: "gun", icon: <Crosshair className="w-8 h-8" />, label: "Gun (1)", color: "from-sky-500 to-blue-600" },
+    { id: "melee", icon: <Swords className="w-8 h-8" />, label: "Melee (2)", color: "from-rose-500 to-red-600" },
+    { id: "wand", icon: <Wand2 className="w-8 h-8" />, label: "Wand (3)", color: "from-purple-500 to-fuchsia-600" },
+  ];
+
   return (
-    <div className="absolute bottom-8 right-8 flex gap-4 pointer-events-auto">
-      <WeaponSlot 
-        icon={<Crosshair className="w-8 h-8" />} 
-        label="Gun (1)" 
-        active={activeWeapon === "gun"} 
-        onClick={() => setActiveWeapon("gun")}
-        color="from-sky-500 to-blue-600"
-      />
-      <WeaponSlot 
-        icon={<Swords className="w-8 h-8" />} 
-        label="Melee (2)" 
-        active={activeWeapon === "melee"} 
-        onClick={() => setActiveWeapon("melee")}
-        color="from-rose-500 to-red-600"
-      />
-      <WeaponSlot 
-        icon={<Wand2 className="w-8 h-8" />} 
-        label="Wand (3)" 
-        active={activeWeapon === "wand"} 
-        onClick={() => setActiveWeapon("wand")}
-        color="from-purple-500 to-fuchsia-600"
-      />
-      
-      <div className="absolute bottom-full right-0 mb-4 text-center w-full font-black uppercase text-white/50 text-xs tracking-widest">
-        Active Arsenal
-      </div>
-    </div>
+    <AnimatePresence>
+      <motion.div 
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 50, opacity: 0 }}
+        className="absolute bottom-8 right-8 flex gap-4 pointer-events-auto"
+      >
+        {weapons.map((w) => (
+          <WeaponSlot 
+            key={w.id}
+            icon={w.icon} 
+            label={w.label} 
+            active={activeWeapon === w.id} 
+            onClick={() => setActiveWeapon(w.id as any)}
+            color={w.color}
+          />
+        ))}
+        
+        <div className="absolute bottom-full right-0 mb-4 text-center w-full font-black uppercase text-white/50 text-xs tracking-widest">
+          Active Arsenal
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
 function WeaponSlot({ icon, label, active, onClick, color }: any) {
   return (
-    <button 
+    <motion.button 
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
       onClick={onClick}
       className={cn(
         "relative w-20 h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all",
@@ -74,6 +79,6 @@ function WeaponSlot({ icon, label, active, onClick, color }: any) {
       <span className={cn("text-[10px] font-bold uppercase tracking-wider", active ? "text-white" : "text-white/50")}>
         {label}
       </span>
-    </button>
+    </motion.button>
   );
 }
