@@ -239,6 +239,7 @@ export default function MailPage() {
         setMailMode('gmail');
       }
     } catch (e: any) {
+      console.error("Gmail linking error:", e);
       if (e.code === 'auth/credential-already-in-use' || e.code === 'auth/provider-already-linked') {
         try {
           const result = await signInWithPopup(auth, provider);
@@ -248,7 +249,12 @@ export default function MailPage() {
             setGmailToken(token);
             setMailMode('gmail');
           }
-        } catch (err) {}
+        } catch (err: any) {
+          console.error("Gmail sign-in error:", err);
+          toast({ title: "Gmail Error", description: err.message, variant: "destructive" });
+        }
+      } else {
+         toast({ title: "Gmail Error", description: e.message, variant: "destructive" });
       }
     }
   };
