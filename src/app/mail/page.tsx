@@ -196,13 +196,7 @@ export default function MailPage() {
     if (folder === "Sent") {
       return query(baseCol, where("senderUserId", "==", user.uid), limit(100));
     }
-    const myEmails = [
-      primaryEmail,
-      userData?.xakteirEmail,
-      userData?.username ? `${userData.username}@mail.xakteir.com` : null
-    ].filter(Boolean) as string[];
-    
-    return query(baseCol, where("recipientList", "array-contains-any", myEmails.length > 0 ? myEmails : [""]), limit(100));
+    return query(baseCol, where("recipientList", "array-contains", primaryEmail), limit(100));
   }, [firestore, user, folder, primaryEmail, userData]);
 
   const { data: rawEmails, isLoading } = useCollection(emailsQuery);
