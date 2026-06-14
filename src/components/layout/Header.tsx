@@ -21,6 +21,7 @@ import {
   HardDrive,
   ClipboardList,
   Calculator,
+  GraduationCap,
   Zap,
   Swords,
   Bell,
