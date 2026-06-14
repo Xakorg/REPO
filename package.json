@@ -42,6 +42,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
+    "@react-three/rapier": "^2.2.0",
     "@stripe/stripe-js": "^5.6.0",
     "@tailwindcss/typography": "^0.5.20",
     "@tiptap/extension-image": "^3.26.1",

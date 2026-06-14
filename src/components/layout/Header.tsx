@@ -83,7 +83,8 @@ const APPS = [
   { name: "Settings", icon: Settings, href: "/settings", color: "text-zinc-500", bg: "bg-zinc-500/10" },
   { name: "Mail", icon: Mail, href: "https://xakteir.com/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
   { name: "Drive", icon: HardDrive, href: "https://xakteir.com/drive", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Games", icon: Gamepad2, href: "https://xakteir.com/games", color: "text-purple-400", bg: "bg-purple-500/10" },
+  { name: "Games", icon: Gamepad2, href: "https://xakteir.com/games", color: "text-purple-400", bg: "bg-purple-400/10" },
+  { name: "XakSports", icon: Gamepad2, href: "/xaksports", color: "text-orange-400", bg: "bg-orange-400/10" },
   { name: "XakCode", icon: Code2, href: "https://code.xakteir.com/", color: "text-sky-400", bg: "bg-sky-500/10" },
   { name: "XakView", icon: Video, href: "https://xakteir.com/xakview", color: "text-rose-500", bg: "bg-rose-500/10" },
   { name: "Xakteir Plan", icon: CalendarIcon, href: "https://xakteir.com/calendar", color: "text-amber-500", bg: "bg-amber-500/10" },
@@ -206,8 +207,10 @@ export function Header() {
     }
   };
 
+  const pathname = usePathname();
+
   if (!mounted) return null;
-  if (isFocusMode) return null;
+  if (isFocusMode || pathname?.startsWith('/xaksports')) return null;
 
   if (isFocusMode) return null;
 

@@ -2,9 +2,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { AppLayoutWrapper } from '@/components/layout/AppLayoutWrapper';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { OnboardingProvider } from '@/components/OnboardingProvider';
 import { UpdateManager } from '@/components/UpdateManager';
@@ -40,11 +40,9 @@ export default function RootLayout({
           <OnboardingProvider>
             <LockedAccountGuard>
               <FocusModeListener />
-              <Header />
-              <main className="relative z-10">
+              <AppLayoutWrapper>
                 {children}
-              </main>
-              <Footer />
+              </AppLayoutWrapper>
               <CommandCenter />
               <UpdateManager />
               <NotificationManager />
