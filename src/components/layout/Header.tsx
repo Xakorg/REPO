@@ -97,6 +97,7 @@ const APPS = [
   { name: "Shop", icon: ShoppingBag, href: "https://xakteir.com/shop", color: "text-emerald-500", bg: "bg-emerald-500/10" },
   
   // Newly Added Apps
+  { name: "Dev Centre", icon: Code2, href: "/dev-centre", color: "text-blue-500", bg: "bg-blue-500/10" },
   { name: "Art Studio", icon: Palette, href: "https://xakteir.com/art", color: "text-pink-400", bg: "bg-pink-400/10" },
   { name: "App Store", icon: LayoutGrid, href: "https://xakteir.com/apps", color: "text-indigo-400", bg: "bg-indigo-400/10" },
   { name: "Archive", icon: Archive, href: "https://xakteir.com/archive", color: "text-amber-500", bg: "bg-amber-500/10" },
@@ -115,13 +116,49 @@ const APPS = [
   { name: "About", icon: Info, href: "https://xakteir.com/about", color: "text-zinc-400", bg: "bg-zinc-400/10" }
 ];
 
+function AppLauncherContent({ router }: { router: any }) {
+  const [appSearch, setAppSearch] = useState("");
+  const filteredApps = APPS.filter(app => app.name.toLowerCase().includes(appSearch.toLowerCase()));
+
+  return (
+    <div className="flex flex-col h-full bg-[#0a0a15] text-white">
+      <div className="p-5 border-b-2 border-white/10 flex items-center justify-between bg-black/40">
+        <h3 className="text-lg font-black uppercase italic tracking-tighter text-primary leading-none">Apps</h3>
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input autoFocus value={appSearch} onChange={(e) => setAppSearch(e.target.value)} placeholder="Search apps..." className="h-9 w-36 rounded-xl bg-secondary/30 border-white/10 pl-9 text-[9px] font-black italic" />
+        </div>
+      </div>
+      <div className="flex-1 max-h-[380px] overflow-y-auto pr-1">
+        <div className="p-5 grid grid-cols-3 gap-3">
+          {filteredApps.map(app => (
+            <button 
+              key={app.name}
+              onClick={() => { 
+                if (app.href.startsWith("http")) window.location.href = app.href;
+                else router.push(app.href); 
+              }} 
+              className={cn(
+                "p-3 rounded-2xl flex flex-col items-center gap-2 transition-all hover:bg-white/5 hover:scale-105 group/btn border-2 border-transparent hover:border-white/5 shadow-md", 
+                app.bg
+              )}
+            >
+              <app.icon className={cn("w-6 h-6", app.color)} />
+              <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover/btn:text-white truncate w-full text-center">{app.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Header() {
   const { user } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [appSearch, setAppSearch] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { isFocusMode } = useSuiteStore();
 
@@ -140,7 +177,6 @@ export function Header() {
   const { data: unreadNotifs } = useCollection(unreadCountQuery);
   const totalUnreadCount = unreadNotifs?.length || 0;
 
-  const filteredApps = APPS.filter(app => app.name.toLowerCase().includes(appSearch.toLowerCase()));
   const cleanDisplayName = user?.displayName?.replace(/^@+/, "") || "User";
 
   const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
@@ -173,37 +209,7 @@ export function Header() {
   if (!mounted) return null;
   if (isFocusMode) return null;
 
-  const appsListContent = (
-    <div className="flex flex-col h-full bg-[#0a0a15] text-white">
-      <div className="p-5 border-b-2 border-white/10 flex items-center justify-between bg-black/40">
-        <h3 className="text-lg font-black uppercase italic tracking-tighter text-primary leading-none">Apps</h3>
-        <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <Input value={appSearch} onChange={(e) => setAppSearch(e.target.value)} placeholder="Search apps..." className="h-9 w-36 rounded-xl bg-secondary/30 border-white/10 pl-9 text-[9px] font-black italic" />
-        </div>
-      </div>
-      <div className="flex-1 max-h-[380px] overflow-y-auto pr-1">
-        <div className="p-5 grid grid-cols-3 gap-3">
-          {filteredApps.map(app => (
-            <button 
-              key={app.name}
-              onClick={() => { 
-                if (app.href.startsWith("http")) window.location.href = app.href;
-                else router.push(app.href); 
-              }} 
-              className={cn(
-                "p-3 rounded-2xl flex flex-col items-center gap-2 transition-all hover:bg-white/5 hover:scale-105 group/btn border-2 border-transparent hover:border-white/5 shadow-md", 
-                app.bg
-              )}
-            >
-              <app.icon className={cn("w-6 h-6", app.color)} />
-              <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover/btn:text-white truncate w-full text-center">{app.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  if (isFocusMode) return null;
 
   return (
     <header className="h-20 bg-black/40 backdrop-blur-2xl sticky top-0 z-[100] px-10 border-b-2 border-white/10 shadow-[0_10px_50px_rgba(0,0,0,0.4)]">
@@ -218,7 +224,7 @@ export function Header() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[360px] p-0 glass-card rounded-[2rem] mt-6 border-4 border-white/10 overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.8)]" align="start">
-                {appsListContent}
+                <AppLauncherContent router={router} />
               </PopoverContent>
             </Popover>
           </div>
@@ -234,7 +240,7 @@ export function Header() {
                  <SheetHeader className="sr-only">
                     <SheetTitle>App Launcher</SheetTitle>
                  </SheetHeader>
-                 {appsListContent}
+                 <AppLauncherContent router={router} />
               </SheetContent>
             </Sheet>
           </div>

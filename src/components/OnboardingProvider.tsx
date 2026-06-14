@@ -13,6 +13,7 @@ import {
 
 type OnboardingStep = 
   | 'welcome' 
+  | 'questions'
   | 'intro' 
   | 'games' 
   | 'studio' 
@@ -35,6 +36,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [hasInteracted, setHasInteracted] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('start_onboarding') === 'true') {
+      sessionStorage.removeItem('start_onboarding');
+      startTutorial();
+    }
+  }, []);
+
   const startTutorial = () => {
     setActiveStep('welcome');
     setHasInteracted(false);
@@ -49,7 +57,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const nextStep = () => {
     setHasInteracted(false);
-    if (activeStep === 'welcome') setActiveStep('intro');
+    if (activeStep === 'welcome') setActiveStep('questions');
+    else if (activeStep === 'questions') setActiveStep('intro');
     else if (activeStep === 'intro') {
       setActiveStep('games');
       router.push('/games');
@@ -93,6 +102,29 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
                   <div className="space-y-2">
                     <h2 className="text-4xl font-black uppercase italic tracking-tighter text-foreground">Welcome to Xakteir!</h2>
                     <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest opacity-60">Your journey begins now.</p>
+                  </div>
+                )}
+
+                {activeStep === 'questions' && (
+                  <div className="space-y-6">
+                    <div>
+                       <h3 className="text-3xl font-black uppercase italic tracking-tighter">Tell Us About Yourself</h3>
+                       <p className="text-sm text-muted-foreground font-medium">To personalize your Xakteir experience, what brings you here today?</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                       <Button variant="outline" onClick={() => setHasInteracted(true)} className="h-16 rounded-2xl border-white/10 flex flex-col items-center justify-center gap-1 hover:bg-white/5 hover:border-primary focus:border-primary">
+                          <span className="font-black uppercase">Gaming & Fun</span>
+                       </Button>
+                       <Button variant="outline" onClick={() => setHasInteracted(true)} className="h-16 rounded-2xl border-white/10 flex flex-col items-center justify-center gap-1 hover:bg-white/5 hover:border-primary focus:border-primary">
+                          <span className="font-black uppercase">Development</span>
+                       </Button>
+                       <Button variant="outline" onClick={() => setHasInteracted(true)} className="h-16 rounded-2xl border-white/10 flex flex-col items-center justify-center gap-1 hover:bg-white/5 hover:border-primary focus:border-primary">
+                          <span className="font-black uppercase">Productivity</span>
+                       </Button>
+                       <Button variant="outline" onClick={() => setHasInteracted(true)} className="h-16 rounded-2xl border-white/10 flex flex-col items-center justify-center gap-1 hover:bg-white/5 hover:border-primary focus:border-primary">
+                          <span className="font-black uppercase">Just Exploring</span>
+                       </Button>
+                    </div>
                   </div>
                 )}
 
@@ -147,7 +179,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
                     <span className="text-[10px] font-black uppercase text-primary italic">Try it now...</span>
                   </div>
                 ) : (
-                  <Button onClick={nextStep} className="h-16 px-10 bg-primary hover:bg-primary/90 rounded-2xl font-black uppercase tracking-widest text-white shadow-xl animate-in zoom-in-95">
+                  <Button onClick={nextStep} disabled={activeStep === 'questions' && !hasInteracted} className="h-16 px-10 bg-primary hover:bg-primary/90 rounded-2xl font-black uppercase tracking-widest text-white shadow-xl animate-in zoom-in-95 disabled:opacity-50">
                     {activeStep === 'welcome' ? 'Next' : activeStep === 'intro' ? 'Start Tutorial' : activeStep === 'launcher' ? 'Finish' : 'Continue'} <ChevronRight className="w-5 h-5 ml-2" />
                   </Button>
                 )}

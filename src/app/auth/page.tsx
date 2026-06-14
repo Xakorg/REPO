@@ -188,6 +188,7 @@ export default function AuthPage() {
         });
 
         toast({ title: "Account Created", description: `Welcome, ${finalUsername}!` });
+        sessionStorage.setItem("start_onboarding", "true");
         // Redirect handled by useEffect
       })
       .catch((error) => {
