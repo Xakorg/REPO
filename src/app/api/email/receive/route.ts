@@ -30,14 +30,17 @@ export async function POST(req: Request) {
     const snapshot = await usersRef.where("username", "==", targetUsername).limit(1).get();
     
     let userId = null;
+    let userEmail = null;
     
     if (!snapshot.empty) {
       userId = snapshot.docs[0].id;
+      userEmail = snapshot.docs[0].data().email;
     } else {
       // Fallback: check if any user has this exact email saved as xakteirEmail
       const emailSnapshot = await usersRef.where("xakteirEmail", "==", targetEmail).limit(1).get();
       if (!emailSnapshot.empty) {
         userId = emailSnapshot.docs[0].id;
+        userEmail = emailSnapshot.docs[0].data().email;
       }
     }
 
@@ -52,7 +55,7 @@ export async function POST(req: Request) {
       senderUserId: "external",
       senderEmail: from,
       senderName: parsed.from?.text || from,
-      recipientList: [targetEmail],
+      recipientList: [targetEmail, userEmail].filter(Boolean),
       subject: parsed.subject || "No Subject",
       body: parsed.text || "",
       html: parsed.html || "",
