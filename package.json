@@ -78,6 +78,7 @@
     "react-hook-form": "^7.54.2",
     "recharts": "^2.15.1",
     "require-in-the-middle": "^7.3.0",
+    "resend": "^6.12.4",
     "server-only": "^0.0.1",
     "simple-peer": "^9.11.1",
     "stripe": "^17.7.0",
