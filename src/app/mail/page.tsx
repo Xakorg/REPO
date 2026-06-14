@@ -30,7 +30,6 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { chatWithXakAI } from "@/ai/flows/xak-ai-chat-assistant-flow";
 
-import { GoogleAuthProvider, linkWithPopup, signInWithPopup } from "firebase/auth";
 
 export default function MailPage() {
   const { user, isUserLoading } = useUser();
