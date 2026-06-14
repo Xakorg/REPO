@@ -194,10 +194,16 @@ export default function MailPage() {
     if (!firestore || !user || !primaryEmail) return null;
     const baseCol = collection(firestore, "emails");
     if (folder === "Sent") {
-      return query(baseCol, where("senderEmail", "==", primaryEmail), limit(100));
+      return query(baseCol, where("senderUserId", "==", user.uid), limit(100));
     }
-    return query(baseCol, where("recipientList", "array-contains", primaryEmail), limit(100));
-  }, [firestore, user, folder, primaryEmail]);
+    const myEmails = [
+      primaryEmail,
+      userData?.xakteirEmail,
+      userData?.username ? `${userData.username}@mail.xakteir.com` : null
+    ].filter(Boolean) as string[];
+    
+    return query(baseCol, where("recipientList", "array-contains-any", myEmails.length > 0 ? myEmails : [""]), limit(100));
+  }, [firestore, user, folder, primaryEmail, userData]);
 
   const { data: rawEmails, isLoading } = useCollection(emailsQuery);
 
@@ -359,8 +365,9 @@ export default function MailPage() {
       if (!res.ok) throw new Error(data.error || "Failed to send email");
 
       // Save to sent folder in firestore
-      if (firestore) {
+      if (firestore && user) {
         await addDoc(collection(firestore, "emails"), {
+          senderUserId: user.uid,
           senderEmail: senderAddress,
           senderName,
           recipientList: [recipient],

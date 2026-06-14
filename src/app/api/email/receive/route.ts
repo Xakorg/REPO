@@ -47,16 +47,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, message: "User not found, ignored." });
     }
 
-    // Save the email into the user's inbox
-    await db.collection("users").doc(userId).collection("emails").add({
-      from: parsed.from?.text || from,
-      to: targetEmail,
+    // Save the email into the root emails collection so the old UI can query it
+    await db.collection("emails").add({
+      senderUserId: "external",
+      senderEmail: from,
+      senderName: parsed.from?.text || from,
+      recipientList: [targetEmail],
       subject: parsed.subject || "No Subject",
-      text: parsed.text || "",
+      body: parsed.text || "",
       html: parsed.html || "",
-      date: parsed.date || new Date(),
-      read: false,
-      folder: "inbox",
+      sentDateTime: (parsed.date || new Date()).toISOString(),
+      isRead: false,
+      isDeleted: false,
+      isStarred: false,
       createdAt: new Date()
     });
 
