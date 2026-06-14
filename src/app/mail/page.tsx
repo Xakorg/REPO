@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth, useStorage } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth, useStorage, useDoc } from "@/firebase";
 import { collection, query, where, addDoc, serverTimestamp, limit, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { GoogleAuthProvider, linkWithPopup, signInWithPopup } from "firebase/auth";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
@@ -43,6 +43,8 @@ export default function MailPage() {
   const [recipient, setRecipient] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+
+  const { data: userData } = useDoc(firestore && user ? doc(firestore, "users", user.uid) : null);
   const [isSending, setIsSending] = useState(false);
   const [attachments, setAttachments] = useState<{name: string, url: string}[]>([]);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
@@ -331,8 +333,8 @@ export default function MailPage() {
     setIsSending(true);
     try {
       const token = await auth.currentUser.getIdToken();
-      const senderName = user?.displayName || user?.username || "Xakteir User";
-      const senderAddress = user?.xakteirEmail || (user?.username ? `${user.username}@mail.xakteir.com` : null);
+      const senderName = user?.displayName || userData?.username || "Xakteir User";
+      const senderAddress = userData?.xakteirEmail || (userData?.username ? `${userData.username}@mail.xakteir.com` : null) || (user?.email?.endsWith('@xakteir.com') ? user.email : null);
 
       if (!senderAddress) {
         throw new Error("You do not have a Xakteir email address configured. Set a username or xakteirEmail in your profile.");
@@ -466,7 +468,7 @@ export default function MailPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="xakteir">
-                        {user?.xakteirEmail || (user?.username ? `${user.username}@mail.xakteir.com` : "Xakteir Email")}
+                        {userData?.xakteirEmail || (userData?.username ? `${userData.username}@mail.xakteir.com` : (user?.email?.endsWith('@xakteir.com') ? user.email : "Xakteir Email"))}
                       </SelectItem>
                     </SelectContent>
                   </Select>
