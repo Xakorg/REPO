@@ -17,12 +17,13 @@ export default function DevCentrePage() {
   const [domain, setDomain] = useState("");
   const [apiKey, setApiKey] = useState<string | null>(null);
 
+  const [oauthName, setOauthName] = useState("");
+  const [oauthRedirect, setOauthRedirect] = useState("");
+  const [oauthCreds, setOauthCreds] = useState<{clientId: string, clientSecret: string} | null>(null);
+
   const generateApiKey = async () => {
     if (!user || !firestore || !appName || !domain) return;
-    
-    // Generate a secure-looking fake API key
     const newKey = "xak_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
-    
     try {
       await setDoc(doc(firestore, "dev_apps", newKey), {
         owner: user.uid,
@@ -32,6 +33,28 @@ export default function DevCentrePage() {
       });
       setApiKey(newKey);
       toast({ title: "API Key Generated!", description: "Your XakCaptcha API key is ready." });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Error", description: e.message });
+    }
+  };
+
+  const createOAuthApp = async () => {
+    if (!user || !firestore || !oauthName || !oauthRedirect) return;
+    
+    // Generate OAuth Credentials
+    const clientId = "xak_id_" + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+    const clientSecret = "xak_sec_" + Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    try {
+      await setDoc(doc(firestore, "oauth_apps", clientId), {
+        owner: user.uid,
+        name: oauthName,
+        redirectUri: oauthRedirect,
+        clientSecret: clientSecret,
+        createdAt: new Date().toISOString()
+      });
+      setOauthCreds({ clientId, clientSecret });
+      toast({ title: "OAuth App Created!", description: "Your Client ID and Secret are ready." });
     } catch (e: any) {
       toast({ variant: "destructive", title: "Error", description: e.message });
     }
@@ -124,7 +147,7 @@ export default function DevCentrePage() {
           </div>
 
           {/* OAuth Provider Section */}
-          <div className="glass-card rounded-[2rem] p-8 border-4 border-white/5 shadow-2xl relative overflow-hidden group opacity-50 cursor-not-allowed">
+          <div className="glass-card rounded-[2rem] p-8 border-4 border-white/5 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
               <Key className="w-32 h-32 text-indigo-400" />
             </div>
@@ -132,12 +155,61 @@ export default function DevCentrePage() {
             <div className="relative z-10 space-y-6">
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border-2 border-indigo-500/20 rounded-full text-indigo-400 text-xs font-black uppercase tracking-widest">
-                  Coming Soon
+                  <CheckCircle2 className="w-3 h-3" /> Identity Provider
                 </div>
                 <h2 className="text-3xl font-black uppercase italic tracking-tighter">Login with Xakteir</h2>
-                <p className="text-sm text-muted-foreground font-medium">Let users sign into your application using their secure Xakteir identity.</p>
+                <p className="text-sm text-muted-foreground font-medium">Let users securely sign into your application using their Xakteir profile.</p>
               </div>
-              <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest">OAuth 2.0 integration is currently in closed beta.</p>
+              
+              {!oauthCreds ? (
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">App Name</label>
+                    <Input 
+                      value={oauthName} 
+                      onChange={(e) => setOauthName(e.target.value)} 
+                      placeholder="My Web App" 
+                      className="h-14 rounded-2xl bg-black/40 border-white/10" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Redirect URI</label>
+                    <Input 
+                      value={oauthRedirect} 
+                      onChange={(e) => setOauthRedirect(e.target.value)} 
+                      placeholder="https://example.com/api/auth/callback" 
+                      className="h-14 rounded-2xl bg-black/40 border-white/10" 
+                    />
+                  </div>
+                  <Button onClick={createOAuthApp} disabled={!oauthName || !oauthRedirect} className="w-full h-14 bg-indigo-500 hover:bg-indigo-600 rounded-2xl font-black uppercase tracking-widest shadow-[0_0_30px_rgba(99,102,241,0.3)]">
+                     Create OAuth App <Key className="w-5 h-5 ml-2" />
+                  </Button>
+                  <p className="text-xs text-muted-foreground font-medium">OAuth 2.0 Credentials will be bound to your current developer account.</p>
+                </div>
+              ) : (
+                <div className="space-y-4 pt-4">
+                  <div className="p-4 bg-black/40 rounded-2xl border-2 border-white/10 space-y-4">
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Client ID</label>
+                      <div className="flex gap-2">
+                        <Input readOnly value={oauthCreds.clientId} className="font-mono text-indigo-400 bg-black/60 border-white/5" />
+                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(oauthCreds.clientId)} className="shrink-0 bg-white/5 border-white/10">
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Client Secret <span className="text-red-400">(Secret!)</span></label>
+                      <div className="flex gap-2">
+                        <Input readOnly type="password" value={oauthCreds.clientSecret} className="font-mono text-indigo-400 bg-black/60 border-white/5" />
+                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(oauthCreds.clientSecret)} className="shrink-0 bg-white/5 border-white/10">
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
