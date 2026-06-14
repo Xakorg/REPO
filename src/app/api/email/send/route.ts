@@ -1,24 +1,16 @@
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
+import { getAdminDb, getAdminAuth } from '@/lib/firebase-admin';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Add a fallback so the build doesn't crash if the env var is missing
+const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_123");
 
 async function verifyAuthToken(req: Request) {
   const auth = req.headers.get('authorization') || '';
   if (!auth.startsWith('Bearer ')) throw new Error('Missing auth token');
   const idToken = auth.split(' ')[1];
   
-  if (!admin.apps.length) {
-    if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-      const key = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-      admin.initializeApp({ credential: admin.credential.cert(key) });
-    } else {
-      admin.initializeApp();
-    }
-  }
-  
-  const decoded = await admin.auth().verifyIdToken(idToken);
+  const decoded = await getAdminAuth().verifyIdToken(idToken);
   return decoded.uid;
 }
 
@@ -31,7 +23,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const userDoc = await admin.firestore().doc(`users/${uid}`).get();
+    const db = getAdminDb();
+    const userDoc = await db.doc(`users/${uid}`).get();
     if (!userDoc.exists) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -59,7 +52,7 @@ export async function POST(req: Request) {
     }
 
     // Save to sent folder in firestore
-    await admin.firestore().collection("users").doc(uid).collection("emails").add({
+    await db.collection("users").doc(uid).collection("emails").add({
       from: senderAddress,
       to,
       subject,

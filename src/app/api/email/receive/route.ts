@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { simpleParser } from "mailparser";
 
 export async function POST(req: Request) {
@@ -25,6 +25,7 @@ export async function POST(req: Request) {
     // Find the user in Firestore who owns this email
     // We check if the user's 'username' matches the start of the email
     // Or if they explicitly have a 'xakteirEmail' field
+    const db = getAdminDb();
     const usersRef = db.collection("users");
     const snapshot = await usersRef.where("username", "==", targetUsername).limit(1).get();
     
