@@ -460,13 +460,14 @@ export default function MailPage() {
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="flex gap-2">
-                  <Select defaultValue={primaryEmail}>
+                  <Select defaultValue="xakteir">
                     <SelectTrigger className="w-[200px] h-12 bg-[#0b0b14]/60 border-transparent rounded-xl text-xs">
                       <SelectValue placeholder="From" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={primaryEmail}>{primaryEmail}</SelectItem>
-                      <SelectItem value={`alias@${primaryEmail.split('@')[1]}`}>Alias Email</SelectItem>
+                      <SelectItem value="xakteir">
+                        {user?.xakteirEmail || (user?.username ? `${user.username}@mail.xakteir.com` : "Xakteir Email")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <Input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="To: name@email.com" className="bg-[#0b0b14]/60 border-transparent h-12 rounded-xl text-white flex-1" />
