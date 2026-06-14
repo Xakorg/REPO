@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       from: `${senderName || 'Xakteir User'} <${senderAddress}>`,
       to: [to],
       subject: subject,
-      text: body,
+      html: body,
     });
 
     if (error) {
