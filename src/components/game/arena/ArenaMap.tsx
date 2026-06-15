@@ -2,6 +2,7 @@
 
 import { RigidBody, CuboidCollider } from "@react-three/rapier";
 import { Grid, Sparkles, Environment } from "@react-three/drei";
+import { HealthPickup } from "./HealthPickup";
 
 export function ArenaMap() {
   const arenaSize = 50;
@@ -102,6 +103,43 @@ export function ArenaMap() {
           <meshStandardMaterial color="#fbbf24" metalness={0.8} roughness={0.2} /> {/* Gold */}
         </mesh>
       </RigidBody>
+
+      {/* Jump Pads */}
+      {[
+        { pos: [0, 0.1, 8] },
+        { pos: [12, 0.1, -2] },
+        { pos: [-12, 0.1, 5] },
+      ].map((pad, i) => (
+        <group key={`jumppad-${i}`} position={pad.pos as any}>
+          {/* Visual Pad */}
+          <mesh receiveShadow>
+            <cylinderGeometry args={[1.5, 1.5, 0.2, 16]} />
+            <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={1} />
+          </mesh>
+          <Sparkles count={10} scale={1.5} size={2} speed={0.4} opacity={0.5} color="#10b981" position={[0, 0.5, 0]} />
+          
+          {/* Physics Sensor */}
+          <RigidBody type="fixed" colliders={false}>
+            <CuboidCollider 
+              args={[1.5, 1, 1.5]} 
+              position={[0, 1, 0]} 
+              sensor 
+              onIntersectionEnter={(payload) => {
+                if (payload.other.rigidBodyObject?.name === "gladiator" && payload.other.rigidBody) {
+                  // Launch the player upwards!
+                  payload.other.rigidBody.setLinvel({ x: 0, y: 15, z: 0 }, true);
+                }
+              }}
+            />
+          </RigidBody>
+        </group>
+      ))}
+
+      {/* Health Pickups */}
+      <HealthPickup position={[0, 0.5, 0]} />
+      <HealthPickup position={[-8, 0.5, -8]} />
+      <HealthPickup position={[8, 0.5, 8]} />
+
     </group>
   );
 }

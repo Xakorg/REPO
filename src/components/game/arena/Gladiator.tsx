@@ -10,6 +10,12 @@ interface GladiatorProps {
   position?: [number, number, number];
   activeWeapon: "gun" | "melee" | "wand";
   gameState?: "lobby" | "playing";
+  inputType?: "mouse" | "keyboard_p1" | "keyboard_p2";
+  innerRef?: React.MutableRefObject<any>;
+  colorOffset?: number; // to distinguish P1 vs P2
+  customCamera?: THREE.PerspectiveCamera;
+  playerIndex?: 1 | 2;
+  onHealthChange?: (hp: number) => void;
 }
 
 interface Projectile {
@@ -19,11 +25,14 @@ interface Projectile {
   type: "gun" | "wand";
 }
 
-export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "playing" }: GladiatorProps) {
-  const playerRef = useRef<any>(null);
+export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "playing", inputType = "mouse", innerRef, colorOffset = 0, customCamera, playerIndex = 1, onHealthChange }: GladiatorProps) {
+  const defaultRef = useRef<any>(null);
+  const playerRef = innerRef || defaultRef;
   const [, get] = useKeyboardControls();
-  const { camera } = useThree();
+  const { camera: globalCamera } = useThree();
+  const activeCamera = customCamera || globalCamera;
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
+  const [health, setHealth] = useState(100);
   const lastFireTime = useRef(0);
   const meleeSwing = useRef(0);
   const meleeWeaponRef = useRef<any>(null);
@@ -43,7 +52,7 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
 
   // Pointer Lock & Mouse Move
   useEffect(() => {
-    if (gameState !== "playing") return;
+    if (gameState !== "playing" || inputType !== "mouse") return;
 
     const onMouseMove = (e: MouseEvent) => {
       if (document.pointerLockElement) {
@@ -69,6 +78,28 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
     };
   }, [gameState]);
 
+  // Health Updates
+  useEffect(() => {
+    if (onHealthChange) onHealthChange(health);
+    if (health <= 0) {
+      // Respawn logic
+      setHealth(100);
+      if (playerRef.current) {
+        playerRef.current.setTranslation({ x: position[0], y: position[1] + 10, z: position[2] }, true);
+      }
+    }
+  }, [health, onHealthChange, playerRef, position]);
+
+  // Listen for Health Pickups
+  useEffect(() => {
+    const handleHeal = (e: any) => {
+      // If we don't have the uuid, heal both for now, or match by closest distance if we had UUIDs easily available
+      setHealth(h => Math.min(100, h + 50));
+    };
+    window.addEventListener('healthPickup', handleHeal);
+    return () => window.removeEventListener('healthPickup', handleHeal);
+  }, []);
+
   const targetCameraPos = new THREE.Vector3();
 
   useFrame((state, delta) => {
@@ -92,14 +123,38 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
 
        // Fixed Lobby Camera
        const targetCamPos = new THREE.Vector3(0, 5, 12);
-       camera.position.lerp(targetCamPos, delta * 2);
-       camera.lookAt(0, 3, 0);
+       activeCamera.position.lerp(targetCamPos, delta * 2);
+       activeCamera.lookAt(0, 3, 0);
        return;
     }
 
     // --- Playing Mode ---
     // 1. Input & Movement
-    const { forward, backward, left, right, jump, shoot } = get();
+    let forward = false, backward = false, left = false, right = false, jump = false, shoot = false;
+    let rotLeft = false, rotRight = false;
+    
+    if (inputType === "mouse") {
+      const keys = get();
+      forward = keys.forward; backward = keys.backward; left = keys.left; right = keys.right;
+      jump = keys.jump; shoot = keys.shoot;
+    } else {
+      // Local Splitscreen Keyboard mapping
+      // We don't have access to standard KeyboardControls for two players cleanly, so we poll DOM
+      // Actually we need global key state. For simplicity, we'll read a global object attached to window in useFrame.
+      const ks = (window as any).localKeys || {};
+      if (inputType === "keyboard_p1") {
+        forward = ks['w']; backward = ks['s']; left = ks['a']; right = ks['d'];
+        jump = ks[' ']; shoot = ks['f']; rotLeft = ks['q']; rotRight = ks['e'];
+      } else {
+        forward = ks['arrowup']; backward = ks['arrowdown']; left = ks['arrowleft']; right = ks['arrowright'];
+        jump = ks['shift']; shoot = ks['l']; rotLeft = ks['u']; rotRight = ks['o'];
+      }
+    }
+
+    // Apply Camera Rotation from Keyboard
+    if (rotLeft) yaw.current += 0.03;
+    if (rotRight) yaw.current -= 0.03;
+
     const vel = playerRef.current.linvel();
     
     // Calculate movement vector relative to camera's Y-rotation
@@ -192,11 +247,11 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
     const cz = playerWorldPos.z + radius * Math.cos(yaw.current) * Math.cos(pitch.current);
     
     targetCameraPos.set(cx, cy, cz);
-    camera.position.lerp(targetCameraPos, delta * 15);
+    activeCamera.position.lerp(targetCameraPos, delta * 15);
     
     // Look slightly above the player
     const lookTarget = playerWorldPos.clone().add(new THREE.Vector3(0, 2, 0));
-    camera.lookAt(lookTarget);
+    activeCamera.lookAt(lookTarget);
   });
 
   return (
@@ -207,7 +262,13 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
         colliders={false}
         mass={2}
         lockRotations // Prevent falling over
-        name="gladiator"
+        name={`gladiator-${playerIndex}`}
+        onIntersectionEnter={(payload) => {
+           // Basic damage logic
+           if (payload.other.rigidBodyObject?.name?.startsWith("projectile")) {
+             setHealth(h => Math.max(0, h - 20)); // Projectiles do 20 damage
+           }
+        }}
       >
         <CapsuleCollider args={[0.5, 0.5]} position={[0, 1, 0]} />
         
@@ -216,7 +277,7 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
           {/* Main Torso */}
           <mesh castShadow position={[0, 0, 0]}>
             <boxGeometry args={[0.7, 0.9, 0.4]} />
-            <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
+            <meshStandardMaterial color={new THREE.Color("#0f172a").offsetHSL(colorOffset, 0, 0)} metalness={0.8} roughness={0.2} />
           </mesh>
           
           {/* Glowing Energy Core */}
@@ -251,6 +312,18 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
           {/* Particle Trail */}
           <Sparkles count={20} scale={1.5} size={2} speed={0.4} opacity={0.5} color="#0ea5e9" position={[0, -0.5, -0.2]} />
 
+          {/* Floating Health Bar */}
+          <group position={[0, 1.8, 0]}>
+             <mesh position={[0, 0, 0]}>
+               <planeGeometry args={[1, 0.1]} />
+               <meshBasicMaterial color="#ef4444" />
+             </mesh>
+             <mesh position={[-0.5 + (health/100)/2, 0, 0.01]}>
+               <planeGeometry args={[health/100, 0.1]} />
+               <meshBasicMaterial color="#22c55e" />
+             </mesh>
+          </group>
+
           {/* Weapon Visualizer */}
           {activeWeapon === "gun" && (
             <mesh position={[0.4, 0, 0.6]} castShadow>
@@ -280,6 +353,12 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
            position={p.position} 
            linearVelocity={p.velocity}
            gravityScale={p.type === "wand" ? 0 : 1} // magic wands shoot straight
+           name={`projectile-${playerIndex}`}
+           sensor // makes them not bounce players around
+           onIntersectionEnter={() => {
+              // Destroy projectile on hit
+              setProjectiles(prev => prev.filter(proj => proj.id !== p.id));
+           }}
         >
            <mesh castShadow>
               {p.type === "gun" ? (

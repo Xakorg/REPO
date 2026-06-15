@@ -6,9 +6,10 @@ import { RigidBody, CapsuleCollider, useRevoluteJoint } from "@react-three/rapie
 import { useControllerInput } from "./useControllerInput";
 import * as THREE from "three";
 
-export function Player({ position = [0, 1, 5] }: { position?: [number, number, number] }) {
-  const ref = useRef<any>(null);
-  const input = useControllerInput();
+export function Player({ position = [0, 1, 5], playerIndex = 1, innerRef }: { position?: [number, number, number], playerIndex?: 1 | 2, innerRef?: any }) {
+  const defaultRef = useRef<any>(null);
+  const ref = innerRef || defaultRef;
+  const input = useControllerInput(playerIndex);
   
   // A simple cooldown so the user can't spam kick
   const [lastKick, setLastKick] = useState(0);
@@ -60,7 +61,7 @@ export function Player({ position = [0, 1, 5] }: { position?: [number, number, n
         {/* Body */}
         <mesh position={[0, 0.5, 0]} castShadow>
           <capsuleGeometry args={[0.5, 1, 4, 16]} />
-          <meshStandardMaterial color="#3b82f6" /> {/* Blue Player */}
+          <meshStandardMaterial color={playerIndex === 1 ? "#3b82f6" : "#ef4444"} /> 
         </mesh>
         
         {/* Simple "Face/Visor" to show direction */}

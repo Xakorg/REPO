@@ -1,22 +1,44 @@
 import { useState, useEffect } from 'react';
 
-export function useControllerInput() {
+export function useControllerInput(playerIndex: 1 | 2 = 1) {
   const [input, setInput] = useState({ x: 0, y: 0, kick: false });
 
   useEffect(() => {
     // Keyboard fallback map
-    const keys = { w: false, a: false, s: false, d: false, space: false };
+    const keys = { up: false, left: false, down: false, right: false, action: false };
     
     const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      if (keys.hasOwnProperty(key)) keys[key as keyof typeof keys] = true;
-      if (e.code === 'Space') keys.space = true;
+      const code = e.code;
+      if (playerIndex === 1) {
+        if (code === 'KeyW') keys.up = true;
+        if (code === 'KeyA') keys.left = true;
+        if (code === 'KeyS') keys.down = true;
+        if (code === 'KeyD') keys.right = true;
+        if (code === 'Space') keys.action = true;
+      } else {
+        if (code === 'ArrowUp') keys.up = true;
+        if (code === 'ArrowLeft') keys.left = true;
+        if (code === 'ArrowDown') keys.down = true;
+        if (code === 'ArrowRight') keys.right = true;
+        if (code === 'Enter') keys.action = true;
+      }
     };
     
     const handleKeyUp = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      if (keys.hasOwnProperty(key)) keys[key as keyof typeof keys] = false;
-      if (e.code === 'Space') keys.space = false;
+      const code = e.code;
+      if (playerIndex === 1) {
+        if (code === 'KeyW') keys.up = false;
+        if (code === 'KeyA') keys.left = false;
+        if (code === 'KeyS') keys.down = false;
+        if (code === 'KeyD') keys.right = false;
+        if (code === 'Space') keys.action = false;
+      } else {
+        if (code === 'ArrowUp') keys.up = false;
+        if (code === 'ArrowLeft') keys.left = false;
+        if (code === 'ArrowDown') keys.down = false;
+        if (code === 'ArrowRight') keys.right = false;
+        if (code === 'Enter') keys.action = false;
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -32,7 +54,7 @@ export function useControllerInput() {
 
       // Check Gamepads
       const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-      const gp = gamepads.find(pad => pad !== null); // get first connected gamepad
+      const gp = gamepads[playerIndex - 1]; // Map player 1 to pad 0, player 2 to pad 1
       
       if (gp) {
         // Left stick axes
@@ -43,15 +65,15 @@ export function useControllerInput() {
         if (Math.abs(stickX) > 0.1) x = stickX;
         if (Math.abs(stickY) > 0.1) y = stickY;
         
-        // A / Cross button (usually index 0)
+        // A / Cross button
         kick = gp.buttons[0]?.pressed;
       } else {
         // Fallback to keyboard
-        if (keys.w) y -= 1;
-        if (keys.s) y += 1;
-        if (keys.a) x -= 1;
-        if (keys.d) x += 1;
-        if (keys.space) kick = true;
+        if (keys.up) y -= 1;
+        if (keys.down) y += 1;
+        if (keys.left) x -= 1;
+        if (keys.right) x += 1;
+        if (keys.action) kick = true;
         
         // Normalize diagonal
         if (x !== 0 && y !== 0) {
@@ -72,7 +94,7 @@ export function useControllerInput() {
       window.removeEventListener('keyup', handleKeyUp);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [playerIndex]);
 
   return input;
 }
