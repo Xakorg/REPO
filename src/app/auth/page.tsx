@@ -237,17 +237,19 @@ export default function AuthPage() {
 
   if (activeTab === 'signup') {
     return (
-      <div className="fixed inset-0 bg-black z-40 flex flex-col items-center justify-center p-6 animate-in fade-in zoom-in-95 duration-500">
-        <div className="absolute inset-0 arcade-grid opacity-20 pointer-events-none" />
+      <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-6 animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+        <div className="absolute inset-0 mesh-background !z-0" />
+        <div className="absolute inset-0 bg-black/20 pointer-events-none z-[1]" />
+        <div className="absolute inset-0 arcade-grid opacity-20 pointer-events-none z-[1]" />
         
         {wizardStep === 0 && (
           <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-12 max-w-4xl animate-in slide-in-from-bottom-8">
-            <h1 className="text-7xl md:text-9xl font-black italic uppercase tracking-tighter text-white drop-shadow-2xl">
+            <h1 className="text-5xl md:text-9xl font-black italic uppercase tracking-tighter text-white drop-shadow-2xl">
               Welcome To <span className="text-primary">Xakteir</span>
             </h1>
             <div className="space-y-4">
-              <p className="text-2xl md:text-4xl font-bold text-white/80">Your go-to place for everything fun.</p>
-              <p className="text-xl md:text-2xl font-bold text-primary/80 uppercase tracking-widest">Do fun the proper way.</p>
+              <p className="text-lg md:text-4xl font-bold text-white/80">Your go-to place for everything fun.</p>
+              <p className="text-base md:text-2xl font-bold text-primary/80 uppercase tracking-widest">Do fun the proper way.</p>
             </div>
             <Button onClick={() => setWizardStep(1)} className="h-20 px-16 text-2xl bg-white text-black hover:bg-gray-200 rounded-[3rem] font-black uppercase tracking-widest shadow-[0_0_40px_rgba(255,255,255,0.3)] transition-all hover:scale-105">
               Next <ArrowRight className="ml-4 w-8 h-8" />
@@ -260,8 +262,8 @@ export default function AuthPage() {
           <div className="relative z-10 w-full max-w-2xl flex flex-col space-y-8 animate-in slide-in-from-right-8">
             <div className="text-center space-y-4">
               <Mail className="w-20 h-20 text-primary mx-auto opacity-80" />
-              <h2 className="text-5xl font-black italic uppercase tracking-tighter text-white">Enter Your Desired Email</h2>
-              <p className="text-lg font-bold text-white/50">This will be your primary Xakteir identity.</p>
+              <h2 className="text-3xl sm:text-5xl font-black italic uppercase tracking-tighter text-white">Enter Your Desired Email</h2>
+              <p className="text-base sm:text-lg font-bold text-white/50">This will be your primary Xakteir identity.</p>
             </div>
             
             <div className="relative">
@@ -273,11 +275,11 @@ export default function AuthPage() {
                   setAskLinkGmail(e.target.value.toLowerCase().endsWith('@gmail.com'));
                 }} 
                 placeholder="youremail@example.com" 
-                className="h-24 bg-white/5 border-white/10 text-3xl font-bold rounded-[2rem] text-center px-16 text-white" 
+                className="h-20 sm:h-24 bg-white/5 border-white/10 text-xl sm:text-3xl font-bold rounded-[2rem] text-center px-12 sm:px-16 text-white" 
                 autoFocus
               />
-              <div className="absolute -left-12 top-1/2 -translate-y-1/2"><Sparkles className="w-8 h-8 text-primary/50 animate-pulse" /></div>
-              <div className="absolute -right-12 top-1/2 -translate-y-1/2"><Mail className="w-8 h-8 text-primary/50 animate-bounce" /></div>
+              <div className="absolute left-2 sm:-left-12 top-1/2 -translate-y-1/2"><Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary/50 animate-pulse" /></div>
+              <div className="absolute right-2 sm:-right-12 top-1/2 -translate-y-1/2"><Mail className="w-6 h-6 sm:w-8 sm:h-8 text-primary/50 animate-bounce" /></div>
             </div>
 
             {askLinkGmail ? (
@@ -301,7 +303,7 @@ export default function AuthPage() {
           <div className="relative z-10 w-full max-w-2xl flex flex-col space-y-8 animate-in slide-in-from-right-8">
             <div className="text-center space-y-4">
               <Lock className="w-20 h-20 text-primary mx-auto opacity-80" />
-              <h2 className="text-5xl font-black italic uppercase tracking-tighter text-white">Secure Your Account</h2>
+              <h2 className="text-3xl sm:text-5xl font-black italic uppercase tracking-tighter text-white">Secure Your Account</h2>
             </div>
             
             <div className="space-y-6">
@@ -311,7 +313,7 @@ export default function AuthPage() {
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
                   placeholder="Password" 
-                  className="h-20 bg-white/5 border-white/10 text-2xl font-bold rounded-[2rem] text-center px-12 text-white" 
+                  className="h-16 sm:h-20 bg-white/5 border-white/10 text-xl sm:text-2xl font-bold rounded-[2rem] text-center px-12 text-white" 
                   autoFocus
                 />
                 <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-white/20" />
@@ -322,7 +324,7 @@ export default function AuthPage() {
                   value={confirmPassword} 
                   onChange={(e) => setConfirmPassword(e.target.value)} 
                   placeholder="Confirm Password" 
-                  className="h-20 bg-white/5 border-white/10 text-2xl font-bold rounded-[2rem] text-center px-12 text-white" 
+                  className="h-16 sm:h-20 bg-white/5 border-white/10 text-xl sm:text-2xl font-bold rounded-[2rem] text-center px-12 text-white" 
                 />
                 <ShieldCheck className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-white/20" />
               </div>

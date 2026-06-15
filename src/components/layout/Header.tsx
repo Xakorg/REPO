@@ -252,14 +252,14 @@ export function Header() {
 
           <Button onClick={() => triggerCommandCenter()} variant="ghost" size="icon" className="w-12 h-12 bg-zinc-900/60 border-2 border-white/10 rounded-2xl shadow-xl hidden sm:flex"><CommandIcon className="w-6 h-6 text-white/40" /></Button>
           
-          <Button onClick={toggleFullscreen} variant="ghost" size="icon" className="w-12 h-12 bg-zinc-900/60 border-2 border-white/10 rounded-2xl shadow-xl flex">
+          <Button onClick={toggleFullscreen} variant="ghost" size="icon" className="w-12 h-12 bg-zinc-900/60 border-2 border-white/10 rounded-2xl shadow-xl hidden sm:flex">
             {isFullscreen ? <Minimize className="w-6 h-6 text-white/40" /> : <Maximize className="w-6 h-6 text-white/40" />}
           </Button>
         </div>
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <Link href="https://xakteir.com/" className="pointer-events-auto group flex items-center gap-3">
-            <span className="text-[2.5rem] font-black tracking-tighter text-white uppercase italic leading-none transition-all group-hover:text-primary drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+            <span className="text-3xl sm:text-[2.5rem] font-black tracking-tighter text-white uppercase italic leading-none transition-all group-hover:text-primary drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
               Xakteir
             </span>
           </Link>
