@@ -135,6 +135,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   const [showGlobalSettingsModal, setShowGlobalSettingsModal] = useState(false);
   const [notificationPref, setNotificationPref] = useState("all");
   const [selectedNotificationServers, setSelectedNotificationServers] = useState<string[]>([]);
+  const [customCssInput, setCustomCssInput] = useState("");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // Profile modal and search states
@@ -317,6 +318,14 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     return doc(firestore, "users", user.uid);
   }, [firestore, user]);
   const { data: userData } = useDoc(userRef);
+
+  useEffect(() => {
+    if (showGlobalSettingsModal && userData) {
+      setNotificationPref(userData.notificationPref || "all");
+      setSelectedNotificationServers(userData.selectedNotificationServers || []);
+      setCustomCssInput(userData.customCss || "");
+    }
+  }, [showGlobalSettingsModal, userData]);
 
   const serversQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -1192,6 +1201,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="h-[calc(100vh-80px)] flex overflow-hidden bg-zinc-950 text-white relative">
+      {userData?.customCss && <style dangerouslySetInnerHTML={{ __html: userData.customCss }} />}
       <div className="absolute inset-0 arcade-grid opacity-[0.02] pointer-events-none" />
 
       <aside className="hidden md:flex w-20 bg-[#05030d] border-r border-white/5 flex-col items-center py-6 gap-4 z-30 shrink-0">
@@ -1408,7 +1418,14 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               </div>
               <div className="text-left cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowGlobalSettingsModal(true)}>
                 <p className="text-[10px] font-black italic">{user.displayName}</p>
+                {userData?.richPresence && (
+                  <p className="text-[8px] text-purple-400 font-bold truncate max-w-[120px]">{userData.richPresence}</p>
+                )}
                 <p className="text-[8px] text-emerald-400 font-bold">{userData?.statusEmoji || '💬'} {userData?.statusText || 'Online'}</p>
+                <p className="text-[8px] text-zinc-400 font-bold mt-0.5">Level {userData?.level || 1} - {userData?.xp || 0} XP</p>
+                <div className="w-full bg-white/10 rounded-full h-1 mt-0.5">
+                  <div className="bg-emerald-500 h-1 rounded-full" style={{ width: `${Math.min(100, (userData?.xp || 0) % 100)}%` }} />
+                </div>
               </div>
            </div>
            <div className="flex gap-1 items-center">
@@ -2751,73 +2768,96 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">Manage your XakChat preferences across all servers.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-6 pt-4">
-            <div className="space-y-3">
-              <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Notification Preferences</h4>
-              <div className="space-y-2">
-                {['all', 'pings', 'specific', 'none'].map((pref) => (
-                  <button 
-                    key={pref}
-                    onClick={() => setNotificationPref(pref)}
-                    className={cn(
-                      "w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all text-left",
-                      notificationPref === pref ? "border-emerald-500 bg-emerald-500/10" : "border-white/5 bg-black/40 hover:border-white/20"
-                    )}
-                  >
-                    <div>
-                      <p className={cn("text-sm font-bold uppercase", notificationPref === pref ? "text-emerald-400" : "text-white")}>
-                        {pref === 'all' ? 'All Messages' : pref === 'pings' ? 'Pings Everywhere' : pref === 'specific' ? 'Pings in Specific Servers' : 'Mute All'}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {pref === 'all' ? 'Receive push notifications for every new message.' : pref === 'pings' ? 'Only notify me when I am explicitly @mentioned.' : pref === 'specific' ? 'Only receive pings from selected servers.' : 'Disable all notifications completely.'}
-                      </p>
-                    </div>
-                    <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0", notificationPref === pref ? "border-emerald-500" : "border-zinc-600")}>
-                      {notificationPref === pref && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+          <Tabs defaultValue="notifications" className="w-full pt-4">
+            <TabsList className="w-full grid grid-cols-2 mb-4 bg-black/40 border border-white/5">
+              <TabsTrigger value="notifications" className="text-[10px] font-black uppercase">Notifications</TabsTrigger>
+              <TabsTrigger value="appearance" className="text-[10px] font-black uppercase">Appearance</TabsTrigger>
+            </TabsList>
 
-            {notificationPref === 'specific' && (
-              <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Select Servers</h4>
-                <div className="max-h-32 overflow-y-auto space-y-1 bg-black/40 p-2 rounded-xl border border-white/5">
-                   {hubs.map((hub) => (
-                     <button 
-                       key={hub.id} 
-                       onClick={() => setSelectedNotificationServers(prev => prev.includes(hub.id) ? prev.filter(id => id !== hub.id) : [...prev, hub.id])}
-                       className={cn("w-full flex items-center justify-between p-2 rounded-lg text-left transition-colors", selectedNotificationServers.includes(hub.id) ? "bg-emerald-500/20" : "hover:bg-white/5")}
-                     >
-                       <span className={cn("text-xs font-bold", selectedNotificationServers.includes(hub.id) ? "text-emerald-400" : "text-white")}>{hub.name}</span>
-                       {selectedNotificationServers.includes(hub.id) && <span className="text-emerald-400 text-[10px]">✓</span>}
-                     </button>
-                   ))}
+            <TabsContent value="notifications" className="space-y-6 mt-0">
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Notification Preferences</h4>
+                <div className="space-y-2">
+                  {['all', 'pings', 'specific', 'none'].map((pref) => (
+                    <button 
+                      key={pref}
+                      onClick={() => setNotificationPref(pref)}
+                      className={cn(
+                        "w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all text-left",
+                        notificationPref === pref ? "border-emerald-500 bg-emerald-500/10" : "border-white/5 bg-black/40 hover:border-white/20"
+                      )}
+                    >
+                      <div>
+                        <p className={cn("text-sm font-bold uppercase", notificationPref === pref ? "text-emerald-400" : "text-white")}>
+                          {pref === 'all' ? 'All Messages' : pref === 'pings' ? 'Pings Everywhere' : pref === 'specific' ? 'Pings in Specific Servers' : 'Mute All'}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {pref === 'all' ? 'Receive push notifications for every new message.' : pref === 'pings' ? 'Only notify me when I am explicitly @mentioned.' : pref === 'specific' ? 'Only receive pings from selected servers.' : 'Disable all notifications completely.'}
+                        </p>
+                      </div>
+                      <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0", notificationPref === pref ? "border-emerald-500" : "border-zinc-600")}>
+                        {notificationPref === pref && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
 
-            <Button 
-              disabled={isSavingSettings}
-              onClick={async () => {
-                if (!firestore || !user) return;
-                setIsSavingSettings(true);
-                try {
-                  const userRef = doc(firestore, "users", user.uid);
-                  await updateDoc(userRef, {
-                    notificationPref,
-                    selectedNotificationServers: notificationPref === 'specific' ? selectedNotificationServers : []
-                  });
-                  toast({ title: "Settings Saved", description: "Your global preferences have been updated." });
-                  setShowGlobalSettingsModal(false);
-                } catch(e) { toast({ variant: "destructive", title: "Error saving settings" }); } finally { setIsSavingSettings(false); }
-              }}
-              className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-black font-black uppercase text-[10px] tracking-widest rounded-xl shadow-lg border-none"
-            >
-              {isSavingSettings ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null} Save Preferences
-            </Button>
-          </div>
+              {notificationPref === 'specific' && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                  <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Select Servers</h4>
+                  <div className="max-h-32 overflow-y-auto space-y-1 bg-black/40 p-2 rounded-xl border border-white/5">
+                     {allServers.map((hub) => (
+                       <button 
+                         key={hub.id} 
+                         onClick={() => setSelectedNotificationServers(prev => prev.includes(hub.id) ? prev.filter(id => id !== hub.id) : [...prev, hub.id])}
+                         className={cn("w-full flex items-center justify-between p-2 rounded-lg text-left transition-colors", selectedNotificationServers.includes(hub.id) ? "bg-emerald-500/20" : "hover:bg-white/5")}
+                       >
+                         <span className={cn("text-xs font-bold", selectedNotificationServers.includes(hub.id) ? "text-emerald-400" : "text-white")}>{hub.name}</span>
+                         {selectedNotificationServers.includes(hub.id) && <span className="text-emerald-400 text-[10px]">✓</span>}
+                       </button>
+                     ))}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="appearance" className="space-y-6 mt-0">
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Custom CSS</h4>
+                <p className="text-[10px] text-muted-foreground">Inject your own custom styling to personalize the chat interface.</p>
+                <textarea 
+                  value={customCssInput}
+                  onChange={(e) => setCustomCssInput(e.target.value)}
+                  className="w-full h-32 bg-black/40 border border-white/5 rounded-xl p-3 text-xs text-white font-mono focus:border-emerald-500 focus:outline-none transition-colors"
+                  placeholder="/* Enter your custom CSS here */&#10;body {&#10;  --primary: #10b981;&#10;}"
+                />
+              </div>
+            </TabsContent>
+
+            <div className="mt-6">
+              <Button 
+                disabled={isSavingSettings}
+                onClick={async () => {
+                  if (!firestore || !user) return;
+                  setIsSavingSettings(true);
+                  try {
+                    const userRef = doc(firestore, "users", user.uid);
+                    await updateDoc(userRef, {
+                      notificationPref,
+                      selectedNotificationServers: notificationPref === 'specific' ? selectedNotificationServers : [],
+                      customCss: customCssInput.trim()
+                    });
+                    toast({ title: "Settings Saved", description: "Your global preferences have been updated." });
+                    setShowGlobalSettingsModal(false);
+                  } catch(e) { toast({ variant: "destructive", title: "Error saving settings" }); } finally { setIsSavingSettings(false); }
+                }}
+                className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-black font-black uppercase text-[10px] tracking-widest rounded-xl shadow-lg border-none"
+              >
+                {isSavingSettings ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null} Save Preferences
+              </Button>
+            </div>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>

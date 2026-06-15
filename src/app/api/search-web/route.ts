@@ -1,27 +1,5 @@
 import { NextResponse } from 'next/server';
 
-const SEARX_INSTANCES = [
-  "https://searx.tiekoetter.com",
-  "https://searx.be",
-  "https://search.mdcnet.de",
-  "https://priv.au",
-  "https://searx.work"
-];
-
-// Helper to fetch with a timeout
-async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(id);
-    return response;
-  } catch (err) {
-    clearTimeout(id);
-    throw err;
-  }
-}
-
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -30,14 +8,20 @@ export async function GET(req: Request) {
       return NextResponse.json({ results: [] });
     }
 
-    for (const instance of SEARX_INSTANCES) {
-      try {
-        const apiUrl = `${instance}/search?q=${encodeURIComponent(q)}&format=json`;
-        const res = await fetchWithTimeout(apiUrl, 2500);
-        if (!res.ok) continue;
-        
-        const data = await res.json();
-        if (data && Array.isArray(data.results)) {
+    // Try Tavily First
+    try {
+      const tavilyRes = await fetch("https://api.tavily.com/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          api_key: process.env.TAVILY_API_KEY || "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",
+          query: q
+        })
+      });
+
+      if (tavilyRes.ok) {
+        const data = await tavilyRes.json();
+        if (data && data.results && Array.isArray(data.results)) {
           const results = data.results.map((item: any) => ({
             title: item.title || '',
             url: item.url || '',
@@ -45,9 +29,35 @@ export async function GET(req: Request) {
           }));
           return NextResponse.json({ results });
         }
-      } catch (e) {
-        console.warn(`SearXNG proxy failed for instance ${instance}:`, e);
       }
+    } catch (e) {
+      console.warn(`Tavily search failed:`, e);
+    }
+
+    // Fallback to Serper
+    try {
+      const serperRes = await fetch("https://google.serper.dev/search", {
+        method: "POST",
+        headers: {
+          "X-API-KEY": process.env.SERPER_API_KEY || "907e3915f87c64aa75b296e1ec64f9d049f26836",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ q })
+      });
+
+      if (serperRes.ok) {
+        const data = await serperRes.json();
+        if (data && data.organic && Array.isArray(data.organic)) {
+          const results = data.organic.map((item: any) => ({
+            title: item.title || '',
+            url: item.link || '',
+            description: item.snippet || ''
+          }));
+          return NextResponse.json({ results });
+        }
+      }
+    } catch (e) {
+      console.warn(`Serper search failed:`, e);
     }
 
     return NextResponse.json({ results: [] });

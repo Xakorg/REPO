@@ -43,6 +43,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Lock, FileText, Box } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, serverTimestamp, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc, where, getDocs, setDoc } from "firebase/firestore";
@@ -557,25 +558,34 @@ export default function ServerChatPage() {
   }, [firestore, channelId]);
   const { data: typingDocs } = useCollection(typingQuery);
 
-  const typingDisplay = useMemo(() => {
-    if (!typingDocs || !user) return "";
-    const activeTyping = typingDocs.filter((d: any) => {
+  const activeTypingUsers = useMemo(() => {
+    if (!typingDocs || !user) return [];
+    return typingDocs.filter((d: any) => {
       if (d.uid === user.uid) return false;
       const seconds = d.timestamp?.seconds || (d.timestamp?.toDate ? d.timestamp.toDate().getTime() / 1000 : Date.now() / 1000);
       const nowSeconds = Date.now() / 1000;
       return nowSeconds - seconds < 5;
     });
-    if (activeTyping.length === 0) return "";
-    if (activeTyping.length === 1) return `${activeTyping[0].username} is typing...`;
-    return "Several people are typing...";
   }, [typingDocs, user]);
 
   // Filters messages inside the scroll window using messageSearchQuery state
   const filteredMessages = useMemo(() => {
     if (!messages) return [];
-    if (!messageSearchQuery.trim()) return messages;
+    let msgs = messages;
+    
+    // Feature 1: Filter out expired ephemeral messages (1h)
+    const now = Date.now();
+    msgs = msgs.filter(m => {
+      if (m.ephemeral) {
+        const msgTime = m.timestamp?.toMillis ? m.timestamp.toMillis() : (m.timestamp || now);
+        if (now - msgTime > 3600000) return false;
+      }
+      return true;
+    });
+
+    if (!messageSearchQuery.trim()) return msgs;
     const qStr = messageSearchQuery.toLowerCase();
-    return messages.filter(m => m.content?.toLowerCase().includes(qStr));
+    return msgs.filter(m => m.content?.toLowerCase().includes(qStr));
   }, [messages, messageSearchQuery]);
 
   // Derive smart replies suggesters
@@ -994,6 +1004,29 @@ export default function ServerChatPage() {
 
     let content = chatInput.trim();
 
+    // Feature 2: /remind slash command
+    if (content.startsWith("/remind ")) {
+      const parts = content.split(" ");
+      const timeStr = parts[1];
+      const reminderText = parts.slice(2).join(" ");
+      const timeMatch = timeStr.match(/^(\d+)(s|m|h)$/);
+      if (timeMatch && reminderText) {
+        const val = parseInt(timeMatch[1]);
+        const unit = timeMatch[2];
+        let ms = 0;
+        if (unit === 's') ms = val * 1000;
+        else if (unit === 'm') ms = val * 60000;
+        else if (unit === 'h') ms = val * 3600000;
+        
+        setTimeout(() => {
+          toast({ title: "Reminder", description: reminderText, duration: 10000 });
+        }, ms);
+        toast({ title: "Reminder Set", description: `I will remind you in ${timeStr}.` });
+        setChatInput("");
+        return;
+      }
+    }
+
     // Feature 11: Scheduled message
     if (scheduleDateTime && showSchedulePicker) {
       if (!content) {
@@ -1068,7 +1101,9 @@ export default function ServerChatPage() {
         senderHat: userData?.hat || null,
         channelId,
         channelName,
-        timestamp: serverTimestamp()
+        timestamp: serverTimestamp(),
+        ephemeral: disappearingMessages,
+        e2e: e2eEnabled
       };
 
       if (replyingToMessage) {
@@ -1424,7 +1459,7 @@ export default function ServerChatPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Feature 2: Image Lightbox */}
+      {/* Feature 2 & 10: Image Lightbox / Media Viewer */}
       {lightboxImage && (
         <div
           className="fixed inset-0 bg-black/90 z-[999] flex items-center justify-center"
@@ -1436,12 +1471,24 @@ export default function ServerChatPage() {
           >
             <X className="w-8 h-8" />
           </button>
-          <img
-            src={lightboxImage}
-            alt="lightbox"
-            className="max-w-[90vw] max-h-[90vh] rounded-2xl border border-white/10 shadow-2xl object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
+          {lightboxImage.endsWith('.pdf') ? (
+            <div className="w-[80vw] h-[80vh] bg-white rounded-2xl flex items-center justify-center flex-col text-black">
+               <FileText className="w-16 h-16 mb-4 text-red-500" />
+               <p className="font-bold">PDF Viewer (Mock)</p>
+            </div>
+          ) : lightboxImage.endsWith('.obj') || lightboxImage.endsWith('.gltf') ? (
+            <div className="w-[80vw] h-[80vh] bg-zinc-900 rounded-2xl flex items-center justify-center flex-col text-white border border-white/10">
+               <Box className="w-16 h-16 mb-4 text-emerald-500" />
+               <p className="font-bold">3D Model Viewer (Mock)</p>
+            </div>
+          ) : (
+            <img
+              src={lightboxImage}
+              alt="lightbox"
+              className="max-w-[90vw] max-h-[90vh] rounded-2xl border border-white/10 shadow-2xl object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
         </div>
       )}
 
@@ -1603,6 +1650,11 @@ export default function ServerChatPage() {
       <div className="flex flex-1 overflow-hidden relative">
         {/* MESSAGES SCROLL AREA */}
         <ScrollArea className="flex-1 p-8" ref={scrollRef}>
+          {serverDoc?.announcements && (
+            <div className="mx-auto max-w-5xl mb-4 p-3 bg-amber-500/20 border border-amber-500/50 rounded-xl text-amber-500 text-xs font-bold text-center">
+              📢 {serverDoc.announcements}
+            </div>
+          )}
            <div className="max-w-5xl mx-auto space-y-8 pb-20 relative">
               {isMessagesLoading ? (
                 <div className="flex justify-center p-20"><Loader2 className="w-10 h-10 animate-spin text-primary opacity-20" /></div>
@@ -1737,7 +1789,25 @@ export default function ServerChatPage() {
                                     <div className="text-[9px] font-black uppercase text-primary mb-2 flex items-center gap-1">
                                       <Mic className="w-3 h-3" /> VOICE MESSAGE
                                     </div>
-                                    <audio controls src={msg.content} className="max-w-[260px] h-8" style={{ filter: 'invert(1) hue-rotate(180deg)' }} />
+                                    <div className="flex items-center gap-2">
+                                      <audio id={`audio-${msg.id}`} controls src={msg.content} className="max-w-[260px] h-8" style={{ filter: 'invert(1) hue-rotate(180deg)' }} />
+                                      <button onClick={() => {
+                                        const aud = document.getElementById(`audio-${msg.id}`) as HTMLAudioElement;
+                                        if (aud) {
+                                          if (aud.playbackRate === 1) aud.playbackRate = 1.5;
+                                          else if (aud.playbackRate === 1.5) aud.playbackRate = 2;
+                                          else aud.playbackRate = 1;
+                                        }
+                                      }} className="px-2 py-1 bg-white/10 text-[10px] font-bold rounded">Speed</button>
+                                    </div>
+                                    <button onClick={(e) => {
+                                      const btn = e.target as HTMLButtonElement;
+                                      const div = btn.nextElementSibling as HTMLDivElement;
+                                      div.classList.toggle('hidden');
+                                    }} className="mt-2 text-[10px] text-zinc-400 hover:text-white underline">Transcribe</button>
+                                    <div className="hidden mt-2 p-2 bg-white/5 rounded text-xs text-zinc-300 italic">
+                                      [AI Transcription]: "Mocked audio transcription text."
+                                    </div>
                                   </div>
                                 ) : msg.type === "sticker" ? (
                                   /* Feature 8: Sticker */
@@ -1757,6 +1827,8 @@ export default function ServerChatPage() {
                                      ) : (
                                        renderMarkdown(msg.content)
                                      )}
+
+                                     {msg.e2e && <Lock className="w-3 h-3 text-emerald-400 inline mr-1" />}
 
                                      {/* Edited Tag */}
                                      {msg.edited && <span className="text-[7px] opacity-40 ml-2 font-black uppercase italic">(edited)</span>}
@@ -1830,6 +1902,9 @@ export default function ServerChatPage() {
                                   <button
                                     key={r.emoji}
                                     onClick={() => handleReact(msg.id, r.emoji)}
+                                    onDoubleClick={() => {
+                                      triggerExplosion(r.emoji);
+                                    }}
                                     onMouseEnter={(e) => {
                                       const rect = (e.target as HTMLElement).getBoundingClientRect();
                                       setReactionTooltip({ msgId: msg.id, emoji: r.emoji, x: rect.left, y: rect.top });
@@ -2258,9 +2333,16 @@ export default function ServerChatPage() {
              </div>
 
              {/* Typing indicator message */}
-             {typingDisplay && (
-               <div className="text-[10px] text-zinc-400 italic pl-2 text-left animate-pulse">
-                 {typingDisplay}
+             {activeTypingUsers && activeTypingUsers.length > 0 && (
+               <div className="flex items-center gap-2 pl-2 animate-pulse">
+                 <div className="flex -space-x-2">
+                   {activeTypingUsers.map((u: any, i: number) => (
+                      <Avatar key={i} className="w-5 h-5 border border-zinc-950">
+                        <AvatarFallback className="bg-primary/20 text-[8px]">{u.username?.[0]}</AvatarFallback>
+                      </Avatar>
+                   ))}
+                 </div>
+                 <span className="text-[10px] text-zinc-400 italic">typing...</span>
                </div>
              )}
 

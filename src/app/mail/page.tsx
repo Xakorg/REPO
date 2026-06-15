@@ -737,9 +737,20 @@ export default function MailPage() {
                       <p className="text-xs text-white/40">{selectedEmail.sentDateTime ? new Date(selectedEmail.sentDateTime).toLocaleString() : ''}</p>
                     </div>
 
-                    <div className="text-sm leading-relaxed text-white/90 whitespace-pre-wrap">
-                      {isTranslating ? "This is a mocked translation of the email body showing how it would look in the users native language.\\n\\n" : ''}
-                      {selectedEmail.body}
+                    <div className="text-sm leading-relaxed text-white/90 w-full">
+                      {isTranslating && <p className="mb-4 text-primary font-bold">This is a mocked translation of the email body showing how it would look in the users native language.</p>}
+                      {selectedEmail.html ? (
+                        <div className="w-full bg-white rounded-lg overflow-hidden shadow-inner">
+                          <iframe 
+                            srcDoc={selectedEmail.html} 
+                            title="Email Content"
+                            className="w-full min-h-[500px] border-0"
+                            sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+                          />
+                        </div>
+                      ) : (
+                         <div className="whitespace-pre-wrap">{selectedEmail.body}</div>
+                      )}
                     </div>
 
                     {/* AI Tools */}

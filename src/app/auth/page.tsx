@@ -272,7 +272,6 @@ export default function AuthPage() {
                 value={email} 
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  setAskLinkGmail(e.target.value.toLowerCase().endsWith('@gmail.com'));
                 }} 
                 placeholder="youremail@example.com" 
                 className="h-20 sm:h-24 bg-white/5 border-white/10 text-xl sm:text-3xl font-bold rounded-[2rem] text-center px-12 sm:px-16 text-white" 
@@ -282,16 +281,12 @@ export default function AuthPage() {
               <div className="absolute right-2 sm:-right-12 top-1/2 -translate-y-1/2"><Mail className="w-6 h-6 sm:w-8 sm:h-8 text-primary/50 animate-bounce" /></div>
             </div>
 
-            {askLinkGmail ? (
-              <div className="bg-primary/10 border border-primary/20 rounded-2xl p-6 text-center animate-in fade-in slide-in-from-top-4">
-                <p className="text-primary font-bold text-lg mb-4">We will give you a <span className="text-white">{(email.split('@')[0] || 'user').toLowerCase()}@mail.xakteir.com</span> address.<br/>Do you want to link your Gmail account?</p>
-                <div className="flex gap-4 justify-center">
-                  <Button onClick={() => { handleGoogleAuth(); }} className="h-14 px-8 bg-primary text-black font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all"><Chrome className="w-5 h-5 mr-2"/> Yes, Link Gmail</Button>
-                  <Button onClick={() => setWizardStep(2)} variant="outline" className="h-14 px-8 border-white/10 bg-transparent text-white font-black uppercase tracking-widest rounded-xl hover:bg-white/5">No, Continue</Button>
-                </div>
+            {email.includes('@') && !email.toLowerCase().endsWith('@mail.xakteir.com') ? (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 text-center animate-in fade-in slide-in-from-top-4">
+                <p className="text-red-400 font-bold text-lg">Please enter an email ending with @mail.xakteir.com</p>
               </div>
             ) : (
-               <Button onClick={() => setWizardStep(2)} disabled={!email} className="h-20 w-full text-2xl bg-primary text-black hover:bg-primary/90 rounded-[3rem] font-black uppercase tracking-widest shadow-[0_0_40px_rgba(var(--primary),0.3)] transition-all">
+               <Button onClick={() => setWizardStep(2)} disabled={!email || !email.toLowerCase().endsWith('@mail.xakteir.com')} className="h-20 w-full text-2xl bg-primary text-black hover:bg-primary/90 rounded-[3rem] font-black uppercase tracking-widest shadow-[0_0_40px_rgba(var(--primary),0.3)] transition-all">
                  Next
                </Button>
             )}
