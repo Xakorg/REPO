@@ -63,7 +63,7 @@ export function LobbyUI({ setGameState, gameMode, setGameMode }: LobbyUIProps) {
             className="bg-black/60 backdrop-blur-xl rounded-xl border border-white/10 p-4 flex flex-col gap-2 min-w-[200px] shadow-2xl"
           >
             <h3 className="text-[#855cd6] uppercase font-black text-xs tracking-widest mb-1 drop-shadow-[0_0_8px_rgba(133,92,214,0.8)]">Game Mode</h3>
-            {["Free For All", "1v1 Duel", "2v2 Team", "Floor is Lava"].map(mode => (
+            {["Battle Royale (Online)", "1v1 Duel", "2v2 Team", "Free For All"].map(mode => (
               <button
                 key={mode}
                 onClick={() => setGameMode(mode)}

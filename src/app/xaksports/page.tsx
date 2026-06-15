@@ -11,15 +11,25 @@ import { SplitscreenCamera } from "@/components/game/sports/SplitscreenCamera";
 import { Goal } from "@/components/game/sports/Goal";
 import { SportsLobby } from "@/components/game/sports/SportsLobby";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { useMultiplayer } from "@/hooks/useMultiplayer";
 
 export default function XakSportsGame() {
   const [gameState, setGameState] = useState<"lobby" | "playing">("lobby");
-  const [gameMode, setGameMode] = useState("1v1 Split-Screen");
+  const [gameMode, setGameMode] = useState("2 Player Local");
   const [score, setScore] = useState({ p1: 0, p2: 0 });
   const [goalEvent, setGoalEvent] = useState<1 | 2 | null>(null);
 
   const player1Ref = useRef<any>(null);
   const player2Ref = useRef<any>(null);
+  const player3Ref = useRef<any>(null);
+  const player4Ref = useRef<any>(null);
+
+  const isOnline = gameMode === "Online Multiplayer";
+  const numLocalPlayers = gameMode.startsWith("2") ? 2 : gameMode.startsWith("3") ? 3 : gameMode.startsWith("4") ? 4 : 1;
+  const { peers, updateLocalState, myId } = useMultiplayer("xaksports-public", isOnline && gameState === "playing");
+
+  const playerRefs = [player1Ref, player2Ref, player3Ref, player4Ref].slice(0, numLocalPlayers);
 
   const handleScore = (team: 1 | 2) => {
     if (goalEvent !== null) return; // Prevent multiple triggers
@@ -63,15 +73,25 @@ export default function XakSportsGame() {
             {gameState === "playing" && (
               <>
                 <Ball position={[0, 5, 0]} />
-                <Player innerRef={player1Ref} position={[0, 1, 5]} playerIndex={1} />
-                <Player innerRef={player2Ref} position={[0, 1, -5]} playerIndex={2} />
+                <Player innerRef={player1Ref} position={[0, 1, 5]} playerIndex={1} onUpdateNetwork={isOnline ? updateLocalState : undefined} />
+                {numLocalPlayers >= 2 && <Player innerRef={player2Ref} position={[0, 1, -5]} playerIndex={2} />}
+                {numLocalPlayers >= 3 && <Player innerRef={player3Ref} position={[5, 1, 5]} playerIndex={3} />}
+                {numLocalPlayers >= 4 && <Player innerRef={player4Ref} position={[-5, 1, -5]} playerIndex={4} />}
+
+                {/* Online Peers */}
+                {isOnline && Array.from(peers.values()).map(peer => (
+                   <mesh key={peer.id} position={[peer.x, peer.y, peer.z]} rotation={[peer.pitch, peer.yaw, 0]}>
+                      <boxGeometry args={[1, 2, 1]} />
+                      <meshStandardMaterial color="red" />
+                   </mesh>
+                ))}
               </>
             )}
           </Physics>
         </Suspense>
 
         {gameState === "playing" && (
-           <SplitscreenCamera player1Ref={player1Ref} player2Ref={player2Ref} />
+           <SplitscreenCamera players={playerRefs} />
         )}
       </Canvas>
       <Loader />

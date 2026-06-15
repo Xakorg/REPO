@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -19,7 +18,7 @@ import {
 import { doc, setDoc, getDoc, getDocs, collection, query, where } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Lock, AtSign, ArrowRight, Sparkles, ShieldCheck, Chrome, HelpCircle, RefreshCw } from "lucide-react";
+import { Loader2, Mail, Lock, AtSign, ArrowRight, Sparkles, ShieldCheck, Chrome, HelpCircle, RefreshCw, EyeOff, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isOffensive } from "@/lib/username";
 
@@ -27,14 +26,18 @@ type AuthStep = 'email' | 'password' | 'verify-2fa' | 'forgot' | 'terms';
 
 export default function AuthPage() {
   const { user: existingUser } = useUser();
-  const [isLogin, setIsLogin] = useState(true);
+  const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
   const [step, setStep] = useState<AuthStep>('email');
   
+  // Wizard States
+  const [wizardStep, setWizardStep] = useState(0);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [askLinkGmail, setAskLinkGmail] = useState(false);
+
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
-  const [agreed, setAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   
@@ -43,22 +46,19 @@ export default function AuthPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  
-
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (existingUser) {
+    if (existingUser && !showAnimation) {
       router.push("/");
     }
-  }, [existingUser, router]);
+  }, [existingUser, router, showAnimation]);
 
-  // Central Redirection Logic: Responds instantly to Auth state changes
   useEffect(() => {
     let isMounted = true;
-    if (existingUser && step !== 'verify-2fa') {
+    if (existingUser && step !== 'verify-2fa' && !showAnimation) {
       existingUser.getIdToken().then(idToken => {
         fetch('/api/auth/sync', {
           method: 'POST',
@@ -72,14 +72,13 @@ export default function AuthPage() {
       });
     }
     return () => { isMounted = false; };
-  }, [existingUser, router, step]);
+  }, [existingUser, router, step, showAnimation]);
 
   const handleGoogleAuth = () => {
     if (!auth || !firestore) return;
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     
-    // Non-blocking popup initiation
     signInWithPopup(auth, provider)
       .then(async (result) => {
         const user = result.user;
@@ -101,7 +100,12 @@ export default function AuthPage() {
             photoURL: user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${finalUsername}`
           });
         }
-        toast({ title: "Signed In", description: `Welcome, ${user.displayName}!` });
+        
+        if (activeTab === 'signup') {
+           finishWizard();
+        } else {
+           toast({ title: "Signed In", description: `Welcome, ${user.displayName}!` });
+        }
       })
       .catch((error) => {
         setIsLoading(false);
@@ -114,7 +118,6 @@ export default function AuthPage() {
     if (!auth || !firestore) return;
 
     setIsLoading(true);
-    // Non-blocking sign-in call
     signInWithEmailAndPassword(auth, email, password)
       .then(async (userCredential) => {
         const userDoc = await getDoc(doc(firestore, "users", userCredential.user.uid));
@@ -124,7 +127,6 @@ export default function AuthPage() {
           toast({ title: "Verification Required", description: "Please enter your security code." });
         } else {
           toast({ title: "Success", description: "You have been signed in." });
-          // Redirect handled by useEffect
         }
       })
       .catch((error) => {
@@ -133,42 +135,46 @@ export default function AuthPage() {
       });
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!auth || !firestore || !agreed) return;
+  const finishWizard = () => {
+    setShowAnimation(true);
+    setTimeout(() => {
+      setShowAnimation(false);
+      sessionStorage.setItem("start_onboarding", "true");
+      router.push("/");
+    }, 3000);
+  };
+
+  const handleSignup = async () => {
+    if (!auth || !firestore) return;
 
     if (email.toLowerCase().endsWith("@xakteir.com")) {
-      toast({ 
-        variant: "destructive", 
-        title: "Registration Error", 
-        description: "Registration with @xakteir.com is reserved. Please use a standard email provider." 
-      });
+      toast({ variant: "destructive", title: "Error", description: "Registration with @xakteir.com is reserved." });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({ variant: "destructive", title: "Error", description: "Passwords do not match." });
       return;
     }
 
     setIsLoading(true);
-    // Validate username choice
-    const chosen = username?.trim() || email.split('@')[0];
+    const chosen = email.split('@')[0];
     if (isOffensive(chosen)) {
       setIsLoading(false);
-      toast({ variant: "destructive", title: "Invalid Username", description: "That username is not allowed. Please choose another." });
+      toast({ variant: "destructive", title: "Invalid", description: "Username not allowed." });
       return;
     }
 
-    // check for username collision
     try {
       const q = query(collection(firestore, "users"), where("username", "==", chosen));
       const snap = await getDocs(q);
       if (!snap.empty) {
         setIsLoading(false);
-        toast({ variant: "destructive", title: "Username Taken", description: "That username is already in use. Please pick a different one." });
+        toast({ variant: "destructive", title: "Username Taken", description: "That username is already in use." });
         return;
       }
-    } catch (e) {
-      // ignore query errors and continue
-    }
+    } catch (e) {}
 
-    // Non-blocking signup call
     createUserWithEmailAndPassword(auth, email, password)
       .then(async (userCredential) => {
         const user = userCredential.user;
@@ -189,9 +195,7 @@ export default function AuthPage() {
           photoURL: `https://api.dicebear.com/7.x/bottts/svg?seed=${finalUsername}`
         });
 
-        toast({ title: "Account Created", description: `Welcome, ${finalUsername}!` });
-        sessionStorage.setItem("start_onboarding", "true");
-        // Redirect handled by useEffect
+        finishWizard();
       })
       .catch((error) => {
         setIsLoading(false);
@@ -217,16 +221,150 @@ export default function AuthPage() {
 
   if (!mounted) return null;
 
+  if (showAnimation) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden" style={{ animation: "fadeOut 1s ease-in-out 2s forwards" }}>
+        <h1 className="text-[15rem] font-black italic uppercase tracking-tighter text-primary animate-pulse" style={{ animation: "zoomIn 2s ease-in-out forwards" }}>
+          XAKTEIR
+        </h1>
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes zoomIn { 0% { transform: scale(0.1); opacity: 0; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+          @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; pointer-events: none; } }
+        `}} />
+      </div>
+    );
+  }
+
+  if (activeTab === 'signup') {
+    return (
+      <div className="fixed inset-0 bg-black z-40 flex flex-col items-center justify-center p-6 animate-in fade-in zoom-in-95 duration-500">
+        <div className="absolute inset-0 arcade-grid opacity-20 pointer-events-none" />
+        
+        {wizardStep === 0 && (
+          <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-12 max-w-4xl animate-in slide-in-from-bottom-8">
+            <h1 className="text-7xl md:text-9xl font-black italic uppercase tracking-tighter text-white drop-shadow-2xl">
+              Welcome To <span className="text-primary">Xakteir</span>
+            </h1>
+            <div className="space-y-4">
+              <p className="text-2xl md:text-4xl font-bold text-white/80">Your go-to place for everything fun.</p>
+              <p className="text-xl md:text-2xl font-bold text-primary/80 uppercase tracking-widest">Do fun the proper way.</p>
+            </div>
+            <Button onClick={() => setWizardStep(1)} className="h-20 px-16 text-2xl bg-white text-black hover:bg-gray-200 rounded-[3rem] font-black uppercase tracking-widest shadow-[0_0_40px_rgba(255,255,255,0.3)] transition-all hover:scale-105">
+              Next <ArrowRight className="ml-4 w-8 h-8" />
+            </Button>
+            <button onClick={() => setActiveTab('signin')} className="text-white/40 font-bold hover:text-white uppercase tracking-widest text-xs pt-4">Back to Sign In</button>
+          </div>
+        )}
+
+        {wizardStep === 1 && (
+          <div className="relative z-10 w-full max-w-2xl flex flex-col space-y-8 animate-in slide-in-from-right-8">
+            <div className="text-center space-y-4">
+              <Mail className="w-20 h-20 text-primary mx-auto opacity-80" />
+              <h2 className="text-5xl font-black italic uppercase tracking-tighter text-white">Enter Your Desired Email</h2>
+              <p className="text-lg font-bold text-white/50">This will be your primary Xakteir identity.</p>
+            </div>
+            
+            <div className="relative">
+              <Input 
+                type="email" 
+                value={email} 
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setAskLinkGmail(e.target.value.toLowerCase().endsWith('@gmail.com'));
+                }} 
+                placeholder="youremail@example.com" 
+                className="h-24 bg-white/5 border-white/10 text-3xl font-bold rounded-[2rem] text-center px-16 text-white" 
+                autoFocus
+              />
+              <div className="absolute -left-12 top-1/2 -translate-y-1/2"><Sparkles className="w-8 h-8 text-primary/50 animate-pulse" /></div>
+              <div className="absolute -right-12 top-1/2 -translate-y-1/2"><Mail className="w-8 h-8 text-primary/50 animate-bounce" /></div>
+            </div>
+
+            {askLinkGmail ? (
+              <div className="bg-primary/10 border border-primary/20 rounded-2xl p-6 text-center animate-in fade-in slide-in-from-top-4">
+                <p className="text-primary font-bold text-lg mb-4">We will give you a <span className="text-white">{(email.split('@')[0] || 'user').toLowerCase()}@mail.xakteir.com</span> address.<br/>Do you want to link your Gmail account?</p>
+                <div className="flex gap-4 justify-center">
+                  <Button onClick={() => { handleGoogleAuth(); }} className="h-14 px-8 bg-primary text-black font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all"><Chrome className="w-5 h-5 mr-2"/> Yes, Link Gmail</Button>
+                  <Button onClick={() => setWizardStep(2)} variant="outline" className="h-14 px-8 border-white/10 bg-transparent text-white font-black uppercase tracking-widest rounded-xl hover:bg-white/5">No, Continue</Button>
+                </div>
+              </div>
+            ) : (
+               <Button onClick={() => setWizardStep(2)} disabled={!email} className="h-20 w-full text-2xl bg-primary text-black hover:bg-primary/90 rounded-[3rem] font-black uppercase tracking-widest shadow-[0_0_40px_rgba(var(--primary),0.3)] transition-all">
+                 Next
+               </Button>
+            )}
+             <button onClick={() => setWizardStep(0)} className="text-white/40 font-bold hover:text-white uppercase tracking-widest text-xs pt-4">Back</button>
+          </div>
+        )}
+
+        {wizardStep === 2 && (
+          <div className="relative z-10 w-full max-w-2xl flex flex-col space-y-8 animate-in slide-in-from-right-8">
+            <div className="text-center space-y-4">
+              <Lock className="w-20 h-20 text-primary mx-auto opacity-80" />
+              <h2 className="text-5xl font-black italic uppercase tracking-tighter text-white">Secure Your Account</h2>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="relative">
+                <Input 
+                  type="password" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  placeholder="Password" 
+                  className="h-20 bg-white/5 border-white/10 text-2xl font-bold rounded-[2rem] text-center px-12 text-white" 
+                  autoFocus
+                />
+                <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-white/20" />
+              </div>
+              <div className="relative">
+                <Input 
+                  type="password" 
+                  value={confirmPassword} 
+                  onChange={(e) => setConfirmPassword(e.target.value)} 
+                  placeholder="Confirm Password" 
+                  className="h-20 bg-white/5 border-white/10 text-2xl font-bold rounded-[2rem] text-center px-12 text-white" 
+                />
+                <ShieldCheck className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-white/20" />
+              </div>
+            </div>
+
+            <Button onClick={handleSignup} disabled={isLoading || !password || !confirmPassword} className="h-20 w-full text-2xl bg-white text-black hover:bg-gray-200 rounded-[3rem] font-black uppercase tracking-widest shadow-[0_0_40px_rgba(255,255,255,0.3)] transition-all">
+              {isLoading ? <Loader2 className="w-8 h-8 animate-spin" /> : "Finish"}
+            </Button>
+            <button onClick={() => setWizardStep(1)} className="text-white/40 font-bold hover:text-white uppercase tracking-widest text-xs pt-4">Back</button>
+          </div>
+        )}
+
+      </div>
+    );
+  }
+
+  // STANDARD SIGN IN UI
   return (
-    <div className="min-h-[calc(100vh-160px)] flex items-center justify-center p-6">
-      <Card className="w-full max-w-lg glass-card rounded-[4rem] border-white/5 shadow-2xl overflow-hidden relative">
+    <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center p-6 relative">
+      <div className="mb-8 z-10 flex bg-black/40 p-2 rounded-full border border-white/5 shadow-xl backdrop-blur-sm">
+        <button 
+          className={cn("px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all", activeTab === 'signin' ? "bg-primary text-black shadow-[0_0_15px_rgba(var(--primary),0.5)]" : "text-white/50 hover:text-white")}
+          onClick={() => setActiveTab('signin')}
+        >
+          Sign In
+        </button>
+        <button 
+          className={cn("px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all", activeTab === 'signup' ? "bg-primary text-black shadow-[0_0_15px_rgba(var(--primary),0.5)]" : "text-white/50 hover:text-white")}
+          onClick={() => { setActiveTab('signup'); setWizardStep(0); }}
+        >
+          Sign Up
+        </button>
+      </div>
+
+      <Card className="w-full max-w-lg glass-card rounded-[4rem] border-white/5 shadow-2xl overflow-hidden relative z-10">
         <div className="absolute inset-0 arcade-grid opacity-10 pointer-events-none" />
         
         <CardHeader className="text-center space-y-8 pt-12">
           <div className="flex justify-center"><GlitchLogo className="scale-110" /></div>
           <div className="space-y-2">
             <CardTitle className="text-5xl font-black italic uppercase tracking-tighter text-white">
-              {step === 'verify-2fa' ? "Verify Code" : step === 'forgot' ? "Reset Password" : isLogin ? "Sign In" : "Sign Up"}
+              {step === 'verify-2fa' ? "Verify Code" : step === 'forgot' ? "Reset Password" : "Sign In"}
             </CardTitle>
             <CardDescription className="text-xs font-bold uppercase tracking-[0.4em] text-muted-foreground opacity-60">
               Account Access
@@ -251,7 +389,7 @@ export default function AuthPage() {
                     className="h-20 bg-black/40 border-8 border-white/5 rounded-[2rem] text-center text-5xl font-black tracking-widest italic text-primary" 
                    />
                 </div>
-                <Button onClick={() => router.push("/")} disabled={otpCode.length < 6} className="w-full h-18 bg-primary rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-xl">Confirm Code</Button>
+                <Button onClick={() => router.push("/")} disabled={otpCode.length < 6} className="w-full h-18 bg-primary text-black hover:bg-primary/90 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-xl">Confirm Code</Button>
              </div>
           ) : step === 'forgot' ? (
             <form onSubmit={handleForgotPassword} className="space-y-6 animate-in slide-in-from-top-4">
@@ -259,17 +397,17 @@ export default function AuthPage() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-4">Email Address</label>
                   <div className="relative">
                     <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" className="bg-secondary/30 border-white/5 pl-14 h-16 rounded-[1.5rem] font-bold" />
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" className="bg-secondary/30 border-white/5 pl-14 h-16 rounded-[1.5rem] font-bold text-white" />
                   </div>
                </div>
-               <Button type="submit" disabled={isLoading || !email} className="w-full bg-primary h-20 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-xl">
+               <Button type="submit" disabled={isLoading || !email} className="w-full bg-primary text-black hover:bg-primary/90 h-20 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-xl">
                   {isLoading ? <Loader2 className="w-8 h-8 animate-spin" /> : "Send Reset Link"}
                </Button>
                <button type="button" onClick={() => setStep('email')} className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all">Back to Login</button>
             </form>
           ) : (
             <div className="space-y-6">
-              <Button onClick={handleGoogleAuth} disabled={isLoading} variant="outline" className="w-full h-16 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 font-black uppercase text-[10px] tracking-widest gap-4 transition-all">
+              <Button type="button" onClick={handleGoogleAuth} disabled={isLoading} variant="outline" className="w-full h-16 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 text-white font-black uppercase text-[10px] tracking-widest gap-4 transition-all">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Chrome className="w-5 h-5 text-primary" />} Continue with Google
               </Button>
 
@@ -278,62 +416,32 @@ export default function AuthPage() {
                 <div className="relative flex justify-center text-[8px] font-black uppercase"><span className="bg-[#0a0a15] px-4 text-muted-foreground tracking-widest">Or use email</span></div>
               </div>
 
-              {isLogin ? (
-                <form onSubmit={handleInitialAuth} className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-4">Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-                      <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" className="bg-secondary/30 border-white/5 pl-14 h-16 rounded-[1.5rem] font-bold" />
-                    </div>
+              <form onSubmit={handleInitialAuth} className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-4">Email Address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" className="bg-secondary/30 border-white/5 pl-14 h-16 rounded-[1.5rem] font-bold text-white" />
                   </div>
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-4">Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-                      <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="bg-secondary/30 border-white/5 pl-14 h-16 rounded-[1.5rem] font-bold" />
-                    </div>
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-4">Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+                    <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="bg-secondary/30 border-white/5 pl-14 h-16 rounded-[1.5rem] font-bold text-white" />
                   </div>
-                  <div className="flex justify-end">
-                    <button type="button" onClick={() => setStep('forgot')} className="text-[10px] font-black uppercase text-primary hover:underline italic flex items-center gap-2">
-                       <HelpCircle className="w-3 h-3" /> Forgot Password?
-                    </button>
-                  </div>
-                  <Button type="submit" disabled={isLoading || !email || !password} className="w-full bg-primary hover:bg-primary/90 h-20 rounded-[2rem] font-black uppercase text-xs tracking-widest text-white shadow-xl">
-                    {isLoading ? <Loader2 className="w-8 h-8 animate-spin" /> : "Sign In"}
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleSignup} className="space-y-6 animate-in slide-in-from-right-4">
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <AtSign className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-                      <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Choose a username" className="bg-secondary/30 border-white/5 pl-14 h-16 rounded-[1.5rem] font-bold" />
-                    </div>
-                    <div className="relative">
-                      <AtSign className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-                      <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address" className="bg-secondary/30 border-white/5 pl-14 h-16 rounded-[1.5rem] font-bold" />
-                    </div>
-                    <div className="relative">
-                      <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-                      <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Choose Password" className="bg-secondary/30 border-white/5 pl-14 h-16 rounded-[1.5rem] font-bold" />
-                    </div>
-                    <div className="flex items-center gap-3 px-4 pt-4">
-                      <Checkbox id="agreed" checked={agreed} onCheckedChange={(v) => setAgreed(!!v)} className="w-6 h-6 border-white/20 data-[state=checked]:bg-primary" />
-                      <label htmlFor="agreed" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Agree to Terms of Service</label>
-                    </div>
-                  </div>
-                  <Button type="submit" disabled={isLoading || !agreed || !email || !password || !username} className="w-full bg-primary h-20 rounded-[2rem] font-black uppercase text-xs tracking-widest text-white shadow-xl">Create Account</Button>
-                </form>
-              )}
+                </div>
+                <div className="flex justify-end">
+                  <button type="button" onClick={() => setStep('forgot')} className="text-[10px] font-black uppercase text-primary hover:underline italic flex items-center gap-2">
+                     <HelpCircle className="w-3 h-3" /> Forgot Password?
+                  </button>
+                </div>
+                <Button type="submit" disabled={isLoading || !email || !password} className="w-full bg-primary hover:bg-primary/90 h-20 rounded-[2rem] font-black uppercase text-xs tracking-widest text-black shadow-xl">
+                  {isLoading ? <Loader2 className="w-8 h-8 animate-spin" /> : "Sign In"}
+                </Button>
+              </form>
             </div>
           )}
-
-          <div className="mt-8 text-center border-t border-white/5 pt-8">
-            <button type="button" onClick={() => { setIsLogin(!isLogin); setStep('email'); }} className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-all">
-              {isLogin ? "Need an account? Join Xakteir" : "Already have an account? Sign in"}
-            </button>
-          </div>
         </CardContent>
       </Card>
     </div>

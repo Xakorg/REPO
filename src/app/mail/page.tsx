@@ -207,13 +207,15 @@ export default function MailPage() {
   }, [mailMode, gmailToken, unifiedInbox]);
 
   const emailsQuery = useMemoFirebase(() => {
-    if (!firestore || !user || !primaryEmail) return null;
+    if (!firestore || !user) return null;
+    const inboxEmail = userData?.xakteirEmail || (userData?.username ? `${userData.username}@mail.xakteir.com` : user.email?.toLowerCase());
+    if (!inboxEmail) return null;
     const baseCol = collection(firestore, "emails");
     if (folder === "Sent") {
       return query(baseCol, where("senderUserId", "==", user.uid), limit(100));
     }
-    return query(baseCol, where("recipientList", "array-contains", primaryEmail), limit(100));
-  }, [firestore, user, folder, primaryEmail, userData]);
+    return query(baseCol, where("recipientList", "array-contains", inboxEmail), limit(100));
+  }, [firestore, user, folder, userData]);
 
   const { data: rawEmails, isLoading } = useCollection(emailsQuery);
 

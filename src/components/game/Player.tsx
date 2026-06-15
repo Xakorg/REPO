@@ -6,10 +6,10 @@ import { RigidBody, CapsuleCollider, useRevoluteJoint } from "@react-three/rapie
 import { useControllerInput } from "./useControllerInput";
 import * as THREE from "three";
 
-export function Player({ position = [0, 1, 5], playerIndex = 1, innerRef }: { position?: [number, number, number], playerIndex?: 1 | 2, innerRef?: any }) {
+export function Player({ position = [0, 1, 5], playerIndex = 1, innerRef, onUpdateNetwork }: { position?: [number, number, number], playerIndex?: 1 | 2 | 3 | 4, innerRef?: any, onUpdateNetwork?: (state: any) => void }) {
   const defaultRef = useRef<any>(null);
   const ref = innerRef || defaultRef;
-  const input = useControllerInput(playerIndex);
+  const input = useControllerInput(playerIndex as any);
   
   // A simple cooldown so the user can't spam kick
   const [lastKick, setLastKick] = useState(0);
@@ -36,13 +36,21 @@ export function Player({ position = [0, 1, 5], playerIndex = 1, innerRef }: { po
     ref.current.setLinvel(vel, true);
 
     // 2. Rotation logic (face the direction of movement)
-    if (input.x !== 0 || input.y !== 0) {
-      const angle = Math.atan2(input.x, input.y);
-      // We set the rotation as a quaternion
-      const euler = new THREE.Euler(0, angle, 0);
-      const quaternion = new THREE.Quaternion().setFromEuler(euler);
-      ref.current.setNextKinematicRotation(quaternion); // wait, we are dynamic, we shouldn't use setNextKinematicRotation, we should use setRotation.
-      ref.current.setRotation(quaternion, true);
+    const moveDir = new THREE.Vector3(input.x, 0, input.y);
+    if (moveDir.length() > 0) {
+      const angle = Math.atan2(moveDir.x, moveDir.z);
+      const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+      if (meshRef.current) {
+        meshRef.current.quaternion.slerp(q, 0.2);
+      }
+    }
+    
+    // Sync Network
+    if (onUpdateNetwork && playerIndex === 1) { // P1 is the authoritative local client when online
+      const p = ref.current.translation();
+      if (meshRef.current) {
+        onUpdateNetwork({ x: p.x, y: p.y, z: p.z, yaw: meshRef.current.rotation.y });
+      }
     }
   });
 

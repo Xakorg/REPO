@@ -2,7 +2,7 @@
 
 import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
-import { Suspense, useState, useRef } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
 import * as THREE from "three";
 import { Loader, KeyboardControls } from "@react-three/drei";
 import { ArenaMap } from "@/components/game/arena/ArenaMap";
@@ -11,6 +11,8 @@ import { WeaponUI } from "@/components/game/arena/WeaponUI";
 import { LobbyUI } from "@/components/game/arena/LobbyUI";
 import { FriendsSidebar } from "@/components/game/arena/FriendsSidebar";
 import { ArenaSplitscreen } from "@/components/game/arena/ArenaSplitscreen";
+import { ArenaMapBR } from "@/components/game/arena/ArenaMapBR";
+import { useMultiplayer } from "@/hooks/useMultiplayer";
 
 export default function XakArenaPage() {
   const [activeWeapon, setActiveWeapon] = useState<"gun" | "melee" | "wand">("gun");
@@ -18,12 +20,26 @@ export default function XakArenaPage() {
   const [gameMode, setGameMode] = useState("Free For All");
 
   // Splitscreen Setup
-  const isSplitscreen = gameMode.includes("2v2") || gameMode.includes("1v1"); // trigger local splitscreen
+  const isSplitscreen = gameMode.includes("2v2") || gameMode.includes("1v1") || gameMode.includes("Team");
+  const isBattleRoyale = gameMode.includes("Battle Royale");
+  const isOnline = isBattleRoyale || gameMode.includes("Online");
   
   const player1Ref = useRef<any>(null);
   const player2Ref = useRef<any>(null);
   const [camera1, setCamera1] = useState<THREE.PerspectiveCamera | null>(null);
   const [camera2, setCamera2] = useState<THREE.PerspectiveCamera | null>(null);
+
+  // Weapon Pickup Listener
+  useEffect(() => {
+    const handleWeaponPickup = (e: any) => {
+       setActiveWeapon(e.detail);
+    };
+    window.addEventListener('weaponPickup', handleWeaponPickup);
+    return () => window.removeEventListener('weaponPickup', handleWeaponPickup);
+  }, []);
+
+  // Online Multiplayer Hook
+  const { peers, updateLocalState, myId } = useMultiplayer("xakarena-public", isOnline && gameState === "playing");
 
   // Health State tracking for HUD
   const [hp1, setHp1] = useState(100);
@@ -57,10 +73,17 @@ export default function XakArenaPage() {
 
           <Suspense fallback={null}>
             <Physics debug={false} gravity={[0, -20, 0]}>
-              <ArenaMap />
+              {isBattleRoyale ? <ArenaMapBR /> : <ArenaMap />}
               
               {!isSplitscreen ? (
-                 <Gladiator activeWeapon={activeWeapon} position={[0, 5, 0]} gameState={gameState} inputType="mouse" onHealthChange={setHp1} />
+                 <Gladiator 
+                   activeWeapon={activeWeapon} 
+                   position={[0, 5, 0]} 
+                   gameState={gameState} 
+                   inputType="mouse" 
+                   onHealthChange={setHp1}
+                   onUpdateNetwork={isOnline ? updateLocalState : undefined}
+                 />
               ) : (
                  <>
                    {gameState === "playing" && (
@@ -81,6 +104,7 @@ export default function XakArenaPage() {
                      playerIndex={1}
                      colorOffset={0} // Blueish default
                      onHealthChange={setHp1}
+                     onUpdateNetwork={isOnline ? updateLocalState : undefined}
                    />
                    {gameState === "playing" && (
                      <Gladiator 
@@ -88,7 +112,7 @@ export default function XakArenaPage() {
                        activeWeapon={activeWeapon} 
                        position={[5, 5, 0]} 
                        gameState={gameState} 
-                       inputType="keyboard_p2" 
+                       inputType="gamepad_p2" 
                        customCamera={camera2 || undefined}
                        playerIndex={2}
                        colorOffset={-0.3} // Reddish
@@ -97,6 +121,20 @@ export default function XakArenaPage() {
                    )}
                  </>
               )}
+
+              {/* Render Remote Players */}
+              {isOnline && Array.from(peers.values()).map(peer => (
+                 <Gladiator 
+                   key={peer.id}
+                   activeWeapon={peer.weapon as any}
+                   position={[peer.x, peer.y, peer.z]}
+                   gameState="playing"
+                   inputType="remote"
+                   remoteState={peer}
+                   colorOffset={0.5}
+                 />
+              ))}
+
             </Physics>
           </Suspense>
         </Canvas>
@@ -134,7 +172,7 @@ export default function XakArenaPage() {
 
           {isSplitscreen && (
              <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/50 text-xs font-bold uppercase tracking-widest text-center pointer-events-none bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
-               P1: WASD+Q/E to rotate, F to fire &nbsp;&bull;&nbsp; P2: Arrows+U/O to rotate, L to fire
+               P1: WASD+Q/E to rotate, F to fire &nbsp;&bull;&nbsp; P2: Gamepad Required (Left Stick move, Right Stick look, A to fire)
              </div>
           )}
         </>

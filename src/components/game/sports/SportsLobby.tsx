@@ -39,13 +39,18 @@ export function SportsLobby({ setGameState, gameMode, setGameMode }: SportsLobby
           className="bg-black/60 backdrop-blur-xl rounded-2xl border border-white/10 p-8 flex flex-col gap-6 pointer-events-auto shadow-2xl items-center"
         >
           <div className="flex gap-4">
-            {["1v1 Split-Screen", "Practice"].map(mode => (
+            {[
+              { name: "2 Player Local", desc: "1v1 Splitscreen" },
+              { name: "3 Player Local", desc: "Free for all or 2v1" },
+              { name: "4 Player Local", desc: "2v2 Chaos" },
+              { name: "Online Multiplayer", desc: "Connect via WebRTC" }
+            ].map((mode) => (
               <button
-                key={mode}
-                onClick={() => setGameMode(mode)}
+                key={mode.name}
+                onClick={() => setGameMode(mode.name)}
                 className={cn(
                   "px-6 py-3 rounded-xl font-black uppercase tracking-wider text-sm transition-all duration-300",
-                  gameMode === mode 
+                  gameMode === mode.name 
                     ? "bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-[0_0_20px_rgba(56,189,248,0.5)] scale-105" 
                     : "bg-white/5 border border-white/10 text-white/50 hover:bg-white/10 hover:text-white"
                 )}

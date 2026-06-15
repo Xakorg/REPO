@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export function useControllerInput(playerIndex: 1 | 2 = 1) {
+export function useControllerInput(playerIndex: 1 | 2 | 3 | 4 = 1) {
   const [input, setInput] = useState({ x: 0, y: 0, kick: false });
 
   useEffect(() => {
@@ -15,13 +15,14 @@ export function useControllerInput(playerIndex: 1 | 2 = 1) {
         if (code === 'KeyS') keys.down = true;
         if (code === 'KeyD') keys.right = true;
         if (code === 'Space') keys.action = true;
-      } else {
+      } else if (playerIndex === 2) {
         if (code === 'ArrowUp') keys.up = true;
         if (code === 'ArrowLeft') keys.left = true;
         if (code === 'ArrowDown') keys.down = true;
         if (code === 'ArrowRight') keys.right = true;
         if (code === 'Enter') keys.action = true;
       }
+      // Players 3 and 4 do NOT have keyboard fallbacks.
     };
     
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -32,7 +33,7 @@ export function useControllerInput(playerIndex: 1 | 2 = 1) {
         if (code === 'KeyS') keys.down = false;
         if (code === 'KeyD') keys.right = false;
         if (code === 'Space') keys.action = false;
-      } else {
+      } else if (playerIndex === 2) {
         if (code === 'ArrowUp') keys.up = false;
         if (code === 'ArrowLeft') keys.left = false;
         if (code === 'ArrowDown') keys.down = false;
@@ -54,7 +55,7 @@ export function useControllerInput(playerIndex: 1 | 2 = 1) {
 
       // Check Gamepads
       const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-      const gp = gamepads[playerIndex - 1]; // Map player 1 to pad 0, player 2 to pad 1
+      const gp = gamepads[playerIndex - 1]; // Map player N to pad N-1
       
       if (gp) {
         // Left stick axes
@@ -67,8 +68,8 @@ export function useControllerInput(playerIndex: 1 | 2 = 1) {
         
         // A / Cross button
         kick = gp.buttons[0]?.pressed;
-      } else {
-        // Fallback to keyboard
+      } else if (playerIndex <= 2) {
+        // Fallback to keyboard only for P1 and P2
         if (keys.up) y -= 1;
         if (keys.down) y += 1;
         if (keys.left) x -= 1;

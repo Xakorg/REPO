@@ -1,20 +1,25 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import * as THREE from "three";
 
 interface SplitscreenCameraProps {
-  player1Ref: React.MutableRefObject<any>;
-  player2Ref: React.MutableRefObject<any>;
+  players: React.MutableRefObject<any>[];
 }
 
-export function SplitscreenCamera({ player1Ref, player2Ref }: SplitscreenCameraProps) {
+export function SplitscreenCamera({ players }: SplitscreenCameraProps) {
   const { gl, scene, size } = useThree();
   
-  // We need two cameras for the two views
-  const camera1 = useRef(new THREE.PerspectiveCamera(45, size.width / 2 / size.height, 0.1, 1000));
-  const camera2 = useRef(new THREE.PerspectiveCamera(45, size.width / 2 / size.height, 0.1, 1000));
+  // Create 4 cameras, we will only use as many as we have players
+  const cameras = useMemo(() => {
+    return [
+      new THREE.PerspectiveCamera(45, 1, 0.1, 1000),
+      new THREE.PerspectiveCamera(45, 1, 0.1, 1000),
+      new THREE.PerspectiveCamera(45, 1, 0.1, 1000),
+      new THREE.PerspectiveCamera(45, 1, 0.1, 1000),
+    ];
+  }, []);
 
   // Disable auto clear so we can render multiple times per frame
   useEffect(() => {
@@ -25,49 +30,75 @@ export function SplitscreenCamera({ player1Ref, player2Ref }: SplitscreenCameraP
   }, [gl]);
 
   useFrame((state) => {
-    if (!player1Ref.current || !player2Ref.current) return;
-
     const width = state.size.width;
     const height = state.size.height;
+    const numPlayers = players.filter(p => p && p.current).length;
+    if (numPlayers === 0) return;
 
-    // Update camera aspect ratios if window resized
-    camera1.current.aspect = (width / 2) / height;
-    camera1.current.updateProjectionMatrix();
-    camera2.current.aspect = (width / 2) / height;
-    camera2.current.updateProjectionMatrix();
+    // Determine layout
+    // 2 players: Side by side (1x2)
+    // 3 or 4 players: 2x2 Grid
+    const isGrid = numPlayers > 2;
 
-    // Player 1 Camera Follow
-    const p1Pos = player1Ref.current.translation();
-    camera1.current.position.set(p1Pos.x, p1Pos.y + 10, p1Pos.z + 15);
-    camera1.current.lookAt(p1Pos.x, p1Pos.y, p1Pos.z);
+    const camWidth = isGrid ? width / 2 : width / numPlayers;
+    const camHeight = isGrid ? height / 2 : height;
 
-    // Player 2 Camera Follow
-    const p2Pos = player2Ref.current.translation();
-    camera2.current.position.set(p2Pos.x, p2Pos.y + 10, p2Pos.z - 15); // P2 looks from the opposite side
-    camera2.current.lookAt(p2Pos.x, p2Pos.y, p2Pos.z);
+    players.forEach((playerRef, index) => {
+      if (!playerRef.current) return;
+      const camera = cameras[index];
+      if (!camera) return;
 
-    // Render Player 1 (Left Half)
-    gl.setViewport(0, 0, width / 2, height);
-    gl.setScissor(0, 0, width / 2, height);
-    gl.setScissorTest(true);
-    // Clear the left side
-    gl.setClearColor("#87CEEB"); // Sky blue
-    gl.clear();
-    gl.render(scene, camera1.current);
+      // Update camera aspect ratios
+      camera.aspect = camWidth / camHeight;
+      camera.updateProjectionMatrix();
 
-    // Render Player 2 (Right Half)
-    gl.setViewport(width / 2, 0, width / 2, height);
-    gl.setScissor(width / 2, 0, width / 2, height);
-    gl.setScissorTest(true);
-    // Clear the right side
-    gl.setClearColor("#87CEEB");
-    gl.clear();
-    gl.render(scene, camera2.current);
+      // Camera Follow logic based on index
+      // P1: Above behind
+      // P2: Opposite side
+      // P3/P4: Perpendicular sides
+      const pPos = playerRef.current.translation();
+      if (index === 0) {
+        camera.position.set(pPos.x, pPos.y + 10, pPos.z + 15);
+      } else if (index === 1) {
+        camera.position.set(pPos.x, pPos.y + 10, pPos.z - 15); 
+      } else if (index === 2) {
+        camera.position.set(pPos.x + 15, pPos.y + 10, pPos.z); 
+      } else {
+        camera.position.set(pPos.x - 15, pPos.y + 10, pPos.z); 
+      }
+      camera.lookAt(pPos.x, pPos.y, pPos.z);
 
-    // Disable scissor test for default R3F pipeline, though we've effectively replaced it
+      // Determine viewport position
+      let vx = 0;
+      let vy = 0;
+
+      if (!isGrid) {
+        // Horizontal split
+        vx = index * camWidth;
+        vy = 0;
+      } else {
+        // 2x2 Grid. WebGL origin is Bottom-Left!
+        // Index 0: Top-Left (x: 0, y: camHeight)
+        // Index 1: Top-Right (x: camWidth, y: camHeight)
+        // Index 2: Bottom-Left (x: 0, y: 0)
+        // Index 3: Bottom-Right (x: camWidth, y: 0)
+        if (index === 0) { vx = 0; vy = camHeight; }
+        else if (index === 1) { vx = camWidth; vy = camHeight; }
+        else if (index === 2) { vx = 0; vy = 0; }
+        else if (index === 3) { vx = camWidth; vy = 0; }
+      }
+
+      // Render
+      gl.setViewport(vx, vy, camWidth, camHeight);
+      gl.setScissor(vx, vy, camWidth, camHeight);
+      gl.setScissorTest(true);
+      gl.setClearColor("#87CEEB"); // Sky blue
+      gl.clear();
+      gl.render(scene, camera);
+    });
+
     gl.setScissorTest(false);
-
-  }, 1); // priority 1 means this takes over the render loop
+  }, 1);
 
   return null;
 }

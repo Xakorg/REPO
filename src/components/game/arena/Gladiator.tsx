@@ -10,12 +10,14 @@ interface GladiatorProps {
   position?: [number, number, number];
   activeWeapon: "gun" | "melee" | "wand";
   gameState?: "lobby" | "playing";
-  inputType?: "mouse" | "keyboard_p1" | "keyboard_p2";
+  inputType?: "mouse" | "keyboard_p1" | "keyboard_p2" | "gamepad_p1" | "gamepad_p2" | "remote";
   innerRef?: React.MutableRefObject<any>;
   colorOffset?: number; // to distinguish P1 vs P2
   customCamera?: THREE.PerspectiveCamera;
   playerIndex?: 1 | 2;
   onHealthChange?: (hp: number) => void;
+  onUpdateNetwork?: (state: any) => void;
+  remoteState?: any;
 }
 
 interface Projectile {
@@ -25,7 +27,7 @@ interface Projectile {
   type: "gun" | "wand";
 }
 
-export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "playing", inputType = "mouse", innerRef, colorOffset = 0, customCamera, playerIndex = 1, onHealthChange }: GladiatorProps) {
+export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "playing", inputType = "mouse", innerRef, colorOffset = 0, customCamera, playerIndex = 1, onHealthChange, onUpdateNetwork, remoteState }: GladiatorProps) {
   const defaultRef = useRef<any>(null);
   const playerRef = innerRef || defaultRef;
   const [, get] = useKeyboardControls();
@@ -128,6 +130,23 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
        return;
     }
 
+    // Remote Player Sync Mode
+    if (inputType === "remote" && remoteState) {
+        playerRef.current.setTranslation({ x: remoteState.x, y: remoteState.y, z: remoteState.z }, true);
+        yaw.current = remoteState.yaw;
+        pitch.current = remoteState.pitch;
+        
+        // Face correct direction
+        const rotQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw.current, 0));
+        playerRef.current.setRotation(rotQ, true);
+
+        // Render projectiles if firing
+        if (remoteState.isFiring) {
+           // We can spawn projectiles here if needed, or rely on NetworkState 
+        }
+        return;
+    }
+
     // --- Playing Mode ---
     // 1. Input & Movement
     let forward = false, backward = false, left = false, right = false, jump = false, shoot = false;
@@ -139,15 +158,30 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
       jump = keys.jump; shoot = keys.shoot;
     } else {
       // Local Splitscreen Keyboard mapping
-      // We don't have access to standard KeyboardControls for two players cleanly, so we poll DOM
-      // Actually we need global key state. For simplicity, we'll read a global object attached to window in useFrame.
       const ks = (window as any).localKeys || {};
       if (inputType === "keyboard_p1") {
         forward = ks['w']; backward = ks['s']; left = ks['a']; right = ks['d'];
         jump = ks[' ']; shoot = ks['f']; rotLeft = ks['q']; rotRight = ks['e'];
-      } else {
+      } else if (inputType === "keyboard_p2") {
         forward = ks['arrowup']; backward = ks['arrowdown']; left = ks['arrowleft']; right = ks['arrowright'];
         jump = ks['shift']; shoot = ks['l']; rotLeft = ks['u']; rotRight = ks['o'];
+      } else if (inputType === "gamepad_p1" || inputType === "gamepad_p2") {
+        const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        const gp = gamepads[inputType === "gamepad_p1" ? 0 : 1];
+        if (gp) {
+          // Left stick for movement
+          if (gp.axes[1] < -0.2) forward = true;
+          if (gp.axes[1] > 0.2) backward = true;
+          if (gp.axes[0] < -0.2) left = true;
+          if (gp.axes[0] > 0.2) right = true;
+          
+          // Right stick for rotation
+          if (gp.axes[2] < -0.2) rotLeft = true;
+          if (gp.axes[2] > 0.2) rotRight = true;
+
+          // A button or Right Trigger for shoot
+          if (gp.buttons[0]?.pressed || gp.buttons[7]?.pressed) shoot = true;
+        }
       }
     }
 
@@ -252,6 +286,20 @@ export function Gladiator({ position = [0, 5, 0], activeWeapon, gameState = "pla
     // Look slightly above the player
     const lookTarget = playerWorldPos.clone().add(new THREE.Vector3(0, 2, 0));
     activeCamera.lookAt(lookTarget);
+
+    // Sync to network
+    if (onUpdateNetwork) {
+       onUpdateNetwork({
+          x: playerWorldPos.x,
+          y: playerWorldPos.y,
+          z: playerWorldPos.z,
+          yaw: yaw.current,
+          pitch: pitch.current,
+          health,
+          weapon: activeWeapon,
+          isFiring: shoot
+       });
+    }
   });
 
   return (
