@@ -114,25 +114,51 @@ export default function MailPage() {
 
   const toggleStar = async (email: any) => {
     if (!firestore || email.isGmail) return;
-    try {
-      const emailRef = doc(firestore, "emails", email.id);
-      await updateDoc(emailRef, { isStarred: !email.isStarred });
-      toast({ title: email.isStarred ? "Removed from Starred" : "Starred successfully" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Action failed" });
+    if (!firestore || !user) return;
+    const ref = doc(firestore, "users", user.uid, "emails", email.id);
+    await updateDoc(ref, { isStarred: !email.isStarred });
+  };
+
+  const togglePin = async (email: any) => {
+    if (!firestore || !user) return;
+    const ref = doc(firestore, "users", user.uid, "emails", email.id);
+    await updateDoc(ref, { isPinned: !email.isPinned });
+  };
+
+  const handleSweep = async () => {
+    if (!firestore || !user || selectedEmails.length === 0) return;
+    const senders = new Set(
+      combinedEmails.filter(e => selectedEmails.includes(e.id)).map(e => e.senderEmail)
+    );
+    const emailsToDelete = combinedEmails.filter(e => senders.has(e.senderEmail));
+    
+    // In a real app we'd use a batch write, but for now we loop
+    for (const email of emailsToDelete) {
+      if (email.isGmail) continue;
+      const ref = doc(firestore, "users", user.uid, "emails", email.id);
+      await deleteDoc(ref);
     }
+    toast({ title: `Swept ${emailsToDelete.length} emails` });
+    setSelectedEmails([]);
+    setSelectedId(null);
   };
 
   const moveToTrash = async (email: any) => {
-    if (!firestore || email.isGmail) return;
-    try {
-      const emailRef = doc(firestore, "emails", email.id);
-      await updateDoc(emailRef, { isDeleted: true });
-      setSelectedId(null);
-      toast({ title: "Moved to Trash" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Action failed" });
-    }
+    if (!firestore || !user) return;
+    const ref = doc(firestore, "users", user.uid, "emails", email.id);
+    await updateDoc(ref, { folder: "trash" });
+    if (selectedId === email.id) setSelectedId(null);
+  };
+
+  const handleSnooze = async (hours: number) => {
+    if (!selectedEmail || !firestore || !user) return;
+    const ref = doc(firestore, "users", user.uid, "emails", selectedEmail.id);
+    await updateDoc(ref, { 
+      folder: "snoozed", 
+      snoozeUntil: new Date(Date.now() + hours * 3600000).toISOString() 
+    });
+    setSelectedId(null);
+    toast({ title: `Snoozed for ${hours} hours` });
   };
 
   const bulkDelete = () => {
@@ -357,58 +383,58 @@ export default function MailPage() {
     try {
       const token = await auth.currentUser.getIdToken();
       const senderName = user?.displayName || userData?.username || "Xakteir User";
-      const senderAddress = userData?.xakteirEmail || (userData?.username ? `${userData.username}@mail.xakteir.com` : null) || (user?.email?.endsWith('@xakteir.com') ? user.email : null);
+    let undone = false;
+    
+    toast({ 
+      title: "Message queued for sending...", 
+      description: "You have 5 seconds to undo.",
+      action: <Button variant="outline" size="sm" onClick={() => { 
+        undone = true; 
+        setIsSending(false);
+        toast({ title: "Sending Undone", description: "Message kept in drafts." }); 
+      }}>Undo</Button>,
+      duration: 5000
+    });
 
-      if (!senderAddress) {
-        throw new Error("You do not have a Xakteir email address configured. Set a username or xakteirEmail in your profile.");
-      }
-
-      const res = await fetch("/api/email/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          to: recipient,
-          subject,
-          body,
-          senderName,
-          senderAddress
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send email");
-
-      // Save to sent folder in firestore
-      if (firestore && user) {
-        await addDoc(collection(firestore, "emails"), {
-          senderUserId: user.uid,
-          senderEmail: senderAddress,
-          senderName,
-          recipientList: [recipient],
-          subject,
-          body,
-          sentDateTime: new Date().toISOString(),
-          isRead: true,
-          folder: "sent",
-          isGmail: false,
-          authorId: user.uid
+    setTimeout(async () => {
+      if (undone) return;
+      try {
+        const res = await fetch('/api/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${await auth.currentUser!.getIdToken()}` },
+          body: JSON.stringify({ 
+            to: recipient, 
+            subject, 
+            body, 
+            senderAddress: `member_${user?.uid}@mail.xakteir.com`,
+            senderName: user?.displayName || "Xakteir Member" 
+          })
         });
+        if (!res.ok) throw new Error("Failed to send email");
+        
+        if (firestore && user) {
+          await addDoc(collection(firestore, "users", user.uid, "emails"), {
+            subject,
+            senderName: user.displayName || "Me",
+            senderEmail: `member_${user.uid}@mail.xakteir.com`,
+            body,
+            sentDateTime: new Date().toISOString(),
+            isRead: true,
+            folder: "sent",
+            isGmail: false,
+            authorId: user.uid
+          });
+        }
+        
+        toast({ title: "Message Sent Successfully" });
+        setIsComposeOpen(false);
+        setRecipient(""); setSubject(""); setBody(""); setAttachments([]);
+      } catch (err: any) {
+        toast({ variant: "destructive", title: "Send Failed", description: err.message });
+      } finally { 
+        setIsSending(false); 
       }
-
-      toast({ 
-        title: "Message Sent", 
-        action: <Button variant="outline" size="sm" onClick={() => toast({title: "Send Undone"})}>Undo</Button> 
-      });
-      setIsComposeOpen(false);
-      setRecipient(""); setSubject(""); setBody(""); setAttachments([]);
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Send Failed", description: err.message });
-    } finally { 
-      setIsSending(false); 
-    }
+    }, 5000);
   };
 
   const handleSummarize = async () => {
@@ -641,6 +667,7 @@ export default function MailPage() {
               {selectedEmails.length > 0 && (
                 <div className="flex items-center gap-2 pt-2">
                   <Button onClick={bulkDelete} size="sm" variant="secondary" className="h-7 text-[10px] uppercase font-bold">Archive/Delete {selectedEmails.length}</Button>
+                  <Button onClick={handleSweep} size="sm" variant="secondary" className="h-7 text-[10px] uppercase font-bold bg-amber-500/20 text-amber-500 hover:bg-amber-500/30">Sweep</Button>
                   <Button onClick={() => setSelectedEmails([])} size="sm" variant="ghost" className="h-7 w-7 p-0"><X className="w-3 h-3" /></Button>
                 </div>
               )}
@@ -660,7 +687,9 @@ export default function MailPage() {
                     <div className="flex-1 min-w-0" onClick={() => handleSelectEmail(email)}>
                       <div className="flex justify-between items-center mb-1">
                         <span className={cn("text-[11px] truncate pr-2", !email.isRead ? "font-black text-white" : "font-bold text-white/70")}>
-                          {email.senderName} {email.isImportant && <Badge variant="secondary" className="ml-1 text-[8px] h-4 px-1 bg-amber-500/20 text-amber-500">Important</Badge>}
+                          {email.senderName} 
+                          {email.isImportant && <Badge variant="secondary" className="ml-1 text-[8px] h-4 px-1 bg-amber-500/20 text-amber-500">Important</Badge>}
+                          {email.isPinned && <Pin className="w-3 h-3 inline ml-1 text-primary" />}
                         </span>
                         <span className={cn("text-[9px] whitespace-nowrap", !email.isRead ? "text-primary font-bold" : "text-white/40")}>{email.sentDateTime ? new Date(email.sentDateTime).toLocaleDateString() : ''}</span>
                       </div>
@@ -705,6 +734,9 @@ export default function MailPage() {
                         <Button onClick={() => setIsTranslating(!isTranslating)} variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full", isTranslating ? "bg-primary/20 text-primary" : "text-white/50")}><Languages className="w-4 h-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => toggleStar(selectedEmail)} className={cn("hover:bg-amber-500/10", selectedEmail.isStarred ? "text-amber-500" : "text-white/40 hover:text-amber-400")}>
                             <Star className={cn("w-5 h-5", selectedEmail.isStarred && "fill-amber-500")} />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => togglePin(selectedEmail)} className={cn("hover:bg-primary/10", selectedEmail.isPinned ? "text-primary" : "text-white/40 hover:text-primary")}>
+                            <Pin className={cn("w-5 h-5", selectedEmail.isPinned && "fill-primary")} />
                           </Button>
                           <Button variant="ghost" size="icon" onClick={() => moveToTrash(selectedEmail)} className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10">
                             <Trash2 className="w-5 h-5" />

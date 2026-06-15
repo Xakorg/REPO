@@ -83,7 +83,7 @@ function RemotePlayer({ data }: { data: any }) {
           outlineWidth={0.05}
           outlineColor="black"
         >
-          {displayName}
+          {String(displayName || 'Member')}
         </Text>
       </Billboard>
     </group>
