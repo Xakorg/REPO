@@ -10,7 +10,7 @@ import {
   Globe, RefreshCw, LogOut, MailCheck, Search, Clock, Paperclip, 
   Lock, Calendar, CheckSquare, AlertTriangle, Languages, Split,
   LayoutDashboard, Settings, MoreVertical, X, Check, Archive, XCircle,
-  Bot, Wand2
+  Bot, Wand2, CornerUpLeft
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -167,6 +167,22 @@ export default function MailPage() {
     } catch (e) {
       toast({ variant: "destructive", title: "Action failed" });
     }
+  };
+
+  const handleSelectEmail = async (email: any) => {
+    setSelectedId(email.id);
+    if (!email.isRead && !email.isGmail && firestore) {
+      const emailRef = doc(firestore, "emails", email.id);
+      await updateDoc(emailRef, { isRead: true }).catch(() => {});
+    }
+  };
+
+  const handleReply = () => {
+    if (!selectedEmail) return;
+    setRecipient(selectedEmail.senderEmail);
+    setSubject(`Re: ${selectedEmail.subject.replace(/^Re:\s*/i, '')}`);
+    setBody(`<br><br><blockquote style="border-left: 2px solid #555; padding-left: 10px; color: #888;">On ${new Date(selectedEmail.sentDateTime || Date.now()).toLocaleString()}, ${selectedEmail.senderName} wrote:<br>${selectedEmail.body}</blockquote>`);
+    setIsComposeOpen(true);
   };
 
   // Gmail states
@@ -605,15 +621,15 @@ export default function MailPage() {
                         className="border-white/20 data-[state=checked]:bg-primary"
                       />
                     </div>
-                    <div className="flex-1 min-w-0" onClick={() => setSelectedId(email.id)}>
+                    <div className="flex-1 min-w-0" onClick={() => handleSelectEmail(email)}>
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-[11px] font-bold text-white/90 truncate pr-2">
+                        <span className={cn("text-[11px] truncate pr-2", !email.isRead ? "font-black text-white" : "font-bold text-white/70")}>
                           {email.senderName} {email.isImportant && <Badge variant="secondary" className="ml-1 text-[8px] h-4 px-1 bg-amber-500/20 text-amber-500">Important</Badge>}
                         </span>
-                        <span className="text-[9px] text-white/40 whitespace-nowrap">{email.sentDateTime ? new Date(email.sentDateTime).toLocaleDateString() : ''}</span>
+                        <span className={cn("text-[9px] whitespace-nowrap", !email.isRead ? "text-primary font-bold" : "text-white/40")}>{email.sentDateTime ? new Date(email.sentDateTime).toLocaleDateString() : ''}</span>
                       </div>
-                      <h4 className="text-[11px] font-bold text-white truncate">{email.subject}</h4>
-                      <p className="text-[10px] text-white/50 truncate mt-0.5">{email.body}</p>
+                      <h4 className={cn("text-[11px] truncate", !email.isRead ? "font-black text-white" : "font-bold text-white/80")}>{email.subject}</h4>
+                      <p className={cn("text-[10px] truncate mt-0.5", !email.isRead ? "text-white/70" : "text-white/50")}>{email.body}</p>
                     </div>
                   </div>
                 ))}
@@ -651,6 +667,9 @@ export default function MailPage() {
                       <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white">{isTranslating ? "TRANSLATED: " + selectedEmail.subject : selectedEmail.subject}</h2>
                       <div className="flex gap-2 shrink-0">
                         <Button onClick={() => setIsTranslating(!isTranslating)} variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full", isTranslating ? "bg-primary/20 text-primary" : "text-white/50")}><Languages className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => toggleStar(selectedEmail)} className={cn("hover:bg-amber-500/10", selectedEmail.isStarred ? "text-amber-500" : "text-white/40 hover:text-amber-400")}>
+                            <Star className={cn("w-5 h-5", selectedEmail.isStarred && "fill-amber-500")} />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => moveToTrash(selectedEmail)} className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10">
                             <Trash2 className="w-5 h-5" />
                           </Button>
@@ -697,6 +716,10 @@ export default function MailPage() {
                         <Button onClick={handleSmartReply} disabled={isGeneratingReply} variant="outline" className="h-10 bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 font-bold text-xs uppercase tracking-widest">
                           {isGeneratingReply ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Wand2 className="w-4 h-4 mr-2" />}
                           Smart Reply
+                        </Button>
+                        <Button onClick={handleReply} variant="outline" className="h-10 bg-white/5 border-white/10 text-white hover:bg-white/10 font-bold text-xs uppercase tracking-widest">
+                          <CornerUpLeft className="w-4 h-4 mr-2" />
+                          Reply
                         </Button>
                       </div>
                       
