@@ -56,274 +56,41 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-const INVIDIOUS_INSTANCES = [
-  "https://yewtu.be",
-  "https://invidious.flokinet.to",
-  "https://invidious.nerdvpn.de",
-  "https://iv.melmac.space",
-  "https://invidious.projectsegfaut.im",
-];
-
-const DEFAULT_VIDEOS = [
-  {
-    id: "default_rickroll",
-    youtubeId: "dQw4w9WgXcQ",
-    title: "Rick Astley - Never Gonna Give You Up (Official Music Video)",
-    author: "Rick Astley",
-    authorId: "rickastley",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=rickastley",
-    views: 1492004523,
-    likes: 17293049,
-    description:
-      "The official video for 'Never Gonna Give You Up' by Rick Astley. Subscribe to the official Rick Astley YouTube channel.",
-    isYoutube: true,
-  },
-  {
-    id: "default_gangnam",
-    youtubeId: "9bZkp7q19f0",
-    title: "PSY - GANGNAM STYLE(강남스타일) M/V",
-    author: "officialpsy",
-    authorId: "officialpsy",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=officialpsy",
-    views: 5120304953,
-    likes: 28409321,
-    description:
-      "PSY - Gangnam Style M/V. The record-breaking K-pop phenomenon.",
-    isYoutube: true,
-  },
-  {
-    id: "default_me_at_zoo",
-    youtubeId: "jNQXAC9IVRw",
-    title: "Me at the zoo",
-    author: "jawed",
-    authorId: "jawed",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=jawed",
-    views: 312049301,
-    likes: 15403210,
-    description:
-      "The first video on YouTube. Recorded by Yakov Lapitsky at the San Diego Zoo.",
-    isYoutube: true,
-  },
-  {
-    id: "default_charlie",
-    youtubeId: "_OBlgSz8sSM",
-    title: "Charlie bit my finger - again !",
-    author: "HDCYT",
-    authorId: "hdcyt",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=hdcyt",
-    views: 902940294,
-    likes: 2409321,
-    description:
-      "Even in the internet age, some things remain timeless. Charlie biting Harry's finger.",
-    isYoutube: true,
-  },
-  {
-    id: "default_nyancat",
-    youtubeId: "QH2-TGUlwu4",
-    title: "Nyan Cat [original]",
-    author: "saraj00n",
-    authorId: "saraj00n",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=saraj00n",
-    views: 212903492,
-    likes: 3509421,
-    description: "Pop Tart Cat flying through space.",
-    isYoutube: true,
-  },
-  {
-    id: "default_lofigirl",
-    youtubeId: "jfKfPfyJRdk",
-    title: "lofi hip hop radio 📚 - beats to relax/study to",
-    author: "Lofi Girl",
-    authorId: "lofigirl",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=lofigirl",
-    views: 890432104,
-    likes: 12403912,
-    description:
-      "Thank you for listening, I hope you will have a good time and enjoy the lofi beats.",
-    isYoutube: true,
-  },
-  {
-    id: "default_historyworld",
-    youtubeId: "xuCn8YmSrf4",
-    title: "history of the entire world, i guess",
-    author: "bill wurtz",
-    authorId: "billwurtz",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=billwurtz",
-    views: 162093491,
-    likes: 9540932,
-    description: "history of the entire world, i guess. By Bill Wurtz.",
-    isYoutube: true,
-  },
-  {
-    id: "default_keyboardcat",
-    youtubeId: "J---aiyznGQ",
-    title: "Charlie Schmidt's Keyboard Cat! - THE ORIGINAL!",
-    author: "Charlie Schmidt",
-    authorId: "charlieschmidt",
-    authorPhoto:
-      "https://api.dicebear.com/7.x/identicon/svg?seed=charlieschmidt",
-    views: 74092102,
-    likes: 1209432,
-    description: "Play him off, Keyboard Cat! The legendary internet meme.",
-    isYoutube: true,
-  },
-  {
-    id: "default_doublerainbow",
-    youtubeId: "OQSNhk5ICTI",
-    title: "Yosemite Bear Mountain Double Rainbow 1-8-10",
-    author: "Yosemitebear62",
-    authorId: "yosemitebear",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=yosemitebear",
-    views: 52093410,
-    likes: 650943,
-    description: "Double Rainbow all the way across the sky! So intense!",
-    isYoutube: true,
-  },
-  {
-    id: "default_panda",
-    youtubeId: "FzRH3iTQPrk",
-    title: "The Sneezing Baby Panda",
-    author: "leshanley",
-    authorId: "leshanley",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=leshanley",
-    views: 294029402,
-    likes: 1840294,
-    description:
-      "Classic video of a baby panda sneezing and startling its mother.",
-    isYoutube: true,
-  },
-  {
-    id: "default_fenton",
-    youtubeId: "3GRSbr0EYYU",
-    title: "FENTON! Jesus Christ in Richmond Park",
-    author: "huskydog",
-    authorId: "huskydog",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=huskydog",
-    views: 27940294,
-    likes: 493021,
-    description: "Oh, Jesus Christ! Fenton chasing the deer in Richmond Park.",
-    isYoutube: true,
-  },
-  {
-    id: "default_dentist",
-    youtubeId: "txqiwrbYGeg",
-    title: "David After Dentist",
-    author: "booba",
-    authorId: "booba",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=booba",
-    views: 145029482,
-    likes: 1209342,
-    description: "Is this real life? David recovering from dental surgery.",
-    isYoutube: true,
-  },
-  {
-    id: "default_chocolate_rain",
-    youtubeId: "EwTZ2xpQwpA",
-    title: "Tay Zonday - Chocolate Rain",
-    author: "TayZonday",
-    authorId: "tayzonday",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=tayzonday",
-    views: 139049210,
-    likes: 1940294,
-    description:
-      "Tay Zonday sings 'Chocolate Rain'. The viral singing sensation.",
-    isYoutube: true,
-  },
-  {
-    id: "default_creeper_aw_man",
-    youtubeId: "cPJUBQ9MZvY",
-    title: "Minecraft - Revenge (Creeper Aw Man) Music Video",
-    author: "CaptainSparklez",
-    authorId: "captainsparklez",
-    authorPhoto:
-      "https://api.dicebear.com/7.x/identicon/svg?seed=captainsparklez",
-    views: 290403210,
-    likes: 5809432,
-    description: "Creeper, Aw Man! The legendary Minecraft music parody.",
-    isYoutube: true,
-  },
-  {
-    id: "default_crazyfrog",
-    youtubeId: "k85mRPdQElY",
-    title: "Crazy Frog - Axel F (Official Video)",
-    author: "Crazy Frog",
-    authorId: "crazyfrog",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=crazyfrog",
-    views: 4509432109,
-    likes: 19482039,
-    description: "Axel F by Crazy Frog.",
-    isYoutube: true,
-  },
-  {
-    id: "default_somebody_used",
-    youtubeId: "8WYHDf2QU18",
-    title: "Gotye - Somebody That I Used To Know (feat. Kimbra)",
-    author: "gotyemusic",
-    authorId: "gotyemusic",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=gotyemusic",
-    views: 2310294829,
-    likes: 14029302,
-    description:
-      "Gotye performing 'Somebody That I Used To Know' featuring Kimbra.",
-    isYoutube: true,
-  },
-  {
-    id: "default_despacito",
-    youtubeId: "kJQP7kiw5Fk",
-    title: "Luis Fonsi - Despacito ft. Daddy Yankee",
-    author: "Luis Fonsi",
-    authorId: "luisfonsi",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=luisfonsi",
-    views: 8402948291,
-    likes: 53904921,
-    description: "Despacito by Luis Fonsi featuring Daddy Yankee.",
-    isYoutube: true,
-  },
-  {
-    id: "default_baby_shark",
-    youtubeId: "XqZsoesa55w",
-    title: "Baby Shark Dance | #babyshark Most Viewed Video",
-    author: "Pinkfong",
-    authorId: "pinkfong",
-    authorPhoto: "https://api.dicebear.com/7.x/identicon/svg?seed=pinkfong",
-    views: 14502930412,
-    likes: 42903820,
-    description:
-      "Baby Shark Dance, the single most viewed video in YouTube history.",
-    isYoutube: true,
-  },
-];
+const YOUTUBE_API_KEY = "AIzaSyCgN4iYJl6F6p5dGwsY43Tgd5mbs4WDRJY";
 
 const searchYoutubeVideos = async (queryText: string) => {
-  for (const instance of INVIDIOUS_INSTANCES) {
-    try {
-      const res = await fetch(
-        `${instance}/api/v1/search?q=${encodeURIComponent(queryText)}&type=video`,
-      );
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        return data.map((item: any) => ({
-          id: `yt_${item.videoId}`,
-          youtubeId: item.videoId,
-          title: item.title,
-          author: item.author || "YouTube Creator",
-          authorId:
-            "youtube_" +
-            (item.author
-              ? item.author.replace(/\s+/g, "").toLowerCase()
-              : "creator"),
-          authorPhoto: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(item.author || item.videoId)}`,
-          views: item.viewCount || Math.floor(Math.random() * 500000) + 50000,
-          likes: Math.floor((item.viewCount || 100000) * 0.05),
-          description:
-            item.description || `YouTube video by ${item.author || "Creator"}.`,
-          isYoutube: true,
-        }));
-      }
-    } catch (e) {
-      console.warn(`Failed YouTube search via ${instance}`, e);
+  try {
+    let url = "";
+    if (queryText.trim()) {
+      url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=${encodeURIComponent(queryText)}&type=video&key=${YOUTUBE_API_KEY}`;
+    } else {
+      url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&maxResults=25&key=${YOUTUBE_API_KEY}`;
     }
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (data.items) {
+      return data.items.map((item: any) => {
+        const videoId = typeof item.id === 'object' ? item.id.videoId : item.id;
+        const snippet = item.snippet;
+        const stats = item.statistics;
+        return {
+          id: `yt_${videoId}`,
+          youtubeId: videoId,
+          title: snippet?.title || "YouTube Video",
+          author: snippet?.channelTitle || "YouTube Creator",
+          authorId: "youtube_" + (snippet?.channelId || "creator"),
+          authorPhoto: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(snippet?.channelTitle || videoId)}`,
+          views: stats?.viewCount ? parseInt(stats.viewCount) : Math.floor(Math.random() * 500000) + 50000,
+          likes: stats?.likeCount ? parseInt(stats.likeCount) : Math.floor(Math.random() * 50000) + 5000,
+          description: snippet?.description || `YouTube video by ${snippet?.channelTitle || "Creator"}.`,
+          isYoutube: true,
+          thumbnail: snippet?.thumbnails?.medium?.url || snippet?.thumbnails?.default?.url || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+        };
+      });
+    }
+  } catch (e) {
+    console.warn(`Failed YouTube search`, e);
   }
   return [];
 };
@@ -422,10 +189,6 @@ export default function XakViewPage() {
 
   // Debounced search for YouTube videos
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setYoutubeVideos([]);
-      return;
-    }
     const delayDebounce = setTimeout(async () => {
       setIsYTSearching(true);
       const results = await searchYoutubeVideos(searchQuery);
@@ -524,13 +287,6 @@ export default function XakViewPage() {
   const filteredVideos = useMemo(() => {
     const localList = dbVideos || [];
     let list = [...localList];
-
-    // Merge default static videos if not already in Firestore list by youtubeId
-    DEFAULT_VIDEOS.forEach((d) => {
-      if (!list.some((v) => v.youtubeId === d.youtubeId)) {
-        list.push(d);
-      }
-    });
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -1356,7 +1112,7 @@ export default function XakViewPage() {
                     >
                       <div className="relative w-44 h-28 rounded-2xl overflow-hidden shrink-0 shadow-xl bg-black border border-white/5">
                         <Image
-                          src={`https://picsum.photos/seed/${video.id}/400/225`}
+                          src={video.thumbnail || `https://picsum.photos/seed/${video.id}/400/225`}
                           alt="Thumb"
                           fill
                           className="object-cover group-hover:scale-110 transition-transform duration-700 opacity-60"
@@ -1713,7 +1469,7 @@ export default function XakViewPage() {
                 >
                   <div className="relative aspect-video rounded-2xl overflow-hidden shadow-xl bg-black border border-white/5 mb-4">
                     <Image
-                      src={`https://picsum.photos/seed/${video.id}/400/225`}
+                      src={video.thumbnail || `https://picsum.photos/seed/${video.id}/400/225`}
                       alt="Thumb"
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-700 opacity-60"

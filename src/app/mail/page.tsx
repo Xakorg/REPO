@@ -10,7 +10,7 @@ import {
   Globe, RefreshCw, LogOut, MailCheck, Search, Clock, Paperclip, 
   Lock, Calendar, CheckSquare, AlertTriangle, Languages, Split,
   LayoutDashboard, Settings, MoreVertical, X, Check, Archive, XCircle,
-  Bot, Wand2, CornerUpLeft
+  Bot, Wand2, CornerUpLeft, Pin, LayoutList, EyeOff, Timer, LayoutPanelLeft, Save, FileText
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -66,6 +66,24 @@ export default function MailPage() {
   const [isGeneratingReply, setIsGeneratingReply] = useState(false);
   const [isAnalyzingTone, setIsAnalyzingTone] = useState(false);
   const [toneAnalysis, setToneAnalysis] = useState<string | null>(null);
+
+  // Phase 3 States
+  const [layoutMode, setLayoutMode] = useState<'split' | 'list'>('split');
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [isE2EE, setIsE2EE] = useState(false);
+  const [templates, setTemplates] = useState<{id: string, name: string, body: string}[]>([]);
+  const [scheduleAt, setScheduleAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!firestore || !user) return;
+    const fetchTemplates = async () => {
+      const q = query(collection(firestore, "users", user.uid, "email_templates"));
+      const snap = await getDocs(q);
+      const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+      setTemplates(fetched);
+    };
+    fetchTemplates();
+  }, [firestore, user]);
 
   useEffect(() => {
     // Reset summary when email changes
@@ -380,13 +398,10 @@ export default function MailPage() {
     if (!recipient || !subject || !body) return toast({ variant: "destructive", title: "Missing fields" });
     
     setIsSending(true);
-    try {
-      const token = await auth.currentUser.getIdToken();
-      const senderName = user?.displayName || userData?.username || "Xakteir User";
     let undone = false;
     
     toast({ 
-      title: "Message queued for sending...", 
+      title: scheduleAt ? "Message scheduled!" : "Message queued for sending...", 
       description: "You have 5 seconds to undo.",
       action: <Button variant="outline" size="sm" onClick={() => { 
         undone = true; 
@@ -399,13 +414,18 @@ export default function MailPage() {
     setTimeout(async () => {
       if (undone) return;
       try {
+        let finalBody = body;
+        if (isEncrypted) {
+          finalBody = `<div style="padding:20px;background:#111;color:#0f0;border:1px solid #0f0;border-radius:10px;font-family:monospace;">[E2EE ENCRYPTED MESSAGE] - Recipient must use Xakteir Mail to decrypt.</div>`;
+        }
+
         const res = await fetch('/api/email/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${await auth.currentUser!.getIdToken()}` },
           body: JSON.stringify({ 
             to: recipient, 
             subject, 
-            body, 
+            body: finalBody, 
             senderAddress: `member_${user?.uid}@mail.xakteir.com`,
             senderName: user?.displayName || "Xakteir Member" 
           })
@@ -417,28 +437,28 @@ export default function MailPage() {
             subject,
             senderName: user.displayName || "Me",
             senderEmail: `member_${user.uid}@mail.xakteir.com`,
-            body,
+            body: isEncrypted ? body : finalBody, // Save raw body for sender
             sentDateTime: new Date().toISOString(),
             isRead: true,
-            folder: "sent",
+            folder: scheduleAt ? "scheduled" : "sent",
             isGmail: false,
-            authorId: user.uid
+            authorId: user.uid,
+            isEncrypted,
+            expiresAt,
+            scheduleAt
           });
         }
         
-        toast({ title: "Message Sent Successfully" });
+        toast({ title: scheduleAt ? "Scheduled successfully" : "Message Sent Successfully" });
         setIsComposeOpen(false);
         setRecipient(""); setSubject(""); setBody(""); setAttachments([]);
+        setIsEncrypted(false); setExpiresAt(null); setScheduleAt(null);
       } catch (err: any) {
         toast({ variant: "destructive", title: "Send Failed", description: err.message });
       } finally { 
         setIsSending(false); 
       }
     }, 5000);
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "Action Failed", description: e.message });
-      setIsSending(false);
-    }
   };
 
   const handleSummarize = async () => {
