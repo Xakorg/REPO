@@ -198,26 +198,28 @@ export default function Room3D({ serverName }: { serverName: string }) {
       </div>
 
       <Canvas>
-        <Sky sunPosition={[100, 20, 100]} turbidity={0.1} rayleigh={0.5} />
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
+        <React.Suspense fallback={null}>
+          <Sky sunPosition={[100, 20, 100]} turbidity={0.1} rayleigh={0.5} />
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
 
-        {/* Floor */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
-          <planeGeometry args={[100, 100]} />
-          <meshStandardMaterial color="#1f2937" />
-        </mesh>
-        <gridHelper args={[100, 100, 0x000000, 0x000000]} position={[0, -0.09, 0]} material-opacity={0.2} material-transparent />
+          {/* Floor */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+            <planeGeometry args={[100, 100]} />
+            <meshStandardMaterial color="#1f2937" />
+          </mesh>
+          <gridHelper args={[100, 100, 0x000000, 0x000000]} position={[0, -0.09, 0]} material-opacity={0.2} material-transparent />
 
-        <LocalPlayer position={localPos} setPosition={setLocalPos} setRotation={setLocalRot} />
-        
-        {/* Render remote players */}
-        {Object.values(remotePlayers).map(p => (
-          <RemotePlayer key={p.uid} data={p} />
-        ))}
+          <LocalPlayer position={localPos} setPosition={setLocalPos} setRotation={setLocalRot} />
+          
+          {/* Render remote players */}
+          {Object.values(remotePlayers).map(p => (
+            <RemotePlayer key={p.uid} data={p} />
+          ))}
 
-        {/* Arcade Machine Zone */}
-        <ArcadeMachine position={[5, 0, -5]} onEnter={() => console.log("Arcade")} />
+          {/* Arcade Machine Zone */}
+          <ArcadeMachine position={[5, 0, -5]} onEnter={() => console.log("Arcade")} />
+        </React.Suspense>
       </Canvas>
     </div>
   );

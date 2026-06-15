@@ -64,11 +64,18 @@ export default function MailPage() {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
   const [isGeneratingReply, setIsGeneratingReply] = useState(false);
+  const [isAnalyzingTone, setIsAnalyzingTone] = useState(false);
+  const [toneAnalysis, setToneAnalysis] = useState<string | null>(null);
 
   useEffect(() => {
     // Reset summary when email changes
     setSummary(null);
   }, [selectedId]);
+
+  useEffect(() => {
+    // Reset tone when composing a new email or closing
+    if (!isComposeOpen) setToneAnalysis(null);
+  }, [isComposeOpen]);
   
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -440,6 +447,23 @@ export default function MailPage() {
     }
   };
 
+  const handleAnalyzeTone = async () => {
+    if (!body) return;
+    setIsAnalyzingTone(true);
+    setToneAnalysis(null);
+    try {
+      const response = await chatWithXakAI({
+        message: `Analyze the tone of this email draft. Is it professional, friendly, angry, or too casual? Provide a 1-2 sentence concise analysis. Draft: ${body}`,
+        userId: user?.uid
+      });
+      setToneAnalysis(response.response);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Failed to analyze tone" });
+    } finally {
+      setIsAnalyzingTone(false);
+    }
+  };
+
   const applyTemplate = (val: string) => {
     if (val === 'meeting') setBody("Hi,\\n\\nLet's schedule a meeting for next week. Let me know what time works for you.\\n\\nBest,");
     if (val === 'thanks') setBody("Thank you so much for your email!\\n\\nI'll get back to you shortly.");
@@ -494,10 +518,22 @@ export default function MailPage() {
                 <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" className="bg-[#0b0b14]/60 border-transparent h-12 rounded-xl text-white" />
                 <div className="relative">
                   <RichTextEditor content={body} onChange={setBody} placeholder="Type message body..." className="min-h-[250px]" />
+                  
+                  {toneAnalysis && (
+                    <div className="absolute top-4 right-4 bg-zinc-900/90 border border-white/10 backdrop-blur-md p-3 rounded-xl max-w-xs shadow-2xl animate-in fade-in zoom-in">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Wand2 className="w-4 h-4 text-primary" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">Tone Analysis</span>
+                      </div>
+                      <p className="text-xs text-white/80">{toneAnalysis}</p>
+                    </div>
+                  )}
+
                   <div className="absolute bottom-4 left-4 flex gap-2 items-center">
                     <input type="file" ref={attachmentInputRef} className="hidden" onChange={handleAttachmentUpload} />
-                    <Button variant="ghost" size="icon" onClick={() => attachmentInputRef.current?.click()} className="h-8 w-8 text-white/50 hover:text-white rounded-full">
-                      {isUploadingAttachment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+                    <Button variant="ghost" size="icon" onClick={() => attachmentInputRef.current?.click()} className="h-8 w-8 text-white/50 hover:text-white rounded-full"><Paperclip className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={handleAnalyzeTone} disabled={isAnalyzingTone || !body} className={cn("h-8 w-8 rounded-full", isAnalyzingTone ? "text-primary animate-pulse" : "text-white/50 hover:text-white")}>
+                      <Wand2 className="w-4 h-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white rounded-full"><LayoutDashboard className="w-4 h-4" /> {/* Drive Integration */}</Button>
                     <Button variant="ghost" size="icon" onClick={() => setIsEncrypted(!isEncrypted)} className={cn("h-8 w-8 rounded-full", isEncrypted ? "text-green-400" : "text-white/50")}><Lock className="w-4 h-4" /></Button>
