@@ -435,6 +435,10 @@ export default function MailPage() {
         setIsSending(false); 
       }
     }, 5000);
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Action Failed", description: e.message });
+      setIsSending(false);
+    }
   };
 
   const handleSummarize = async () => {

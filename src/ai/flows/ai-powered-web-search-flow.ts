@@ -26,13 +26,16 @@ const searchPrompt = ai.definePrompt({
   name: 'searchPrompt',
   input: {schema: SearchInputSchema},
   output: {schema: SearchOutputSchema},
-  prompt: `You are the Xakteir Search Assistant. Your goal is to provide helpful, clear, and direct answers to the user's questions based on their search query.
-
+  prompt: `You are the Xakteir Search Assistant. Your goal is to provide extremely concise, direct answers.
+  
 User Query: {{{query}}}
 
-When relevant, prioritize trustworthy, well-known web sources. If you would normally consult an index, prefer these default sites if they are applicable: google.com, duckduckgo.com, bing.com, youtube.com, wikipedia.org, stackoverflow.com, reddit.com, poki.com, friv.com, itch.io.
+If the user query is a single word, or explicitly asks for a definition, ALWAYS start your response exactly like a dictionary definition format:
+"[Word] Definition & Meaning
+# [word]. [part of speech] [definition]
+Origin of [word]: [origin]."
 
-Answer the user directly in a professional and friendly tone. Keep your response concise and easy to read. DO NOT use jargon like "logic shards" or "neural sync." Speak in plain English.`,
+For all other queries, answer directly in a professional and friendly tone. Keep your overall response extremely concise, ideally 1 to 3 sentences maximum. DO NOT use jargon. Speak in plain English.`,
 });
 
 const searchFlow = ai.defineFlow(

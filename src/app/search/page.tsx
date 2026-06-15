@@ -555,14 +555,35 @@ function SearchContent() {
     // Traditional link results will load via the firestore query below
     router.push(`/search?q=${encodeURIComponent(target.trim())}`, { scroll: false });
 
-    // Wikipedia summary removed. Using local definitions only.
     const queryLowerTarget = target.toLowerCase().trim();
-    const matchedDefKeyTarget = Object.keys(LOCAL_DEFINITIONS).find(key => 
-      queryLowerTarget === key || queryLowerTarget.includes(key)
-    );
-    const matchedDef = matchedDefKeyTarget ? LOCAL_DEFINITIONS[matchedDefKeyTarget] : null;
-    if (matchedDef) {
-      setWikiDefinition(matchedDef);
+    if (queryLowerTarget.split(' ').length <= 2 && queryLowerTarget.match(/^[a-z]+$/)) {
+      try {
+        const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(queryLowerTarget)}`);
+        if (dictRes.ok) {
+          const dictData = await dictRes.json();
+          if (dictData && dictData.length > 0) {
+            const entry = dictData[0];
+            const meaning = entry.meanings[0];
+            const def = meaning.definitions[0];
+            setWikiDefinition({
+              title: entry.word.toUpperCase() + " Definition & Meaning",
+              type: meaning.partOfSpeech,
+              definition: def.definition,
+              facts: {
+                "Phonetic": entry.phonetic || entry.phonetics?.[0]?.text || "",
+                "Example": def.example || ""
+              }
+            });
+          }
+        } else {
+          setWikiDefinition(null);
+        }
+      } catch (e) {
+        console.error("Dictionary API Error:", e);
+        setWikiDefinition(null);
+      }
+    } else {
+      setWikiDefinition(null);
     }
 
     try {
@@ -2217,8 +2238,39 @@ console.log(solve("hello"));`}
                   </div>
                 </Card>
               )}
-
             </div>
+          )}
+
+          {/* Dictionary Definition Widget (Main Column) */}
+          {activeCategory === "all" && activeDefinition && (
+            <Card className="p-6 border-white/10 bg-zinc-900/40 rounded-3xl overflow-hidden animate-in slide-in-from-top-4 max-w-3xl">
+              <div className="flex gap-6">
+                {activeDefinition.image && (
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 border border-white/10">
+                    <img src={activeDefinition.image} alt={activeDefinition.title} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h2 className="text-2xl font-black text-white">{activeDefinition.title}</h2>
+                    {activeDefinition.facts?.Phonetic && (
+                      <span className="text-zinc-500 font-mono text-sm">{activeDefinition.facts.Phonetic}</span>
+                    )}
+                  </div>
+                  <div className="text-xs font-black uppercase tracking-widest text-primary mb-3">
+                    {activeDefinition.type}
+                  </div>
+                  <p className="text-sm text-zinc-300 leading-relaxed">
+                    {activeDefinition.definition}
+                  </p>
+                  {activeDefinition.facts?.Example && (
+                    <p className="text-sm text-zinc-500 italic mt-2">
+                      "{activeDefinition.facts.Example}"
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Card>
           )}
 
           {/* AI Quick Response Section (Only on "All" category) */}
@@ -2600,41 +2652,6 @@ console.log(solve("hello"));`}
               </div>
             </Card>
           )}
-
-          {/* Knowledge Sidebar */}
-          {activeDefinition && (
-            <Card className="border-white/10 bg-zinc-900/50 overflow-hidden backdrop-blur-xl">
-              {activeDefinition.image && (
-                <div className="h-48 w-full relative">
-                  <img src={activeDefinition.image} alt={activeDefinition.title} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent" />
-                </div>
-              )}
-              <div className="p-5 relative -mt-12">
-                <div className="flex items-start justify-between gap-4 mb-2">
-                  <h2 className="text-2xl font-black text-white">{activeDefinition.title}</h2>
-                </div>
-                <p className="text-xs text-primary font-bold uppercase tracking-widest mb-3">
-                  {activeDefinition.type}
-                </p>
-                <p className="text-sm text-zinc-300 leading-relaxed mb-4">
-                  {activeDefinition.definition}
-                </p>
-                
-                {activeDefinition.facts && Object.keys(activeDefinition.facts).length > 0 && (
-                  <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-white/10">
-                    {Object.entries(activeDefinition.facts).map(([key, val]) => (
-                      <div key={key}>
-                        <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">{key}</p>
-                        {String(val).startsWith("http") ? (
-                          <a href={String(val)} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline truncate block">Link</a>
-                        ) : (
-                          <p className="text-sm text-zinc-200">{String(val)}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
 
                 <div className="mt-6 pt-4 border-t border-white/10 flex flex-col gap-2">
                   <Button variant="secondary" className="w-full justify-between bg-white/5 hover:bg-white/10 border border-white/5 text-white">
