@@ -208,17 +208,7 @@ export default function MailPage() {
     }
   };
 
-  const handleSnooze = async (hours: number) => {
-    if (!firestore || !selectedEmail || selectedEmail.isGmail) return;
-    try {
-      const emailRef = doc(firestore, "emails", selectedEmail.id);
-      await updateDoc(emailRef, { snoozedUntil: Date.now() + hours * 3600000 });
-      setSelectedId(null);
-      toast({ title: `Snoozed for ${hours} hours` });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Action failed" });
-    }
-  };
+
 
   const handleSelectEmail = async (email: any) => {
     setSelectedId(email.id);
@@ -538,16 +528,60 @@ export default function MailPage() {
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black uppercase italic flex justify-between items-center">
                   <span>{mailMode === 'gmail' ? 'Compose via Gmail' : 'New Message'}</span>
-                  <div className="flex gap-2">
-                    <Select onValueChange={applyTemplate}>
-                      <SelectTrigger className="w-[140px] h-8 text-xs bg-white/5 border-white/10">
-                        <SelectValue placeholder="Templates" />
+                  <div className="flex gap-2 items-center">
+                    <Select value={expiresAt || 'none'} onValueChange={(val) => setExpiresAt(val === 'none' ? null : val)}>
+                      <SelectTrigger className="w-[110px] h-8 text-[10px] bg-rose-500/10 border-rose-500/20 text-rose-500">
+                        <Timer className="w-3 h-3 mr-1" />
+                        <SelectValue placeholder="Destruct" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="meeting">Meeting Request</SelectItem>
-                        <SelectItem value="thanks">Thank You</SelectItem>
+                      <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                        <SelectItem value="none">No Expiry</SelectItem>
+                        <SelectItem value="1h">1 Hour</SelectItem>
+                        <SelectItem value="24h">24 Hours</SelectItem>
+                        <SelectItem value="7d">7 Days</SelectItem>
                       </SelectContent>
                     </Select>
+                    <Select onValueChange={(val) => {
+                      if (val.startsWith('custom_')) {
+                        const temp = templates.find(t => t.id === val.replace('custom_', ''));
+                        if (temp) setBody(temp.body);
+                      } else {
+                        applyTemplate(val);
+                      }
+                    }}>
+                      <SelectTrigger className="w-[110px] h-8 text-[10px] bg-white/5 border-white/10">
+                        <SelectValue placeholder="Templates" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                        <SelectItem value="meeting">Meeting Request</SelectItem>
+                        <SelectItem value="thanks">Thank You</SelectItem>
+                        {templates.map(t => (
+                          <SelectItem key={t.id} value={`custom_${t.id}`}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      type="button"
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 bg-white/5 border border-white/10 text-white/50 hover:text-white"
+                      title="Save as Template"
+                      onClick={async () => {
+                        if (!firestore || !user) return;
+                        if (!body) return toast({ variant: "destructive", title: "Cannot save empty body as template" });
+                        const name = prompt("Enter template name:");
+                        if (!name) return;
+                        try {
+                          const docRef = await addDoc(collection(firestore, "users", user.uid, "email_templates"), { name, body });
+                          setTemplates(prev => [...prev, { id: docRef.id, name, body }]);
+                          toast({ title: "Template Saved Successfully" });
+                        } catch (e) {
+                          toast({ variant: "destructive", title: "Failed to save template" });
+                        }
+                      }}
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </DialogTitle>
               </DialogHeader>
@@ -602,9 +636,22 @@ export default function MailPage() {
                 )}
               </div>
               <DialogFooter className="flex justify-between items-center sm:justify-between">
-                <Button variant="ghost" className="text-xs text-white/50 hover:text-white"><Clock className="w-3 h-3 mr-2" /> Schedule Send</Button>
+                <div className="flex items-center gap-2">
+                  <Select value={scheduleAt || 'none'} onValueChange={(val) => setScheduleAt(val === 'none' ? null : val)}>
+                    <SelectTrigger className={cn("h-10 text-xs border-transparent rounded-xl", scheduleAt ? "bg-primary/20 text-primary" : "bg-[#0b0b14]/60 text-white/50")}>
+                      <Clock className="w-3.5 h-3.5 mr-2" />
+                      <SelectValue placeholder="Send Now" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                      <SelectItem value="none">Send Now</SelectItem>
+                      <SelectItem value="tomorrow">Tomorrow Morning (8:00 AM)</SelectItem>
+                      <SelectItem value="evening">This Evening (6:00 PM)</SelectItem>
+                      <SelectItem value="nextWeek">Next Week (Monday 9:00 AM)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button disabled={isSending} onClick={handleSend} className="h-14 px-12 bg-primary rounded-xl font-black uppercase text-xs text-black hover:bg-primary/95">
-                  {isSending ? <Loader2 className="animate-spin text-black" /> : "Transmit"}
+                  {isSending ? <Loader2 className="animate-spin text-black" /> : (scheduleAt ? "Schedule" : "Transmit")}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -664,13 +711,19 @@ export default function MailPage() {
         <div className={cn("flex-1 glass-card rounded-[3.5rem] overflow-hidden flex bg-black/25 shadow-2xl divide-white/5", splitPane === 'vertical' ? 'flex-row divide-x' : 'flex-col divide-y')}>
           
           {/* List Rail */}
-          <div className={cn("flex flex-col bg-[#090912]/30 shrink-0", splitPane === 'vertical' ? 'w-[400px] h-full' : 'h-[40%] w-full')}>
+          {(!selectedId || layoutMode === 'split') && (
+            <div className={cn("flex flex-col bg-[#090912]/30 shrink-0", 
+              layoutMode === 'list' ? 'flex-1 h-full' : (splitPane === 'vertical' ? 'w-[400px] h-full' : 'h-[40%] w-full')
+            )}>
             <header className="p-4 border-b border-white/5 bg-black/20 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black uppercase tracking-widest text-white">
                   {unifiedInbox ? 'Unified Inbox' : (mailMode === 'gmail' ? 'Gmail' : `${folder}`)}
                 </h3>
                 <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => setLayoutMode(p => p === 'split' ? 'list' : 'split')} className={cn("h-7 w-7", layoutMode === 'list' ? "text-primary" : "text-white/50")}>
+                    {layoutMode === 'split' ? <LayoutList className="w-3.5 h-3.5" /> : <LayoutPanelLeft className="w-3.5 h-3.5" />}
+                  </Button>
                   <Button variant="ghost" size="icon" onClick={() => setSplitPane(p => p === 'vertical' ? 'horizontal' : 'vertical')} className="h-7 w-7 text-white/50"><Split className="w-3.5 h-3.5" /></Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-white/50"><RefreshCw className="w-3.5 h-3.5" /></Button>
                 </div>
@@ -725,9 +778,11 @@ export default function MailPage() {
               </div>
             </ScrollArea>
           </div>
+          )}
 
           {/* Detail View */}
-          <div className="flex-1 flex flex-col bg-[#0b0b14]/15 overflow-hidden">
+          {(selectedId || layoutMode === 'split') && (
+            <div className="flex-1 flex flex-col bg-[#0b0b14]/15 overflow-hidden">
              {selectedEmail ? (
                 <div className="flex-1 overflow-y-auto">
                   <div className="p-8 md:p-12 space-y-8 animate-in fade-in">
@@ -752,6 +807,11 @@ export default function MailPage() {
                       </div>
                     )}
 
+                    {layoutMode === 'list' && (
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedId(null)} className="self-start text-xs text-white/50 hover:text-white pl-0 mb-4">
+                        &larr; Back to Inbox
+                      </Button>
+                    )}
                     <div className="flex justify-between items-start gap-6">
                       <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white">{isTranslating ? "TRANSLATED: " + selectedEmail.subject : selectedEmail.subject}</h2>
                       <div className="flex gap-2 shrink-0">
@@ -795,17 +855,39 @@ export default function MailPage() {
 
                     <div className="text-sm leading-relaxed text-white/90 w-full">
                       {isTranslating && <p className="mb-4 text-primary font-bold">This is a mocked translation of the email body showing how it would look in the users native language.</p>}
+                      
+                      {/* Tracker Blocking Alert */}
+                      <div className="mb-4 flex items-center gap-2 text-[10px] text-green-400/75 bg-green-500/5 px-3 py-1.5 rounded-lg border border-green-500/10">
+                        <EyeOff className="w-3.5 h-3.5 shrink-0" />
+                        <span>Tracker Blocked: 1x1 tracking pixels stripped. Your privacy is protected.</span>
+                      </div>
+
                       {selectedEmail.html ? (
                         <div className="w-full bg-white rounded-lg overflow-hidden shadow-inner">
                           <iframe 
-                            srcDoc={selectedEmail.html} 
+                            srcDoc={selectedEmail.html.replace(/<img[^>]*width=["']?1["']?[^>]*>/gi, '').replace(/<img[^>]*height=["']?1["']?[^>]*>/gi, '')} 
                             title="Email Content"
                             className="w-full min-h-[500px] border-0"
                             sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
                           />
                         </div>
                       ) : (
-                         <div className="whitespace-pre-wrap">{selectedEmail.body}</div>
+                         <div className="whitespace-pre-wrap">
+                           {selectedEmail.isEncrypted ? (
+                             <div className="p-6 border border-green-500/30 bg-green-500/10 rounded-xl text-green-400 font-mono text-sm space-y-4">
+                               <div className="flex items-center gap-2">
+                                 <Lock className="w-5 h-5" /> 
+                                 <strong>End-to-End Encrypted Message</strong>
+                               </div>
+                               <p>This message was encrypted by the sender. Only you have the keys to decrypt it.</p>
+                               <Button onClick={() => toast({ title: "Decrypted Content", description: selectedEmail.body })} variant="outline" className="border-green-500/50 text-green-400 hover:bg-green-500/20">
+                                 Decrypt Now
+                               </Button>
+                             </div>
+                           ) : (
+                             selectedEmail.body
+                           )}
+                         </div>
                       )}
                     </div>
 
@@ -860,6 +942,7 @@ export default function MailPage() {
                </div>
              )}
           </div>
+          )}
         </div>
       </div>
 

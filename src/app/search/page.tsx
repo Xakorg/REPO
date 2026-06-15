@@ -2650,8 +2650,6 @@ console.log(solve("hello"));`}
                   );
                 })}
               </div>
-            </Card>
-          )}
 
                 <div className="mt-6 pt-4 border-t border-white/10 flex flex-col gap-2">
                   <Button variant="secondary" className="w-full justify-between bg-white/5 hover:bg-white/10 border border-white/5 text-white">
@@ -2663,7 +2661,6 @@ console.log(solve("hello"));`}
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
-              </div>
             </Card>
           )}
 
