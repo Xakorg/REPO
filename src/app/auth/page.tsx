@@ -16,7 +16,7 @@ import {
   sendPasswordResetEmail
 } from "firebase/auth";
 import { doc, setDoc, getDoc, getDocs, collection, query, where } from "firebase/firestore";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Lock, AtSign, ArrowRight, Sparkles, ShieldCheck, Chrome, HelpCircle, RefreshCw, EyeOff, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,6 +45,8 @@ export default function AuthPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const isAddAccount = pathname?.includes('/auth/add-acct');
   const { toast } = useToast();
 
   const saveToVault = (uid: string, provider: 'password' | 'google', userEmail: string, userPassword?: string) => {
@@ -65,14 +67,14 @@ export default function AuthPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (existingUser && !showAnimation) {
+    if (existingUser && !showAnimation && !isAddAccount) {
       router.push("/");
     }
-  }, [existingUser, router, showAnimation]);
+  }, [existingUser, router, showAnimation, isAddAccount]);
 
   useEffect(() => {
     let isMounted = true;
-    if (existingUser && step !== 'verify-2fa' && !showAnimation) {
+    if (existingUser && step !== 'verify-2fa' && !showAnimation && !isAddAccount) {
       existingUser.getIdToken().then(idToken => {
         fetch('/api/auth/sync', {
           method: 'POST',
