@@ -445,7 +445,7 @@ export function Header() {
                 </div>
 
                 {accounts.length < 5 && (
-                  <button onClick={() => { if (auth) signOut(auth); router.push('/auth'); }} className="w-[calc(100%-12px)] mx-1.5 flex items-center justify-center gap-2 p-3 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-all border border-dashed border-primary/20 hover:border-primary/40 mt-1">
+                  <button onClick={() => { if (auth) signOut(auth); router.push('/auth/add-acct'); }} className="w-[calc(100%-12px)] mx-1.5 flex items-center justify-center gap-2 p-3 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-all border border-dashed border-primary/20 hover:border-primary/40 mt-1">
                     <Plus className="w-4 h-4" /> Add Profile
                   </button>
                 )}

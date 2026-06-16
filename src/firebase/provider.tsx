@@ -266,8 +266,9 @@ export const useUser = (): UserHookResult => {
     }
   }, [firebaseUser]);
 
-  if (activeAccount) {
-    const mockUser = {
+  const memoizedUser = useMemo(() => {
+    if (!activeAccount) return null;
+    return {
       uid: activeAccount.uid,
       email: activeAccount.email,
       displayName: activeAccount.displayName,
@@ -278,9 +279,12 @@ export const useUser = (): UserHookResult => {
       metadata: {},
       providerData: [],
     } as any;
+  }, [activeAccount?.uid, activeAccount?.email, activeAccount?.displayName, activeAccount?.photoURL]);
 
-    return { user: mockUser, isUserLoading: false, userError: null };
-  }
-
-  return { user: firebaseUser, isUserLoading, userError };
+  return useMemo(() => {
+    if (activeAccount && memoizedUser) {
+      return { user: memoizedUser, isUserLoading: false, userError: null };
+    }
+    return { user: firebaseUser, isUserLoading, userError };
+  }, [activeAccount, memoizedUser, firebaseUser, isUserLoading, userError]);
 };
