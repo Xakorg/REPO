@@ -63,6 +63,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useUser, useAuth, useMemoFirebase, useFirestore, useCollection, useDoc } from "@/firebase";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Check } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -164,6 +166,59 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { isFocusMode } = useSuiteStore();
+  const { toast } = useToast();
+
+  // Multi-account switcher state
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [newName, setNewName] = useState("");
+
+  useEffect(() => {
+    const updateAccounts = () => {
+      const accs = localStorage.getItem("xakteir_accounts");
+      const activeId = localStorage.getItem("xakteir_active_account_id");
+      if (accs) setAccounts(JSON.parse(accs));
+      if (activeId) setActiveAccountId(activeId);
+    };
+    updateAccounts();
+    window.addEventListener("xakteir-accounts-changed", updateAccounts);
+    return () => window.removeEventListener("xakteir-accounts-changed", updateAccounts);
+  }, []);
+
+  const handleSwitchAccount = (uid: string) => {
+    localStorage.setItem("xakteir_active_account_id", uid);
+    window.dispatchEvent(new Event("xakteir-accounts-changed"));
+    toast({ title: "Account Switched", description: "Switched active profile." });
+  };
+
+  const handleAddAccount = () => {
+    if (accounts.length >= 5) {
+      toast({ variant: "destructive", title: "Limit Reached", description: "You can have up to 5 accounts." });
+      return;
+    }
+    if (!newEmail || !newName) {
+      toast({ variant: "destructive", title: "Missing fields", description: "Please enter name and email." });
+      return;
+    }
+    const newUid = "mock_user_" + Math.random().toString(36).substring(2, 9);
+    const newAcc = {
+      uid: newUid,
+      email: newEmail,
+      displayName: newName,
+      photoURL: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(newName)}`,
+      hat: ""
+    };
+    const updated = [...accounts, newAcc];
+    localStorage.setItem("xakteir_accounts", JSON.stringify(updated));
+    localStorage.setItem("xakteir_active_account_id", newUid);
+    window.dispatchEvent(new Event("xakteir-accounts-changed"));
+    setIsAdding(false);
+    setNewEmail("");
+    setNewName("");
+    toast({ title: "Account Added", description: `Switched to ${newName}` });
+  };
 
   useEffect(() => { 
     setMounted(true); 
@@ -327,18 +382,71 @@ export function Header() {
                   </div>
                 </div>
               </PopoverTrigger>
-              <PopoverContent className="w-72 p-2 glass-card rounded-[2.5rem] mt-6 border-4 border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.8)] overflow-hidden" align="end">
-                <div className="p-6 border-b-2 border-white/5 bg-black/40 mb-3 rounded-t-[1.5rem] text-white text-center">
-                   <p className="text-[10px] font-black uppercase tracking-widest text-primary italic">Account</p>
-                   <p className="text-[13px] font-bold text-white mt-2 truncate italic">{user.email}</p>
+              <PopoverContent className="w-80 p-2 glass-card rounded-[2.5rem] mt-6 border-4 border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.8)] overflow-hidden" align="end">
+                <div className="p-4 border-b-2 border-white/5 bg-black/40 mb-3 rounded-t-[1.5rem] text-white text-center">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-primary italic">Profiles ({accounts.length}/5)</p>
                 </div>
-                <div className="space-y-1.5 p-1.5 text-white">
-                   <button onClick={() => router.push('/profile')} className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 text-[11px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all text-left">
-                      <UserIcon className="w-5 h-5 text-primary" /> Profile
+
+                <div className="space-y-1 max-h-[200px] overflow-y-auto px-1.5">
+                  {accounts.map((acc: any) => (
+                    <div 
+                      key={acc.uid} 
+                      onClick={() => handleSwitchAccount(acc.uid)}
+                      className={cn(
+                        "flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all hover:bg-white/5",
+                        activeAccountId === acc.uid ? "bg-white/5 border border-white/10" : "border border-transparent"
+                      )}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar className="w-8 h-8 rounded-lg border border-white/10">
+                          <AvatarImage src={acc.photoURL} />
+                          <AvatarFallback className="bg-primary text-white text-xs font-black">{acc.displayName?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex flex-col text-left">
+                          <span className="text-xs font-bold text-white truncate">{acc.displayName}</span>
+                          <span className="text-[9px] text-white/40 truncate">{acc.email}</span>
+                        </div>
+                      </div>
+                      {activeAccountId === acc.uid && <Check className="w-4 h-4 text-primary shrink-0" />}
+                    </div>
+                  ))}
+                </div>
+
+                {isAdding ? (
+                  <div className="p-3 bg-black/40 rounded-2xl border border-white/10 m-1.5 space-y-2.5 animate-in slide-in-from-top-2">
+                    <Input 
+                      placeholder="Name" 
+                      value={newName} 
+                      onChange={(e) => setNewName(e.target.value)} 
+                      className="h-8 rounded-lg bg-black/60 border-white/10 text-xs text-white" 
+                    />
+                    <Input 
+                      placeholder="Email" 
+                      value={newEmail} 
+                      onChange={(e) => setNewEmail(e.target.value)} 
+                      className="h-8 rounded-lg bg-black/60 border-white/10 text-xs text-white" 
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={handleAddAccount} className="flex-1 h-8 bg-primary hover:bg-primary/95 text-black text-[10px] font-black uppercase tracking-wider rounded-lg">Add</Button>
+                      <Button onClick={() => setIsAdding(false)} variant="ghost" className="flex-1 h-8 text-[10px] font-black uppercase tracking-wider rounded-lg border border-white/10 text-white">Cancel</Button>
+                    </div>
+                  </div>
+                ) : (
+                  accounts.length < 5 && (
+                    <button onClick={() => setIsAdding(true)} className="w-[calc(100%-12px)] mx-1.5 flex items-center justify-center gap-2 p-3 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-all border border-dashed border-primary/20 hover:border-primary/40 mt-1">
+                      <Plus className="w-4 h-4" /> Add Profile
+                    </button>
+                  )
+                )}
+
+                <div className="h-0.5 bg-white/5 my-3 mx-1.5" />
+
+                <div className="space-y-1 p-1.5 text-white">
+                   <button onClick={() => router.push('/profile')} className="w-full flex items-center gap-4 p-3.5 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all text-left">
+                      <UserIcon className="w-4 h-4 text-primary" /> Profile
                    </button>
-                   <div className="h-0.5 bg-white/5 my-3" />
-                   <button onClick={() => { auth && signOut(auth); router.push('/'); }} className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-rose-500/10 text-[11px] font-black uppercase tracking-widest text-rose-500 transition-all text-left">
-                      <LogOut className="w-5 h-5" /> Sign Out
+                   <button onClick={() => { auth && signOut(auth); localStorage.removeItem("xakteir_accounts"); localStorage.removeItem("xakteir_active_account_id"); window.dispatchEvent(new Event("xakteir-accounts-changed")); router.push('/'); }} className="w-full flex items-center gap-4 p-3.5 rounded-2xl hover:bg-rose-500/10 text-[10px] font-black uppercase tracking-widest text-rose-500 transition-all text-left">
+                      <LogOut className="w-4 h-4" /> Sign Out
                    </button>
                 </div>
               </PopoverContent>

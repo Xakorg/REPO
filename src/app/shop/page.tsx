@@ -404,7 +404,7 @@ export default function ShopPage() {
                     <p className="text-muted-foreground font-black uppercase tracking-widest text-lg">No items found in this category.</p>
                 </div>
             )}
-          </div>
+          </motion.div>
         </div>
 
         <div className="lg:col-span-4">

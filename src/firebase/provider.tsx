@@ -225,6 +225,62 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
  * @returns {UserHookResult} Object with user, isUserLoading, userError.
  */
 export const useUser = (): UserHookResult => {
-  const { user, isUserLoading, userError } = useFirebase();
-  return { user, isUserLoading, userError };
+  const { user: firebaseUser, isUserLoading, userError } = useFirebase();
+  const [activeAccount, setActiveAccount] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const checkActiveAccount = () => {
+      const accountsJson = localStorage.getItem('xakteir_accounts');
+      const activeId = localStorage.getItem('xakteir_active_account_id');
+      if (accountsJson && activeId) {
+        const accounts = JSON.parse(accountsJson);
+        const active = accounts.find((a: any) => a.uid === activeId);
+        if (active) {
+          setActiveAccount(active);
+          return;
+        }
+      }
+      setActiveAccount(null);
+    };
+
+    checkActiveAccount();
+    window.addEventListener('xakteir-accounts-changed', checkActiveAccount);
+    return () => window.removeEventListener('xakteir-accounts-changed', checkActiveAccount);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (firebaseUser && !localStorage.getItem('xakteir_accounts')) {
+      const initialAccounts = [{
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || "user@xakteir.com",
+        displayName: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User",
+        photoURL: firebaseUser.photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(firebaseUser.displayName || "User")}`,
+        hat: ""
+      }];
+      localStorage.setItem('xakteir_accounts', JSON.stringify(initialAccounts));
+      localStorage.setItem('xakteir_active_account_id', firebaseUser.uid);
+      window.dispatchEvent(new Event('xakteir-accounts-changed'));
+    }
+  }, [firebaseUser]);
+
+  if (activeAccount) {
+    const mockUser = {
+      uid: activeAccount.uid,
+      email: activeAccount.email,
+      displayName: activeAccount.displayName,
+      photoURL: activeAccount.photoURL,
+      getIdToken: async () => "mock_token_" + activeAccount.uid,
+      emailVerified: true,
+      isAnonymous: false,
+      metadata: {},
+      providerData: [],
+    } as any;
+
+    return { user: mockUser, isUserLoading: false, userError: null };
+  }
+
+  return { user: firebaseUser, isUserLoading, userError };
 };
