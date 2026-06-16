@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Cloud, LayoutGrid, Mail, Users, Key, Activity, Database, FileCode2, RadioReceiver, GitBranch, Zap } from "lucide-react";
+import { Cloud, LayoutGrid, Mail, Users, Key, Activity, Database, FileCode2, RadioReceiver, GitBranch, Zap, Bug, TerminalSquare, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { usePathname, useRouter } from "next/navigation";
@@ -38,12 +38,14 @@ export default function DevCentreLayout({ children }: { children: React.ReactNod
     { name: "Dev Storage", path: "/dev-centre/storage", icon: Database },
     { name: "Dev Socket", path: "/dev-centre/sockets", icon: RadioReceiver },
     { name: "Dev Git", path: "/dev-centre/git", icon: GitBranch },
+    { name: "Database Playground", path: "/dev-centre/database", icon: TerminalSquare },
     { name: "Webhooks", path: "/dev-centre/webhooks", icon: Zap },
     { name: "Custom Emails", path: "/dev-centre/emails", icon: Mail },
     { name: "Teams & IAM", path: "/dev-centre/teams", icon: Users },
     { name: "App Credentials", path: "/dev-centre/credentials", icon: Key },
-    // Cloud Monitoring placeholder for phase 3
+    { name: "Dev Crashlytics", path: "/dev-centre/crashlytics", icon: Bug },
     { name: "Cloud Monitoring", path: "/dev-centre/monitoring", icon: Activity },
+    { name: "Billing & Plans", path: "/dev-centre/billing", icon: CreditCard },
   ];
 
   if (!user) {
