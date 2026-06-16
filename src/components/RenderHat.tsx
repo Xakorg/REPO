@@ -177,3 +177,80 @@ export function getNameplateClass(nameplateKey?: string, defaultClass: string = 
     default: return defaultClass;
   }
 }
+
+export function RenderPet({ petKey }: { petKey?: string }) {
+  if (!petKey) return null;
+  switch (petKey) {
+    case 'cyberwolf':
+      return (
+        <div className="absolute -right-8 bottom-0 w-12 h-12 pointer-events-none drop-shadow-[0_0_10px_rgba(56,189,248,0.5)] z-40">
+           <svg viewBox="0 0 50 50" className="w-full h-full fill-sky-500 animate-pulse">
+              <path d="M10 40 L20 20 L30 25 L40 10 L45 30 L35 50 Z" />
+              <circle cx="35" cy="20" r="2" className="fill-white" />
+           </svg>
+        </div>
+      );
+    case 'minidragon':
+      return (
+        <div className="absolute -left-6 top-4 w-10 h-10 pointer-events-none drop-shadow-[0_0_15px_rgba(239,68,68,0.6)] z-40 animate-bounce" style={{ animationDuration: '3s' }}>
+           <svg viewBox="0 0 50 50" className="w-full h-full fill-red-500">
+              <path d="M25 0 Q40 10 50 25 Q35 40 25 50 Q10 35 0 25 Q10 10 25 0 Z" />
+              <path d="M0 25 L10 15 L20 30 Z" className="fill-orange-400" />
+              <path d="M50 25 L40 15 L30 30 Z" className="fill-orange-400" />
+           </svg>
+        </div>
+      );
+    case 'voidentity':
+      return (
+        <div className="absolute -right-6 top-0 w-14 h-14 pointer-events-none drop-shadow-[0_0_20px_rgba(168,85,247,0.8)] z-40 mix-blend-color-dodge">
+           <div className="w-full h-full bg-purple-600 rounded-full animate-ping opacity-50 blur-sm" />
+           <div className="absolute inset-2 bg-black rounded-full shadow-inner flex items-center justify-center">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+           </div>
+        </div>
+      );
+    default:
+      return null;
+  }
+}
+
+export function RenderBanner({ bannerKey, className }: { bannerKey?: string, className?: string }) {
+  if (!bannerKey) return null;
+  switch (bannerKey) {
+    case 'matrix':
+      return (
+        <div className={cn("absolute inset-0 bg-black overflow-hidden pointer-events-none", className)}>
+           <div className="absolute inset-0 opacity-30 bg-[linear-gradient(180deg,transparent,rgba(34,197,94,0.5),transparent)] bg-[length:100%_200%] animate-[matrix_5s_linear_infinite]" />
+           <div className="w-full h-full opacity-20 text-green-500 font-mono text-[8px] tracking-[0.5em] whitespace-pre-wrap break-all leading-tight">
+              {"1010100101100111010100110101010100101010101010010111001010101001110100101010".repeat(20)}
+           </div>
+        </div>
+      );
+    case 'retrowave':
+      return (
+        <div className={cn("absolute inset-0 bg-gradient-to-b from-indigo-900 via-purple-900 to-pink-900 pointer-events-none overflow-hidden", className)}>
+           <div className="absolute bottom-0 w-full h-1/2 bg-[linear-gradient(rgba(236,72,153,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(236,72,153,0.3)_1px,transparent_1px)] bg-[size:20px_10px] [transform:perspective(500px)_rotateX(60deg)] origin-bottom" />
+           <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-32 h-32 rounded-full bg-gradient-to-b from-yellow-400 to-pink-500 shadow-[0_0_50px_rgba(236,72,153,0.5)] blur-[2px]" />
+        </div>
+      );
+    case 'galactic':
+      return (
+        <div className={cn("absolute inset-0 bg-slate-950 pointer-events-none overflow-hidden", className)}>
+           <div className="absolute inset-0 opacity-50 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.2),transparent_70%)]" />
+           <div className="absolute inset-0 opacity-30">
+             {Array.from({length: 20}).map((_,i) => (
+                <div key={i} className="absolute bg-white rounded-full animate-pulse" style={{
+                  width: Math.random() * 3 + 'px',
+                  height: Math.random() * 3 + 'px',
+                  top: Math.random() * 100 + '%',
+                  left: Math.random() * 100 + '%',
+                  animationDelay: Math.random() * 2 + 's'
+                }} />
+             ))}
+           </div>
+        </div>
+      );
+    default:
+      return null;
+  }
+}

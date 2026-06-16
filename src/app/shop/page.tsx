@@ -100,6 +100,16 @@ const ALL_SHOP_ITEMS = [
   { id: 64, name: "Floating Orbs", category: "Decorations", type: 'decor', key: 'stars', price: 1300, color: "text-indigo-300", bg: "bg-indigo-300/10", rarity: "Legendary", description: "Mysterious glowing spheres." },
   { id: 65, name: "Alien Pet", category: "Decorations", type: 'decor', key: 'bot', price: 1800, color: "text-lime-500", bg: "bg-lime-500/10", rarity: "Mythic", description: "A companion from another world." },
   { id: 66, name: "Dragon Hatchling", category: "Decorations", type: 'decor', key: 'cat', price: 4800, color: "text-red-600", bg: "bg-red-600/20", rarity: "Exotic", description: "A tiny, fire-breathing friend." },
+
+  // Pets (3 items)
+  { id: 67, name: "Cyber Wolf", category: "Pets", type: 'pet', key: 'cyberwolf', price: 6000, color: "text-sky-400", bg: "bg-sky-500/10", rarity: "Exotic", description: "A loyal holographic wolf companion." },
+  { id: 68, name: "Mini Dragon", category: "Pets", type: 'pet', key: 'minidragon', price: 4500, color: "text-red-500", bg: "bg-red-500/10", rarity: "Mythic", description: "A small fire-breathing dragon." },
+  { id: 69, name: "Void Entity", category: "Pets", type: 'pet', key: 'voidentity', price: 8000, color: "text-purple-500", bg: "bg-purple-600/20", rarity: "Exotic", description: "An entity from the deep void." },
+
+  // Banners (3 items)
+  { id: 70, name: "Matrix Rain", category: "Banners", type: 'banner', key: 'matrix', price: 2000, color: "text-green-500", bg: "bg-green-500/10", rarity: "Legendary", description: "Falling green code background." },
+  { id: 71, name: "Retrowave Sunset", category: "Banners", type: 'banner', key: 'retrowave', price: 2500, color: "text-pink-500", bg: "bg-pink-500/10", rarity: "Mythic", description: "A retro 80s synthwave sunset." },
+  { id: 72, name: "Galactic Void", category: "Banners", type: 'banner', key: 'galactic', price: 3500, color: "text-indigo-400", bg: "bg-indigo-500/10", rarity: "Exotic", description: "Stare into the endless galaxy." },
 ];
 
 export default function ShopPage() {
