@@ -57,7 +57,8 @@ import {
   PenTool,
   PlaySquare,
   Settings,
-  Sparkles
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +70,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { signOut } from "firebase/auth";
+import { signOut, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { collection, query, where, doc } from "firebase/firestore";
 import { triggerCommandCenter } from "@/components/CommandCenter";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -204,10 +205,46 @@ export function Header() {
     }
   }, [user]);
 
-  const handleSwitchAccount = (acc: any) => {
+  const [isSwitching, setIsSwitching] = useState(false);
+
+  const handleSwitchAccount = async (acc: any) => {
     if (user && user.uid === acc.uid) return;
-    if (auth) signOut(auth);
-    router.push(`/auth?email=${encodeURIComponent(acc.email)}`);
+    
+    setIsSwitching(true);
+    const vaultStr = localStorage.getItem('xakteir_vault');
+    if (!vaultStr) {
+      setIsSwitching(false);
+      if (auth) signOut(auth);
+      router.push(`/auth?email=${encodeURIComponent(acc.email)}`);
+      return;
+    }
+    
+    const vault = JSON.parse(vaultStr);
+    const savedCreds = vault[acc.uid];
+    
+    if (savedCreds) {
+      toast({ title: "Switching Profiles...", description: `Logging in to ${acc.displayName}` });
+      if (auth) signOut(auth);
+      
+      try {
+        if (savedCreds.provider === 'password' && savedCreds.password) {
+          await signInWithEmailAndPassword(auth, savedCreds.email, savedCreds.password);
+          toast({ title: "Account Switched", description: `Welcome back, ${acc.displayName}` });
+        } else if (savedCreds.provider === 'google') {
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ login_hint: savedCreds.email });
+          await signInWithPopup(auth, provider);
+          toast({ title: "Account Switched", description: `Welcome back, ${acc.displayName}` });
+        }
+      } catch (e: any) {
+        toast({ variant: "destructive", title: "Switch Failed", description: "Session expired. Please sign in again." });
+        router.push(`/auth?email=${encodeURIComponent(acc.email)}`);
+      }
+    } else {
+      if (auth) signOut(auth);
+      router.push(`/auth?email=${encodeURIComponent(acc.email)}`);
+    }
+    setIsSwitching(false);
   };
 
   useEffect(() => { 
@@ -372,7 +409,12 @@ export function Header() {
                   </div>
                 </div>
               </PopoverTrigger>
-              <PopoverContent className="w-80 p-2 glass-card rounded-[2.5rem] mt-6 border-4 border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.8)] overflow-hidden" align="end">
+              <PopoverContent className="w-80 p-2 glass-card rounded-[2.5rem] mt-6 border-4 border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.8)] overflow-hidden relative" align="end">
+                {isSwitching && (
+                  <div className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center rounded-[2.5rem] backdrop-blur-sm">
+                     <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                  </div>
+                )}
                 <div className="p-4 border-b-2 border-white/5 bg-black/40 mb-3 rounded-t-[1.5rem] text-white text-center">
                    <p className="text-[10px] font-black uppercase tracking-widest text-primary italic">Profiles ({accounts.length}/5)</p>
                 </div>

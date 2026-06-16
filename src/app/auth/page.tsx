@@ -46,6 +46,14 @@ export default function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+
+  const saveToVault = (uid: string, provider: 'password' | 'google', userEmail: string, userPassword?: string) => {
+    try {
+      const vault = JSON.parse(localStorage.getItem('xakteir_vault') || '{}');
+      vault[uid] = { provider, email: userEmail, password: userPassword };
+      localStorage.setItem('xakteir_vault', JSON.stringify(vault));
+    } catch (e) {}
+  };
   
   useEffect(() => {
     setMounted(true);
@@ -108,8 +116,10 @@ export default function AuthPage() {
         }
         
         if (activeTab === 'signup') {
+           saveToVault(user.uid, 'google', user.email || "");
            finishWizard();
         } else {
+           saveToVault(user.uid, 'google', user.email || "");
            toast({ title: "Signed In", description: `Welcome, ${user.displayName}!` });
         }
       })
@@ -126,6 +136,7 @@ export default function AuthPage() {
     setIsLoading(true);
     signInWithEmailAndPassword(auth, email, password)
       .then(async (userCredential) => {
+        saveToVault(userCredential.user.uid, 'password', email, password);
         const userDoc = await getDoc(doc(firestore, "users", userCredential.user.uid));
         if (userDoc.exists() && userDoc.data().twoFactorEnabled) {
           setStep('verify-2fa');
@@ -201,6 +212,7 @@ export default function AuthPage() {
           photoURL: `https://api.dicebear.com/7.x/bottts/svg?seed=${finalUsername}`
         });
 
+        saveToVault(user.uid, 'password', email, password);
         finishWizard();
       })
       .catch((error) => {
