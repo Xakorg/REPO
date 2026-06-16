@@ -16,7 +16,7 @@ import {
   sendPasswordResetEmail
 } from "firebase/auth";
 import { doc, setDoc, getDoc, getDocs, collection, query, where } from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Lock, AtSign, ArrowRight, Sparkles, ShieldCheck, Chrome, HelpCircle, RefreshCw, EyeOff, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -44,11 +44,17 @@ export default function AuthPage() {
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   
   useEffect(() => {
     setMounted(true);
-  }, []);
+    const prefilledEmail = searchParams?.get('email');
+    if (prefilledEmail) {
+      setEmail(prefilledEmail);
+      setActiveTab('signin');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (existingUser && !showAnimation) {

@@ -171,9 +171,6 @@ export function Header() {
   // Multi-account switcher state
   const [accounts, setAccounts] = useState<any[]>([]);
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
-  const [newEmail, setNewEmail] = useState("");
-  const [newName, setNewName] = useState("");
 
   useEffect(() => {
     const updateAccounts = () => {
@@ -187,37 +184,30 @@ export function Header() {
     return () => window.removeEventListener("xakteir-accounts-changed", updateAccounts);
   }, []);
 
-  const handleSwitchAccount = (uid: string) => {
-    localStorage.setItem("xakteir_active_account_id", uid);
-    window.dispatchEvent(new Event("xakteir-accounts-changed"));
-    toast({ title: "Account Switched", description: "Switched active profile." });
-  };
+  useEffect(() => {
+    if (user) {
+      const accs = JSON.parse(localStorage.getItem("xakteir_accounts") || "[]");
+      const existingIdx = accs.findIndex((a: any) => a.uid === user.uid);
+      const newAcc = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || user.email?.split('@')[0] || "User",
+        photoURL: user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.displayName || user.email}`,
+      };
+      if (existingIdx >= 0) {
+        accs[existingIdx] = newAcc;
+      } else {
+        accs.push(newAcc);
+      }
+      localStorage.setItem("xakteir_accounts", JSON.stringify(accs));
+      localStorage.setItem("xakteir_active_account_id", user.uid);
+    }
+  }, [user]);
 
-  const handleAddAccount = () => {
-    if (accounts.length >= 5) {
-      toast({ variant: "destructive", title: "Limit Reached", description: "You can have up to 5 accounts." });
-      return;
-    }
-    if (!newEmail || !newName) {
-      toast({ variant: "destructive", title: "Missing fields", description: "Please enter name and email." });
-      return;
-    }
-    const newUid = "mock_user_" + Math.random().toString(36).substring(2, 9);
-    const newAcc = {
-      uid: newUid,
-      email: newEmail,
-      displayName: newName,
-      photoURL: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(newName)}`,
-      hat: ""
-    };
-    const updated = [...accounts, newAcc];
-    localStorage.setItem("xakteir_accounts", JSON.stringify(updated));
-    localStorage.setItem("xakteir_active_account_id", newUid);
-    window.dispatchEvent(new Event("xakteir-accounts-changed"));
-    setIsAdding(false);
-    setNewEmail("");
-    setNewName("");
-    toast({ title: "Account Added", description: `Switched to ${newName}` });
+  const handleSwitchAccount = (acc: any) => {
+    if (user && user.uid === acc.uid) return;
+    if (auth) signOut(auth);
+    router.push(`/auth?email=${encodeURIComponent(acc.email)}`);
   };
 
   useEffect(() => { 
@@ -391,7 +381,7 @@ export function Header() {
                   {accounts.map((acc: any) => (
                     <div 
                       key={acc.uid} 
-                      onClick={() => handleSwitchAccount(acc.uid)}
+                      onClick={() => handleSwitchAccount(acc)}
                       className={cn(
                         "flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all hover:bg-white/5",
                         activeAccountId === acc.uid ? "bg-white/5 border border-white/10" : "border border-transparent"
@@ -412,31 +402,10 @@ export function Header() {
                   ))}
                 </div>
 
-                {isAdding ? (
-                  <div className="p-3 bg-black/40 rounded-2xl border border-white/10 m-1.5 space-y-2.5 animate-in slide-in-from-top-2">
-                    <Input 
-                      placeholder="Name" 
-                      value={newName} 
-                      onChange={(e) => setNewName(e.target.value)} 
-                      className="h-8 rounded-lg bg-black/60 border-white/10 text-xs text-white" 
-                    />
-                    <Input 
-                      placeholder="Email" 
-                      value={newEmail} 
-                      onChange={(e) => setNewEmail(e.target.value)} 
-                      className="h-8 rounded-lg bg-black/60 border-white/10 text-xs text-white" 
-                    />
-                    <div className="flex gap-2">
-                      <Button onClick={handleAddAccount} className="flex-1 h-8 bg-primary hover:bg-primary/95 text-black text-[10px] font-black uppercase tracking-wider rounded-lg">Add</Button>
-                      <Button onClick={() => setIsAdding(false)} variant="ghost" className="flex-1 h-8 text-[10px] font-black uppercase tracking-wider rounded-lg border border-white/10 text-white">Cancel</Button>
-                    </div>
-                  </div>
-                ) : (
-                  accounts.length < 5 && (
-                    <button onClick={() => setIsAdding(true)} className="w-[calc(100%-12px)] mx-1.5 flex items-center justify-center gap-2 p-3 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-all border border-dashed border-primary/20 hover:border-primary/40 mt-1">
-                      <Plus className="w-4 h-4" /> Add Profile
-                    </button>
-                  )
+                {accounts.length < 5 && (
+                  <button onClick={() => { if (auth) signOut(auth); router.push('/auth'); }} className="w-[calc(100%-12px)] mx-1.5 flex items-center justify-center gap-2 p-3 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-all border border-dashed border-primary/20 hover:border-primary/40 mt-1">
+                    <Plus className="w-4 h-4" /> Add Profile
+                  </button>
                 )}
 
                 <div className="h-0.5 bg-white/5 my-3 mx-1.5" />
