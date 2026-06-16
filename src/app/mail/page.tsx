@@ -207,15 +207,13 @@ export default function MailPage() {
   }, [mailMode, gmailToken, unifiedInbox]);
 
   const emailsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    const inboxEmail = userData?.xakteirEmail || (userData?.username ? `${userData.username}@mail.xakteir.com` : user.email?.toLowerCase());
-    if (!inboxEmail) return null;
+    if (!firestore || !user || !primaryEmail) return null;
     const baseCol = collection(firestore, "emails");
     if (folder === "Sent") {
       return query(baseCol, where("senderUserId", "==", user.uid), limit(100));
     }
-    return query(baseCol, where("recipientList", "array-contains", inboxEmail), limit(100));
-  }, [firestore, user, folder, userData]);
+    return query(baseCol, where("recipientList", "array-contains", primaryEmail), limit(100));
+  }, [firestore, user, folder, primaryEmail]);
 
   const { data: rawEmails, isLoading } = useCollection(emailsQuery);
 
@@ -226,7 +224,7 @@ export default function MailPage() {
     else if (folder === "Snoozed") filtered = filtered.filter(e => !e.isDeleted && e.snoozedUntil && e.snoozedUntil > Date.now());
     else if (folder === "Sent") filtered = filtered.filter(e => !e.isDeleted);
     else if (folder === "Trash") filtered = filtered.filter(e => e.isDeleted);
-    else filtered = filtered.filter(e => !e.isDeleted && (!e.snoozedUntil || e.snoozedUntil <= Date.now()));
+    else filtered = filtered.filter(e => !e.isDeleted && (!e.snoozedUntil || e.snoozedUntil <= Date.now()) && e.folder !== "sent");
     
     if (searchQuery) {
       filtered = filtered.filter(e => e.subject?.toLowerCase().includes(searchQuery.toLowerCase()) || e.body?.toLowerCase().includes(searchQuery.toLowerCase()));
