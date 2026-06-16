@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useUser, useFirestore, useDoc } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, setDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { 
   Copy, ShieldCheck, Key, Code2, CheckCircle2, Cloud, Database, 
@@ -30,8 +30,11 @@ export default function DevCentrePage() {
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
 
   // Dev Account creation & document loading
-  const devAccountRef = firestore && user ? doc(firestore, "dev_accounts", user.uid) : null;
-  const { data: devAccount, isDocLoading } = useDoc(devAccountRef);
+  const devAccountRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "dev_accounts", user.uid);
+  }, [firestore, user]);
+  const { data: devAccount, isLoading: isDocLoading } = useDoc(devAccountRef);
 
   // App Integration states (retaining existing functionality)
   const [appName, setAppName] = useState("");
