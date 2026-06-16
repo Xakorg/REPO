@@ -29,9 +29,10 @@ export function FirebaseErrorListener() {
     };
   }, []);
 
-  // On re-render, if an error exists in state, throw it.
+  // Transient permission errors (like during sign-out token swaps) shouldn't crash the app.
+  // The individual hooks already return the error state for local handling.
   if (error) {
-    throw error;
+    console.warn("[FirebaseErrorListener] Suppressed global permission error:", error);
   }
 
   // This component renders nothing.
