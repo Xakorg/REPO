@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Check, Zap, ArrowRight, ShieldCheck, ZapIcon } from "lucide-react";
@@ -20,11 +20,20 @@ export default function BillingBlade() {
   
   const { data: devAccount } = useDoc(devAccountRef);
 
-  const handleUpgrade = (tier: string) => {
-    toast({ 
-      title: "Connecting to XakPay...", 
-      description: `Preparing Stripe checkout session for ${tier} tier.` 
-    });
+  const handleUpgrade = async (tier: string) => {
+    if (!devAccountRef) return;
+    
+    // Developer mentioned they don't have Stripe keys yet, 
+    // so we mock the upgrade by directly writing to Firestore.
+    try {
+      await updateDoc(devAccountRef, { tier });
+      toast({ 
+        title: "Upgrade Successful!", 
+        description: `Your account has been upgraded to ${tier}.` 
+      });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Upgrade Failed", description: e.message });
+    }
   };
 
   return (
@@ -80,7 +89,7 @@ export default function BillingBlade() {
           <div className="mb-6 space-y-2">
             <div className="flex items-center gap-2">
               <ZapIcon className="w-5 h-5 text-purple-400 fill-purple-400/20" />
-              <h3 className="text-xl font-black uppercase italic tracking-tighter text-white">Xakteir Pro</h3>
+              <h3 className="text-xl font-black uppercase italic tracking-tighter text-white">Xakteir Dev Pro</h3>
             </div>
             <p className="text-xs text-purple-200/60 h-8">For production apps with active users.</p>
           </div>
@@ -96,10 +105,11 @@ export default function BillingBlade() {
             <FeatureItem text="Priority Email Support" />
           </div>
           <Button 
-            onClick={() => handleUpgrade("Pro")}
+            disabled={devAccount?.tier === "Xakteir Dev Pro"}
+            onClick={() => handleUpgrade("Xakteir Dev Pro")}
             className="w-full mt-8 bg-purple-500 hover:bg-purple-600 text-white font-black uppercase text-xs tracking-widest h-12 rounded-xl group"
           >
-            Upgrade to Pro <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            {devAccount?.tier === "Xakteir Dev Pro" ? "Active" : "Upgrade to Pro"} <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
           </Button>
         </Card>
 

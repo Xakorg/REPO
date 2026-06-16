@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,9 +25,19 @@ export default function FunctionsBlade() {
   }, [user, firestore]);
   const { data: deployedFunctions } = useCollection(functionsRef);
 
+  const devAccountRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "dev_accounts", user.uid);
+  }, [firestore, user]);
+  const { data: devAccount } = useDoc(devAccountRef);
+
   const handleDeploy = async () => {
     if (!user || !firestore || !funcName.trim()) {
       toast({ variant: "destructive", title: "Error", description: "Function name is required." });
+      return;
+    }
+    if (devAccount?.tier === "Standard Developer" && (deployedFunctions?.length || 0) >= 5) {
+      toast({ variant: "destructive", title: "Quota Exceeded", description: "Upgrade to Xakteir Dev Pro to deploy more than 5 functions." });
       return;
     }
     
@@ -110,7 +120,7 @@ export default function FunctionsBlade() {
             
             <Button 
               onClick={handleDeploy} 
-              disabled={isDeploying}
+              disabled={isDeploying || (devAccount?.tier === "Standard Developer" && (deployedFunctions?.length || 0) >= 5)}
               className="w-full bg-sky-500 hover:bg-sky-600 text-black font-black uppercase text-xs tracking-widest h-12 rounded-xl"
             >
               {isDeploying ? (

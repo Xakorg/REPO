@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,12 @@ export default function SocketsBlade() {
     return collection(firestore, `dev_accounts/${user.uid}/sockets`);
   }, [user, firestore]);
   const { data: sockets } = useCollection(socketsRef);
+
+  const devAccountRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "dev_accounts", user.uid);
+  }, [firestore, user]);
+  const { data: devAccount } = useDoc(devAccountRef);
 
   const handleCreateSocket = async () => {
     if (!user || !firestore || !socketName.trim()) {
@@ -104,8 +110,8 @@ export default function SocketsBlade() {
                 className="w-full bg-black/50 border border-white/10 h-12 rounded-xl px-3 text-white font-bold outline-none"
               >
                 <option value="100">100 CCU (Dev Tier)</option>
-                <option value="1000">1,000 CCU (Pro Tier)</option>
-                <option value="10000">10,000 CCU (Enterprise)</option>
+                <option value="1000" disabled={devAccount?.tier === "Standard Developer"}>1,000 CCU (Pro Tier)</option>
+                <option value="10000" disabled={devAccount?.tier !== "Enterprise"}>10,000 CCU (Enterprise)</option>
               </select>
             </div>
             

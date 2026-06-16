@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,9 +25,19 @@ export default function StorageBlade() {
   }, [user, firestore]);
   const { data: buckets } = useCollection(storageRef);
 
+  const devAccountRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "dev_accounts", user.uid);
+  }, [firestore, user]);
+  const { data: devAccount } = useDoc(devAccountRef);
+
   const handleCreateBucket = async () => {
     if (!user || !firestore || !bucketName.trim()) {
       toast({ variant: "destructive", title: "Error", description: "Bucket name is required." });
+      return;
+    }
+    if (devAccount?.tier === "Standard Developer" && (buckets?.length || 0) >= 1) {
+      toast({ variant: "destructive", title: "Quota Exceeded", description: "Upgrade to Xakteir Dev Pro to provision more than 1 bucket." });
       return;
     }
     
@@ -113,7 +123,7 @@ export default function StorageBlade() {
             
             <Button 
               onClick={handleCreateBucket} 
-              disabled={isCreating}
+              disabled={isCreating || (devAccount?.tier === "Standard Developer" && (buckets?.length || 0) >= 1)}
               className="w-full bg-pink-500 hover:bg-pink-600 text-white font-black uppercase text-xs tracking-widest h-12 rounded-xl mt-2"
             >
               <Plus className="w-4 h-4 mr-2" />
