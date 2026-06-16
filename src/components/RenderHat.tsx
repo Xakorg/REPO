@@ -163,6 +163,36 @@ export function RenderDecor({ decorKey }: { decorKey?: string }) {
            </div>
         </div>
       );
+    case 'lightning':
+      return (
+        <div className="absolute -inset-6 pointer-events-none drop-shadow-[0_0_10px_rgba(250,204,21,0.8)] z-40">
+           <svg viewBox="0 0 100 100" className="w-full h-full fill-transparent stroke-yellow-400 stroke-2 animate-pulse">
+              <path d="M50 10 L40 50 L60 50 L50 90 L80 40 L60 40 Z" className="animate-[dash_1s_linear_infinite]" />
+           </svg>
+        </div>
+      );
+    case 'skull':
+      return (
+        <div className="absolute -right-6 -bottom-2 w-8 h-8 bg-zinc-200 rounded-full animate-bounce pointer-events-none drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] z-40 flex flex-col items-center justify-center">
+           <div className="flex gap-1 mb-1">
+             <div className="w-2 h-2 bg-black rounded-full" />
+             <div className="w-2 h-2 bg-black rounded-full" />
+           </div>
+           <div className="w-4 h-1 bg-black rounded-sm" />
+        </div>
+      );
+    case 'bot':
+      return (
+        <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none drop-shadow-[0_0_15px_rgba(134,239,172,0.8)] z-40 animate-bounce" style={{ animationDuration: '2s' }}>
+           <div className="w-full h-full bg-lime-400 rounded-xl border-2 border-lime-200 flex flex-col items-center justify-center relative overflow-hidden">
+             <div className="w-6 h-2 bg-black rounded-sm flex items-center justify-around px-1">
+               <div className="w-1 h-1 bg-lime-400 rounded-full animate-ping" />
+               <div className="w-1 h-1 bg-lime-400 rounded-full animate-ping" style={{ animationDelay: '0.5s' }} />
+             </div>
+             <div className="w-4 h-1 bg-lime-600 mt-1 rounded-full" />
+           </div>
+        </div>
+      );
     default:
       return null;
   }

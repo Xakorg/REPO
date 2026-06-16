@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -24,7 +25,8 @@ import { doc, updateDoc, increment, collection, query, addDoc, serverTimestamp, 
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { RenderHat } from "@/components/RenderHat";
+import { Input } from "@/components/ui/input";
+import { RenderHat, RenderAura, RenderDecor, getNameplateClass, RenderPet, RenderBanner } from "@/components/RenderHat";
 
 const ALL_SHOP_ITEMS = [
   // Hats (11 items)
@@ -253,7 +255,7 @@ export default function ShopPage() {
     }
   };
 
-  const categories = ["Weekly", "All", "Auras", "Name Plates", "Hats", "Decorations"];
+  const categories = ["Weekly", "All", "Pets", "Banners", "Auras", "Name Plates", "Hats", "Decorations"];
 
   const getRarityGlow = (rarity: string) => {
     switch (rarity) {
@@ -347,13 +349,20 @@ export default function ShopPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <motion.div layout className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <AnimatePresence mode="popLayout">
             {displayedItems.map((item, i) => (
+              <motion.div
+                key={`${item.id}-${i}`}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.5), type: "spring" }}
+              >
               <Card 
-                key={`${item.id}-${i}`} 
                 onClick={() => setSelectedItem(item)} 
                 className={cn(
-                    "glass-card cursor-pointer rounded-[3rem] overflow-hidden transition-all duration-500 group", 
+                    "glass-card cursor-pointer rounded-[3rem] overflow-hidden transition-all duration-500 group h-full", 
                     selectedItem?.id === item.id 
                         ? cn("scale-[1.02] border-2", getRarityGlow(item.rarity))
                         : "border border-white/5 hover:border-white/20 hover:scale-[1.01]"
@@ -361,13 +370,17 @@ export default function ShopPage() {
               >
                 <div className={cn("h-56 flex items-center justify-center relative overflow-hidden", item.bg)}>
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20" />
-                  <div className={cn("w-20 h-20 flex items-center justify-center transition-transform duration-700 group-hover:scale-125 drop-shadow-xl", item.color)}>
+                  <motion.div 
+                    whileHover={{ scale: 1.2, rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                    className={cn("w-20 h-20 flex items-center justify-center drop-shadow-xl", item.color)}
+                  >
                      {item.type === 'hat' ? <Award className="w-16 h-16" /> : 
                       item.type === 'decor' ? <Sparkles className="w-16 h-16" /> :
                       item.type === 'aura' ? <Flame className="w-16 h-16" /> :
                       item.type === 'nameplate' ? <User className="w-16 h-16" /> :
                       <User className="w-16 h-16" />}
-                  </div>
+                  </motion.div>
                   <Badge className={cn("absolute top-6 right-6 border-none text-[10px] font-black uppercase px-3 py-1 shadow-lg", getRarityBadge(item.rarity))}>
                       {item.rarity}
                   </Badge>
@@ -383,7 +396,9 @@ export default function ShopPage() {
                   <p className="text-sm text-muted-foreground font-bold italic line-clamp-2 leading-relaxed opacity-80">{item.description}</p>
                 </CardContent>
               </Card>
+              </motion.div>
             ))}
+            </AnimatePresence>
             {displayedItems.length === 0 && (
                 <div className="col-span-2 py-20 text-center">
                     <p className="text-muted-foreground font-black uppercase tracking-widest text-lg">No items found in this category.</p>
@@ -394,32 +409,27 @@ export default function ShopPage() {
 
         <div className="lg:col-span-4">
           <div className="sticky top-12 space-y-8">
-            <Card className="glass-card rounded-[3.5rem] border border-white/10 overflow-hidden shadow-2xl backdrop-blur-2xl">
-              <div className="h-48 bg-gradient-to-br from-primary/20 via-transparent to-accent/20 flex items-start justify-center pt-8 relative overflow-hidden">
+            <Card className="glass-card rounded-[3.5rem] border border-white/10 overflow-hidden shadow-2xl backdrop-blur-2xl relative">
+              <RenderBanner bannerKey={selectedItem?.type === 'banner' ? selectedItem.key : userData?.banner} />
+              <div className="h-48 bg-gradient-to-br from-primary/20 via-transparent to-accent/20 flex items-start justify-center pt-8 relative overflow-hidden z-10">
                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.1),transparent_70%)]" />
-                 <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/50 relative z-10">Preview Station</p>
+                 <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/50 relative z-10 bg-black/50 px-4 py-1 rounded-full backdrop-blur-md">Live Profile Preview</p>
               </div>
               <CardContent className="p-10 -mt-24 text-center relative z-10">
-                <div className={cn(
-                  "relative rounded-full p-2 mx-auto transition-all duration-700 w-max",
-                  selectedItem?.type === 'aura' && (
-                    selectedItem.key === 'neon' ? "aura-neon" :
-                    selectedItem.key === 'glitch' ? "aura-glitch" : "aura-gold"
-                  )
-                )}>
-                  {selectedItem?.key === 'cat' && <div className="flying-cat">🐱</div>}
+                <div className="relative rounded-full p-2 mx-auto w-max z-20">
+                  <RenderDecor decorKey={selectedItem?.type === 'decor' ? selectedItem.key : userData?.decor} />
+                  <RenderAura auraKey={selectedItem?.type === 'aura' ? selectedItem.key : userData?.aura} />
                   <RenderHat hatKey={selectedItem?.type === 'hat' ? selectedItem.key : userData?.hat} />
+                  <RenderPet petKey={selectedItem?.type === 'pet' ? selectedItem.key : userData?.pet} />
+                  
                   <Avatar className="w-40 h-40 border-[8px] border-card rounded-[3rem] shadow-2xl mx-auto overflow-hidden bg-secondary relative z-20">
                     <AvatarImage src={user?.photoURL || ""} className="object-cover" />
                     <AvatarFallback className="bg-primary text-5xl font-black text-white">{user?.displayName?.[0] || 'U'}</AvatarFallback>
                   </Avatar>
                 </div>
                 <h4 className={cn(
-                  "text-4xl font-black tracking-tighter mt-8 italic uppercase leading-none break-words",
-                  selectedItem?.type === 'nameplate' && (
-                    selectedItem.key === 'blue' ? 'nameplate-blue' :
-                    selectedItem.key === 'gold' ? 'nameplate-gold' : 'nameplate-pro'
-                  )
+                  "text-4xl font-black tracking-tighter mt-8 italic uppercase leading-none break-words relative z-20",
+                  getNameplateClass(selectedItem?.type === 'nameplate' ? selectedItem.key : userData?.nameplate)
                 )}>
                   {user?.displayName?.replace(/^@+/, "") || "Member"}
                 </h4>
