@@ -49,13 +49,14 @@ export function SportsLobby({ setGameState, gameMode, setGameMode }: SportsLobby
                 key={mode.name}
                 onClick={() => setGameMode(mode.name)}
                 className={cn(
-                  "px-6 py-3 rounded-xl font-black uppercase tracking-wider text-sm transition-all duration-300",
+                  "px-6 py-3 rounded-xl transition-all duration-300 flex flex-col items-center gap-1",
                   gameMode === mode.name 
                     ? "bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-[0_0_20px_rgba(56,189,248,0.5)] scale-105" 
                     : "bg-white/5 border border-white/10 text-white/50 hover:bg-white/10 hover:text-white"
                 )}
               >
-                {mode}
+                <span className="font-black uppercase tracking-wider text-sm">{mode.name}</span>
+                <span className="text-[10px] font-bold opacity-70 tracking-widest uppercase">{mode.desc}</span>
               </button>
             ))}
           </div>
