@@ -202,6 +202,7 @@ export function Header() {
       }
       localStorage.setItem("xakteir_accounts", JSON.stringify(accs));
       localStorage.setItem("xakteir_active_account_id", user.uid);
+      window.dispatchEvent(new Event("xakteir-accounts-changed"));
     }
   }, [user]);
 

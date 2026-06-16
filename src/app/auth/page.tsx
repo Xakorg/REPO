@@ -123,6 +123,7 @@ export default function AuthPage() {
         } else {
            saveToVault(user.uid, 'google', user.email || "");
            toast({ title: "Signed In", description: `Welcome, ${user.displayName}!` });
+           finishWizard();
         }
       })
       .catch((error) => {
@@ -146,6 +147,7 @@ export default function AuthPage() {
           toast({ title: "Verification Required", description: "Please enter your security code." });
         } else {
           toast({ title: "Success", description: "You have been signed in." });
+          finishWizard();
         }
       })
       .catch((error) => {
