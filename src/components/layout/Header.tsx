@@ -185,26 +185,6 @@ export function Header() {
     return () => window.removeEventListener("xakteir-accounts-changed", updateAccounts);
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      const accs = JSON.parse(localStorage.getItem("xakteir_accounts") || "[]");
-      const existingIdx = accs.findIndex((a: any) => a.uid === user.uid);
-      const newAcc = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName || user.email?.split('@')[0] || "User",
-        photoURL: user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.displayName || user.email}`,
-      };
-      if (existingIdx >= 0) {
-        accs[existingIdx] = newAcc;
-      } else {
-        accs.push(newAcc);
-      }
-      localStorage.setItem("xakteir_accounts", JSON.stringify(accs));
-      localStorage.setItem("xakteir_active_account_id", user.uid);
-      window.dispatchEvent(new Event("xakteir-accounts-changed"));
-    }
-  }, [user]);
 
   const [isSwitching, setIsSwitching] = useState(false);
 

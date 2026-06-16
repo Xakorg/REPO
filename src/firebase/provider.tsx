@@ -252,17 +252,36 @@ export const useUser = (): UserHookResult => {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (firebaseUser && !localStorage.getItem('xakteir_accounts')) {
-      const initialAccounts = [{
+    if (firebaseUser) {
+      const accountsJson = localStorage.getItem('xakteir_accounts');
+      let accs = accountsJson ? JSON.parse(accountsJson) : [];
+      
+      const existingIdx = accs.findIndex((a: any) => a.uid === firebaseUser.uid);
+      const newAcc = {
         uid: firebaseUser.uid,
         email: firebaseUser.email || "user@xakteir.com",
         displayName: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User",
-        photoURL: firebaseUser.photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(firebaseUser.displayName || "User")}`,
+        photoURL: firebaseUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(firebaseUser.displayName || "User")}`,
         hat: ""
-      }];
-      localStorage.setItem('xakteir_accounts', JSON.stringify(initialAccounts));
-      localStorage.setItem('xakteir_active_account_id', firebaseUser.uid);
-      window.dispatchEvent(new Event('xakteir-accounts-changed'));
+      };
+      
+      let changed = false;
+      if (existingIdx >= 0) {
+        // Keep their existing hat, but update photo/display name if changed
+        newAcc.hat = accs[existingIdx].hat || "";
+        accs[existingIdx] = newAcc;
+        changed = true;
+      } else {
+        accs.push(newAcc);
+        changed = true;
+      }
+      
+      const activeId = localStorage.getItem('xakteir_active_account_id');
+      if (activeId !== firebaseUser.uid || changed) {
+        localStorage.setItem('xakteir_accounts', JSON.stringify(accs));
+        localStorage.setItem('xakteir_active_account_id', firebaseUser.uid);
+        window.dispatchEvent(new Event('xakteir-accounts-changed'));
+      }
     }
   }, [firebaseUser]);
 
