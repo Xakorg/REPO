@@ -107,7 +107,7 @@ service cloud.firestore {
 
     match /admins/{userId} {
 
-      allow get: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
+      allow get: if true;
 
       allow list: if false;
 
