@@ -428,14 +428,14 @@ export default function AuthPage() {
                     <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="bg-secondary/30 border-white/5 pl-14 h-16 rounded-[1.5rem] font-bold text-white" />
                   </div>
                 </div>
-                <div className="flex justify-end">
-                  <button type="button" onClick={() => setStep('forgot')} className="text-[10px] font-black uppercase text-primary hover:underline italic flex items-center gap-2">
-                     <HelpCircle className="w-3 h-3" /> Forgot Password?
-                  </button>
+                <div className="space-y-4 pt-4">
+                  <Button type="submit" disabled={isLoading || !email || !password} className="w-full bg-primary hover:bg-primary/90 h-20 rounded-[2rem] font-black uppercase text-xs tracking-widest text-black shadow-xl">
+                    {isLoading ? <Loader2 className="w-8 h-8 animate-spin" /> : "Sign In"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setStep('forgot')} className="w-full h-16 rounded-2xl border-white/10 bg-transparent hover:bg-white/5 text-white/60 font-black uppercase text-[10px] tracking-widest transition-all">
+                     <HelpCircle className="w-4 h-4 mr-2" /> Forgot Password?
+                  </Button>
                 </div>
-                <Button type="submit" disabled={isLoading || !email || !password} className="w-full bg-primary hover:bg-primary/90 h-20 rounded-[2rem] font-black uppercase text-xs tracking-widest text-black shadow-xl">
-                  {isLoading ? <Loader2 className="w-8 h-8 animate-spin" /> : "Sign In"}
-                </Button>
               </form>
             </div>
           )}

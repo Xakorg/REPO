@@ -417,8 +417,7 @@ export default function MailPage() {
             subject, 
             body: finalBody, 
             senderAddress: `member_${user?.uid}@mail.xakteir.com`,
-            senderName: user?.displayName || "Xakteir Member",
-            senderPhoto: user?.photoURL || ""
+            senderName: user?.displayName || "Xakteir Member" 
           })
         });
         if (!res.ok) throw new Error("Failed to send email");

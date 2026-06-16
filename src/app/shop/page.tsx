@@ -25,7 +25,6 @@ import { doc, updateDoc, increment, collection, query, addDoc, serverTimestamp, 
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Input } from "@/components/ui/input";
 import { RenderHat, RenderAura, RenderDecor, getNameplateClass, RenderPet, RenderBanner } from "@/components/RenderHat";
 
 const ALL_SHOP_ITEMS = [

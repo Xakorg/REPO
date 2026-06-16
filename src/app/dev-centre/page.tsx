@@ -15,11 +15,13 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function DevCentrePage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState("overview");
   
