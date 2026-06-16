@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,10 @@ export default function SocketsBlade() {
   const [isProvisioning, setIsProvisioning] = useState(false);
 
   // Load existing sockets from Firestore
-  const socketsRef = user && firestore ? collection(firestore, `dev_accounts/${user.uid}/sockets`) : null;
+  const socketsRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, `dev_accounts/${user.uid}/sockets`);
+  }, [user, firestore]);
   const { data: sockets } = useCollection(socketsRef);
 
   const handleCreateSocket = async () => {

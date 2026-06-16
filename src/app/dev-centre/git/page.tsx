@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,10 @@ export default function GitBlade() {
   const [isCreating, setIsCreating] = useState(false);
 
   // Load existing repos from Firestore
-  const reposRef = user && firestore ? collection(firestore, `dev_accounts/${user.uid}/repositories`) : null;
+  const reposRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, `dev_accounts/${user.uid}/repositories`);
+  }, [user, firestore]);
   const { data: repos } = useCollection(reposRef);
 
   const handleCreateRepo = async () => {

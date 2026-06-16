@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,10 @@ export default function WebhooksBlade() {
   const [isRegistering, setIsRegistering] = useState(false);
 
   // Load existing webhooks from Firestore
-  const webhooksRef = user && firestore ? collection(firestore, `dev_accounts/${user.uid}/webhooks`) : null;
+  const webhooksRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, `dev_accounts/${user.uid}/webhooks`);
+  }, [user, firestore]);
   const { data: webhooks } = useCollection(webhooksRef);
 
   const handleCreateWebhook = async () => {

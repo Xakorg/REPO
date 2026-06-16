@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,10 @@ export default function StorageBlade() {
   const [isCreating, setIsCreating] = useState(false);
 
   // Load existing buckets from Firestore
-  const storageRef = user && firestore ? collection(firestore, `dev_accounts/${user.uid}/storage`) : null;
+  const storageRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, `dev_accounts/${user.uid}/storage`);
+  }, [user, firestore]);
   const { data: buckets } = useCollection(storageRef);
 
   const handleCreateBucket = async () => {

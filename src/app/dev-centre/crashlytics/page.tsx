@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, doc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,10 @@ export default function CrashlyticsBlade() {
   const { toast } = useToast();
 
   // Load existing crash reports from Firestore
-  const crashesRef = user && firestore ? collection(firestore, `dev_accounts/${user.uid}/crashes`) : null;
+  const crashesRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, `dev_accounts/${user.uid}/crashes`);
+  }, [user, firestore]);
   const { data: crashes } = useCollection(crashesRef);
 
   const handleDelete = async (crashId: string) => {

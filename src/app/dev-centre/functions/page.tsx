@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,10 @@ export default function FunctionsBlade() {
   const [isDeploying, setIsDeploying] = useState(false);
 
   // Load existing functions from Firestore
-  const functionsRef = user && firestore ? collection(firestore, `dev_accounts/${user.uid}/functions`) : null;
+  const functionsRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, `dev_accounts/${user.uid}/functions`);
+  }, [user, firestore]);
   const { data: deployedFunctions } = useCollection(functionsRef);
 
   const handleDeploy = async () => {
