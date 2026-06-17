@@ -211,6 +211,20 @@ ipcMain.handle('create-desktop-shortcuts', async () => {
   }
 });
 
+ipcMain.handle('wake-xak', async (event, command) => {
+  if (mainWindow) {
+    if (!mainWindow.isVisible()) {
+      mainWindow.show();
+    }
+    if (!mainWindow.isFocused()) {
+      mainWindow.focus();
+    }
+    mainWindow.webContents.send('trigger-xak-ai-with-command', command);
+    return { success: true };
+  }
+  return { success: false };
+});
+
 app.whenReady().then(() => {
   createWindow();
   createOverlayWindow();

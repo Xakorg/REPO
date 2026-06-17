@@ -247,6 +247,16 @@ export default function XakAIPage() {
         if (!recognitionRef.current) return;
         recognitionRef.current.start();
       });
+      
+      (window as any).electron.onTriggerXakAIWithCommand((command: string) => {
+        if (command && command.trim().length > 0) {
+          setInput(command);
+          setTimeout(() => {
+            const submitBtn = document.querySelector('form button[type="submit"]') as HTMLButtonElement | null;
+            if (submitBtn) submitBtn.click();
+          }, 300);
+        }
+      });
     }
 
     return () => {
@@ -265,16 +275,8 @@ export default function XakAIPage() {
       
       rec.onstart = () => setIsListening(true);
       
-      let finalTranscriptBuffer = '';
-      
       rec.onend = () => {
         setIsListening(false);
-        if (alwaysOnRef.current) {
-          // Restart if always on
-          setTimeout(() => {
-            try { rec.start(); } catch(e) {}
-          }, 300);
-        }
       };
       
       rec.onresult = (event: any) => {
@@ -289,62 +291,12 @@ export default function XakAIPage() {
           }
         }
         
-        const currentText = (finalTranscript || interimTranscript).toLowerCase();
-        
-        // If we are already glowing (listening for the actual command after wake word)
-        if (isGlowActiveRef.current) {
-          setInput(finalTranscript || interimTranscript);
-          
-          if (finalTranscript.trim().length > 0) {
-             // User finished speaking the command
-             finalTranscriptBuffer += finalTranscript + " ";
-             setInput(finalTranscriptBuffer.trim());
-             
-             // Auto submit after a short delay
-             setTimeout(() => {
-               const submitBtn = document.querySelector('form button[type="submit"]') as HTMLButtonElement | null;
-               if (submitBtn) submitBtn.click();
-               setIsGlowActive(false);
-               finalTranscriptBuffer = '';
-             }, 1000);
-          }
-          return;
-        }
-
-        // Hotword check
-        if (alwaysOnRef.current && currentText.includes(hotwordRef.current.toLowerCase())) {
-          setIsGlowActive(true);
-          finalTranscriptBuffer = ''; // Reset buffer
-          
-          // We found the hotword! See if they already said something after it
-          const query = currentText.split(hotwordRef.current.toLowerCase())[1]?.trim();
-          if (query && query.length > 2) {
-             setInput(query);
-             finalTranscriptBuffer = query;
-             // Auto submit after a short delay
-             setTimeout(() => {
-               const submitBtn = document.querySelector('form button[type="submit"]') as HTMLButtonElement | null;
-               if (submitBtn) submitBtn.click();
-               setIsGlowActive(false);
-               finalTranscriptBuffer = '';
-             }, 1000);
-          } else {
-             // Woke up but no command yet
-             setInput("Listening...");
-          }
-        } else if (!alwaysOnRef.current) {
-           // Normal voice typing mode
-           setInput(prev => (prev && !prev.endsWith(' ') ? prev + " " : "") + (finalTranscript || interimTranscript));
-        }
+        setInput(prev => (prev && !prev.endsWith(' ') ? prev + " " : "") + (finalTranscript || interimTranscript));
       };
       
       recognitionRef.current = rec;
-      
-      if (alwaysOn) {
-        try { rec.start(); } catch(e) {}
-      }
     }
-  }, [alwaysOn]);
+  }, []);
 
   const toggleListening = () => {
     if (!recognitionRef.current) {

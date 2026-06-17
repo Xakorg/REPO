@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('electron', {
   },
   setListeningState: (state) => ipcRenderer.send('set-listening-state', state),
   onTriggerXakAI: (callback) => ipcRenderer.on('trigger-xak-ai', () => callback()),
+  onTriggerXakAIWithCommand: (callback) => ipcRenderer.on('trigger-xak-ai-with-command', (event, command) => callback(command)),
   onSetListeningState: (callback) => ipcRenderer.on('set-listening-state', (event, state) => callback(state)),
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args)
 });

@@ -38,6 +38,9 @@ import { collection, serverTimestamp, query, orderBy, limit, doc, getDoc, setDoc
 import { useToast } from "@/hooks/use-toast";
 import { RenderHat } from "@/components/RenderHat";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { DrawCanvas } from "@/components/chat/DrawCanvas";
+import { Dice5, Paintbrush, Flame, MessagesSquare, Ghost, Palette, Gamepad2, BellRing } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function DirectMessagePage() {
   const params = useParams();
@@ -52,6 +55,13 @@ export default function DirectMessagePage() {
   const [chatInput, setChatInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [dmChatId, setDmChatId] = useState<string | null>(null);
+
+  // Phase 1 New States
+  const [showCanvas, setShowCanvas] = useState(false);
+  const [isWhisperMode, setIsWhisperMode] = useState(false);
+  const [isUrgent, setIsUrgent] = useState(false);
+  const [chatTheme, setChatTheme] = useState("bg-zinc-950");
+  const [showSideQuest, setShowSideQuest] = useState<string | null>(null);
 
   // Upgrade state variables
   const [explosions, setExplosions] = useState<{ id: number; emoji: string; left: number }[]>([]);
@@ -742,6 +752,13 @@ export default function DirectMessagePage() {
 
     let content = chatInput.trim();
 
+    // ── Phase 1: Dice & Coin Flip Interception ──
+    if (content === "/roll") {
+      content = `🎲 Rolled a ${Math.floor(Math.random() * 6) + 1}!`;
+    } else if (content === "/flip") {
+      content = `🪙 Flipped a ${Math.random() > 0.5 ? "Heads" : "Tails"}!`;
+    }
+
     // ── Feature 7: Poll interception ──
     if (content.startsWith("/poll ")) {
       const pollBody = content.slice(6).trim();
@@ -795,8 +812,13 @@ export default function DirectMessagePage() {
         senderHat: currentUserData?.hat || null,
         channelId: dmChatId,
         channelName: `DM with ${friendUser?.displayName || personName}`,
-        timestamp: serverTimestamp()
+        timestamp: serverTimestamp(),
+        isWhisper: isWhisperMode,
+        isUrgent: isUrgent
       };
+
+      if (isWhisperMode) setIsWhisperMode(false);
+      if (isUrgent) setIsUrgent(false);
 
       if (replyingToMessage) {
         payload.replyTo = {
@@ -971,6 +993,9 @@ export default function DirectMessagePage() {
     escaped = escaped.replace(/(https?:\/\/[^\s]+)/g, (url) => {
       return `<a href="#" onclick="if(window.openXakChatWebview){window.openXakChatWebview('${url}');return false;}else{window.open('${url}','_blank');return false;}" class="text-primary hover:underline font-bold">${url}</a>`;
     });
+    // ── Phase 1: Invisible Ink (Spoilers) ──
+    escaped = escaped.replace(/\|\|(.*?)\|\|/g, "<span class='bg-white/20 text-transparent hover:text-white transition-all cursor-pointer rounded px-2 blur-[4px] hover:blur-none select-none' title='Reveal Invisible Ink'>$1</span>");
+    
     return <span dangerouslySetInnerHTML={{ __html: escaped }} />;
   };
 
@@ -1015,7 +1040,7 @@ export default function DirectMessagePage() {
   const friendDisplayName = friendUser.displayName?.replace(/^@+/, "") || "Member";
 
   return (
-    <main className="flex-1 flex flex-col bg-zinc-950 relative overflow-hidden h-full">
+    <main className={cn("flex-1 flex flex-col relative overflow-hidden h-full transition-colors duration-1000", chatTheme)}>
       <style>{`
         @keyframes emojiRain {
           0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
@@ -1151,7 +1176,7 @@ export default function DirectMessagePage() {
             <div className="relative shrink-0">
                <RenderHat hatKey={friendUser.hat} />
                <Avatar
-                 className="w-8 h-8 rounded-lg border border-white/10 cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+                 className={cn("w-8 h-8 rounded-lg border-2 cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all", friendUser.status === "online" ? "border-emerald-500" : "border-zinc-500")}
                  onClick={() => handleOpenProfile(friendUser.id)}
                >
                  <AvatarImage src={friendUser.photoURL} className="object-cover" />
@@ -1188,6 +1213,30 @@ export default function DirectMessagePage() {
                 <span className="hidden sm:inline">Video</span>
               </Button>
             </div>
+
+            {/* ── Phase 1: Theme Picker ── */}
+            <Button
+              onClick={() => {
+                const themes = ["bg-zinc-950", "bg-gradient-to-br from-indigo-950 to-purple-950", "bg-gradient-to-br from-rose-950 to-red-950", "bg-gradient-to-tr from-emerald-950 to-teal-950"];
+                const currIdx = themes.indexOf(chatTheme);
+                setChatTheme(themes[(currIdx + 1) % themes.length]);
+              }}
+              variant="ghost"
+              className="h-9 w-9 p-0 text-zinc-400 hover:text-white rounded-xl"
+              title="Change Chat Theme"
+            >
+              <Palette className="w-4 h-4" />
+            </Button>
+
+            {/* ── Phase 1: Side Quests / Mini-Games overlay trigger ── */}
+            <Button
+              onClick={() => setShowSideQuest(showSideQuest ? null : "connect4")}
+              variant="ghost"
+              className="h-9 w-9 p-0 text-amber-500/70 hover:text-amber-400 rounded-xl"
+              title="Side Quests (Mini Games)"
+            >
+              <Gamepad2 className="w-4 h-4" />
+            </Button>
 
             {/* In-chat Search Input */}
             <div className="relative group max-w-[120px] sm:max-w-xs">
@@ -1248,15 +1297,23 @@ export default function DirectMessagePage() {
                 const isLastOwn = lastOwnMessage?.id === msg.id;
 
                 return (
-                  <div 
+                  <motion.div 
+                    initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     key={msg.id} 
                     id={`msg-${msg.id}`}
-                    className={cn("flex gap-5 group relative transition-all duration-500", isOwn && "flex-row-reverse")}
+                    className={cn(
+                      "flex gap-5 group relative transition-all duration-500", 
+                      isOwn && "flex-row-reverse",
+                      msg.isWhisper && "opacity-75 blur-[1px] hover:blur-none transition-all hover:opacity-100",
+                      msg.isUrgent && "animate-pulse"
+                    )}
                   >
                      <div className="relative shrink-0 text-left">
                        <RenderHat hatKey={msg.senderHat} />
                        <Avatar
-                         className="w-11 h-11 rounded-[1.1rem] border-2 border-white/5 bg-zinc-900 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all"
+                         className={cn("w-11 h-11 rounded-[1.1rem] border-2 border-white/5 bg-zinc-900 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all", msg.isUrgent && "border-red-500 animate-pulse")}
                          onClick={() => handleOpenProfile(msg.senderId)}
                        >
                           <AvatarImage src={msg.senderPhoto} className="object-cover" />
@@ -1354,7 +1411,8 @@ export default function DirectMessagePage() {
                           ) : (
                             <div className={cn(
                               "p-5 rounded-[1.8rem] shadow-2xl border transition-all text-sm font-medium leading-relaxed text-left relative",
-                              isOwn ? "bg-primary text-white border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none text-foreground/90"
+                              isOwn ? "bg-primary text-white border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none text-foreground/90",
+                              msg.isUrgent && "bg-red-500/20 border-red-500 text-red-50 font-bold shadow-[0_0_15px_rgba(239,68,68,0.5)]"
                             )}>
                                {/* ── Feature 10: Scheduled label ── */}
                                {msg.status === "scheduled" && msg.scheduledFor && (
@@ -1474,7 +1532,7 @@ export default function DirectMessagePage() {
                           </div>
                         )}
                      </div>
-                  </div>
+                  </motion.div>
                 );
               })
             )}
@@ -1777,6 +1835,50 @@ export default function DirectMessagePage() {
                    <Clock className="w-4 h-4" />
                  </button>
 
+                 {/* ── Phase 1: Draw to Chat ── */}
+                 <button
+                   type="button"
+                   onClick={() => setShowCanvas(!showCanvas)}
+                   className={cn("w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all shrink-0", showCanvas ? "bg-primary text-black" : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white")}
+                   title="Draw to Chat"
+                 >
+                   <Paintbrush className="w-4 h-4" />
+                 </button>
+
+                 {/* ── Phase 1: Whisper Mode ── */}
+                 <button
+                   type="button"
+                   onClick={() => setIsWhisperMode(!isWhisperMode)}
+                   className={cn("w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all shrink-0", isWhisperMode ? "bg-indigo-500/20 text-indigo-500 border border-indigo-500/50" : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white")}
+                   title="Toggle Whisper Mode (Self-Destructing)"
+                 >
+                   <Ghost className="w-4 h-4" />
+                 </button>
+
+                 {/* ── Phase 1: Urgent Ping ── */}
+                 <button
+                   type="button"
+                   onClick={() => setIsUrgent(!isUrgent)}
+                   className={cn("w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all shrink-0", isUrgent ? "bg-red-500/20 text-red-500 border border-red-500/50 animate-pulse" : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white")}
+                   title="Urgent Ping (Bypass DND)"
+                 >
+                   <BellRing className="w-4 h-4" />
+                 </button>
+
+                 {/* ── Phase 1: Icebreaker ── */}
+                 <button
+                   type="button"
+                   onClick={() => {
+                     const qs = ["What's your most controversial food take?", "If you had to live in a video game, which one?", "What's the best movie you've seen recently?"];
+                     setChatInput(qs[Math.floor(Math.random() * qs.length)]);
+                   }}
+                   className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"
+                   title="Random Icebreaker Question"
+                 >
+                   <Dice5 className="w-4 h-4" />
+                 </button>
+
+
                  <div className="relative flex-1">
                     {/* @mention autocomplete dropdown */}
                     {showMentionList && mentionCandidates.length > 0 && (
@@ -1806,8 +1908,20 @@ export default function DirectMessagePage() {
                     />
                  </div>
               </div>
-              <Button type="submit" size="icon" className="h-12 w-12 md:h-16 md:w-16 bg-primary rounded-[1rem] md:rounded-[1.5rem] shadow-2xl active:scale-90 flex items-center justify-center shrink-0 border-none"><Send className="w-5 h-5 md:w-6 md:h-6 text-white" /></Button>
+              <Button type="submit" size="icon" className="h-12 w-12 md:h-16 md:w-16 bg-primary rounded-[1rem] md:rounded-[1.5rem] shadow-2xl active:scale-90 flex items-center justify-center shrink-0 border-none">
+                <Send className="w-5 h-5 md:w-6 md:h-6 text-white" />
+              </Button>
             </form>
+
+            {showCanvas && (
+               <DrawCanvas 
+                 onClose={() => setShowCanvas(false)} 
+                 onSend={(base64) => {
+                   setImagePreview(base64);
+                   setShowCanvas(false);
+                 }} 
+               />
+            )}
          </div>
       </div>
     </main>
