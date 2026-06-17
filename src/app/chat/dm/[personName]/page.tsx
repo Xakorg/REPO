@@ -1012,15 +1012,6 @@ export default function DirectMessagePage() {
     return messages.filter(m => m.content?.toLowerCase().includes(qStr));
   }, [messages, messageSearchQuery]);
 
-  // Derived smart replies chips
-  const smartReplies = useMemo(() => {
-    if (!messages || messages.length === 0) return ["Hello!", "Hey there!", "What's up?"];
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg.senderId === user?.uid) return ["Let me add...", "Actually, wait.", "Brb!"];
-    const content = lastMsg.content || "";
-    if (content.includes("?")) return ["Definitely!", "I don't think so.", "Let me investigate."];
-    return ["Sounds good!", "Awesome!", "Understood!"];
-  }, [messages, user?.uid]);
 
   const isImageUrl = (url: string) => {
     if (typeof url !== 'string') return false;
@@ -1860,22 +1851,6 @@ export default function DirectMessagePage() {
               </div>
             )}
 
-            {/* Smart replies chips */}
-            <div className="flex gap-2 pb-1 overflow-x-auto">
-              {smartReplies.map((rText, index) => (
-                <button 
-                  key={index} 
-                  type="button"
-                  onClick={() => {
-                    setChatInput(rText);
-                    handleTyping();
-                  }}
-                  className="px-3 py-1 text-[9px] font-black uppercase tracking-widest bg-white/5 hover:bg-primary hover:text-black border border-white/5 hover:border-transparent rounded-full text-zinc-400 transition-all shrink-0"
-                >
-                  {rText}
-                </button>
-              ))}
-            </div>
 
             {/* ── Feature 2: Formatting toolbar ── */}
             <div className="flex gap-1 px-2 pb-1">

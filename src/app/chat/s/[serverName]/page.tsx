@@ -588,16 +588,6 @@ export default function ServerChatPage() {
     return msgs.filter(m => m.content?.toLowerCase().includes(qStr));
   }, [messages, messageSearchQuery]);
 
-  // Derive smart replies suggesters
-  const smartReplies = useMemo(() => {
-    if (!messages || messages.length === 0) return ["Hello!", "Hey there!", "What's up?"];
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg.senderId === user?.uid) return ["Let me add...", "Actually, wait.", "Brb!"];
-    const content = lastMsg.content || "";
-    if (content.includes("?")) return ["Definitely!", "I don't think so.", "Let me investigate."];
-    if (content.toLowerCase().includes("bug") || content.toLowerCase().includes("error")) return ["I will check it.", "Did it build?", "Let's fix it!"];
-    return ["Sounds good!", "Awesome!", "Understood!"];
-  }, [messages, user?.uid]);
 
   // Derived list of pinned messages
   const pinnedMessagesList = useMemo(() => {
@@ -2315,22 +2305,6 @@ export default function ServerChatPage() {
                </div>
              )}
 
-             {/* Smart Replies Suggestions Chips */}
-             <div className="flex gap-2 pb-1 overflow-x-auto">
-               {smartReplies.map((rText, index) => (
-                 <button 
-                   key={index} 
-                   type="button"
-                   onClick={() => {
-                     setChatInput(rText);
-                     handleTyping();
-                   }}
-                   className="px-3 py-1 text-[9px] font-black uppercase tracking-widest bg-white/5 hover:bg-primary hover:text-black border border-white/5 hover:border-transparent rounded-full text-zinc-400 transition-all shrink-0"
-                 >
-                   {rText}
-                 </button>
-               ))}
-             </div>
 
              {/* Typing indicator message */}
              {activeTypingUsers && activeTypingUsers.length > 0 && (

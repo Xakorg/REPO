@@ -1045,6 +1045,11 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         remoteVideo.srcObject = remoteMs;
         remoteVideo.play().catch(e => console.warn(e));
       }
+      const remoteAudio = document.getElementById("direct-call-remote-audio") as HTMLAudioElement | null;
+      if (remoteAudio) {
+        remoteAudio.srcObject = remoteMs;
+        remoteAudio.play().catch(e => console.warn(e));
+      }
     };
 
     const signalsRef = collection(firestore!, "meetings", roomId, "signals");
@@ -2584,7 +2589,12 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                 <div className="relative rounded-3xl bg-zinc-900 border border-white/5 overflow-hidden flex items-center justify-center">
                   <video 
                     id="direct-call-remote-video" 
-                    ref={(el) => { if (el) el.srcObject = remoteCallStream; }} 
+                    ref={(el) => { 
+                      if (el && remoteCallStream) {
+                        el.srcObject = remoteCallStream;
+                        el.play().catch(e => console.warn(e));
+                      }
+                    }} 
                     className="w-full h-full object-cover" 
                     autoPlay 
                     playsInline 
@@ -2611,7 +2621,13 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             ) : (
               <div className="text-center space-y-6">
                 <audio 
-                  ref={(el) => { if (el) el.srcObject = remoteCallStream; }} 
+                  id="direct-call-remote-audio"
+                  ref={(el) => { 
+                    if (el && remoteCallStream) {
+                      el.srcObject = remoteCallStream;
+                      el.play().catch(e => console.warn(e));
+                    }
+                  }} 
                   autoPlay 
                   playsInline 
                 />

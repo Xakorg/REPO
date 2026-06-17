@@ -265,7 +265,9 @@ export default function MeetingRoomPage() {
 
   const bindVideoElements = useCallback(() => {
     if (localVideoRef.current && localStream.current) {
-      localVideoRef.current.srcObject = localStream.current;
+      if (localVideoRef.current.srcObject !== localStream.current) {
+        localVideoRef.current.srcObject = localStream.current;
+      }
       void localVideoRef.current.play().catch(() => {});
     }
     // Bind remote streams to their respective elements
@@ -274,7 +276,9 @@ export default function MeetingRoomPage() {
       const el = document.getElementById(`video-${p.id}`) as HTMLVideoElement | null;
       const s = remoteStreams.current[p.id];
       if (el && s) {
-        el.srcObject = s;
+        if (el.srcObject !== s) {
+          el.srcObject = s;
+        }
         void el.play().catch(() => {});
       }
     });
@@ -283,7 +287,9 @@ export default function MeetingRoomPage() {
       const keys = Object.keys(remoteStreams.current);
       const s = keys.length ? remoteStreams.current[keys[0]] : null;
       if (s) {
-        remoteVideoRef.current.srcObject = s;
+        if (remoteVideoRef.current.srcObject !== s) {
+          remoteVideoRef.current.srcObject = s;
+        }
         void remoteVideoRef.current.play().catch(() => {});
       }
     }
@@ -1493,7 +1499,9 @@ export default function MeetingRoomPage() {
                       if (!el) return;
                       const s = remoteStreams.current[screenSharerId];
                       if (s) {
-                        el.srcObject = s;
+                        if (el.srcObject !== s) {
+                          el.srcObject = s;
+                        }
                         void el.play().catch(() => {});
                       }
                     }}
@@ -1759,7 +1767,9 @@ export default function MeetingRoomPage() {
                         if (!el) return;
                         const s = remoteStreams.current[screenSharerId];
                         if (s) {
-                          el.srcObject = s;
+                          if (el.srcObject !== s) {
+                            el.srcObject = s;
+                          }
                           void el.play().catch(() => {});
                         }
                       }}
@@ -1832,10 +1842,14 @@ export default function MeetingRoomPage() {
                           ref={(el) => {
                             if (!el) return;
                             if (pinnedStreamId === myUserId && localStream.current) {
-                              el.srcObject = localStream.current;
+                              if (el.srcObject !== localStream.current) {
+                                el.srcObject = localStream.current;
+                              }
                             } else {
                               const s = remoteStreams.current[pinnedStreamId];
-                              if (s) el.srcObject = s;
+                              if (s && el.srcObject !== s) {
+                                el.srcObject = s;
+                              }
                             }
                             void el.play().catch(() => {});
                           }}
