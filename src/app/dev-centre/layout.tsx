@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Cloud, LayoutGrid, Mail, Users, Key, Activity, Database, FileCode2 } from "lucide-react";
+import { Cloud, LayoutGrid, Mail, Users, Key, Activity, Database, FileCode2, RadioReceiver, GitBranch, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { usePathname, useRouter } from "next/navigation";
@@ -36,6 +36,9 @@ export default function DevCentreLayout({ children }: { children: React.ReactNod
     { name: "Overview", path: "/dev-centre", icon: LayoutGrid },
     { name: "Dev Functions", path: "/dev-centre/functions", icon: FileCode2 },
     { name: "Dev Storage", path: "/dev-centre/storage", icon: Database },
+    { name: "Dev Socket", path: "/dev-centre/sockets", icon: RadioReceiver },
+    { name: "Dev Git", path: "/dev-centre/git", icon: GitBranch },
+    { name: "Webhooks", path: "/dev-centre/webhooks", icon: Zap },
     { name: "Custom Emails", path: "/dev-centre/emails", icon: Mail },
     { name: "Teams & IAM", path: "/dev-centre/teams", icon: Users },
     { name: "App Credentials", path: "/dev-centre/credentials", icon: Key },
