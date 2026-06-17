@@ -120,6 +120,10 @@ service cloud.firestore {
 
     match /dev_accounts/{userId} {
       allow read, write: if isOwner(userId) || isAdmin();
+      
+      match /{collectionName}/{docId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
     }
 
     // ─────────────────────────────────────────────
