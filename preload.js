@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('electron', {
     minimize: () => ipcRenderer.send('window-minimize'),
     maximize: () => ipcRenderer.send('window-maximize'),
     close: () => ipcRenderer.send('window-close'),
+    openMiniPlayer: (type, id) => ipcRenderer.send('open-mini-player', { type, id }),
   },
   updater: {
     onUpdateAvailable: (callback) => ipcRenderer.on('update_available', () => callback()),
@@ -21,5 +22,10 @@ contextBridge.exposeInMainWorld('electron', {
   onTriggerXakAI: (callback) => ipcRenderer.on('trigger-xak-ai', () => callback()),
   onTriggerXakAIWithCommand: (callback) => ipcRenderer.on('trigger-xak-ai-with-command', (event, command) => callback(command)),
   onSetListeningState: (callback) => ipcRenderer.on('set-listening-state', (event, state) => callback(state)),
+  notifications: {
+    show: (options) => ipcRenderer.send('show-notification', options),
+    onReply: (callback) => ipcRenderer.on('notification-reply', (event, { id, reply }) => callback(id, reply)),
+    onClick: (callback) => ipcRenderer.on('notification-click', (event, { id }) => callback(id)),
+  },
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args)
 });

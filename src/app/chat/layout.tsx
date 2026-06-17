@@ -912,6 +912,10 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
 
   const handleStartDirectCall = async (friendId: string, friendName: string, friendPhoto: string, type: "audio" | "video") => {
     if (!firestore || !user) return;
+    if (activeCallSession || outgoingCallData) {
+      toast({ variant: "destructive", title: "Call in progress", description: "You are already in a call." });
+      return;
+    }
     
     const sortedIds = [user.uid, friendId].sort();
     const dmChatId = `dm_${sortedIds.join("_")}`;
@@ -2559,7 +2563,13 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-6 relative">
                 {/* Remote Video element */}
                 <div className="relative rounded-3xl bg-zinc-900 border border-white/5 overflow-hidden flex items-center justify-center">
-                  <video id="direct-call-remote-video" className="w-full h-full object-cover" autoPlay playsInline />
+                  <video 
+                    id="direct-call-remote-video" 
+                    ref={(el) => { if (el) el.srcObject = remoteCallStream; }} 
+                    className="w-full h-full object-cover" 
+                    autoPlay 
+                    playsInline 
+                  />
                   <p className="absolute bottom-4 left-4 bg-black/60 px-3 py-1 rounded-lg text-[9px] font-black uppercase">Remote Feed</p>
                 </div>
                 
@@ -2581,6 +2591,11 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               </div>
             ) : (
               <div className="text-center space-y-6">
+                <audio 
+                  ref={(el) => { if (el) el.srcObject = remoteCallStream; }} 
+                  autoPlay 
+                  playsInline 
+                />
                 <div className="flex justify-center gap-6">
                   <Avatar className="w-24 h-24 border-4 border-white/10 rounded-[2rem]">
                     <AvatarImage src={activeCallSession.callerPhoto} />

@@ -1,0 +1,20 @@
+appId: "com.xakteir.xakchat"
+productName: "Xakchat"
+directories:
+  output: "dist-electron-xakchat"
+files:
+  - "main.js"
+  - "preload.js"
+  - "desktop-out/**/*"
+  - "public/**/*"
+win:
+  target: "nsis"
+  icon: "public/favicon.ico"
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+  artifactName: "Xakchat Setup 1.0.0.exe"
+  deleteAppDataOnUninstall: true
+extraMetadata:
+  main: "main.js"

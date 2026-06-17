@@ -1,0 +1,20 @@
+appId: "com.xakteir.xakai"
+productName: "Xak AI"
+directories:
+  output: "dist-electron-xakai"
+files:
+  - "main.js"
+  - "preload.js"
+  - "desktop-out/**/*"
+  - "public/**/*"
+win:
+  target: "nsis"
+  icon: "public/favicon.ico"
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+  artifactName: "Xak AI Setup 1.0.0.exe"
+  deleteAppDataOnUninstall: true
+extraMetadata:
+  main: "main.js"

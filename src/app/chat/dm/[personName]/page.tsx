@@ -39,7 +39,8 @@ import { useToast } from "@/hooks/use-toast";
 import { RenderHat } from "@/components/RenderHat";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { DrawCanvas } from "@/components/chat/DrawCanvas";
-import { Dice5, Paintbrush, Flame, MessagesSquare, Ghost, Palette, Gamepad2, BellRing } from "lucide-react";
+import { MediaGallery } from "@/components/chat/MediaGallery";
+import { Dice5, Paintbrush, Flame, MessagesSquare, Ghost, Palette, Gamepad2, BellRing, Image as ImageIcon, MonitorUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function DirectMessagePage() {
@@ -62,6 +63,9 @@ export default function DirectMessagePage() {
   const [isUrgent, setIsUrgent] = useState(false);
   const [chatTheme, setChatTheme] = useState("bg-zinc-950");
   const [showSideQuest, setShowSideQuest] = useState<string | null>(null);
+  const [localNickname, setLocalNickname] = useState("");
+  const [prevMsgCount, setPrevMsgCount] = useState(0);
+  const [showMediaGallery, setShowMediaGallery] = useState(false);
 
   // Upgrade state variables
   const [explosions, setExplosions] = useState<{ id: number; emoji: string; left: number }[]>([]);
@@ -245,6 +249,16 @@ export default function DirectMessagePage() {
   const isFriends = useMemo(() => {
     return (friendship1 && friendship1.length > 0) || (friendship2 && friendship2.length > 0);
   }, [friendship1, friendship2]);
+
+  // Phase 1: Custom Notification Sounds
+  useEffect(() => {
+    if (messages && messages.length > prevMsgCount) {
+      if (prevMsgCount > 0 && messages[messages.length - 1]?.senderId !== user?.uid) {
+         try { new Audio("/ping.mp3").play(); } catch(e) {}
+      }
+      setPrevMsgCount(messages.length);
+    }
+  }, [messages, prevMsgCount, user?.uid]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -1183,9 +1197,18 @@ export default function DirectMessagePage() {
                  <AvatarFallback className="bg-primary text-xs font-black">{friendDisplayName[0]}</AvatarFallback>
                </Avatar>
             </div>
-            <div className="text-left cursor-pointer" onClick={() => handleOpenProfile(friendUser.id)}>
-               <h3 className="text-sm font-black italic uppercase tracking-tighter truncate leading-none text-white hover:text-primary transition-colors">{friendDisplayName}</h3>
-               <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Direct Message</span>
+            <div className="text-left">
+               <h3 
+                 className="text-sm font-black italic uppercase tracking-tighter truncate leading-none text-white hover:text-primary transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                 onClick={(e) => { e.stopPropagation(); const nn = prompt("Set Nickname for this chat:", localNickname); if (nn !== null) setLocalNickname(nn); }}
+                 title="Click to set local nickname"
+               >
+                 {localNickname || friendDisplayName}
+                 <span className="flex items-center text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded-md border border-orange-500/20 text-[10px]" title="Chat Streak">
+                   <Flame className="w-3 h-3 mr-0.5" /> 14
+                 </span>
+               </h3>
+               <span className="block text-[9px] text-muted-foreground uppercase tracking-wider mt-1 cursor-pointer hover:text-white transition-colors" onClick={() => handleOpenProfile(friendUser.id)}>Direct Message</span>
             </div>
          </div>
 
@@ -1212,6 +1235,21 @@ export default function DirectMessagePage() {
                 {isFriends ? <Video className="w-4 h-4 text-emerald-400" /> : <Lock className="w-3.5 h-3.5 text-zinc-600" />}
                 <span className="hidden sm:inline">Video</span>
               </Button>
+              {/* ── Phase 2: Screen Share Request ── */}
+              <Button
+                onClick={() => {
+                  toast({ title: "Screen Share Requested", description: "Waiting for user to accept screen share request..." });
+                  // Simulate sending an actionable message
+                  setChatInput("/screenshare-request");
+                }}
+                disabled={!isFriends}
+                variant="ghost"
+                className="h-8 px-2.5 text-blue-400 hover:text-blue-300 rounded-lg flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider bg-blue-500/10 hover:bg-blue-500/20"
+                title={isFriends ? "Request Screen Share" : "Request (Friends Only)"}
+              >
+                <MonitorUp className="w-4 h-4" />
+                <span className="hidden sm:inline">Screen</span>
+              </Button>
             </div>
 
             {/* ── Phase 1: Theme Picker ── */}
@@ -1236,6 +1274,16 @@ export default function DirectMessagePage() {
               title="Side Quests (Mini Games)"
             >
               <Gamepad2 className="w-4 h-4" />
+            </Button>
+
+            {/* ── Phase 2: Media Gallery ── */}
+            <Button
+              onClick={() => setShowMediaGallery(true)}
+              variant="ghost"
+              className="h-9 w-9 p-0 text-zinc-400 hover:text-white rounded-xl"
+              title="View Media Gallery"
+            >
+              <ImageIcon className="w-4 h-4" />
             </Button>
 
             {/* In-chat Search Input */}
@@ -1371,10 +1419,22 @@ export default function DirectMessagePage() {
                           ) : msg.type === "audio" ? (
                             /* ── Feature 9: Audio message rendering ── */
                             <div className={cn(
-                              "p-4 rounded-[1.8rem] shadow-2xl border transition-all text-left",
+                              "p-4 rounded-[1.8rem] shadow-2xl border transition-all text-left space-y-2",
                               isOwn ? "bg-primary/20 border-primary/20 rounded-tr-none" : "bg-[#18181b] border-white/5 rounded-tl-none"
                             )}>
-                              <audio controls className="max-w-xs" src={msg.content} />
+                              {/* ── Phase 2: Audio Waveform Mock ── */}
+                              <div className="flex items-center gap-1 h-6 px-2">
+                                {Array.from({ length: 20 }).map((_, i) => (
+                                  <motion.div
+                                    key={i}
+                                    initial={{ height: "10%" }}
+                                    animate={{ height: `${20 + Math.random() * 80}%` }}
+                                    transition={{ repeat: Infinity, repeatType: "mirror", duration: 0.5 + Math.random() }}
+                                    className="w-1 bg-primary/60 rounded-full"
+                                  />
+                                ))}
+                              </div>
+                              <audio controls className="max-w-xs h-8 opacity-60 hover:opacity-100 transition-opacity grayscale contrast-150" src={msg.content} />
                             </div>
                           ) : msg.type === "poll" ? (
                             /* ── Feature 7: Poll rendering ── */
@@ -1924,6 +1984,8 @@ export default function DirectMessagePage() {
             )}
          </div>
       </div>
+      
+      <MediaGallery isOpen={showMediaGallery} onClose={() => setShowMediaGallery(false)} messages={messages || []} />
     </main>
   );
 }

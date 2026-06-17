@@ -9,6 +9,8 @@ autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
 let mainWindow;
+let overlayWindow = null;
+let quickReplyWindow = null;
 let tray = null;
 
 function createWindow() {
@@ -22,10 +24,12 @@ function createWindow() {
       contextIsolation: true,
     },
     icon: path.join(__dirname, 'public', 'favicon.ico'),
-    title: "Xak AI"
+    title: app.getName()
   });
 
-  const startUrl = process.env.ELECTRON_START_URL ? process.env.ELECTRON_START_URL.replace('/desktop', '/ai-chat') : `file://${path.join(__dirname, 'desktop-out/ai-chat.html')}`;
+  const isXakchat = app.getName() === "Xakchat";
+  const defaultPage = isXakchat ? 'desktop-out/chat.html' : 'desktop-out/ai-chat.html';
+  const startUrl = process.env.ELECTRON_START_URL ? process.env.ELECTRON_START_URL.replace('/desktop', isXakchat ? '/chat' : '/ai-chat') : `file://${path.join(__dirname, defaultPage)}`;
   
   mainWindow.loadURL(startUrl);
 
@@ -75,6 +79,74 @@ function createOverlayWindow() {
     overlayWindow = null;
   });
 }
+
+function createQuickReplyWindow() {
+  quickReplyWindow = new BrowserWindow({
+    width: 400,
+    height: 120,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    }
+  });
+
+  const startUrl = process.env.ELECTRON_START_URL 
+    ? process.env.ELECTRON_START_URL.replace('/desktop', '/quick-reply') 
+    : `file://${path.join(__dirname, 'desktop-out/quick-reply.html')}`;
+  
+  quickReplyWindow.loadURL(startUrl);
+
+  quickReplyWindow.on('closed', function () {
+    quickReplyWindow = null;
+  });
+
+  quickReplyWindow.on('blur', () => {
+    quickReplyWindow.hide(); // Hide when clicked outside
+  });
+}
+
+let miniPlayerWindow = null;
+
+function createMiniPlayerWindow(type, id) {
+  if (miniPlayerWindow) {
+    miniPlayerWindow.close();
+  }
+
+  miniPlayerWindow = new BrowserWindow({
+    width: 300,
+    height: 200,
+    frame: false,
+    alwaysOnTop: true,
+    transparent: true,
+    hasShadow: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    }
+  });
+
+  const startUrl = process.env.ELECTRON_START_URL 
+    ? process.env.ELECTRON_START_URL.replace('/desktop', '/mini-player') 
+    : `file://${path.join(__dirname, 'desktop-out/mini-player.html')}`;
+  
+  miniPlayerWindow.loadURL(`${startUrl}?type=${type}&id=${id}`);
+
+  miniPlayerWindow.on('closed', function () {
+    miniPlayerWindow = null;
+  });
+}
+
+ipcMain.on('open-mini-player', (event, { type, id }) => {
+  createMiniPlayerWindow(type, id);
+});
 
 function createTray() {
   tray = new Tray(path.join(__dirname, 'public', 'favicon.ico'));
@@ -133,8 +205,15 @@ ipcMain.on('window-maximize', () => {
   }
 });
 
-ipcMain.on('window-close', () => {
-  if (mainWindow) mainWindow.hide(); // Hide instead of close to keep in tray
+ipcMain.on('window-close', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) {
+    if (win === mainWindow) {
+      win.hide();
+    } else {
+      win.hide(); // quickReplyWindow will also hide instead of destroy
+    }
+  }
 });
 
 ipcMain.on('set-listening-state', (event, state) => {
@@ -225,24 +304,67 @@ ipcMain.handle('wake-xak', async (event, command) => {
   return { success: false };
 });
 
+const { Notification } = require('electron');
+
+ipcMain.on('show-notification', (event, { title, body, replyPlaceholder, id }) => {
+  if (Notification.isSupported()) {
+    const notification = new Notification({
+      title,
+      body,
+      hasReply: true,
+      replyPlaceholder: replyPlaceholder || 'Type your reply...',
+      icon: path.join(__dirname, 'public', 'favicon.ico')
+    });
+
+    notification.on('reply', (e, reply) => {
+      // Send the reply back to the renderer so it can push to Firebase
+      if (mainWindow) {
+        mainWindow.webContents.send('notification-reply', { id, reply });
+      }
+    });
+
+    notification.on('click', () => {
+      if (mainWindow) {
+        mainWindow.show();
+        mainWindow.focus();
+        mainWindow.webContents.send('notification-click', { id });
+      }
+    });
+
+    notification.show();
+  }
+});
+
 app.whenReady().then(() => {
   createWindow();
   createOverlayWindow();
+  createQuickReplyWindow();
   createTray();
 
-  // Global Shortcut for Xak AI
   globalShortcut.register('CommandOrControl+Space', () => {
     if (mainWindow) {
-      if (mainWindow.isVisible()) {
-        if (!mainWindow.isFocused()) {
-          mainWindow.focus();
-        }
-      } else {
+      if (!mainWindow.isVisible()) {
         mainWindow.show();
       }
+      if (!mainWindow.isFocused()) {
+        mainWindow.focus();
+      }
       mainWindow.webContents.send('trigger-xak-ai');
+    }
+  });
+
+  globalShortcut.register('Alt+C', () => {
+    if (quickReplyWindow) {
+      if (quickReplyWindow.isVisible()) {
+        quickReplyWindow.hide();
+      } else {
+        // Reload it just in case state is stale, but a soft reload or event might be better
+        quickReplyWindow.show();
+        quickReplyWindow.focus();
+      }
     } else {
-      createWindow();
+      createQuickReplyWindow();
+      quickReplyWindow.show();
     }
   });
 
