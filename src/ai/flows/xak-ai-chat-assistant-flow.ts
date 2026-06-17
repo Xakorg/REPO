@@ -519,7 +519,7 @@ CRITICAL GUIDELINES:
           };
         }
         if (retries === 0) {
-          return { response: "The system is currently busy. Please try again in a moment." };
+          return { response: `The system encountered an error: ${message}. Please try again.` };
         }
       }
     }
