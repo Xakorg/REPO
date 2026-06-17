@@ -32,8 +32,9 @@ import {
   PhoneOff,
   Video,
   Monitor,
-  Sparkles
-
+  Sparkles,
+  Minimize2,
+  Maximize2
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -130,6 +131,9 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   const [roleColorInput, setRoleColorInput] = useState("text-zinc-300");
   const [rolePermissions, setRolePermissions] = useState<string[]>(["sendMessages"]);
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
+
+  // PIP Mode state
+  const [isPipMode, setIsPipMode] = useState(false);
 
   // Global Settings states
   const [showGlobalSettingsModal, setShowGlobalSettingsModal] = useState(false);
@@ -2549,16 +2553,31 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
 
       {/* 3. In-Call Active Calling Overlay UI */}
       {activeCallSession && (
-        <div className="fixed inset-4 md:inset-10 bg-zinc-950/95 border-2 border-white/10 rounded-[3.5rem] flex flex-col z-[100] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-          <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-black/30 shrink-0">
+        <div className={cn(
+          "fixed bg-zinc-950/95 border-2 border-white/10 flex flex-col z-[100] overflow-hidden shadow-2xl transition-all duration-300",
+          isPipMode ? "bottom-6 right-6 w-72 h-48 rounded-2xl" : "inset-4 md:inset-10 rounded-[3.5rem] animate-in zoom-in-95"
+        )}>
+          <header className={cn("border-b border-white/5 flex items-center justify-between bg-black/30 shrink-0", isPipMode ? "h-10 px-4" : "h-16 px-8")}>
             <div className="flex items-center gap-3">
               <Phone className="w-4 h-4 text-emerald-400 animate-pulse" />
-              <span className="text-xs font-black uppercase tracking-widest text-zinc-400">Direct call: {activeCallSession.callerName} & {activeCallSession.recipientName}</span>
+              <span className={cn("font-black uppercase tracking-widest text-zinc-400", isPipMode ? "text-[8px] truncate max-w-[100px]" : "text-xs")}>
+                Direct call: {activeCallSession.callerName} & {activeCallSession.recipientName}
+              </span>
             </div>
-            <Badge className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full">WebRTC Link Active</Badge>
+            <div className="flex items-center gap-2">
+              {!isPipMode && <Badge className="hidden sm:inline-flex bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full">WebRTC Link Active</Badge>}
+              <Button onClick={() => setIsPipMode(!isPipMode)} variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
+                {isPipMode ? <Maximize2 className="w-4 h-4 text-white" /> : <Minimize2 className="w-4 h-4 text-white" />}
+              </Button>
+              {isPipMode && (
+                <Button onClick={handleEndDirectCall} variant="ghost" size="icon" className="h-8 w-8 hover:bg-rose-500/20 text-rose-500">
+                  <PhoneOff className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </header>
 
-          <div className="flex-1 min-h-0 relative p-8 flex items-center justify-center bg-black/40">
+          <div className="flex-1 min-h-0 relative p-4 md:p-8 flex items-center justify-center bg-black/40">
             {activeCallSession.callType === "video" ? (
               <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-6 relative">
                 {/* Remote Video element */}
@@ -2610,8 +2629,9 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             )}
           </div>
 
-          <footer className="p-6 bg-black/40 border-t border-white/5 flex items-center justify-center gap-4 shrink-0">
-            <Button 
+          {!isPipMode && (
+            <footer className="p-6 bg-black/40 border-t border-white/5 flex items-center justify-center gap-4 shrink-0">
+              <Button 
               onClick={toggleCallMic} 
               variant="ghost" 
               className={cn("h-12 w-12 rounded-xl border border-white/5", callMicMuted ? "bg-rose-500/20 text-rose-500" : "bg-white/5 text-white")}
@@ -2646,6 +2666,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               <PhoneOff className="w-4 h-4" /> Hang Up
             </Button>
           </footer>
+          )}
         </div>
       )}
 

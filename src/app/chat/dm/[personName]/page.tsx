@@ -40,7 +40,7 @@ import { RenderHat } from "@/components/RenderHat";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { DrawCanvas } from "@/components/chat/DrawCanvas";
 import { MediaGallery } from "@/components/chat/MediaGallery";
-import { Dice5, Paintbrush, Flame, MessagesSquare, Ghost, Palette, Gamepad2, BellRing, Image as ImageIcon, MonitorUp } from "lucide-react";
+import { Dice5, Paintbrush, Flame, MessagesSquare, Ghost, Palette, Gamepad2, BellRing, Image as ImageIcon, MonitorUp, Sparkles, Trophy, Coins, MapPin, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function DirectMessagePage() {
@@ -133,6 +133,8 @@ export default function DirectMessagePage() {
   // ── Feature 10: Message Scheduling ──
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [scheduleDateTime, setScheduleDateTime] = useState("");
+
+  const [showActionMenu, setShowActionMenu] = useState(false);
 
   // ── Feature 11: Message Forwarding ──
   const [forwardMessage, setForwardMessage] = useState<any | null>(null);
@@ -771,6 +773,29 @@ export default function DirectMessagePage() {
       content = `🎲 Rolled a ${Math.floor(Math.random() * 6) + 1}!`;
     } else if (content === "/flip") {
       content = `🪙 Flipped a ${Math.random() > 0.5 ? "Heads" : "Tails"}!`;
+    } else if (content === "/screenshare-request") {
+      content = `🖥️ **Screen Share Requested**. Click to join my feed!`;
+    }
+
+    // ── Phase 2: AI Bot Interception ──
+    if (content.startsWith("/askai ")) {
+      const promptText = content.slice(7).trim();
+      content = promptText;
+      // Send a fake bot response after a short delay
+      setTimeout(async () => {
+        if (!firestore) return;
+        await addDocumentNonBlocking(collection(firestore, "chats", dmChatId, "messages"), {
+          content: `🤖 **Xak-AI**: I am analyzing your request: "${promptText}". \n\nUnfortunately my neural pathways are still syncing, but I will be fully operational soon!`,
+          type: "text",
+          senderId: "xak-ai-bot",
+          senderName: "Xak-AI",
+          senderPhoto: "https://api.dicebear.com/7.x/bottts/svg?seed=xakai",
+          senderHat: null,
+          channelId: dmChatId,
+          channelName: `DM with ${friendUser?.displayName || personName}`,
+          timestamp: serverTimestamp()
+        });
+      }, 1000);
     }
 
     // ── Feature 7: Poll interception ──
@@ -830,6 +855,19 @@ export default function DirectMessagePage() {
         isWhisper: isWhisperMode,
         isUrgent: isUrgent
       };
+
+      // ── Phase 2: Ecosystem Bridge Payload Interception ──
+      if (content.startsWith("/invite ")) {
+        payload.type = "invite";
+        payload.gameName = content.slice(8).trim();
+      } else if (content === "/trophies") {
+        payload.type = "trophies";
+      } else if (content.startsWith("/bet ")) {
+        payload.type = "bet";
+        payload.betArgs = content.slice(5).trim();
+      } else if (content === "/location") {
+        payload.type = "location";
+      }
 
       if (isWhisperMode) setIsWhisperMode(false);
       if (isUrgent) setIsUrgent(false);
@@ -1002,11 +1040,13 @@ export default function DirectMessagePage() {
     escaped = escaped.replace(/_([^_]+)_/g, "<em>$1</em>");
     escaped = escaped.replace(/~([^~]+)~/g, "<del>$1</del>");
     escaped = escaped.replace(/`([^`]+)`/g, "<code class='bg-black/50 px-1 py-0.5 rounded text-pink-400 font-mono text-xs'>$1</code>");
-    // Highlight @mentions as styled pills
     escaped = escaped.replace(/@([\w]+)/g, "<span class='inline-flex items-center bg-primary/20 text-primary font-black px-1.5 py-0.5 rounded-md text-xs cursor-pointer hover:bg-primary/30 transition-colors'>@$1</span>");
     escaped = escaped.replace(/(https?:\/\/[^\s]+)/g, (url) => {
       return `<a href="#" onclick="if(window.openXakChatWebview){window.openXakChatWebview('${url}');return false;}else{window.open('${url}','_blank');return false;}" class="text-primary hover:underline font-bold">${url}</a>`;
     });
+    // ── Phase 2: Power User Code Highlight ──
+    escaped = escaped.replace(/```([\s\S]*?)```/g, "<pre class='bg-zinc-950 p-4 rounded-xl border border-white/10 my-2 overflow-x-auto shadow-inner'><code class='text-emerald-400 font-mono text-[10px]'>$1</code></pre>");
+    
     // ── Phase 1: Invisible Ink (Spoilers) ──
     escaped = escaped.replace(/\|\|(.*?)\|\|/g, "<span class='bg-white/20 text-transparent hover:text-white transition-all cursor-pointer rounded px-2 blur-[4px] hover:blur-none select-none' title='Reveal Invisible Ink'>$1</span>");
     
@@ -1468,6 +1508,53 @@ export default function DirectMessagePage() {
                               </div>
                               <p className="text-[9px] text-zinc-500 mt-2">{(msg.voters || []).length} votes</p>
                             </div>
+                          ) : msg.type === "invite" ? (
+                            /* ── Phase 2: Game Invite Embed ── */
+                            <div className="p-5 rounded-[1.8rem] shadow-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 text-left min-w-[220px]">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Gamepad2 className="w-5 h-5 text-indigo-400" />
+                                <span className="text-xs font-black uppercase text-indigo-400 tracking-widest">Game Invite</span>
+                              </div>
+                              <p className="text-sm font-bold text-white mb-4">Let's play <span className="text-indigo-300">{msg.gameName}</span>!</p>
+                              <Button onClick={() => window.open("/games", "_blank")} className="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase rounded-xl h-10">Accept Invite</Button>
+                            </div>
+                          ) : msg.type === "trophies" ? (
+                            /* ── Phase 2: Trophy Showcase Embed ── */
+                            <div className="p-5 rounded-[1.8rem] shadow-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-left min-w-[220px]">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Trophy className="w-5 h-5 text-amber-400" />
+                                <span className="text-xs font-black uppercase text-amber-400 tracking-widest">Trophy Case</span>
+                              </div>
+                              <ul className="space-y-2 text-sm font-bold text-zinc-300">
+                                <li className="flex items-center gap-2"><span className="text-amber-500">🥇</span> Connect 4 Champion</li>
+                                <li className="flex items-center gap-2"><span className="text-zinc-400">🥈</span> Flappy Bird Pro</li>
+                                <li className="flex items-center gap-2"><span className="text-orange-400">🥉</span> Pong Veteran</li>
+                              </ul>
+                            </div>
+                          ) : msg.type === "bet" ? (
+                            /* ── Phase 2: XakSports Bet Embed ── */
+                            <div className="p-5 rounded-[1.8rem] shadow-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-left min-w-[220px]">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Coins className="w-5 h-5 text-emerald-400" />
+                                <span className="text-xs font-black uppercase text-emerald-400 tracking-widest">XakSports Wager</span>
+                              </div>
+                              <p className="text-sm font-bold text-white">I placed a bet: <span className="text-emerald-300">{msg.betArgs}</span></p>
+                            </div>
+                          ) : msg.type === "location" ? (
+                            /* ── Phase 2: Live Location Embed ── */
+                            <div className="p-1 rounded-[1.8rem] shadow-2xl bg-zinc-900 border border-sky-500/30 text-left w-[240px] overflow-hidden">
+                              <div className="h-24 bg-sky-900/50 relative flex items-center justify-center">
+                                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
+                                <div className="relative animate-bounce">
+                                  <MapPin className="w-8 h-8 text-sky-400 drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]" />
+                                </div>
+                              </div>
+                              <div className="p-4">
+                                <p className="text-xs font-black uppercase text-sky-400 tracking-widest mb-1">Live Location</p>
+                                <p className="text-[10px] text-zinc-400 font-bold mb-3">📍 34.0522° N, 118.2437° W (Los Angeles, CA)</p>
+                                <Button className="w-full bg-sky-500 hover:bg-sky-400 text-white font-black uppercase rounded-xl h-8 text-[9px]">Open in Maps</Button>
+                              </div>
+                            </div>
                           ) : (
                             <div className={cn(
                               "p-5 rounded-[1.8rem] shadow-2xl border transition-all text-sm font-medium leading-relaxed text-left relative",
@@ -1833,6 +1920,19 @@ export default function DirectMessagePage() {
               </div>
             )}
 
+            {/* ── Phase 2: AI Quick Replies ── */}
+            <div className="flex gap-2 pb-2 overflow-x-auto no-scrollbar px-2">
+              <Button onClick={() => setChatInput("Haha yeah")} variant="outline" className="h-6 px-3 rounded-full text-[10px] bg-primary/10 border-primary/20 text-primary whitespace-nowrap hover:bg-primary/20">
+                <Sparkles className="w-3 h-3 mr-1" /> Haha yeah
+              </Button>
+              <Button onClick={() => setChatInput("Let's do it!")} variant="outline" className="h-6 px-3 rounded-full text-[10px] bg-primary/10 border-primary/20 text-primary whitespace-nowrap hover:bg-primary/20">
+                <Sparkles className="w-3 h-3 mr-1" /> Let's do it!
+              </Button>
+              <Button onClick={() => setChatInput("I don't think so")} variant="outline" className="h-6 px-3 rounded-full text-[10px] bg-primary/10 border-primary/20 text-primary whitespace-nowrap hover:bg-primary/20">
+                <Sparkles className="w-3 h-3 mr-1" /> I don't think so
+              </Button>
+            </div>
+
             <form onSubmit={(e) => handleSend(e)} className="flex items-end gap-3 md:gap-4">
               <div className="flex-1 bg-black/40 border-2 border-white/10 rounded-[1.8rem] p-2 md:p-3 flex items-center gap-3 md:gap-4 relative">
                  <input 
@@ -1843,101 +1943,44 @@ export default function DirectMessagePage() {
                    className="hidden" 
                  />
 
+                 {/* Action Menu Toggle Button */}
                  <button 
                     type="button" 
-                    onClick={() => imageInputRef.current?.click()} 
-                    className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"
-                    title="Upload Image"
+                    onClick={() => setShowActionMenu(!showActionMenu)} 
+                    className={cn("w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all shrink-0 z-50", showActionMenu ? "bg-primary text-black rotate-45" : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white")}
+                    title="Toggle Actions Menu"
                  >
-                   <Paperclip className="w-4 h-4" />
+                   <Plus className="w-5 h-5 transition-transform duration-300" />
                  </button>
 
-                 <button 
-                    type="button" 
-                    onClick={() => { setShowGifPicker(!showGifPicker); setShowStickerPicker(false); setShowSchedulePicker(false); }} 
-                    className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-black text-white/40 hover:text-white transition-all shrink-0"
-                 >
-                   GIF
-                 </button>
+                 {/* Popover Action Menu */}
+                 <AnimatePresence>
+                   {showActionMenu && (
+                     <motion.div 
+                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                       animate={{ opacity: 1, y: 0, scale: 1 }}
+                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                       className="absolute bottom-full left-0 mb-4 bg-[#0a0a15] border-2 border-white/10 rounded-[2rem] p-4 shadow-2xl z-50 flex flex-wrap gap-2 w-72"
+                     >
+                       <p className="w-full text-[10px] font-black uppercase text-zinc-500 tracking-widest mb-1 px-1">Attachment</p>
+                       <button type="button" onClick={() => imageInputRef.current?.click()} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white" title="Upload Image"><Paperclip className="w-4 h-4" /></button>
+                       <button type="button" onClick={() => { setShowGifPicker(!showGifPicker); setShowStickerPicker(false); setShowSchedulePicker(false); setShowActionMenu(false); }} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs font-black text-white/40 hover:text-white" title="GIF">GIF</button>
+                       <button type="button" onClick={() => { setShowStickerPicker(!showStickerPicker); setShowGifPicker(false); setShowSchedulePicker(false); setShowActionMenu(false); }} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white" title="Stickers"><Smile className="w-4 h-4" /></button>
+                       <button type="button" onClick={handleToggleRecording} className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", isRecording ? "bg-red-500 text-white animate-pulse" : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white")} title="Voice Message"><Mic className="w-4 h-4" /></button>
 
-                 {/* ── Feature 8: Sticker button ── */}
-                 <button
-                   type="button"
-                   onClick={() => { setShowStickerPicker(!showStickerPicker); setShowGifPicker(false); setShowSchedulePicker(false); }}
-                   className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"
-                   title="Stickers"
-                 >
-                   <Smile className="w-4 h-4 md:w-5 md:h-5" />
-                 </button>
-
-                 {/* ── Feature 9: Voice recording button ── */}
-                 <button
-                   type="button"
-                   onClick={handleToggleRecording}
-                   className={cn(
-                     "w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all shrink-0",
-                     isRecording
-                       ? "bg-red-500 text-white animate-pulse"
-                       : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white"
+                       <p className="w-full text-[10px] font-black uppercase text-zinc-500 tracking-widest mt-2 mb-1 px-1">Power Tools</p>
+                       <button type="button" onClick={() => { setShowSchedulePicker(!showSchedulePicker); setShowGifPicker(false); setShowStickerPicker(false); setShowActionMenu(false); }} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white" title="Schedule message"><Clock className="w-4 h-4" /></button>
+                       <button type="button" onClick={() => { setChatInput("/location"); setShowActionMenu(false); toast({ title: "Location ready", description: "Press Send to share." }); }} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-sky-500/20 flex items-center justify-center text-white/40 hover:text-sky-500" title="Share Location"><MapPin className="w-4 h-4" /></button>
+                       <button type="button" onClick={() => { setShowCanvas(!showCanvas); setShowActionMenu(false); }} className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", showCanvas ? "bg-primary text-black" : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white")} title="Draw to Chat"><Paintbrush className="w-4 h-4" /></button>
+                       
+                       <p className="w-full text-[10px] font-black uppercase text-zinc-500 tracking-widest mt-2 mb-1 px-1">Magic & Fun</p>
+                       <button type="button" onClick={() => { if(chatInput.trim()){ setChatInput(`Indeed, I must agree: ${chatInput}`); toast({ title: "Tone changed to Formal." }); setShowActionMenu(false); } }} className="w-10 h-10 rounded-xl bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-primary" title="AI Tone Rewriter"><Sparkles className="w-4 h-4" /></button>
+                       <button type="button" onClick={() => setIsWhisperMode(!isWhisperMode)} className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", isWhisperMode ? "bg-indigo-500/20 text-indigo-500 border border-indigo-500/50" : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white")} title="Whisper Mode"><Ghost className="w-4 h-4" /></button>
+                       <button type="button" onClick={() => setIsUrgent(!isUrgent)} className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", isUrgent ? "bg-red-500/20 text-red-500 border border-red-500/50 animate-pulse" : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white")} title="Urgent Ping"><BellRing className="w-4 h-4" /></button>
+                       <button type="button" onClick={() => { const qs = ["What's your hot take?", "Best movie ever?", "Pineapple on pizza?"]; setChatInput(qs[Math.floor(Math.random() * qs.length)]); setShowActionMenu(false); }} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white" title="Icebreaker"><Dice5 className="w-4 h-4" /></button>
+                     </motion.div>
                    )}
-                   title={isRecording ? "Stop recording" : "Record voice message"}
-                 >
-                   <Mic className="w-4 h-4" />
-                 </button>
-
-                 {/* ── Feature 10: Schedule button ── */}
-                 <button
-                   type="button"
-                   onClick={() => { setShowSchedulePicker(!showSchedulePicker); setShowGifPicker(false); setShowStickerPicker(false); }}
-                   className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"
-                   title="Schedule message"
-                 >
-                   <Clock className="w-4 h-4" />
-                 </button>
-
-                 {/* ── Phase 1: Draw to Chat ── */}
-                 <button
-                   type="button"
-                   onClick={() => setShowCanvas(!showCanvas)}
-                   className={cn("w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all shrink-0", showCanvas ? "bg-primary text-black" : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white")}
-                   title="Draw to Chat"
-                 >
-                   <Paintbrush className="w-4 h-4" />
-                 </button>
-
-                 {/* ── Phase 1: Whisper Mode ── */}
-                 <button
-                   type="button"
-                   onClick={() => setIsWhisperMode(!isWhisperMode)}
-                   className={cn("w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all shrink-0", isWhisperMode ? "bg-indigo-500/20 text-indigo-500 border border-indigo-500/50" : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white")}
-                   title="Toggle Whisper Mode (Self-Destructing)"
-                 >
-                   <Ghost className="w-4 h-4" />
-                 </button>
-
-                 {/* ── Phase 1: Urgent Ping ── */}
-                 <button
-                   type="button"
-                   onClick={() => setIsUrgent(!isUrgent)}
-                   className={cn("w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all shrink-0", isUrgent ? "bg-red-500/20 text-red-500 border border-red-500/50 animate-pulse" : "bg-white/5 hover:bg-white/10 text-white/40 hover:text-white")}
-                   title="Urgent Ping (Bypass DND)"
-                 >
-                   <BellRing className="w-4 h-4" />
-                 </button>
-
-                 {/* ── Phase 1: Icebreaker ── */}
-                 <button
-                   type="button"
-                   onClick={() => {
-                     const qs = ["What's your most controversial food take?", "If you had to live in a video game, which one?", "What's the best movie you've seen recently?"];
-                     setChatInput(qs[Math.floor(Math.random() * qs.length)]);
-                   }}
-                   className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"
-                   title="Random Icebreaker Question"
-                 >
-                   <Dice5 className="w-4 h-4" />
-                 </button>
-
+                 </AnimatePresence>
 
                  <div className="relative flex-1">
                     {/* @mention autocomplete dropdown */}
