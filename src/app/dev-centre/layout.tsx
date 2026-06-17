@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Cloud, LayoutGrid, Database, FileCode2, RadioReceiver, CreditCard, Server, Box } from "lucide-react";
+import { Cloud, LayoutGrid, Database, FileCode2, RadioReceiver, CreditCard, Server, Box, MonitorSmartphone, Network } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { usePathname, useRouter } from "next/navigation";
@@ -39,6 +39,8 @@ export default function DevCentreLayout({ children }: { children: React.ReactNod
     { name: "Xakteir Dev Functions", path: "/dev-centre/functions", icon: FileCode2 },
     { name: "Xakteir Dev Storage", path: "/dev-centre/storage", icon: Database },
     { name: "Xakteir Dev Socket", path: "/dev-centre/sockets", icon: RadioReceiver },
+    { name: "Xakteir Dev Preview Env", path: "/dev-centre/preview", icon: MonitorSmartphone },
+    { name: "Xakteir Dev Edge Config", path: "/dev-centre/edge-config", icon: Network },
     { name: "Xakteir Dev Billing", path: "/dev-centre/billing", icon: CreditCard },
   ];
 
