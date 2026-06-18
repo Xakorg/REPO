@@ -88,7 +88,13 @@ export default function DevCentreLayout({ children }: { children: React.ReactNod
             return (
               <button 
                 key={link.name}
-                onClick={() => router.push(link.path)} 
+                onClick={() => {
+                  if (link.path === "/dev-centre/compute/vms") {
+                    window.location.href = link.path;
+                  } else {
+                    router.push(link.path);
+                  }
+                }} 
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all text-left", 
                   isActive ? "bg-white/5 text-primary" : "text-zinc-400 hover:bg-white/5"
