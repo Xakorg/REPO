@@ -53,11 +53,11 @@ export default function FunctionsBlade() {
         code: funcCode,
         runtime: "Node.js 20.x",
         status: "Active",
-        url: `https://${funcId}.edge.xakteir.cloud`,
+        url: `/api/edge/${funcId}`,
         deployedAt: new Date().toISOString()
       });
 
-      toast({ title: "Function Deployed", description: `Your function ${funcName} is now live at edge.xakteir.cloud.` });
+      toast({ title: "Function Deployed", description: `Your function ${funcName} is now live.` });
       setFuncName("");
     } catch (e: any) {
       toast({ variant: "destructive", title: "Deployment Failed", description: e.message });
@@ -157,7 +157,7 @@ export default function FunctionsBlade() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest text-zinc-500">
                     <span>URL</span>
-                    <a href={`https://${func.url}`} target="_blank" className="text-sky-400 hover:underline lowercase normal-case tracking-normal">{func.url}</a>
+                    <a href={func.url} target="_blank" className="text-sky-400 hover:underline lowercase normal-case tracking-normal">{typeof window !== "undefined" ? window.location.origin : ""}{func.url}</a>
                   </div>
                   <div className="flex justify-between items-center text-[10px] uppercase font-black tracking-widest text-zinc-600">
                     <span>Runtime: {func.runtime}</span>

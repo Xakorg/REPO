@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Check, Zap, ArrowRight, ShieldCheck, ZapIcon } from "lucide-react";
@@ -21,19 +21,10 @@ export default function BillingBlade() {
   const { data: devAccount } = useDoc(devAccountRef);
 
   const handleUpgrade = async (tier: string) => {
-    if (!devAccountRef) return;
-    
-    // Developer mentioned they don't have Stripe keys yet, 
-    // so we mock the upgrade by directly writing to Firestore.
-    try {
-      await updateDoc(devAccountRef, { tier });
-      toast({ 
-        title: "Upgrade Successful!", 
-        description: `Your account has been upgraded to ${tier}.` 
-      });
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "Upgrade Failed", description: e.message });
-    }
+    toast({ 
+      title: "Coming Soon!", 
+      description: `XakPay integration for ${tier} is currently under development.` 
+    });
   };
 
   return (
