@@ -2,7 +2,7 @@ export interface GameMeta {
   id: string;
   title: string;
   developer: string;
-  type: "3D" | "2D Top-Down" | "2D Platformer" | "Retro Emulator" | "Arcade" | "Sports";
+  type: "3D" | "2D Top-Down" | "2D Platformer" | "Retro Emulator" | "Arcade" | "Sports" | "Puzzle" | "Strategy" | "Discovery";
   genre: string[];
   description: string;
   bannerUrl: string;
@@ -12,7 +12,7 @@ export interface GameMeta {
   route: string; // The URL to launch the game
 }
 
-export const GAMES_DB: GameMeta[] = [
+const premiumGames: GameMeta[] = [
   {
     id: "xaksports",
     title: "XakSports",
@@ -79,3 +79,68 @@ export const GAMES_DB: GameMeta[] = [
     route: "/games/play/pixel_knight"
   }
 ];
+
+const legacyGamesData = [
+  { id: 'aim', name: 'Aim Trainer', type: 'Arcade' },
+  { id: 'balance', name: 'Balance Board', type: 'Puzzle' },
+  { id: 'basketball', name: 'Basketball Shoot', type: 'Sports' },
+  { id: 'breaker', name: 'Brick Breaker', type: 'Arcade' },
+  { id: 'bubble', name: 'Bubble Shooter', type: 'Puzzle' },
+  { id: 'clickSpeed', name: 'Click Speed', type: 'Arcade' },
+  { id: 'clicker', name: 'Idle Clicker', type: 'Strategy' },
+  { id: 'colorMatch', name: 'Color Match', type: 'Puzzle' },
+  { id: 'connectFour', name: 'Connect Four', type: 'Strategy' },
+  { id: 'dodge', name: 'Dodge Objects', type: 'Arcade' },
+  { id: 'drawing', name: 'Drawing Canvas', type: 'Discovery' },
+  { id: 'fishing', name: 'Fishing Game', type: 'Arcade' },
+  { id: 'flappy', name: 'Flappy Bird', type: 'Arcade' },
+  { id: 'football3D', name: 'Football 3D', type: '3D' },
+  { id: 'frogger', name: 'Frogger Cross', type: 'Arcade' },
+  { id: 'golf', name: 'Mini Golf', type: 'Sports' },
+  { id: 'gravity', name: 'Gravity Flip', type: 'Arcade' },
+  { id: 'invaders', name: 'Space Invaders', type: 'Arcade' },
+  { id: 'jump', name: 'Infinite Jump', type: 'Arcade' },
+  { id: 'knife', name: 'Knife Hit', type: 'Arcade' },
+  { id: 'match3', name: 'Match 3', type: 'Puzzle' },
+  { id: 'math', name: 'Math Quiz', type: 'Puzzle' },
+  { id: 'maze', name: 'Maze Solver', type: 'Puzzle' },
+  { id: 'memory', name: 'Memory Cards', type: 'Puzzle' },
+  { id: 'minesweeper', name: 'Minesweeper', type: 'Strategy' },
+  { id: 'paint', name: 'Paint & Draw', type: 'Discovery' },
+  { id: 'parking', name: 'Car Parking', type: 'Puzzle' },
+  { id: 'pinball', name: 'Pinball Classic', type: 'Arcade' },
+  { id: 'plinko', name: 'Plinko Drop', type: 'Arcade' },
+  { id: 'pong', name: 'Classic Pong', type: 'Arcade' },
+  { id: 'rps', name: 'Rock Paper Scissors', type: 'Strategy' },
+  { id: 'reaction', name: 'Reaction Time', type: 'Arcade' },
+  { id: 'sequence', name: 'Memory Sequence', type: 'Puzzle' },
+  { id: 'snake', name: 'Snake Game', type: 'Arcade' },
+  { id: 'spinWheel', name: 'Spin The Wheel', type: 'Discovery' },
+  { id: 'stack', name: 'Tower Stacker', type: 'Arcade' },
+  { id: 'sudoku', name: 'Sudoku Classic', type: 'Puzzle' },
+  { id: 'tictactoe', name: 'Tic Tac Toe', type: 'Strategy' },
+  { id: 'towerDefense', name: 'Tower Defense', type: 'Strategy' },
+  { id: 'trivia', name: 'Trivia Quiz', type: 'Discovery' },
+  { id: 'tunnel3D', name: 'Tunnel 3D', type: '3D' },
+  { id: 'twoZeroFourEight', name: '2048 Puzzle', type: 'Puzzle' },
+  { id: 'typing', name: 'Typing Test', type: 'Discovery' },
+  { id: 'whack', name: 'Whack-a-Mole', type: 'Arcade' },
+  { id: 'word', name: 'Word Search', type: 'Puzzle' },
+  { id: 'xbr', name: 'XBR Arena', type: '3D' }
+];
+
+const legacyGames: GameMeta[] = legacyGamesData.map(g => ({
+  id: g.id,
+  title: g.name,
+  developer: "xakteir",
+  type: g.type as any,
+  genre: [g.type, "Casual"],
+  description: `Classic ${g.name} experience available right in your browser.`,
+  bannerUrl: `https://picsum.photos/seed/${g.id}/1200/800`,
+  iconUrl: `https://api.dicebear.com/7.x/shapes/svg?seed=${g.id}`,
+  releaseDate: "Classic",
+  price: "Free",
+  route: `/games/play/${g.id}`
+}));
+
+export const GAMES_DB: GameMeta[] = [...premiumGames, ...legacyGames];
