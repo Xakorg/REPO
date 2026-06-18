@@ -1,20 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { GAMES_DB, GameMeta } from "@/lib/games-db";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, ShoppingBag, Plus, Sparkles, LogOut, Settings } from "lucide-react";
+import { Play, ShoppingBag, Settings, Sparkles, Gamepad2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function GamesLibraryPage() {
+export default function PlayStationGamesLibrary() {
   const router = useRouter();
   const [libraryIds, setLibraryIds] = useState<string[]>([]);
-  const [hoveredGame, setHoveredGame] = useState<string | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState(0);
   const [launchingGame, setLaunchingGame] = useState<string | null>(null);
+  
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load owned games from localStorage (default to free built-in games)
     const stored = localStorage.getItem("xakteir_game_library");
     if (stored) {
       setLibraryIds(JSON.parse(stored));
@@ -25,138 +26,243 @@ export default function GamesLibraryPage() {
     }
   }, []);
 
+  // Make sure 'store' card is always at the end of the library array
   const libraryGames = GAMES_DB.filter(g => libraryIds.includes(g.id));
+  const activeItem = focusedIndex < libraryGames.length ? libraryGames[focusedIndex] : null;
+
+  // Handle keyboard navigation for that authentic console feel
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (launchingGame) return;
+      
+      if (e.key === "ArrowRight") {
+        setFocusedIndex(prev => Math.min(prev + 1, libraryGames.length));
+      } else if (e.key === "ArrowLeft") {
+        setFocusedIndex(prev => Math.max(prev - 1, 0));
+      } else if (e.key === "Enter" && activeItem) {
+        handleLaunch(activeItem);
+      } else if (e.key === "Enter" && !activeItem) {
+        router.push('/games/store');
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [libraryGames.length, activeItem, launchingGame, router]);
+
+  // Center the focused item in the carousel
+  useEffect(() => {
+    if (carouselRef.current) {
+      const container = carouselRef.current;
+      const focusedElement = container.children[focusedIndex] as HTMLElement;
+      if (focusedElement) {
+        const containerWidth = container.offsetWidth;
+        const elementOffset = focusedElement.offsetLeft;
+        const elementWidth = focusedElement.offsetWidth;
+        
+        container.scrollTo({
+          left: elementOffset - (containerWidth / 2) + (elementWidth / 2),
+          behavior: "smooth"
+        });
+      }
+    }
+  }, [focusedIndex]);
 
   const handleLaunch = (game: GameMeta) => {
     setLaunchingGame(game.id);
-    // Simulate a slick fade-to-black entering transition
     setTimeout(() => {
       router.push(game.route);
-    }, 1500);
+    }, 2000);
+  };
+
+  // Generate a dynamic gradient based on the active item
+  const getGradient = (index: number) => {
+    const colors = [
+      "from-blue-600 via-indigo-900",
+      "from-rose-600 via-red-900",
+      "from-emerald-600 via-teal-900",
+      "from-amber-500 via-orange-900",
+      "from-purple-600 via-fuchsia-900"
+    ];
+    return colors[index % colors.length];
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500/30 overflow-hidden relative">
+    <div className="w-full h-screen bg-black text-white font-sans overflow-hidden relative selection:bg-white/20">
       
-      {/* Background ambient light based on hovered game */}
-      <AnimatePresence>
-        {hoveredGame && (
-          <motion.div 
-            key={hoveredGame}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.15 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1 }}
-            className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-black pointer-events-none"
-            style={{ 
-              backgroundImage: `url(${GAMES_DB.find(g => g.id === hoveredGame)?.bannerUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              filter: 'blur(100px)'
-            }}
-          />
-        )}
+      {/* 1. Dynamic Fullscreen Background (PS5 Style) */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={focusedIndex}
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className={cn(
+            "absolute inset-0 bg-gradient-to-br to-black pointer-events-none transition-colors duration-1000",
+            getGradient(focusedIndex)
+          )}
+        >
+          {activeItem && (
+            <>
+              <img 
+                src={activeItem.bannerUrl} 
+                alt="bg" 
+                className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60"
+              />
+              {/* Vignette & Fade to Black at bottom */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
+            </>
+          )}
+        </motion.div>
       </AnimatePresence>
 
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none opacity-50" />
+      {/* Floating Particles/UI Elements */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.1),transparent_50%)] pointer-events-none" />
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-10 py-6 bg-gradient-to-b from-black/80 to-transparent backdrop-blur-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.4)]">
-            <Sparkles className="w-5 h-5 text-white" />
+      {/* 2. Top Status Bar */}
+      <header className="absolute top-0 left-0 right-0 p-8 flex justify-between items-center z-50">
+        <div className="flex items-center gap-6">
+          <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+            <Sparkles className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-black tracking-tighter italic">XAKTEIR<span className="text-zinc-500">GAMES</span></h1>
+          <div className="flex gap-8 text-sm font-black uppercase tracking-widest text-white/50">
+            <span className="text-white">Games</span>
+            <span className="hover:text-white transition-colors cursor-pointer" onClick={() => router.push('/games/store')}>Store</span>
+          </div>
         </div>
-        
         <div className="flex items-center gap-4">
-          <button 
-            onClick={() => router.push('/games/store')}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-black font-bold text-sm tracking-wide hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-          >
-            <ShoppingBag className="w-4 h-4" />
-            STORE
-          </button>
-          <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/20 transition-colors">
-            <Settings className="w-4 h-4" />
+          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer border border-white/20">
+            <Settings className="w-5 h-5" />
           </div>
         </div>
       </header>
 
-      {/* Main Library View */}
-      <main className="relative z-10 pt-32 px-10 pb-20 max-w-[1800px] mx-auto h-screen flex flex-col">
-        <h2 className="text-5xl font-black tracking-tighter mb-12">My Library</h2>
-
-        {libraryGames.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center opacity-50">
-            <ShoppingBag className="w-16 h-16 mb-4" />
-            <h3 className="text-xl font-bold">Your library is empty</h3>
-            <p className="text-sm mt-2">Head to the store to add some games!</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {libraryGames.map((game) => (
-              <motion.div
-                key={game.id}
-                onHoverStart={() => setHoveredGame(game.id)}
-                onHoverEnd={() => setHoveredGame(null)}
-                whileHover={{ scale: 1.05, y: -10 }}
-                className="group relative aspect-[16/9] rounded-2xl overflow-hidden cursor-pointer border border-white/10 shadow-2xl bg-zinc-900"
-                onClick={() => handleLaunch(game)}
-              >
-                {/* Banner Image */}
-                <img 
-                  src={game.bannerUrl} 
-                  alt={game.title} 
-                  className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500"
-                />
-                
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80" />
-
-                {/* Content */}
-                <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                  <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
-                      {game.type}
-                    </div>
-                    <h3 className="text-2xl font-black tracking-tight text-white mb-2">{game.title}</h3>
-                    
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-200">
-                      {game.genre.slice(0,2).map(g => (
-                        <span key={g} className="px-2 py-1 rounded-md bg-white/10 backdrop-blur-md text-[10px] font-bold text-zinc-300">
-                          {g}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Play Button Overlay */}
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-sm">
-                  <div className="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center scale-75 group-hover:scale-100 transition-transform duration-500 delay-100 shadow-[0_0_30px_rgba(255,255,255,0.5)]">
-                    <Play className="w-6 h-6 fill-black ml-1" />
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-
-            {/* Add More Card */}
+      {/* 3. Game Info (Top Left) */}
+      <div className="absolute top-40 left-16 z-40 max-w-2xl">
+        <AnimatePresence mode="wait">
+          {activeItem ? (
             <motion.div
-              whileHover={{ scale: 1.02 }}
-              onClick={() => router.push('/games/store')}
-              className="aspect-[16/9] rounded-2xl border-2 border-dashed border-white/20 flex flex-col items-center justify-center cursor-pointer hover:border-white/50 hover:bg-white/5 transition-colors group"
+              key={activeItem.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
             >
-              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Plus className="w-6 h-6 text-white" />
+              <img src={activeItem.iconUrl} alt="logo" className="w-24 h-24 rounded-3xl bg-zinc-900 border-2 border-white/10 mb-6 shadow-2xl" />
+              <h1 className="text-6xl font-black tracking-tighter mb-4">{activeItem.title}</h1>
+              <p className="text-lg text-white/70 font-medium mb-8 leading-relaxed line-clamp-3">{activeItem.description}</p>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => handleLaunch(activeItem)}
+                  className="px-10 py-4 bg-white text-black rounded-full font-black tracking-widest uppercase hover:scale-105 transition-transform flex items-center gap-3 shadow-[0_0_40px_rgba(255,255,255,0.3)]"
+                >
+                  <Play className="w-5 h-5 fill-black" /> Play
+                </button>
+                <div className="text-xs font-bold tracking-widest uppercase text-white/50 bg-white/10 px-4 py-4 rounded-full backdrop-blur-md border border-white/10">
+                  {activeItem.type}
+                </div>
               </div>
-              <span className="font-bold tracking-widest uppercase text-sm text-zinc-400 group-hover:text-white transition-colors">Find More Games</span>
             </motion.div>
-          </div>
-        )}
-      </main>
+          ) : (
+            <motion.div
+              key="store-info"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="w-24 h-24 rounded-3xl bg-indigo-600 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(79,70,229,0.5)]">
+                <ShoppingBag className="w-10 h-10 text-white" />
+              </div>
+              <h1 className="text-6xl font-black tracking-tighter mb-4">Store</h1>
+              <p className="text-lg text-white/70 font-medium mb-8 leading-relaxed">Discover your next favorite game. Expand your library with native 3D, retro emulators, and top-down adventures.</p>
+              <button 
+                onClick={() => router.push('/games/store')}
+                className="px-10 py-4 bg-indigo-600 text-white rounded-full font-black tracking-widest uppercase hover:scale-105 transition-transform flex items-center gap-3 shadow-[0_0_40px_rgba(79,70,229,0.4)]"
+              >
+                Browse Catalog
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-      {/* Launching Transition Overlay */}
+      {/* 4. The 1-Line Carousel (Bottom) */}
+      <div className="absolute bottom-20 left-0 right-0 z-40">
+        <div 
+          ref={carouselRef}
+          className="flex items-end gap-4 px-[10vw] overflow-x-auto no-scrollbar scroll-smooth pb-10 pt-4"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {libraryGames.map((game, idx) => (
+            <div
+              key={game.id}
+              onClick={() => setFocusedIndex(idx)}
+              className="shrink-0 relative group outline-none"
+            >
+              <motion.div
+                animate={{
+                  width: focusedIndex === idx ? 280 : 120,
+                  height: focusedIndex === idx ? 280 : 120,
+                  y: focusedIndex === idx ? -20 : 0
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className={cn(
+                  "rounded-3xl overflow-hidden cursor-pointer shadow-2xl transition-colors duration-300",
+                  focusedIndex === idx ? "border-4 border-white" : "border border-white/20 bg-white/5 hover:bg-white/20 hover:border-white/40"
+                )}
+              >
+                <img 
+                  src={game.iconUrl} 
+                  alt={game.title} 
+                  className={cn(
+                    "w-full h-full object-cover transition-opacity duration-300",
+                    focusedIndex === idx ? "opacity-100" : "opacity-50 group-hover:opacity-100"
+                  )} 
+                />
+              </motion.div>
+              {/* Label underneath small icons */}
+              {focusedIndex !== idx && (
+                <div className="absolute -bottom-8 left-0 right-0 text-center text-xs font-bold tracking-widest uppercase text-white/50 opacity-0 group-hover:opacity-100 transition-opacity truncate px-2">
+                  {game.title}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* "Store" Card at the end of the line */}
+          <div
+            onClick={() => setFocusedIndex(libraryGames.length)}
+            className="shrink-0 relative group outline-none ml-4"
+          >
+            <motion.div
+              animate={{
+                width: focusedIndex === libraryGames.length ? 280 : 120,
+                height: focusedIndex === libraryGames.length ? 280 : 120,
+                y: focusedIndex === libraryGames.length ? -20 : 0
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className={cn(
+                "rounded-3xl cursor-pointer shadow-2xl flex items-center justify-center transition-colors duration-300",
+                focusedIndex === libraryGames.length ? "bg-indigo-600 border-4 border-white" : "bg-white/5 border border-white/20 hover:bg-white/20 hover:border-white/40"
+              )}
+            >
+              <ShoppingBag className={cn(
+                "transition-all duration-300",
+                focusedIndex === libraryGames.length ? "w-20 h-20 text-white" : "w-10 h-10 text-white/50 group-hover:text-white"
+              )} />
+            </motion.div>
+            {focusedIndex !== libraryGames.length && (
+              <div className="absolute -bottom-8 left-0 right-0 text-center text-xs font-bold tracking-widest uppercase text-white/50 opacity-0 group-hover:opacity-100 transition-opacity truncate px-2">
+                Store
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Launching Sequence Overlay */}
       <AnimatePresence>
         {launchingGame && (
           <motion.div
@@ -167,22 +273,20 @@ export default function GamesLibraryPage() {
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.3 }}
               className="flex flex-col items-center"
             >
-              <div className="w-24 h-24 rounded-2xl bg-zinc-900 border border-white/10 mb-8 overflow-hidden shadow-[0_0_50px_rgba(255,255,255,0.1)]">
+              <div className="w-32 h-32 rounded-[2rem] bg-zinc-900 border-2 border-white/10 mb-8 overflow-hidden shadow-[0_0_100px_rgba(255,255,255,0.1)]">
                 <img src={GAMES_DB.find(g => g.id === launchingGame)?.iconUrl} alt="Icon" className="w-full h-full object-cover" />
               </div>
-              <h2 className="text-3xl font-black tracking-widest uppercase text-white mb-2">
+              <h2 className="text-4xl font-black tracking-widest uppercase text-white mb-12">
                 {GAMES_DB.find(g => g.id === launchingGame)?.title}
               </h2>
-              <div className="w-48 h-1 bg-zinc-800 rounded-full mt-8 overflow-hidden">
-                <motion.div 
-                  initial={{ width: "0%" }}
-                  animate={{ width: "100%" }}
-                  transition={{ duration: 1.2, ease: "easeInOut" }}
-                  className="h-full bg-white"
-                />
+              {/* PlayStation style pulsing loader */}
+              <div className="flex gap-4">
+                <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0 }} className="w-3 h-3 rounded-full bg-blue-500" />
+                <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-3 h-3 rounded-full bg-rose-500" />
+                <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-3 h-3 rounded-full bg-emerald-500" />
               </div>
             </motion.div>
           </motion.div>
