@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Server, Plus, Trash2, TerminalSquare, ShieldCheck, Power } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import dynamic from "next/dynamic";
+
+const WebContainerEngine = dynamic(() => import("@/components/compute/WebContainerEngine"), { ssr: false });
 
 export default function VMsBlade() {
   const { user } = useUser();
@@ -224,20 +227,8 @@ export default function VMsBlade() {
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
                 </div>
               </div>
-              <div className="p-4 h-64 overflow-y-auto">
-                <div className="font-mono text-xs text-green-400 whitespace-pre">
-                  {`Welcome to Xakteir WebOS!
-System information as of ${new Date().toUTCString()}
-
-System load:  0.01               Processes:             102
-Usage of /:   14.2% of 40GB      Users logged in:       1
-Memory usage: 4%                 IPv4 address for eth0: 10.0.0.5
-
-* To simulate commands, use standard linux utils. (Coming soon: WebContainer Engine)
-
-root@${activeTerminalVm}:~# `}
-                  <span className="animate-pulse">_</span>
-                </div>
+              <div className="p-4 h-96">
+                <WebContainerEngine vmId={activeTerminalVm} />
               </div>
             </Card>
           )}
