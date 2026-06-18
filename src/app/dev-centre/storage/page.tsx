@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Database, Plus, Trash2, HardDrive, Globe2, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 export default function StorageBlade() {
   const { user } = useUser();
