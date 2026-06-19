@@ -14,6 +14,7 @@ import { TimeTravelOverlay } from '@/components/TimeTravelOverlay';
 import { NotificationManager } from '@/components/NotificationManager';
 import { FocusModeListener } from '@/components/FocusModeListener';
 import { DesktopBridge } from '@/components/desktop-bridge';
+import { FaviconController } from '@/components/layout/FaviconController';
 
 export const metadata: Metadata = {
   title: 'Xakteir',
@@ -26,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -36,10 +37,22 @@ export default function RootLayout({
         <div className="mesh-background" aria-hidden="true" />
         <div className="fixed inset-0 arcade-grid opacity-10 pointer-events-none" aria-hidden="true" />
         
+        {/* Global animated SVG gradient for mesh logo effects */}
+        <svg width="0" height="0" className="absolute pointer-events-none" aria-hidden="true">
+          <defs>
+            <linearGradient id="mesh-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" className="mesh-stop-1" />
+              <stop offset="50%" className="mesh-stop-2" />
+              <stop offset="100%" className="mesh-stop-3" />
+            </linearGradient>
+          </defs>
+        </svg>
+
         <FirebaseClientProvider>
           <OnboardingProvider>
             <LockedAccountGuard>
               <FocusModeListener />
+              <FaviconController />
               <AppLayoutWrapper>
                 {children}
               </AppLayoutWrapper>

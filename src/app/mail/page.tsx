@@ -10,7 +10,7 @@ import {
   Globe, RefreshCw, LogOut, MailCheck, Search, Clock, Paperclip, 
   Lock, Calendar, CheckSquare, AlertTriangle, Languages, Split,
   LayoutDashboard, Settings, MoreVertical, X, Check, Archive, XCircle,
-  Bot, Wand2, CornerUpLeft, Pin, LayoutList, EyeOff, Timer, LayoutPanelLeft, Save, FileText
+  Bot, Wand2, CornerUpLeft, Pin, LayoutList, EyeOff, Timer, LayoutPanelLeft, Save, FileText, Menu
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -38,11 +38,22 @@ export default function MailPage() {
   const { toast } = useToast();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [folder, setFolder] = useState("Inbox");
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [recipient, setRecipient] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) setSidebarOpen(false);
+      else setSidebarOpen(true);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const { data: userData } = useDoc(firestore && user ? doc(firestore, "users", user.uid) : null);
   const [isSending, setIsSending] = useState(false);
@@ -416,7 +427,7 @@ export default function MailPage() {
             to: recipient, 
             subject, 
             body: finalBody, 
-            senderAddress: `member_${user?.uid}@mail.xakteir.com`,
+            senderAddress: `${userData?.username || user?.displayName?.toLowerCase().replace(/\s+/g,'') || user?.uid}@mail.xakteir.com`,
             senderName: user?.displayName || "Xakteir Member" 
           })
         });
@@ -426,7 +437,7 @@ export default function MailPage() {
           await addDoc(collection(firestore, "users", user.uid, "emails"), {
             subject,
             senderName: user.displayName || "Me",
-            senderEmail: `member_${user.uid}@mail.xakteir.com`,
+            senderEmail: `${userData?.username || user?.displayName?.toLowerCase().replace(/\s+/g,'') || user.uid}@mail.xakteir.com`,
             body: isEncrypted ? body : finalBody, // Save raw body for sender
             sentDateTime: new Date().toISOString(),
             isRead: true,
@@ -514,10 +525,13 @@ export default function MailPage() {
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       {isOffline && <div className="bg-amber-500 text-black text-center text-xs font-bold py-1 uppercase">Offline Mode - Some features may be unavailable</div>}
-      <div className="flex-1 flex p-6 gap-6 overflow-hidden">
+      <div className="flex-1 flex p-4 lg:p-6 gap-6 overflow-hidden relative">
         
         {/* Sidebar */}
-        <div className="w-80 flex flex-col space-y-6 shrink-0">
+        <div className={cn(
+          "flex flex-col space-y-6 shrink-0 transition-all duration-300 z-30 lg:relative absolute lg:inset-auto inset-y-4 left-4 lg:bg-transparent bg-zinc-950/95 lg:p-0 p-4 rounded-[2rem] lg:w-80 w-[280px] shadow-2xl lg:shadow-none",
+          sidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-full lg:translate-x-0 lg:w-0 lg:overflow-hidden lg:opacity-0"
+        )}>
           <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
             <DialogTrigger asChild>
               <Button className="w-full bg-primary hover:bg-primary/95 text-black h-16 rounded-3xl font-black uppercase text-xs italic shadow-xl">
@@ -937,13 +951,22 @@ export default function MailPage() {
                 </div>
              ) : (
                <div className="flex-1 flex flex-col items-center justify-center text-white/20">
-                  <MailIcon className="w-16 h-16 mb-4" />
+                  <MailIcon className="w-16 h-16 mb-4" style={{ stroke: "url(#mesh-gradient)", fill: "url(#mesh-gradient)", fillOpacity: 0.15 }} />
                   <p className="text-sm font-bold uppercase tracking-widest">Select an Email</p>
                </div>
              )}
           </div>
           )}
         </div>
+        
+        {/* Sidebar Toggle Button for mobile */}
+        <button 
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="fixed bottom-6 left-6 z-40 lg:hidden w-14 h-14 rounded-full bg-primary text-black flex items-center justify-center shadow-2xl border-4 border-[#05030d] active:scale-95 transition-transform hover:scale-105"
+          aria-label="Toggle folders"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
       </div>
 
       {/* Settings Modal */}

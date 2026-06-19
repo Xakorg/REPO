@@ -43,6 +43,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, query, where, doc, addDoc, serverTimestamp, getDocs, limit, orderBy, updateDoc, deleteDoc, setDoc, onSnapshot } from "firebase/firestore";
@@ -1216,6 +1217,100 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     <div className="h-[calc(100vh-80px)] flex overflow-hidden bg-zinc-950 text-white relative">
       {userData?.customCss && <style dangerouslySetInnerHTML={{ __html: userData.customCss }} />}
       <div className="absolute inset-0 arcade-grid opacity-[0.02] pointer-events-none" />
+
+      {/* Mobile Drawer Trigger */}
+      <div className="md:hidden absolute bottom-6 left-6 z-40">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button className="w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-2xl border-4 border-[#05030d] active:scale-95 transition-all">
+              <Menu className="w-6 h-6 text-white" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="bg-[#05030d] border-white/5 p-0 w-[300px] flex shadow-[0_0_100px_rgba(0,0,0,0.8)] text-white">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Chat Channels</SheetTitle>
+            </SheetHeader>
+            
+            {/* Mobile Server Rail */}
+            <div className="w-16 bg-black flex flex-col items-center py-6 gap-4 z-30 shrink-0 border-r border-white/5">
+              <ScrollArea className="w-full flex-1" style={{ height: "100%" }}>
+                <div className="flex flex-col items-center gap-4 py-4 w-full">
+                  {allServers.map(s => (
+                    <button 
+                      key={s.id}
+                      onClick={() => router.push(s.href)}
+                      className={cn(
+                        "w-10 h-10 rounded-[1.2rem] flex items-center justify-center transition-all duration-300 relative overflow-hidden shrink-0",
+                        activeServer === s.id ? "bg-primary text-black rounded-[0.8rem]" : "bg-white/5 text-white/40 hover:bg-primary hover:text-black hover:rounded-[0.8rem]"
+                      )}
+                    >
+                      {s.iconUrl ? (
+                        <img src={s.iconUrl} alt={s.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <s.icon className="w-5 h-5" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+
+            {/* Mobile Channels List */}
+            <div className="flex-1 bg-[#0a0a15] flex flex-col z-20 overflow-hidden">
+              {activeServer === 'home' ? (
+                <>
+                  <header className="h-16 border-b border-white/5 px-4 flex items-center justify-between shadow-xl shrink-0">
+                     <h2 className="text-xs font-black uppercase italic tracking-tighter text-white">DMs</h2>
+                  </header>
+                  <ScrollArea className="flex-1">
+                    <div className="p-2 space-y-4">
+                      <div className="space-y-1">
+                         {activeDms?.map(chat => (
+                           <DMContactItem key={chat.id} chatId={chat.id} participants={chat.participants} activeChatId={pathname} currentUserId={user.uid} />
+                         ))}
+                      </div>
+                    </div>
+                  </ScrollArea>
+                </>
+              ) : (
+                <>
+                  <header className="h-16 border-b border-white/5 px-4 flex items-center justify-between shadow-xl shrink-0">
+                     <h2 className="text-xs font-black uppercase italic tracking-tighter text-white truncate">{serverHeaderTitle}</h2>
+                  </header>
+                  <ScrollArea className="flex-1">
+                    <div className="p-2 space-y-4">
+                        {channelCategories.map(cat => {
+                          const catChannels = serverChannelsList.filter(c => c.category === cat);
+                          return (
+                            <div key={cat} className="space-y-1">
+                              <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest px-2">{cat}</p>
+                              {catChannels.map(ch => {
+                                const isSel = pathname?.endsWith(`/chat/s/${activeServer}/${ch.id}`) || (ch.id === 'general' && pathname === `/chat/s/${activeServer}`);
+                                return (
+                                  <button 
+                                    key={ch.id}
+                                    onClick={() => router.push(`/chat/s/${activeServer}/${ch.id}`)}
+                                    className={cn(
+                                      "w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] transition-all text-left font-bold",
+                                      isSel ? "bg-primary/20 text-white" : "text-white/40 hover:bg-white/5 hover:text-white"
+                                    )}
+                                  >
+                                    <Hash className="w-3.5 h-3.5 shrink-0 text-white/30" />
+                                    <span className="truncate">{ch.name}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </ScrollArea>
+                </>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
 
       <aside className="hidden md:flex w-20 bg-[#05030d] border-r border-white/5 flex-col items-center py-6 gap-4 z-30 shrink-0">
         <ScrollArea className="w-full flex-1" style={{ height: "100%" }}>

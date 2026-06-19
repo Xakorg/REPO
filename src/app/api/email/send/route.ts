@@ -40,10 +40,11 @@ export async function POST(req: Request) {
         senderDomain,
         timestamp: new Date().toISOString()
       });
-    } else if (senderAddress && senderAddress.endsWith('@mail.xakteir.com')) {
-      // Webmail Client Route
-      finalSenderEmail = `${senderName || 'Xakteir Member'} <${senderAddress}>`;
-      finalReplyTo = senderAddress;
+    } else if (senderAddress && senderAddress.toLowerCase().endsWith('@mail.xakteir.com')) {
+      // Webmail Client Route — use the actual username@mail.xakteir.com address
+      const normalizedAddress = senderAddress.toLowerCase();
+      finalSenderEmail = `${senderName || 'Xakteir Member'} <${normalizedAddress}>`;
+      finalReplyTo = normalizedAddress;
     } else {
       return NextResponse.json({ error: 'Invalid sender configuration' }, { status: 400 });
     }

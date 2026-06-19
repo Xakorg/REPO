@@ -23,6 +23,7 @@ import {
   X,
   Play,
   Printer,
+  Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -60,8 +61,19 @@ export default function XakteirSuitePage() {
 
   const [activeApp, setActiveApp] = useState<SuiteApp>("write");
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) setSidebarOpen(false);
+      else setSidebarOpen(true);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   const [isSaving, setIsSaving] = useState(false);
   const [embedUrlInput, setEmbedUrlInput] = useState("");
   const contentEditableRef = React.useRef<HTMLDivElement>(null);
@@ -677,9 +689,18 @@ export default function XakteirSuitePage() {
 
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col bg-background text-foreground animate-fade-in overflow-hidden relative">
-      <header className="h-16 border-b border-white/5 bg-card/80 backdrop-blur-xl px-8 flex items-center justify-between shadow-2xl relative z-20">
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-3">
+      <header className="h-16 border-b border-white/5 bg-card/80 backdrop-blur-xl px-4 md:px-8 flex items-center justify-between shadow-2xl relative z-20">
+        <div className="flex items-center gap-3 md:gap-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="h-10 w-10 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl"
+            aria-label="Toggle directory"
+          >
+            <Menu className="w-4 h-4" />
+          </Button>
+          <div className="hidden sm:flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
               <Layers className="w-6 h-6 text-white" />
             </div>
@@ -687,7 +708,7 @@ export default function XakteirSuitePage() {
               Suite
             </h2>
           </div>
-          <nav className="flex bg-black/40 p-1 rounded-xl border border-white/10 ml-4">
+          <nav className="flex bg-black/40 p-1 rounded-xl border border-white/10">
             {[
               { id: "write", icon: FileText, label: "Write" },
               { id: "sheet", icon: FileSpreadsheet, label: "Sheets" },
@@ -701,7 +722,7 @@ export default function XakteirSuitePage() {
                   setSelectedDocId(null);
                 }}
                 className={cn(
-                  "px-5 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-3",
+                  "px-3 md:px-5 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 md:gap-3",
                   activeApp === app.id
                     ? "bg-primary text-white shadow-xl"
                     : "text-muted-foreground hover:bg-white/5",
@@ -714,7 +735,7 @@ export default function XakteirSuitePage() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-[10px] font-black text-white/40 uppercase tracking-widest">
+          <div className="hidden lg:flex items-center gap-2 text-[10px] font-black text-white/40 uppercase tracking-widest">
             {isSaving ? (
               <>
                 <Loader2 className="w-3 h-3 animate-spin" /> Saving...
@@ -732,16 +753,20 @@ export default function XakteirSuitePage() {
           </div>
           <Button
             onClick={handleCreateDoc}
-            className="bg-primary hover:bg-primary/90 h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest text-white shadow-xl"
+            className="bg-primary hover:bg-primary/90 h-10 px-3 md:px-6 rounded-xl font-black uppercase text-[10px] tracking-widest text-white shadow-xl"
           >
-            <Plus className="w-4 h-4 mr-2" /> New Document
+            <Plus className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">New Document</span>
           </Button>
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Sidebar */}
-        <aside className="w-72 border-r border-white/5 bg-zinc-950 flex flex-col z-10 shadow-2xl shrink-0">
+        <aside className={cn(
+          "border-r border-white/5 bg-zinc-950 flex flex-col z-30 shadow-2xl shrink-0 transition-all duration-300 md:relative absolute md:inset-auto inset-y-0 left-0",
+          sidebarOpen ? "w-72 translate-x-0 opacity-100" : "-translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden md:opacity-0"
+        )}>
           <div className="p-6 border-b border-white/5 bg-white/5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-[10px] font-black uppercase tracking-widest text-white italic">

@@ -128,8 +128,8 @@ export default function ChatDashboardPage() {
     <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-zinc-950 animate-fade-in relative">
       <div className="absolute inset-0 arcade-grid opacity-[0.02] pointer-events-none" />
       <div className="max-w-xl space-y-8 z-10">
-        <div className="w-24 h-24 rounded-[2.5rem] bg-primary/10 border-4 border-primary/20 flex items-center justify-center mx-auto shadow-2xl animate-float">
-          <MessageSquare className="w-12 h-12 text-primary" />
+        <div className="w-24 h-24 rounded-[2.5rem] bg-black/40 border-4 border-white/10 flex items-center justify-center mx-auto shadow-2xl animate-float">
+          <MessageSquare className="w-12 h-12" style={{ stroke: "url(#mesh-gradient)", fill: "url(#mesh-gradient)", fillOpacity: 0.15 }} />
         </div>
         <div className="space-y-3">
           <h1 className="text-5xl font-black uppercase italic tracking-tighter text-white">Welcome, {cleanDisplayName}!</h1>

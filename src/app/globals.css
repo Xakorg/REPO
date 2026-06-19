@@ -160,3 +160,67 @@
 :-webkit-full-screen footer {
   display: none !important;
 }
+
+/* Global animated SVG gradient stops */
+.mesh-stop-1 {
+  animation: mesh-color-1 12s infinite alternate;
+}
+.mesh-stop-2 {
+  animation: mesh-color-2 12s infinite alternate;
+}
+.mesh-stop-3 {
+  animation: mesh-color-3 12s infinite alternate;
+}
+
+@keyframes mesh-color-1 {
+  0% { stop-color: #00e5ff; }
+  50% { stop-color: #ff3366; }
+  100% { stop-color: #9900ff; }
+}
+@keyframes mesh-color-2 {
+  0% { stop-color: #00ff88; }
+  50% { stop-color: #ffcc00; }
+  100% { stop-color: #00e5ff; }
+}
+@keyframes mesh-color-3 {
+  0% { stop-color: #ff3366; }
+  50% { stop-color: #9900ff; }
+  100% { stop-color: #00ff88; }
+}
+
+/* Games & Catalog Light Theme Overrides */
+.light-theme {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+}
+.light-theme canvas {
+  filter: invert(0.9) hue-rotate(180deg) !important;
+}
+.light-theme .text-white {
+  color: #111827 !important;
+}
+.light-theme .bg-zinc-950,
+.light-theme .bg-black,
+.light-theme .bg-zinc-900,
+.light-theme .bg-zinc-900\/50,
+.light-theme .bg-[#0a0a10],
+.light-theme .bg-[#05030d] {
+  background-color: #f9fafb !important;
+}
+.light-theme .border-zinc-700,
+.light-theme .border-zinc-800,
+.light-theme .border-white\/10 {
+  border-color: #e5e7eb !important;
+}
+.light-theme .text-zinc-400,
+.light-theme .text-white\/40,
+.light-theme .text-white\/50,
+.light-theme .text-white\/60 {
+  color: #4b5563 !important;
+}
+.light-theme .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+.light-theme .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+}
