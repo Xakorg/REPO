@@ -50,19 +50,24 @@ import * as OTPAuth from "otpauth";
 const generateTOTP = (secret: string) => {
   if (!secret) return "------";
   try {
-    const cleanSecret = secret.replace(/[^A-Z2-7]/ig, '');
+    // Normalize: uppercase, strip whitespace and padding, keep only valid Base32 chars
+    const cleanSecret = secret.trim().toUpperCase().replace(/\s+/g, '').replace(/=+$/, '').replace(/[^A-Z2-7]/g, '');
     if (!cleanSecret) return "------";
+    // IMPORTANT: Must use Secret.fromBase32() — passing a raw string treats it as UTF-8
+    // which produces wrong codes that won't match Google Authenticator etc.
+    const secretObj = OTPAuth.Secret.fromBase32(cleanSecret);
     const totp = new OTPAuth.TOTP({
       issuer: 'Xakteir',
       label: 'Auth',
       algorithm: 'SHA1',
       digits: 6,
       period: 30,
-      secret: cleanSecret
+      secret: secretObj
     });
     return totp.generate();
   } catch (e) {
     return "------";
+
   }
 };
 
