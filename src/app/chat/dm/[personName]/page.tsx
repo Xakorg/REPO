@@ -38,6 +38,8 @@ import { collection, serverTimestamp, query, orderBy, limit, doc, getDoc, setDoc
 import { useToast } from "@/hooks/use-toast";
 import { RenderHat } from "@/components/RenderHat";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { ThreadPanel } from "@/components/chat/ThreadPanel";
+import { ReactionPicker } from "@/components/chat/ReactionPicker";
 import { DrawCanvas } from "@/components/chat/DrawCanvas";
 import { MediaGallery } from "@/components/chat/MediaGallery";
 import { Dice5, Paintbrush, Flame, MessagesSquare, Ghost, Palette, Gamepad2, BellRing, Image as ImageIcon, MonitorUp, Sparkles, Trophy, Coins, MapPin, Plus } from "lucide-react";
@@ -1599,10 +1601,9 @@ export default function DirectMessagePage() {
                               "absolute -top-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center bg-[#0a0a15] border border-white/10 rounded-full px-2.5 py-1.5 shadow-2xl gap-2 z-30",
                               isOwn ? "left-0" : "right-0"
                             )}>
-                              {/* Quick reaction emojis */}
-                              {['👍', '❤️', '🔥', '😂'].map(emoji => (
-                                <button key={emoji} onClick={() => handleReact(msg.id, emoji)} className="hover:scale-125 transition-transform text-xs">{emoji}</button>
-                              ))}
+                              {/* Reaction Emoji Picker */}
+                              <ReactionPicker onSelect={(emoji) => handleReact(msg.id, emoji)} />
+                              
                               <div className="w-px h-3 bg-white/10 mx-1" />
                               <button onClick={() => setReplyingToMessage(msg)} className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="Reply"><CornerUpLeft className="w-3 h-3" /></button>
                               <button onClick={() => handleTogglePin(msg.id, msg.pinned)} className={cn("text-zinc-400 hover:text-white hover:scale-110 transition-all", msg.pinned && "text-amber-500")} title="Pin Message"><Pin className="w-3 h-3" /></button>

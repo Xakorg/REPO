@@ -10,11 +10,20 @@ export function FaviconController() {
   const { user } = useUser();
   const firestore = useFirestore();
   const [hostname, setHostname] = useState("");
+  const [hueOffset, setHueOffset] = useState(0);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setHostname(window.location.hostname);
     }
+    
+    // Animation loop for the favicon
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setHueOffset(prev => (prev + 2) % 360);
+      }
+    }, 100);
+    return () => clearInterval(interval);
   }, []);
  
   // 1. Fetch unread emails count
@@ -690,14 +699,14 @@ export function FaviconController() {
 
       ctx.restore();
 
-      // Composite the color changing mesh gradient into the white shape outline!
+      // Composite the color changing gradient into the white shape outline!
       ctx.globalCompositeOperation = "source-in";
       const gradient = ctx.createLinearGradient(0, 0, 64, 64);
-      gradient.addColorStop(0, "#00e5ff");
-      gradient.addColorStop(0.25, "#00ff88");
-      gradient.addColorStop(0.5, "#ffcc00");
-      gradient.addColorStop(0.75, "#ff3366");
-      gradient.addColorStop(1, "#9900ff");
+      gradient.addColorStop(0, `hsl(${(hueOffset + 180) % 360}, 100%, 50%)`);
+      gradient.addColorStop(0.25, `hsl(${(hueOffset + 145) % 360}, 100%, 50%)`);
+      gradient.addColorStop(0.5, `hsl(${(hueOffset + 45) % 360}, 100%, 50%)`);
+      gradient.addColorStop(0.75, `hsl(${(hueOffset + 340) % 360}, 100%, 50%)`);
+      gradient.addColorStop(1, `hsl(${(hueOffset + 270) % 360}, 100%, 50%)`);
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, 64, 64);
 
@@ -735,7 +744,7 @@ export function FaviconController() {
 
       setFavicon(canvas.toDataURL("image/png"));
     }
-  }, [activeApp.icon, activeApp.count, pathname]);
+  }, [activeApp.icon, activeApp.count, pathname, hueOffset]);
  
   return null;
 }
