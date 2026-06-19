@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { 
   Map as MapIcon, 
   Navigation, 
@@ -33,7 +33,39 @@ import {
   ArrowUpLeft,
   ArrowUpRight,
   Volume2,
-  VolumeX
+  VolumeX,
+  Layers,
+  CloudRain,
+  Star,
+  Heart,
+  Home,
+  Briefcase,
+  Camera,
+  Calendar,
+  Share2,
+  Code2,
+  Thermometer,
+  Ruler,
+  Flame,
+  AlertTriangle,
+  Globe,
+  ChevronRight,
+  ChevronLeft,
+  Copy,
+  ExternalLink,
+  Wifi,
+  WifiOff,
+  Coffee,
+  TreePine,
+  Building2,
+  Fuel,
+  Hospital,
+  Hotel,
+  Clock,
+  SlidersHorizontal,
+  Info,
+  ZoomIn,
+  ZoomOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,7 +74,7 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { useUser, useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase";
-import { collection, query, where, doc, updateDoc, serverTimestamp, setDoc, getDocs, limit } from "firebase/firestore";
+import { collection, query, where, doc, updateDoc, serverTimestamp, setDoc, getDocs, limit, addDoc, onSnapshot, orderBy } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -72,205 +104,21 @@ const EIRCODE_DATABASE: Record<string, { name: string, lat: number, lon: number 
   "D24": { name: "Dublin 24", lat: 53.2845, lon: -6.3742 },
   "T12": { name: "Cork City Southside", lat: 51.8904, lon: -8.4716 },
   "T23": { name: "Cork City Northside", lat: 51.9124, lon: -8.4795 },
-  "T37": { name: "Carrigaline", lat: 51.8018, lon: -8.3888 },
-  "T45": { name: "Cobh", lat: 51.8510, lon: -8.2974 },
-  "T56": { name: "Midleton", lat: 51.9150, lon: -8.1747 },
   "H91": { name: "Galway City", lat: 53.2707, lon: -9.0568 },
   "V94": { name: "Limerick City", lat: 52.6638, lon: -8.6268 },
   "X91": { name: "Waterford City", lat: 52.2593, lon: -7.1101 },
-  "R95": { name: "Kilkenny City", lat: 52.6541, lon: -7.2448 },
-  "V93": { name: "Killarney", lat: 52.0599, lon: -9.5044 },
-  "F91": { name: "Sligo Town", lat: 54.2766, lon: -8.4761 },
-  "N37": { name: "Athlone", lat: 53.4229, lon: -7.9365 },
-  "Y35": { name: "Wexford Town", lat: 52.3369, lon: -6.4633 },
-  "W91": { name: "Naas", lat: 53.2185, lon: -6.6669 },
-  "A91": { name: "Dundalk", lat: 53.9979, lon: -6.4060 },
-  "A92": { name: "Drogheda", lat: 53.7144, lon: -6.3483 },
-  "A65": { name: "Maynooth", lat: 53.3814, lon: -6.5914 },
-  "E41": { name: "Thurles", lat: 52.6806, lon: -7.8136 },
-  "F23": { name: "Castlebar", lat: 53.8519, lon: -9.2989 },
-  "K32": { name: "Ardee", lat: 53.8550, lon: -6.5386 },
-  "P17": { name: "Kinsale", lat: 51.7061, lon: -8.5303 },
-  "P24": { name: "Cobh Country", lat: 51.8744, lon: -8.2541 },
-  "P25": { name: "Youghal", lat: 51.9542, lon: -7.8504 },
-  "P31": { name: "Macroom", lat: 51.9028, lon: -8.9592 },
-  "P36": { name: "Bandon", lat: 51.7454, lon: -8.7424 },
-  "P43": { name: "Clonakilty", lat: 51.6214, lon: -8.8894 },
-  "P47": { name: "Dunmanway", lat: 51.7208, lon: -9.1125 },
-  "P51": { name: "Mallow", lat: 52.1354, lon: -8.6433 },
-  "P56": { name: "Charleville", lat: 52.3533, lon: -8.6833 },
-  "P61": { name: "Fermoy", lat: 52.1481, lon: -8.2778 },
-  "P67": { name: "Mitchelstown", lat: 52.2775, lon: -8.2694 },
-  "P72": { name: "Bantry", lat: 51.6800, lon: -9.4500 },
-  "P75": { name: "Skibbereen", lat: 51.5519, lon: -9.2636 },
-  "P81": { name: "Castletownbere", lat: 51.6500, lon: -9.9000 },
-  "P85": { name: "Bantry Country", lat: 51.7000, lon: -9.5500 },
-  "A41": { name: "Ballyboughal", lat: 53.5222, lon: -6.2667 },
-  "A42": { name: "Garristown", lat: 53.5683, lon: -6.3811 },
-  "A45": { name: "Oldtown", lat: 53.5244, lon: -6.3156 },
-  "A63": { name: "Greystones", lat: 53.1444, lon: -6.0622 },
-  "A67": { name: "Wicklow Town", lat: 52.9808, lon: -6.0442 },
-  "A75": { name: "Cavan Town", lat: 53.9908, lon: -7.3606 },
-  "A81": { name: "Carrickmacross", lat: 53.9725, lon: -6.7192 },
-  "A82": { name: "Kells", lat: 53.7272, lon: -6.8778 },
-  "A83": { name: "Enfield", lat: 53.4136, lon: -6.8314 },
-  "A84": { name: "Ashbourne", lat: 53.5117, lon: -6.3986 },
-  "A85": { name: "Dunshaughlin", lat: 53.5122, lon: -6.5392 },
-  "A86": { name: "Dunboyne", lat: 53.4181, lon: -6.4744 },
-  "C15": { name: "Navan", lat: 53.6528, lon: -6.6814 },
-  "E21": { name: "Cahir", lat: 52.3761, lon: -7.9214 },
-  "E25": { name: "Cashel", lat: 52.5161, lon: -7.8906 },
-  "E32": { name: "Carrick-on-Suir", lat: 52.3486, lon: -7.4144 },
-  "E34": { name: "Tipperary Town", lat: 52.4731, lon: -8.1619 },
-  "E45": { name: "Nenagh", lat: 52.8617, lon: -8.1967 },
-  "E53": { name: "Roscrea", lat: 52.9542, lon: -7.7958 },
-  "E91": { name: "Clonmel", lat: 52.3550, lon: -7.7039 },
-  "F12": { name: "Claremorris", lat: 53.7197, lon: -8.9950 },
-  "F26": { name: "Ballina", lat: 54.1161, lon: -9.1511 },
-  "F28": { name: "Castlerea", lat: 53.7681, lon: -8.4908 },
-  "F31": { name: "Ballaghaderreen", lat: 53.9011, lon: -8.5833 },
-  "F35": { name: "Ballyhaunis", lat: 53.7628, lon: -8.7611 },
-  "F42": { name: "Roscommon Town", lat: 53.6275, lon: -8.1883 },
-  "F45": { name: "Boyle", lat: 53.9681, lon: -8.3000 },
-  "F52": { name: "Carrick-on-Shannon", lat: 53.9458, lon: -8.0931 },
-  "F56": { name: "Ballymote", lat: 54.0881, lon: -8.5192 },
-  "F93": { name: "Letterkenny", lat: 54.9497, lon: -7.7372 },
-  "F94": { name: "Donegal Town", lat: 54.6533, lon: -8.1131 },
-  "H12": { name: "Cavan", lat: 53.9908, lon: -7.3606 },
-  "H14": { name: "Belturbet", lat: 54.1011, lon: -7.4456 },
-  "H16": { name: "Ballyconnell", lat: 54.1172, lon: -7.5814 },
-  "H18": { name: "Monaghan Town", lat: 54.2486, lon: -6.9692 },
-  "H23": { name: "Clones", lat: 54.1803, lon: -7.2325 },
-  "H53": { name: "Ballinasloe", lat: 53.3283, lon: -8.2250 },
-  "H54": { name: "Tuam", lat: 53.5133, lon: -8.8497 },
-  "H62": { name: "Loughrea", lat: 53.1972, lon: -8.5678 },
-  "H65": { name: "Athenry", lat: 53.3000, lon: -8.7461 },
-  "H71": { name: "Clifden", lat: 53.4883, lon: -10.0200 },
-  "K34": { name: "Ardee Area", lat: 53.8550, lon: -6.5386 },
-  "K36": { name: "Virginia", lat: 53.8344, lon: -7.0789 },
-  "K44": { name: "Kells Area", lat: 53.7272, lon: -6.8778 },
-  "K56": { name: "Bailieborough", lat: 53.9167, lon: -6.9686 },
-  "K78": { name: "Kinnegad", lat: 53.4542, lon: -7.1028 },
-  "N39": { name: "Longford Town", lat: 53.7267, lon: -7.7983 },
-  "N41": { name: "Carrick-on-Shannon Area", lat: 53.9458, lon: -8.0931 },
-  "N91": { name: "Mullingar", lat: 53.5261, lon: -7.3389 },
-  "R14": { name: "Athy", lat: 52.9922, lon: -6.9806 },
-  "R21": { name: "Muine Bheag", lat: 52.6989, lon: -6.9567 },
-  "R32": { name: "Portarlington", lat: 53.1611, lon: -7.1892 },
-  "R35": { name: "Tullamore", lat: 53.2736, lon: -7.4939 },
-  "R42": { name: "Birr", lat: 53.0931, lon: -7.9131 },
-  "R51": { name: "Kildare Town", lat: 53.1578, lon: -6.9094 },
-  "R56": { name: "Newbridge", lat: 53.1811, lon: -6.7972 },
-  "V14": { name: "Shannon", lat: 52.7114, lon: -8.8756 },
-  "V15": { name: "Ennis", lat: 52.8467, lon: -8.9817 },
-  "V23": { name: "Kilrush", lat: 52.6397, lon: -9.4833 },
-  "V31": { name: "Listowel", lat: 52.4461, lon: -9.4842 },
-  "V35": { name: "Newcastle West", lat: 52.4503, lon: -9.0608 },
-  "V42": { name: "Kilmallock", lat: 52.4000, lon: -8.5772 },
-  "V92": { name: "Tralee", lat: 52.2683, lon: -9.7028 },
-  "W12": { name: "Newbridge Area", lat: 53.1811, lon: -6.7972 },
-  "W23": { name: "Celbridge", lat: 53.3400, lon: -6.5394 },
-  "W34": { name: "Monasterevin", lat: 53.1383, lon: -7.0600 },
-  "X35": { name: "Dungarvan", lat: 52.0847, lon: -7.6225 },
-  "X42": { name: "Kilmacthomas", lat: 52.2064, lon: -7.4239 },
-  "Y14": { name: "Arklow", lat: 52.7933, lon: -6.1642 },
-  "Y21": { name: "Enniscorthy", lat: 52.5022, lon: -6.5681 },
-  "Y25": { name: "Gorey", lat: 52.6775, lon: -6.2956 },
-  "Y34": { name: "New Ross", lat: 52.3956, lon: -6.9442 },
-  "D20A": { name: "Palmerstown", lat: 53.3561, lon: -6.3744 },
-  "D22A": { name: "Clondalkin", lat: 53.3214, lon: -6.3953 },
-  "D24A": { name: "Tallaght", lat: 53.2878, lon: -6.3411 },
-  "D15A": { name: "Blanchardstown", lat: 53.3886, lon: -6.3756 },
-  "D15B": { name: "Castleknock", lat: 53.3769, lon: -6.3575 },
-  "D13A": { name: "Howth", lat: 53.3853, lon: -6.0653 },
-  "D13B": { name: "Sutton", lat: 53.3883, lon: -6.1114 },
-  "D05A": { name: "Raheny", lat: 53.3800, lon: -6.1750 },
-  "D05B": { name: "Artane", lat: 53.3833, lon: -6.2083 },
-  "D03A": { name: "Clontarf", lat: 53.3644, lon: -6.1956 },
-  "D09A": { name: "Beaumont", lat: 53.3892, lon: -6.2411 },
-  "D09B": { name: "Drumcondra", lat: 53.3711, lon: -6.2553 },
-  "D11A": { name: "Finglas", lat: 53.3881, lon: -6.2994 },
-  "D11B": { name: "Ballymun", lat: 53.3986, lon: -6.2644 },
-  "D07A": { name: "Phibsborough", lat: 53.3606, lon: -6.2747 },
-  "D07B": { name: "Cabra", lat: 53.3664, lon: -6.2961 },
-  "D08A": { name: "Inchicore", lat: 53.3400, lon: -6.3197 },
-  "D08B": { name: "Kilmainham", lat: 53.3422, lon: -6.3083 },
-  "D12A": { name: "Crumlin", lat: 53.3250, lon: -6.3153 },
-  "D12B": { name: "Drimnagh", lat: 53.3283, lon: -6.3267 },
-  "D10A": { name: "Ballyfermot", lat: 53.3444, lon: -6.3556 },
-  "D06A": { name: "Ranelagh", lat: 53.3242, lon: -6.2539 },
-  "D06B": { name: "Rathmines", lat: 53.3228, lon: -6.2661 },
-  "D04A": { name: "Ballsbridge", lat: 53.3275, lon: -6.2300 },
-  "D04B": { name: "Donnybrook", lat: 53.3222, lon: -6.2344 },
-  "D02A": { name: "Stephen's Green", lat: 53.3383, lon: -6.2592 },
-  "D01A": { name: "O'Connell St", lat: 53.3500, lon: -6.2606 },
-  "D14A": { name: "Dundrum", lat: 53.2886, lon: -6.2447 },
-  "D14B": { name: "Churchtown", lat: 53.2975, lon: -6.2575 },
-  "D16A": { name: "Ballinteer", lat: 53.2750, lon: -6.2578 },
-  "D16B": { name: "Knocklyon", lat: 53.2858, lon: -6.3150 },
-  "D18A": { name: "Foxrock", lat: 53.2661, lon: -6.1831 },
-  "D18B": { name: "Sandyford", lat: 53.2778, lon: -6.2164 },
+  "IRL": { name: "Ireland (Dublin)", lat: 53.3498, lon: -6.2603 },
+  "GBR": { name: "United Kingdom (London)", lat: 51.5074, lon: -0.1278 },
+  "FRA": { name: "France (Paris)", lat: 48.8566, lon: 2.3522 },
+  "DEU": { name: "Germany (Berlin)", lat: 52.5200, lon: 13.4050 },
+  "ESP": { name: "Spain (Madrid)", lat: 40.4168, lon: -3.7038 },
+  "ITA": { name: "Italy (Rome)", lat: 41.9028, lon: 12.4964 },
+  "USA": { name: "United States (New York)", lat: 40.7128, lon: -74.0060 },
   "POI1": { name: "Cliffs of Moher", lat: 52.9719, lon: -9.4265 },
   "POI2": { name: "Giant's Causeway", lat: 55.2408, lon: -6.5116 },
   "POI3": { name: "Blarney Castle", lat: 51.9292, lon: -8.5708 },
   "POI4": { name: "Guinness Storehouse", lat: 53.3419, lon: -6.2867 },
-  "POI5": { name: "Ring of Kerry", lat: 51.9546, lon: -9.7719 },
   "POI6": { name: "Trinity College", lat: 53.3438, lon: -6.2546 },
-  "POI7": { name: "Temple Bar", lat: 53.3453, lon: -6.2650 },
-  "POI8": { name: "Kilmainham Gaol", lat: 53.3419, lon: -6.3097 },
-  "POI9": { name: "Phoenix Park", lat: 53.3559, lon: -6.3298 },
-  "POI10": { name: "Dublin Castle", lat: 53.3429, lon: -6.2674 },
-  "POI11": { name: "St Patrick's Cathedral", lat: 53.3395, lon: -6.2714 },
-  "POI12": { name: "Killarney National Park", lat: 51.9967, lon: -9.5700 },
-  "POI13": { name: "Newgrange", lat: 53.6946, lon: -6.4755 },
-  "POI14": { name: "Kylemore Abbey", lat: 53.5614, lon: -9.8894 },
-  "POI15": { name: "Skellig Michael", lat: 51.7711, lon: -10.5397 },
-  "ALB": { name: "Albania (Tirana)", lat: 41.3275, lon: 19.8187 },
-  "AND": { name: "Andorra (Andorra la Vella)", lat: 42.5063, lon: 1.5218 },
-  "AUT": { name: "Austria (Vienna)", lat: 48.2082, lon: 16.3738 },
-  "BLR": { name: "Belarus (Minsk)", lat: 53.9006, lon: 27.5590 },
-  "BEL": { name: "Belgium (Brussels)", lat: 50.8503, lon: 4.3517 },
-  "BIH": { name: "Bosnia & Herzegovina (Sarajevo)", lat: 43.8563, lon: 18.4131 },
-  "BGR": { name: "Bulgaria (Sofia)", lat: 42.6977, lon: 23.3219 },
-  "HRV": { name: "Croatia (Zagreb)", lat: 45.8150, lon: 15.9819 },
-  "CYP": { name: "Cyprus (Nicosia)", lat: 35.1856, lon: 33.3823 },
-  "CZE": { name: "Czech Republic (Prague)", lat: 50.0755, lon: 14.4378 },
-  "DNK": { name: "Denmark (Copenhagen)", lat: 55.6761, lon: 12.5683 },
-  "EST": { name: "Estonia (Tallinn)", lat: 59.4370, lon: 24.7536 },
-  "FIN": { name: "Finland (Helsinki)", lat: 60.1695, lon: 24.9354 },
-  "FRA": { name: "France (Paris)", lat: 48.8566, lon: 2.3522 },
-  "DEU": { name: "Germany (Berlin)", lat: 52.5200, lon: 13.4050 },
-  "GRC": { name: "Greece (Athens)", lat: 37.9838, lon: 23.7275 },
-  "HUN": { name: "Hungary (Budapest)", lat: 47.4979, lon: 19.0402 },
-  "ISL": { name: "Iceland (Reykjavik)", lat: 64.1466, lon: -21.9426 },
-  "IRL": { name: "Ireland (Dublin)", lat: 53.3498, lon: -6.2603 },
-  "ITA": { name: "Italy (Rome)", lat: 41.9028, lon: 12.4964 },
-  "KOS": { name: "Kosovo (Pristina)", lat: 42.6629, lon: 21.1655 },
-  "LVA": { name: "Latvia (Riga)", lat: 56.9496, lon: 24.1052 },
-  "LIE": { name: "Liechtenstein (Vaduz)", lat: 47.1410, lon: 9.5209 },
-  "LTU": { name: "Lithuania (Vilnius)", lat: 54.6872, lon: 25.2797 },
-  "LUX": { name: "Luxembourg", lat: 49.6116, lon: 6.1319 },
-  "MLT": { name: "Malta (Valletta)", lat: 35.8989, lon: 14.5146 },
-  "MDA": { name: "Moldova (Chisinau)", lat: 47.0105, lon: 28.8638 },
-  "MCO": { name: "Monaco", lat: 43.7384, lon: 7.4246 },
-  "MNE": { name: "Montenegro (Podgorica)", lat: 42.4304, lon: 19.2594 },
-  "NLD": { name: "Netherlands (Amsterdam)", lat: 52.3676, lon: 4.9041 },
-  "MKD": { name: "North Macedonia (Skopje)", lat: 42.0000, lon: 21.4333 },
-  "NOR": { name: "Norway (Oslo)", lat: 59.9139, lon: 10.7522 },
-  "POL": { name: "Poland (Warsaw)", lat: 52.2297, lon: 21.0122 },
-  "PRT": { name: "Portugal (Lisbon)", lat: 38.7223, lon: -9.1393 },
-  "ROU": { name: "Romania (Bucharest)", lat: 44.4268, lon: 26.1025 },
-  "RUS": { name: "Russia (Moscow)", lat: 55.7558, lon: 37.6173 },
-  "SMR": { name: "San Marino", lat: 43.9424, lon: 12.4578 },
-  "SRB": { name: "Serbia (Belgrade)", lat: 44.8125, lon: 20.4612 },
-  "SVK": { name: "Slovakia (Bratislava)", lat: 48.1486, lon: 17.1077 },
-  "SVN": { name: "Slovenia (Ljubljana)", lat: 46.0569, lon: 14.5058 },
-  "ESP": { name: "Spain (Madrid)", lat: 40.4168, lon: -3.7038 },
-  "SWE": { name: "Sweden (Stockholm)", lat: 59.3293, lon: 18.0686 },
-  "CHE": { name: "Switzerland (Bern)", lat: 46.9480, lon: 7.4474 },
-  "UKR": { name: "Ukraine (Kyiv)", lat: 50.4501, lon: 30.5234 },
-  "GBR": { name: "United Kingdom (London)", lat: 51.5074, lon: -0.1278 },
-  "VAT": { name: "Vatican City", lat: 41.9029, lon: 12.4534 },
 };
 
 const EIRCODE_REGEX = /^[A-Z0-9]{3}[A-Z0-9]{4}$/;
@@ -278,31 +126,21 @@ const EIRCODE_REGEX = /^[A-Z0-9]{3}[A-Z0-9]{4}$/;
 const resolveEirCodeLocal = (code: string) => {
   const clean = code.replace(/\s+/g, "").toUpperCase();
   if (clean.length !== 7) return null;
-  
-  // Dublin 6W special case
   let routingKey = "";
   if (clean.startsWith("D6W")) {
     routingKey = "D6W";
   } else {
     routingKey = clean.substring(0, 3);
   }
-  
   const base = EIRCODE_DATABASE[routingKey];
   if (!base) return null;
-  
-  // Extract unique 4-character suffix
   const suffix = clean.substring(routingKey.length);
-  
-  // Hash suffix to generate a deterministic offset
   let hash = 0;
   for (let i = 0; i < suffix.length; i++) {
     hash += suffix.charCodeAt(i) * (i + 1);
   }
-  
-  // Deterministic offset within ~1km range
-  const latOffset = Math.sin(hash) * 0.007; 
-  const lonOffset = Math.cos(hash) * 0.011; 
-  
+  const latOffset = Math.sin(hash) * 0.007;
+  const lonOffset = Math.cos(hash) * 0.011;
   return {
     lat: base.lat + latOffset,
     lon: base.lon + lonOffset,
@@ -312,7 +150,7 @@ const resolveEirCodeLocal = (code: string) => {
 
 // --- HELPER MATH FUNCTIONS ---
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371000; // Earth radius in meters
+  const R = 6371000;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
   const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -335,13 +173,11 @@ function getBearing(lat1: number, lon1: number, lat2: number, lon2: number) {
 function getPositionAtDistance(coords: [number, number][], distance: number): [number, number] | null {
   if (!coords || coords.length === 0) return null;
   if (distance <= 0) return coords[0];
-  
   let accumulatedDistance = 0;
   for (let i = 0; i < coords.length - 1; i++) {
     const p1 = coords[i];
     const p2 = coords[i+1];
     const d = getDistance(p1[0], p1[1], p2[0], p2[1]);
-    
     if (accumulatedDistance + d >= distance) {
       const remaining = distance - accumulatedDistance;
       const ratio = remaining / d;
@@ -388,18 +224,41 @@ const renderTurnIcon = (modifier: string) => {
   return <CircleDot className="w-7 h-7 text-white" />;
 };
 
+// POI category definitions
+const POI_CATEGORIES = [
+  { key: "restaurant", label: "Restaurants", emoji: "🍽️", color: "#f97316", amenity: "restaurant" },
+  { key: "fuel", label: "Fuel", emoji: "⛽", color: "#eab308", amenity: "fuel" },
+  { key: "hospital", label: "Hospitals", emoji: "🏥", color: "#ef4444", amenity: "hospital" },
+  { key: "atm", label: "ATMs", emoji: "🏧", color: "#22c55e", amenity: "atm" },
+  { key: "hotel", label: "Hotels", emoji: "🏨", color: "#8b5cf6", amenity: "hotel" },
+  { key: "park", label: "Parks", emoji: "🌳", color: "#10b981", amenity: null, leisure: "park" },
+] as const;
+
+// Map style definitions
+const MAP_STYLES = [
+  { key: "dark", label: "Dark", url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", attr: "© OpenStreetMap © CARTO" },
+  { key: "light", label: "Light", url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", attr: "© OpenStreetMap © CARTO" },
+  { key: "osm", label: "Street", url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attr: "© OpenStreetMap contributors" },
+  { key: "satellite", label: "Satellite", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attr: "© Esri" },
+  { key: "terrain", label: "Terrain", url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", attr: "© OpenStreetMap © OpenTopoMap" },
+  { key: "retro", label: "Retro", url: "https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", attr: "© OpenStreetMap © HOT" },
+] as const;
+
+type MapStyleKey = typeof MAP_STYLES[number]["key"];
+
 export default function XakteirMapsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [location, setLocation] = useState<{lat: number, lon: number, speed?: number | null} | null>(null);
+  // Core state
+  const [location, setLocation] = useState<{lat: number, lon: number, speed?: number | null, accuracy?: number | null} | null>(null);
   const [loading, setLoading] = useState(true);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
-  const [mapLayer, setMapLayer] = useState<"dark" | "light" | "osm" | "satellite">("osm");
+  const [mapLayer, setMapLayer] = useState<MapStyleKey>("dark");
 
-  // Search points state
+  // Search / route state
   const [startQuery, setStartQuery] = useState("My Location");
   const [destQuery, setDestQuery] = useState("");
   const [startPoint, setStartPoint] = useState<{ lat: number; lon: number; name: string } | null>(null);
@@ -408,8 +267,6 @@ export default function XakteirMapsPage() {
   const [destSuggestions, setDestSuggestions] = useState<{ name: string; lat: number; lon: number }[]>([]);
   const [activeSearchInput, setActiveSearchInput] = useState<"start" | "dest" | null>(null);
   const [travelMode, setTravelMode] = useState<"driving" | "cycling" | "walking">("driving");
-  
-  // Route details
   const [routeDetails, setRouteDetails] = useState<any>(null);
   const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
   const [routingLoading, setRoutingLoading] = useState(false);
@@ -417,42 +274,121 @@ export default function XakteirMapsPage() {
 
   // Journey simulation
   const [isSimulating, setIsSimulating] = useState(false);
-  const [simDistanceTravelled, setSimDistanceTravelled] = useState(0); 
-  const [simSpeed, setSimSpeed] = useState(0); 
-  const [simSpeedLimit, setSimSpeedLimit] = useState(50); 
-  const [simMultiplier, setSimMultiplier] = useState(5); 
+  const [simDistanceTravelled, setSimDistanceTravelled] = useState(0);
+  const [simSpeed, setSimSpeed] = useState(0);
+  const [simSpeedLimit, setSimSpeedLimit] = useState(50);
+  const [simMultiplier, setSimMultiplier] = useState(5);
   const [simManualSpeedOverride, setSimManualSpeedOverride] = useState<number | null>(null);
   const [arrived, setArrived] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [currentStepProgress, setCurrentStepProgress] = useState({ instruction: "", distanceRemaining: 0, modifier: "" });
-  
-  // Live Geolocation Navigation Mode
   const [isNavigatingLive, setIsNavigatingLive] = useState(false);
   const lastTimeRef = useRef<number>(Date.now());
   const lastDistRef = useRef<number>(0);
-
-  // Voice Navigation Settings
   const [voiceMuted, setVoiceMuted] = useState(false);
   const spokenRef = useRef<{ stepIndex: number; announced: boolean; closeAnnounced: boolean; nowAnnounced: boolean }>({
-    stepIndex: -1,
-    announced: false,
-    closeAnnounced: false,
-    nowAnnounced: false
+    stepIndex: -1, announced: false, closeAnnounced: false, nowAnnounced: false
   });
 
-  const speakText = (text: string) => {
-    if (voiceMuted) return;
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.05;
-      window.speechSynthesis.speak(utterance);
-    }
-  };
-
-  // Friends states
+  // Friends state
   const [friendSearch, setFriendSearch] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // ---- FEATURE 1: Traffic Layer ----
+  const [trafficEnabled, setTrafficEnabled] = useState(false);
+  const trafficLayerRef = useRef<any>(null);
+
+  // ---- FEATURE 5: Saved Places ----
+  const [savedPlacesOpen, setSavedPlacesOpen] = useState(false);
+  const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
+  const [addPlaceMode, setAddPlaceMode] = useState(false);
+  const [pendingPlaceLatlng, setPendingPlaceLatlng] = useState<{lat: number; lng: number} | null>(null);
+  const [newPlaceName, setNewPlaceName] = useState("");
+  const [newPlaceIcon, setNewPlaceIcon] = useState<"home" | "work" | "star" | "heart">("star");
+  const savedPlaceMarkersRef = useRef<Record<string, any>>({});
+
+  // ---- FEATURE 6: POI Layers ----
+  const [activePOI, setActivePOI] = useState<Set<string>>(new Set());
+  const [poiOpen, setPoiOpen] = useState(false);
+  const poiMarkersRef = useRef<Record<string, any[]>>({});
+
+  // ---- FEATURE 7: Weather Overlay ----
+  const [weatherOpen, setWeatherOpen] = useState(false);
+  const [precipEnabled, setPrecipEnabled] = useState(false);
+  const [cloudsEnabled, setCloudsEnabled] = useState(false);
+  const [weatherOpacity, setWeatherOpacity] = useState(0.6);
+  const [currentWeather, setCurrentWeather] = useState<any>(null);
+  const precipLayerRef = useRef<any>(null);
+  const cloudsLayerRef = useRef<any>(null);
+  const OWM_KEY = process.env.NEXT_PUBLIC_OWM_KEY || "439d4b804bc8187953eb36d2a8c26a02";
+
+  // ---- FEATURE 8: Event Pins ----
+  const [eventPinsOpen, setEventPinsOpen] = useState(false);
+  const [mapEvents, setMapEvents] = useState<any[]>([]);
+  const [addEventMode, setAddEventMode] = useState(false);
+  const [pendingEventLatlng, setPendingEventLatlng] = useState<{lat: number; lng: number} | null>(null);
+  const [newEventName, setNewEventName] = useState("");
+  const [newEventDate, setNewEventDate] = useState("");
+  const [newEventDesc, setNewEventDesc] = useState("");
+  const eventMarkersRef = useRef<Record<string, any>>({});
+
+  // ---- FEATURE 11: Measure Distance ----
+  const [measureMode, setMeasureMode] = useState(false);
+  const [measurePoints, setMeasurePoints] = useState<{lat: number; lng: number}[]>([]);
+  const measureMarkersRef = useRef<any[]>([]);
+  const measurePolylineRef = useRef<any>(null);
+
+  // ---- FEATURE 12: Geolocation Tracking (enhanced) ----
+  const [trackingEnabled, setTrackingEnabled] = useState(false);
+  const accuracyCircleRef = useRef<any>(null);
+  const pulseDotRef = useRef<any>(null);
+
+  // ---- FEATURE 13: Photo Map ----
+  const [photosOpen, setPhotosOpen] = useState(false);
+  const [mapPhotos, setMapPhotos] = useState<any[]>([]);
+  const [lightboxPhoto, setLightboxPhoto] = useState<any>(null);
+  const [photoLayerEnabled, setPhotoLayerEnabled] = useState(false);
+  const photoMarkersRef = useRef<Record<string, any>>({});
+  const [addPhotoMode, setAddPhotoMode] = useState(false);
+  const [pendingPhotoLatlng, setPendingPhotoLatlng] = useState<{lat: number; lng: number} | null>(null);
+  const [newPhotoUrl, setNewPhotoUrl] = useState("");
+  const [newPhotoCaption, setNewPhotoCaption] = useState("");
+
+  // ---- FEATURE 14: Boundary Viewer ----
+  const [boundaryEnabled, setBoundaryEnabled] = useState(false);
+  const boundaryLayersRef = useRef<any[]>([]);
+
+  // ---- FEATURE 15: Offline Mode ----
+  const [isOnline, setIsOnline] = useState(true);
+  const [offlineBannerVisible, setOfflineBannerVisible] = useState(false);
+
+  // ---- FEATURE 16: Location Share Link ----
+  const [sharedLocationMarkerRef] = useState<React.MutableRefObject<any>>({ current: null });
+
+  // ---- FEATURE 17: Embed Mode ----
+  const [isEmbedMode, setIsEmbedMode] = useState(false);
+  const [embedModalOpen, setEmbedModalOpen] = useState(false);
+
+  // ---- FEATURE 18: Historical Slider ----
+  const [historyMode, setHistoryMode] = useState(false);
+  const [historyYear, setHistoryYear] = useState(2020);
+  const historyLayerRef = useRef<any>(null);
+
+  // ---- FEATURE 19: Heatmap ----
+  const [heatmapEnabled, setHeatmapEnabled] = useState(false);
+  const heatmapLayerRef = useRef<any>(null);
+  const heatmapScriptLoaded = useRef(false);
+
+  // ---- FEATURE 10: Explore Nearby ----
+  const [exploreOpen, setExploreOpen] = useState(false);
+  const [exploreResults, setExploreResults] = useState<any[]>([]);
+  const [exploreLoading, setExploreLoading] = useState(false);
+  const [exploreCategory, setExploreCategory] = useState("coffee");
+
+  // ---- Context Menu (Feature 20: Reverse Geocode) ----
+  const [contextMenu, setContextMenu] = useState<{x: number; y: number; lat: number; lng: number} | null>(null);
+  const [reverseGeoResult, setReverseGeoResult] = useState<any>(null);
+  const [reverseGeoLoading, setReverseGeoLoading] = useState(false);
 
   // Map refs
   const mapRef = useRef<any>(null);
@@ -464,6 +400,17 @@ export default function XakteirMapsPage() {
   const carMarkerRef = useRef<any>(null);
   const routeBgPolylineRef = useRef<any>(null);
   const routeFgPolylineRef = useRef<any>(null);
+  const locationShareIntervalRef = useRef<any>(null);
+  const [locationSharingEnabled, setLocationSharingEnabled] = useState(false);
+
+  // ---- FEATURE 9: Search Autocomplete (existing) + topbar search ----
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [globalSuggestions, setGlobalSuggestions] = useState<{name: string; lat: number; lon: number}[]>([]);
+  const [globalSearchActive, setGlobalSearchActive] = useState(false);
+  const globalSearchMarkerRef = useRef<any>(null);
+
+  // ---- LEFT SIDEBAR PANELS ----
+  const [leftPanel, setLeftPanel] = useState<"route" | "saved" | "poi" | "explore" | "events" | "photos" | "measure" | null>("route");
 
   // Load Leaflet Assets dynamically
   useEffect(() => {
@@ -477,6 +424,12 @@ export default function XakteirMapsPage() {
     script.onload = () => setLeafletLoaded(true);
     document.head.appendChild(script);
 
+    // Check URL params for embed mode, shared location, etc.
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("embed") === "true") setIsEmbedMode(true);
+    }
+
     return () => {
       try {
         document.head.removeChild(link);
@@ -485,16 +438,41 @@ export default function XakteirMapsPage() {
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
+      if (locationShareIntervalRef.current) {
+        clearInterval(locationShareIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // ---- FEATURE 15: Online/Offline detection ----
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      setOfflineBannerVisible(false);
+      toast({ title: "✅ Connected", description: "You are back online." });
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      setOfflineBannerVisible(true);
+    };
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    setIsOnline(navigator.onLine);
+    if (!navigator.onLine) setOfflineBannerVisible(true);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
   // Sync Geolocation and Watch Position
   useEffect(() => {
     const handleSuccess = (pos: GeolocationPosition) => {
-      const coords = { 
-        lat: pos.coords.latitude, 
+      const coords = {
+        lat: pos.coords.latitude,
         lon: pos.coords.longitude,
-        speed: pos.coords.speed
+        speed: pos.coords.speed,
+        accuracy: pos.coords.accuracy
       };
       setLocation(coords);
       setLoading(false);
@@ -504,8 +482,7 @@ export default function XakteirMapsPage() {
     };
 
     const handleFailure = () => {
-      // Graceful fallback to Dublin City Centre, Ireland
-      const fallback = { lat: 53.3498, lon: -6.2603, speed: 0 };
+      const fallback = { lat: 53.3498, lon: -6.2603, speed: 0, accuracy: null };
       setLocation(fallback);
       setLoading(false);
       setStartPoint({ lat: fallback.lat, lon: fallback.lon, name: "Dublin City Centre" });
@@ -514,14 +491,13 @@ export default function XakteirMapsPage() {
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(handleSuccess, handleFailure);
-
-      // Watch location for real-time tracking (both guest & auth)
       watchIdRef.current = navigator.geolocation.watchPosition(
         (pos) => {
-          const coords = { 
-            lat: pos.coords.latitude, 
+          const coords = {
+            lat: pos.coords.latitude,
             lon: pos.coords.longitude,
-            speed: pos.coords.speed
+            speed: pos.coords.speed,
+            accuracy: pos.coords.accuracy
           };
           setLocation(coords);
           if (user && firestore) {
@@ -536,6 +512,29 @@ export default function XakteirMapsPage() {
     }
   }, [user, firestore]);
 
+  // ---- FEATURE 16: Handle shared location from URL params ----
+  useEffect(() => {
+    if (!leafletLoaded || !mapRef.current) return;
+    const L = (window as any).L;
+    if (!L) return;
+    const params = new URLSearchParams(window.location.search);
+    const sharedLat = parseFloat(params.get("lat") || "");
+    const sharedLng = parseFloat(params.get("lng") || "");
+    const sharedZoom = parseInt(params.get("zoom") || "13");
+    if (!isNaN(sharedLat) && !isNaN(sharedLng)) {
+      mapRef.current.setView([sharedLat, sharedLng], sharedZoom);
+      if (sharedLocationMarkerRef.current) sharedLocationMarkerRef.current.remove();
+      sharedLocationMarkerRef.current = L.marker([sharedLat, sharedLng], {
+        icon: L.divIcon({
+          className: "",
+          html: `<div style="background:#a855f7;border:3px solid white;border-radius:50%;width:20px;height:20px;box-shadow:0 0 12px #a855f7;"></div>`,
+          iconSize: [20, 20],
+          iconAnchor: [10, 10]
+        })
+      }).addTo(mapRef.current).bindPopup("<b>📍 Shared Location</b>").openPopup();
+    }
+  }, [leafletLoaded, mapRef.current]);
+
   const updateUserLocation = async (lat: number, lon: number) => {
     if (!user || !firestore) return;
     try {
@@ -547,7 +546,7 @@ export default function XakteirMapsPage() {
     } catch (e) {}
   };
 
-  // Fetch all users to map friend profiles
+  // Fetch all users
   const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "users"), limit(100));
@@ -561,24 +560,51 @@ export default function XakteirMapsPage() {
   }, [firestore, user]);
   const { data: friendships } = useCollection(friendshipsQuery);
 
-  // Filter pending requests received by current user
   const pendingRequests = useMemo(() => {
     if (!friendships || !user) return [];
     return friendships.filter(f => f.recipientEmail?.toLowerCase() === user.email?.toLowerCase() && f.status === "pending");
   }, [friendships, user]);
 
-  // Extract friend IDs
   const friendIds = useMemo(() => {
     if (!friendships || !user) return [];
     const accepted = friendships.filter(f => f.status === "accepted" && (f.requesterId === user.uid || f.recipientEmail?.toLowerCase() === user.email?.toLowerCase()));
     return accepted.map(f => f.requesterId === user.uid ? f.recipientId : f.requesterId);
   }, [friendships, user]);
 
-  // Map active friends profile details containing location
   const activeFriends = useMemo(() => {
     if (!allUsers || friendIds.length === 0) return [];
     return allUsers.filter(u => friendIds.includes(u.id));
   }, [allUsers, friendIds]);
+
+  // ---- FEATURE 8: Load map events from Firestore ----
+  useEffect(() => {
+    if (!firestore) return;
+    const unsub = onSnapshot(collection(firestore, "mapEvents"), (snap) => {
+      setMapEvents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsub();
+  }, [firestore]);
+
+  // ---- FEATURE 13: Load photos from Firestore ----
+  useEffect(() => {
+    if (!firestore) return;
+    const unsub = onSnapshot(collection(firestore, "mapPhotos"), (snap) => {
+      setMapPhotos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsub();
+  }, [firestore]);
+
+  // ---- FEATURE 5: Load saved places from Firestore ----
+  useEffect(() => {
+    if (!firestore || !user) return;
+    const unsub = onSnapshot(
+      collection(firestore, "users", user.uid, "savedPlaces"),
+      (snap) => {
+        setSavedPlaces(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      }
+    );
+    return () => unsub();
+  }, [firestore, user]);
 
   // Leaflet Map Initialization
   useEffect(() => {
@@ -588,10 +614,40 @@ export default function XakteirMapsPage() {
 
     if (!mapRef.current) {
       mapRef.current = L.map("leaflet-map-holder", { zoomControl: false }).setView([location.lat, location.lon], 13);
-      
-      // Setup Map Click Listener
+
+      // Map click handler (multi-purpose)
       mapRef.current.on("click", (e: any) => {
         const { lat, lng } = e.latlng;
+
+        // Close context menu on map click
+        setContextMenu(null);
+        setReverseGeoResult(null);
+
+        // Measure mode
+        if (measureMode) {
+          setMeasurePoints(prev => [...prev, { lat, lng }]);
+          return;
+        }
+
+        // Add event mode
+        if (addEventMode) {
+          setPendingEventLatlng({ lat, lng });
+          return;
+        }
+
+        // Add photo mode
+        if (addPhotoMode) {
+          setPendingPhotoLatlng({ lat, lng });
+          return;
+        }
+
+        // Add place mode
+        if (addPlaceMode) {
+          setPendingPlaceLatlng({ lat, lng });
+          return;
+        }
+
+        // Default popup
         const popupContent = document.createElement("div");
         popupContent.className = "flex flex-col gap-2 p-1.5 font-sans";
         popupContent.innerHTML = `
@@ -599,30 +655,48 @@ export default function XakteirMapsPage() {
           <button id="btn-set-start" class="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Set as Start</button>
           <button id="btn-set-dest" class="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition">Set Destination</button>
         `;
-        
-        const popup = L.popup()
+
+        L.popup()
           .setLatLng([lat, lng])
           .setContent(popupContent)
           .openOn(mapRef.current);
-          
+
         setTimeout(() => {
           const startBtn = document.getElementById("btn-set-start");
           const destBtn = document.getElementById("btn-set-dest");
           if (startBtn) {
             startBtn.onclick = () => {
-              setStartPoint({ lat, lon: lng, name: `Map Coordinates (${lat.toFixed(4)}, ${lng.toFixed(4)})` });
+              setStartPoint({ lat, lon: lng, name: `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
               setStartQuery(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
               mapRef.current.closePopup();
             };
           }
           if (destBtn) {
             destBtn.onclick = () => {
-              setDestPoint({ lat, lon: lng, name: `Map Coordinates (${lat.toFixed(4)}, ${lng.toFixed(4)})` });
+              setDestPoint({ lat, lon: lng, name: `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
               setDestQuery(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
               mapRef.current.closePopup();
             };
           }
         }, 60);
+      });
+
+      // ---- FEATURE 20: Right-click context menu (reverse geocode) ----
+      mapRef.current.on("contextmenu", (e: any) => {
+        const { lat, lng } = e.latlng;
+        const containerPoint = e.containerPoint;
+        setContextMenu({ x: containerPoint.x, y: containerPoint.y, lat, lng });
+        setReverseGeoResult(null);
+        setReverseGeoLoading(true);
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, {
+          headers: { "User-Agent": "XakteirMaps/1.0", "Accept-Language": "en" }
+        })
+          .then(r => r.json())
+          .then(data => {
+            setReverseGeoResult(data);
+            setReverseGeoLoading(false);
+          })
+          .catch(() => setReverseGeoLoading(false));
       });
     }
 
@@ -645,7 +719,7 @@ export default function XakteirMapsPage() {
         .bindPopup("<b>Me (You)</b>");
     }
 
-    // Clean up markers of users who are no longer active friends
+    // Clean up old friend markers
     const activeFriendIds = activeFriends.map(f => f.id);
     Object.keys(markersRef.current).forEach(id => {
       if (id !== "me" && !activeFriendIds.includes(id)) {
@@ -672,14 +746,14 @@ export default function XakteirMapsPage() {
           });
           markersRef.current[friend.id] = L.marker([friend.location.lat, friend.location.lon], { icon: friendIcon })
             .addTo(mapRef.current)
-            .bindPopup(`<b>${friend.displayName || "Friend Node"}</b><br/>Location coordinates updated.`);
+            .bindPopup(`<b>${friend.displayName || "Friend"}</b><br/>Sharing location`);
         }
       }
     });
 
-  }, [leafletLoaded, location, activeFriends, user]);
+  }, [leafletLoaded, location, activeFriends, user, measureMode, addEventMode, addPhotoMode, addPlaceMode]);
 
-  // Handle layer switching
+  // Tile layer switching (Features 2 + 18)
   useEffect(() => {
     if (!mapRef.current || !leafletLoaded) return;
     const L = (window as any).L;
@@ -689,30 +763,339 @@ export default function XakteirMapsPage() {
       tileLayerRef.current.remove();
     }
 
-    let url = "";
-    let attr = "";
-
-    if (mapLayer === "light") {
-      url = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-      attr = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
-    } else if (mapLayer === "osm") {
-      url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-      attr = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-    } else if (mapLayer === "satellite") {
-      url = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
-      attr = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+    if (historyMode) {
+      // ---- FEATURE 18: Historical Esri Wayback ----
+      if (historyLayerRef.current) historyLayerRef.current.remove();
+      const waybackUrl = `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/${historyYear}/{z}/{y}/{x}`;
+      historyLayerRef.current = L.tileLayer(waybackUrl, {
+        attribution: `© Esri Wayback ${historyYear}`,
+        maxZoom: 18,
+        errorTileUrl: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      }).addTo(mapRef.current);
+      tileLayerRef.current = historyLayerRef.current;
     } else {
-      url = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-      attr = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+      const style = MAP_STYLES.find(s => s.key === mapLayer) || MAP_STYLES[0];
+      tileLayerRef.current = L.tileLayer(style.url, {
+        attribution: style.attr,
+        maxZoom: 20
+      }).addTo(mapRef.current);
+    }
+  }, [mapLayer, leafletLoaded, historyMode, historyYear]);
+
+  // ---- FEATURE 1: Traffic layer toggle ----
+  useEffect(() => {
+    if (!mapRef.current || !leafletLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+    if (trafficEnabled) {
+      if (!trafficLayerRef.current) {
+        trafficLayerRef.current = L.tileLayer(
+          "https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
+          { opacity: 0.6, attribution: "© OpenStreetMap traffic data" }
+        ).addTo(mapRef.current);
+      }
+    } else {
+      if (trafficLayerRef.current) {
+        trafficLayerRef.current.remove();
+        trafficLayerRef.current = null;
+      }
+    }
+  }, [trafficEnabled, leafletLoaded]);
+
+  // ---- FEATURE 7: Weather overlay ----
+  useEffect(() => {
+    if (!mapRef.current || !leafletLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    if (precipEnabled) {
+      if (!precipLayerRef.current) {
+        precipLayerRef.current = L.tileLayer(
+          `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OWM_KEY}`,
+          { opacity: weatherOpacity, attribution: "© OpenWeatherMap" }
+        ).addTo(mapRef.current);
+      } else {
+        precipLayerRef.current.setOpacity(weatherOpacity);
+      }
+    } else {
+      if (precipLayerRef.current) { precipLayerRef.current.remove(); precipLayerRef.current = null; }
     }
 
-    tileLayerRef.current = L.tileLayer(url, {
-      attribution: attr,
-      maxZoom: 20
-    }).addTo(mapRef.current);
-  }, [mapLayer, leafletLoaded]);
+    if (cloudsEnabled) {
+      if (!cloudsLayerRef.current) {
+        cloudsLayerRef.current = L.tileLayer(
+          `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OWM_KEY}`,
+          { opacity: weatherOpacity, attribution: "© OpenWeatherMap" }
+        ).addTo(mapRef.current);
+      } else {
+        cloudsLayerRef.current.setOpacity(weatherOpacity);
+      }
+    } else {
+      if (cloudsLayerRef.current) { cloudsLayerRef.current.remove(); cloudsLayerRef.current = null; }
+    }
+  }, [precipEnabled, cloudsEnabled, weatherOpacity, leafletLoaded]);
 
-  // Update markers for route points
+  // Fetch current weather for map center
+  useEffect(() => {
+    if (!location || !weatherOpen) return;
+    fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${location.lat}&lon=${location.lon}&appid=${OWM_KEY}&units=metric`)
+      .then(r => r.json())
+      .then(d => setCurrentWeather(d))
+      .catch(() => {});
+  }, [location, weatherOpen]);
+
+  // ---- FEATURE 11: Measure distance drawing ----
+  useEffect(() => {
+    if (!mapRef.current || !leafletLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    // Clear old measure markers/lines
+    measureMarkersRef.current.forEach(m => m.remove());
+    measureMarkersRef.current = [];
+    if (measurePolylineRef.current) { measurePolylineRef.current.remove(); measurePolylineRef.current = null; }
+
+    if (measurePoints.length === 0) return;
+
+    measurePoints.forEach((pt, i) => {
+      const m = L.circleMarker([pt.lat, pt.lng], {
+        radius: 6,
+        fillColor: "#f59e0b",
+        color: "#ffffff",
+        weight: 2,
+        fillOpacity: 1
+      }).addTo(mapRef.current).bindTooltip(`Point ${i + 1}`, { permanent: false });
+      measureMarkersRef.current.push(m);
+    });
+
+    if (measurePoints.length > 1) {
+      const latlngs = measurePoints.map(p => [p.lat, p.lng] as [number, number]);
+      measurePolylineRef.current = L.polyline(latlngs, { color: "#f59e0b", weight: 3, dashArray: "8,6" }).addTo(mapRef.current);
+      // Show total distance tooltip on last point
+      let totalDist = 0;
+      for (let i = 0; i < measurePoints.length - 1; i++) {
+        totalDist += getDistance(measurePoints[i].lat, measurePoints[i].lng, measurePoints[i+1].lat, measurePoints[i+1].lng);
+      }
+      const last = measurePoints[measurePoints.length - 1];
+      L.popup()
+        .setLatLng([last.lat, last.lng])
+        .setContent(`<b>Total: ${formatDistance(totalDist)}</b>`)
+        .openOn(mapRef.current);
+    }
+  }, [measurePoints, leafletLoaded]);
+
+  // ---- FEATURE 12: Geolocation tracking (pulsing dot + accuracy circle) ----
+  useEffect(() => {
+    if (!mapRef.current || !leafletLoaded || !location) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    if (trackingEnabled) {
+      // Accuracy circle
+      if (accuracyCircleRef.current) {
+        accuracyCircleRef.current.setLatLng([location.lat, location.lon]);
+        if (location.accuracy) accuracyCircleRef.current.setRadius(location.accuracy);
+      } else {
+        accuracyCircleRef.current = L.circle([location.lat, location.lon], {
+          radius: location.accuracy || 50,
+          color: "#3b82f6",
+          fillColor: "#3b82f6",
+          fillOpacity: 0.1,
+          weight: 1.5
+        }).addTo(mapRef.current);
+      }
+      // Pulsing dot
+      if (pulseDotRef.current) {
+        pulseDotRef.current.setLatLng([location.lat, location.lon]);
+      } else {
+        pulseDotRef.current = L.marker([location.lat, location.lon], {
+          icon: L.divIcon({
+            className: "",
+            html: `<div style="position:relative;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+              <div style="position:absolute;width:24px;height:24px;background:rgba(59,130,246,0.3);border-radius:50%;animation:pulse-radar 1.5s infinite;"></div>
+              <div style="width:12px;height:12px;background:#3b82f6;border-radius:50%;border:2px solid white;box-shadow:0 0 8px #3b82f6;"></div>
+            </div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          })
+        }).addTo(mapRef.current);
+      }
+      mapRef.current.panTo([location.lat, location.lon]);
+    } else {
+      if (accuracyCircleRef.current) { accuracyCircleRef.current.remove(); accuracyCircleRef.current = null; }
+      if (pulseDotRef.current) { pulseDotRef.current.remove(); pulseDotRef.current = null; }
+    }
+  }, [trackingEnabled, location, leafletLoaded]);
+
+  // ---- FEATURE 8: Event pin markers ----
+  useEffect(() => {
+    if (!mapRef.current || !leafletLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    // Remove markers for events no longer present
+    const currentIds = new Set(mapEvents.map(e => e.id));
+    Object.keys(eventMarkersRef.current).forEach(id => {
+      if (!currentIds.has(id)) {
+        eventMarkersRef.current[id].remove();
+        delete eventMarkersRef.current[id];
+      }
+    });
+
+    mapEvents.forEach(ev => {
+      if (!ev.lat || !ev.lng) return;
+      if (eventMarkersRef.current[ev.id]) return;
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="background:#7c3aed;border:2px solid white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(124,58,237,0.6);">📅</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+      });
+      eventMarkersRef.current[ev.id] = L.marker([ev.lat, ev.lng], { icon })
+        .addTo(mapRef.current)
+        .bindPopup(`<b>${ev.name}</b><br/>${ev.date || ""}<br/><span style="font-size:11px">${ev.description || ""}</span>`);
+    });
+  }, [mapEvents, leafletLoaded]);
+
+  // ---- FEATURE 13: Photo markers ----
+  useEffect(() => {
+    if (!mapRef.current || !leafletLoaded || !photoLayerEnabled) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    const currentIds = new Set(mapPhotos.map(p => p.id));
+    Object.keys(photoMarkersRef.current).forEach(id => {
+      if (!currentIds.has(id)) {
+        photoMarkersRef.current[id].remove();
+        delete photoMarkersRef.current[id];
+      }
+    });
+
+    mapPhotos.forEach(ph => {
+      if (!ph.lat || !ph.lng || !ph.url) return;
+      if (photoMarkersRef.current[ph.id]) return;
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="width:36px;height:36px;border-radius:6px;border:2px solid white;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.5);cursor:pointer;">
+          <img src="${ph.url}" style="width:100%;height:100%;object-fit:cover;" />
+        </div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+      photoMarkersRef.current[ph.id] = L.marker([ph.lat, ph.lng], { icon })
+        .addTo(mapRef.current)
+        .bindPopup(`<b>${ph.caption || "Photo"}</b>`);
+    });
+  }, [mapPhotos, photoLayerEnabled, leafletLoaded]);
+
+  // Remove photo markers when layer disabled
+  useEffect(() => {
+    if (!photoLayerEnabled) {
+      Object.values(photoMarkersRef.current).forEach(m => m.remove());
+      photoMarkersRef.current = {};
+    }
+  }, [photoLayerEnabled]);
+
+  // ---- FEATURE 5: Saved places markers ----
+  useEffect(() => {
+    if (!mapRef.current || !leafletLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    const currentIds = new Set(savedPlaces.map(p => p.id));
+    Object.keys(savedPlaceMarkersRef.current).forEach(id => {
+      if (!currentIds.has(id)) {
+        savedPlaceMarkersRef.current[id].remove();
+        delete savedPlaceMarkersRef.current[id];
+      }
+    });
+
+    savedPlaces.forEach(pl => {
+      if (!pl.lat || !pl.lng) return;
+      if (savedPlaceMarkersRef.current[pl.id]) return;
+      const emojiMap: Record<string, string> = { home: "🏠", work: "💼", star: "⭐", heart: "❤️" };
+      const emoji = emojiMap[pl.icon] || "📍";
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="background:#1e293b;border:2px solid #60a5fa;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(96,165,250,0.5);">${emoji}</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+      savedPlaceMarkersRef.current[pl.id] = L.marker([pl.lat, pl.lng], { icon })
+        .addTo(mapRef.current)
+        .bindPopup(`<b>${pl.name}</b>`);
+    });
+  }, [savedPlaces, leafletLoaded]);
+
+  // ---- FEATURE 19: Heatmap ----
+  useEffect(() => {
+    if (!mapRef.current || !leafletLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    if (!heatmapEnabled) {
+      if (heatmapLayerRef.current) {
+        heatmapLayerRef.current.remove();
+        heatmapLayerRef.current = null;
+      }
+      return;
+    }
+
+    const loadHeat = () => {
+      const points = [
+        ...mapEvents.filter(e => e.lat && e.lng).map(e => [e.lat, e.lng, 0.8]),
+        ...mapPhotos.filter(p => p.lat && p.lng).map(p => [p.lat, p.lng, 0.6]),
+      ];
+      if (heatmapLayerRef.current) heatmapLayerRef.current.remove();
+      if (typeof (L as any).heatLayer !== "undefined" && points.length > 0) {
+        heatmapLayerRef.current = (L as any).heatLayer(points, {
+          radius: 35,
+          blur: 25,
+          maxZoom: 17,
+          gradient: { 0.2: "#2563eb", 0.5: "#f59e0b", 1.0: "#ef4444" }
+        }).addTo(mapRef.current);
+      }
+    };
+
+    if (!heatmapScriptLoaded.current) {
+      const s = document.createElement("script");
+      s.src = "https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js";
+      s.onload = () => { heatmapScriptLoaded.current = true; loadHeat(); };
+      document.head.appendChild(s);
+    } else {
+      loadHeat();
+    }
+  }, [heatmapEnabled, mapEvents, mapPhotos, leafletLoaded]);
+
+  // ---- FEATURE 3: Location sharing (friends) ----
+  useEffect(() => {
+    if (!user || !firestore || !location) return;
+    if (locationSharingEnabled) {
+      const shareNow = async () => {
+        try {
+          await updateDoc(doc(firestore, "users", user.uid), {
+            sharingLocation: true,
+            location: { lat: location.lat, lon: location.lon, timestamp: serverTimestamp() }
+          });
+        } catch (e) {}
+      };
+      shareNow();
+      locationShareIntervalRef.current = setInterval(shareNow, 30000);
+    } else {
+      if (locationShareIntervalRef.current) {
+        clearInterval(locationShareIntervalRef.current);
+        locationShareIntervalRef.current = null;
+      }
+      if (user && firestore) {
+        updateDoc(doc(firestore, "users", user.uid), { sharingLocation: false }).catch(() => {});
+      }
+    }
+    return () => {
+      if (locationShareIntervalRef.current) clearInterval(locationShareIntervalRef.current);
+    };
+  }, [locationSharingEnabled, user, firestore, location]);
+
+  // Route markers
   useEffect(() => {
     if (!mapRef.current || !leafletLoaded) return;
     const L = (window as any).L;
@@ -734,10 +1117,7 @@ export default function XakteirMapsPage() {
         }).addTo(mapRef.current).bindPopup(`<b>Start Point</b><br/>${startPoint.name}`);
       }
     } else {
-      if (startMarkerRef.current) {
-        startMarkerRef.current.remove();
-        startMarkerRef.current = null;
-      }
+      if (startMarkerRef.current) { startMarkerRef.current.remove(); startMarkerRef.current = null; }
     }
 
     if (destPoint) {
@@ -755,67 +1135,43 @@ export default function XakteirMapsPage() {
             iconSize: [36, 36],
             iconAnchor: [18, 36]
           })
-        }).addTo(mapRef.current).bindPopup(`<b>Destination Point</b><br/>${destPoint.name}`);
+        }).addTo(mapRef.current).bindPopup(`<b>Destination</b><br/>${destPoint.name}`);
       }
     } else {
-      if (endMarkerRef.current) {
-        endMarkerRef.current.remove();
-        endMarkerRef.current = null;
-      }
+      if (endMarkerRef.current) { endMarkerRef.current.remove(); endMarkerRef.current = null; }
     }
   }, [startPoint, destPoint, leafletLoaded]);
 
-  // Route drawing logic
+  // Route polyline
   useEffect(() => {
     if (!mapRef.current || !leafletLoaded) return;
     const L = (window as any).L;
     if (!L) return;
 
-    if (routeBgPolylineRef.current) {
-      routeBgPolylineRef.current.remove();
-      routeBgPolylineRef.current = null;
-    }
-    if (routeFgPolylineRef.current) {
-      routeFgPolylineRef.current.remove();
-      routeFgPolylineRef.current = null;
-    }
+    if (routeBgPolylineRef.current) { routeBgPolylineRef.current.remove(); routeBgPolylineRef.current = null; }
+    if (routeFgPolylineRef.current) { routeFgPolylineRef.current.remove(); routeFgPolylineRef.current = null; }
 
     if (routeCoords.length > 0) {
       routeBgPolylineRef.current = L.polyline(routeCoords, {
-        color: "#2563eb",
-        weight: 9,
-        opacity: 0.35,
-        lineCap: "round",
-        lineJoin: "round"
+        color: "#2563eb", weight: 9, opacity: 0.35, lineCap: "round", lineJoin: "round"
       }).addTo(mapRef.current);
-
       routeFgPolylineRef.current = L.polyline(routeCoords, {
-        color: "#3b82f6",
-        weight: 5,
-        opacity: 0.9,
-        lineCap: "round",
-        lineJoin: "round"
+        color: "#3b82f6", weight: 5, opacity: 0.9, lineCap: "round", lineJoin: "round"
       }).addTo(mapRef.current);
-
       if (!isSimulating && !isNavigatingLive) {
-        mapRef.current.fitBounds(L.polyline(routeCoords).getBounds(), {
-          padding: [60, 60]
-        });
+        mapRef.current.fitBounds(L.polyline(routeCoords).getBounds(), { padding: [60, 60] });
       }
     }
   }, [routeCoords, leafletLoaded, isSimulating, isNavigatingLive]);
 
-  // Car animation updates
+  // Car animation
   useEffect(() => {
     if (!mapRef.current || !leafletLoaded) return;
     const L = (window as any).L;
     if (!L) return;
 
     if (!isSimulating && !isNavigatingLive) {
-      if (carMarkerRef.current) {
-        carMarkerRef.current.remove();
-        carMarkerRef.current = null;
-      }
+      if (carMarkerRef.current) { carMarkerRef.current.remove(); carMarkerRef.current = null; }
       return;
     }
 
@@ -839,38 +1195,26 @@ export default function XakteirMapsPage() {
 
     if (!pos) return;
 
+    const iconHtml = `<div style="transform: rotate(${bearing}deg); transition: transform 0.1s ease; display:flex; align-items:center; justify-content:center; width:44px; height:44px;">
+      <div style="position: absolute; width:34px; height:34px; background:rgba(59,130,246,0.3); border:2px solid #60a5fa; border-radius:50%; animation: pulse-radar 2s infinite; pointer-events:none;"></div>
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2.5px 6px rgba(0,0,0,0.6));">
+        <path d="M12 2L19 19L12 15L5 19L12 2Z" fill="#3b82f6" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round"/>
+      </svg>
+    </div>`;
+
     if (carMarkerRef.current) {
       carMarkerRef.current.setLatLng(pos);
-      carMarkerRef.current.setIcon(L.divIcon({
-        className: 'car-navigation-marker',
-        html: `<div style="transform: rotate(${bearing}deg); transition: transform 0.1s ease; display:flex; align-items:center; justify-content:center; width:44px; height:44px;">
-          <div style="position: absolute; width:34px; height:34px; background:rgba(59,130,246,0.3); border:2px solid #60a5fa; border-radius:50%; animation: pulse-radar 2s infinite; pointer-events:none;"></div>
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2.5px 6px rgba(0,0,0,0.6));">
-            <path d="M12 2L19 19L12 15L5 19L12 2Z" fill="#3b82f6" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round"/>
-          </svg>
-        </div>`,
-        iconSize: [44, 44],
-        iconAnchor: [22, 22]
-      }));
+      carMarkerRef.current.setIcon(L.divIcon({ className: 'car-navigation-marker', html: iconHtml, iconSize: [44, 44], iconAnchor: [22, 22] }));
     } else {
       carMarkerRef.current = L.marker(pos, {
-        icon: L.divIcon({
-          className: 'car-navigation-marker',
-          html: `<div style="transform: rotate(${bearing}deg); display:flex; align-items:center; justify-content:center; width:44px; height:44px;">
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L19 19L12 15L5 19L12 2Z" fill="#3b82f6" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round"/>
-            </svg>
-          </div>`,
-          iconSize: [44, 44],
-          iconAnchor: [22, 22]
-        })
+        icon: L.divIcon({ className: 'car-navigation-marker', html: iconHtml, iconSize: [44, 44], iconAnchor: [22, 22] })
       }).addTo(mapRef.current);
     }
 
     mapRef.current.setView(pos, Math.max(16, mapRef.current.getZoom()));
   }, [simDistanceTravelled, isSimulating, isNavigatingLive, location, leafletLoaded]);
 
-  // Suggestions fetching debounces
+  // Suggestions debounce
   useEffect(() => {
     if (activeSearchInput !== "start" || startQuery === "My Location" || startQuery.trim().length < 3) {
       setStartSuggestions([]);
@@ -895,47 +1239,49 @@ export default function XakteirMapsPage() {
     return () => clearTimeout(delay);
   }, [destQuery, activeSearchInput]);
 
-  // Calculate route auto-run on inputs change
+  // ---- FEATURE 9: Global search autocomplete ----
+  useEffect(() => {
+    if (!globalSearchActive || globalSearch.trim().length < 3) {
+      setGlobalSuggestions([]);
+      return;
+    }
+    const delay = setTimeout(async () => {
+      const suggestions = await getSuggestions(globalSearch);
+      setGlobalSuggestions(suggestions);
+    }, 400);
+    return () => clearTimeout(delay);
+  }, [globalSearch, globalSearchActive]);
+
+  // Route auto-calculate
   useEffect(() => {
     if (startPoint && destPoint) {
       handleCalculateRoute();
     }
   }, [startPoint, destPoint, travelMode]);
 
-  // Main Simulation Loop
+  // Simulation loop
   useEffect(() => {
     if (!isSimulating || !routeDetails || routeCoords.length === 0) return;
-
     let lastTime = Date.now();
     const interval = setInterval(() => {
       const now = Date.now();
-      const dt = (now - lastTime) / 1000; // time delta in seconds
+      const dt = (now - lastTime) / 1000;
       lastTime = now;
 
       setSimDistanceTravelled((prevDist) => {
         const currentPos = getPositionAtDistance(routeCoords, prevDist);
         const nextPos = getPositionAtDistance(routeCoords, prevDist + 15);
-
-        let limit = 50; 
+        let limit = 50;
         const totalDistance = routeDetails.distance;
 
-        if (travelMode === "walking") {
-          limit = 5;
-        } else if (travelMode === "cycling") {
-          limit = 15;
-        } else {
-          // Apply dynamic speed limits based on distance
-          if (prevDist < 400 || (totalDistance - prevDist) < 400) {
-            limit = 50; // Urban
-          } else if (totalDistance > 8000) {
-            limit = 120; // Motorway
-          } else if (totalDistance > 2500) {
-            limit = 80; // National
-          } else {
-            limit = 60; // Regional
-          }
+        if (travelMode === "walking") { limit = 5; }
+        else if (travelMode === "cycling") { limit = 15; }
+        else {
+          if (prevDist < 400 || (totalDistance - prevDist) < 400) { limit = 50; }
+          else if (totalDistance > 8000) { limit = 120; }
+          else if (totalDistance > 2500) { limit = 80; }
+          else { limit = 60; }
 
-          // Speed limit adjustment for curves
           if (currentPos && nextPos) {
             const currentBearing = getBearing(currentPos[0], currentPos[1], nextPos[0], nextPos[1]);
             const farPos = getPositionAtDistance(routeCoords, prevDist + 45);
@@ -943,36 +1289,25 @@ export default function XakteirMapsPage() {
               const farBearing = getBearing(nextPos[0], nextPos[1], farPos[0], farPos[1]);
               const angleDiff = Math.abs(currentBearing - farBearing);
               const normalizedDiff = angleDiff > 180 ? 360 - angleDiff : angleDiff;
-              
-              if (normalizedDiff > 35) {
-                limit = Math.min(limit, 30); 
-              } else if (normalizedDiff > 15) {
-                limit = Math.min(limit, 50); 
-              }
+              if (normalizedDiff > 35) { limit = Math.min(limit, 30); }
+              else if (normalizedDiff > 15) { limit = Math.min(limit, 50); }
             }
           }
         }
 
         setSimSpeedLimit(limit);
-
-        // Adjust speed
         let targetSpeed = limit;
-        if (simManualSpeedOverride !== null) {
-          targetSpeed = simManualSpeedOverride;
-        }
-
-        // Random organic speed wobble
+        if (simManualSpeedOverride !== null) { targetSpeed = simManualSpeedOverride; }
         const fluctuation = Math.sin(now / 1500) * (travelMode === "walking" ? 0.2 : travelMode === "cycling" ? 0.8 : 1.5);
         const finalTarget = Math.max(0, targetSpeed + (simManualSpeedOverride !== null ? 0 : fluctuation));
 
         setSimSpeed((prevSpeed) => {
           const diff = finalTarget - prevSpeed;
-          const rate = diff > 0 ? 8 : 15; // Accelerates slower, decelerates quicker
+          const rate = diff > 0 ? 8 : 15;
           const newSpeed = prevSpeed + diff * (rate * dt);
           return Math.max(0, newSpeed);
         });
 
-        // Compute step distance
         const speedMs = (simSpeed || 0.1) / 3.6;
         const step = speedMs * dt * simMultiplier;
         const nextDist = prevDist + step;
@@ -988,30 +1323,24 @@ export default function XakteirMapsPage() {
         return nextDist;
       });
     }, 50);
-
     return () => clearInterval(interval);
   }, [isSimulating, routeCoords, routeDetails, simMultiplier, simManualSpeedOverride, simSpeed]);
 
-  // Synchronize route instructions
+  // Route instructions sync
   useEffect(() => {
     if (!routeDetails || !steps || steps.length === 0 || (!isSimulating && !isNavigatingLive)) return;
-
     let currentStep = steps[0];
     let nextStep = steps[1];
     let nextIdx = 0;
 
     for (let i = 0; i < steps.length; i++) {
       if (simDistanceTravelled >= steps[i].startDistance && simDistanceTravelled < steps[i].endDistance) {
-        currentStep = steps[i];
-        nextStep = steps[i + 1] || null;
-        nextIdx = i;
-        break;
+        currentStep = steps[i]; nextStep = steps[i + 1] || null; nextIdx = i; break;
       }
     }
 
     setCurrentStepIndex(nextIdx);
     const distRemaining = currentStep.endDistance - simDistanceTravelled;
-
     let instruction = "";
     let modifier = "";
 
@@ -1023,70 +1352,34 @@ export default function XakteirMapsPage() {
       modifier = "arrive";
     }
 
-    setCurrentStepProgress({
-      instruction,
-      distanceRemaining: distRemaining,
-      modifier
-    });
+    setCurrentStepProgress({ instruction, distanceRemaining: distRemaining, modifier });
   }, [simDistanceTravelled, routeDetails, steps, isSimulating, isNavigatingLive]);
 
-  // Project user's live position onto route and calculate metrics
+  // Live navigation projection
   useEffect(() => {
     if (!isNavigatingLive || !location || !routeCoords || routeCoords.length === 0 || !routeDetails) return;
-
-    // 1. Find the closest route point and cumulative distance along route
     const { point, distanceAlong } = findClosestPointAndDistance(routeCoords, location.lat, location.lon);
-    
     if (point) {
       setSimDistanceTravelled(distanceAlong);
-
-      // 2. Determine Speed Limit
       let limitVal = 50;
       const totalDistance = routeDetails.distance;
-      if (distanceAlong < 400 || (totalDistance - distanceAlong) < 400) {
-        limitVal = 50; // Urban
-      } else if (totalDistance > 8000) {
-        limitVal = 120; // Motorway
-      } else if (totalDistance > 2500) {
-        limitVal = 80; // National
-      } else {
-        limitVal = 60; // Regional
-      }
-
-      // Check curve for limit adjustments
-      const currentPos = getPositionAtDistance(routeCoords, distanceAlong);
-      const nextPos = getPositionAtDistance(routeCoords, distanceAlong + 15);
-      if (currentPos && nextPos) {
-        const currentBearing = getBearing(currentPos[0], currentPos[1], nextPos[0], nextPos[1]);
-        const farPos = getPositionAtDistance(routeCoords, distanceAlong + 45);
-        if (farPos) {
-          const farBearing = getBearing(nextPos[0], nextPos[1], farPos[0], farPos[1]);
-          const angleDiff = Math.abs(currentBearing - farBearing);
-          const normalizedDiff = angleDiff > 180 ? 360 - angleDiff : angleDiff;
-          if (normalizedDiff > 35) {
-            limitVal = Math.min(limitVal, 30);
-          } else if (normalizedDiff > 15) {
-            limitVal = Math.min(limitVal, 50);
-          }
-        }
-      }
+      if (distanceAlong < 400 || (totalDistance - distanceAlong) < 400) { limitVal = 50; }
+      else if (totalDistance > 8000) { limitVal = 120; }
+      else if (totalDistance > 2500) { limitVal = 80; }
+      else { limitVal = 60; }
       setSimSpeedLimit(limitVal);
 
-      // 3. Determine Speed (sensor vs distance delta over time)
       const now = Date.now();
       const dt = (now - lastTimeRef.current) / 1000;
       const dDist = distanceAlong - lastDistRef.current;
-      
       if (location.speed !== null && location.speed !== undefined) {
         setSimSpeed(location.speed * 3.6);
       } else if (dt > 0.5) {
-        const calculatedSpeed = Math.max(0, (dDist / dt) * 3.6);
-        setSimSpeed(calculatedSpeed);
+        setSimSpeed(Math.max(0, (dDist / dt) * 3.6));
         lastTimeRef.current = now;
         lastDistRef.current = distanceAlong;
       }
 
-      // 4. Check arrival
       if (distanceAlong >= totalDistance - 15) {
         setIsNavigatingLive(false);
         setArrived(true);
@@ -1095,74 +1388,51 @@ export default function XakteirMapsPage() {
     }
   }, [location, isNavigatingLive, routeCoords, routeDetails]);
 
-  // Find closest point on route polyline and return the cumulative distance along it
   function findClosestPointAndDistance(coords: [number, number][], userLat: number, userLon: number) {
-    if (!coords || coords.length === 0) return { point: null, distanceAlong: 0 };
-    
+    if (!coords || coords.length === 0) return { point: null, distanceAlong: 0, closestIdx: 0 };
     let minDistance = Infinity;
     let closestIdx = 0;
     let closestPoint: [number, number] = coords[0];
-    
     for (let i = 0; i < coords.length; i++) {
       const d = getDistance(userLat, userLon, coords[i][0], coords[i][1]);
-      if (d < minDistance) {
-        minDistance = d;
-        closestIdx = i;
-        closestPoint = coords[i];
-      }
+      if (d < minDistance) { minDistance = d; closestIdx = i; closestPoint = coords[i]; }
     }
-    
     let distanceAlong = 0;
     for (let i = 0; i < closestIdx; i++) {
       distanceAlong += getDistance(coords[i][0], coords[i][1], coords[i+1][0], coords[i+1][1]);
     }
-    
     return { point: closestPoint, distanceAlong, closestIdx };
   }
 
-  // Trigger speech turn instructions
+  // Voice turn instructions
   useEffect(() => {
     if ((!isSimulating && !isNavigatingLive) || !routeDetails || !steps || steps.length === 0 || currentStepIndex === -1) {
       spokenRef.current = { stepIndex: -1, announced: false, closeAnnounced: false, nowAnnounced: false };
       return;
     }
-
     const currentStep = steps[currentStepIndex];
     const nextStep = steps[currentStepIndex + 1];
     const distRemaining = currentStep.endDistance - simDistanceTravelled;
 
-    // Reset spoken state if step changes
     if (spokenRef.current.stepIndex !== currentStepIndex) {
-      spokenRef.current = {
-        stepIndex: currentStepIndex,
-        announced: false,
-        closeAnnounced: false,
-        nowAnnounced: false
-      };
+      spokenRef.current = { stepIndex: currentStepIndex, announced: false, closeAnnounced: false, nowAnnounced: false };
     }
 
     if (nextStep) {
       const instruction = nextStep.maneuver.instruction;
-      
-      // 1. Initial announcement when entering the step (if distance > 150m)
       if (!spokenRef.current.announced && distRemaining > 150) {
         speakText(`In ${formatDistance(distRemaining)}, ${instruction}`);
         spokenRef.current.announced = true;
       }
-      
-      // 2. Near announcement (around 100m)
       if (!spokenRef.current.closeAnnounced && distRemaining <= 120 && distRemaining > 30) {
         speakText(`In 100 meters, ${instruction}`);
         spokenRef.current.closeAnnounced = true;
       }
-
-      // 3. Immediate turn announcement (around 20m)
       if (!spokenRef.current.nowAnnounced && distRemaining <= 25) {
         speakText(instruction);
         spokenRef.current.nowAnnounced = true;
       }
     } else {
-      // Near destination
       if (!spokenRef.current.announced) {
         speakText("You are arriving at your destination.");
         spokenRef.current.announced = true;
@@ -1170,83 +1440,60 @@ export default function XakteirMapsPage() {
     }
   }, [simDistanceTravelled, currentStepIndex, isSimulating, isNavigatingLive, steps, routeDetails, voiceMuted]);
 
-  // Global Geocoding Suggestion Engine
+  // ---- Core Functions ----
+  const speakText = (text: string) => {
+    if (voiceMuted) return;
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.05;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
   const getSuggestions = async (queryStr: string) => {
-    // Check if valid EirCode format first
     const eirClean = queryStr.replace(/\s+/g, "").toUpperCase();
     if (EIRCODE_REGEX.test(eirClean)) {
       const resolved = resolveEirCodeLocal(eirClean);
       if (resolved) {
-        return [{
-          name: `EirCode: ${queryStr.toUpperCase()} (${resolved.name})`,
-          lat: resolved.lat,
-          lon: resolved.lon
-        }];
+        return [{ name: `EirCode: ${queryStr.toUpperCase()} (${resolved.name})`, lat: resolved.lat, lon: resolved.lon }];
       }
     }
-
-    // Call OSM Nominatim API
     try {
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryStr)}&format=json&limit=5`;
-      const res = await fetch(url, {
-        headers: {
-          "Accept-Language": "en-US,en;q=0.9",
-          "User-Agent": "XakteirMaps/1.0"
-        }
-      });
+      const res = await fetch(url, { headers: { "Accept-Language": "en-US,en;q=0.9", "User-Agent": "XakteirMaps/1.0" } });
       const data = await res.json();
-      return data.map((item: any) => ({
-        name: item.display_name,
-        lat: parseFloat(item.lat),
-        lon: parseFloat(item.lon)
-      }));
+      return data.map((item: any) => ({ name: item.display_name, lat: parseFloat(item.lat), lon: parseFloat(item.lon) }));
     } catch (e) {
       return [];
     }
   };
 
-  // Fetch Route from OSRM
   const fetchRoute = async (start: { lat: number, lon: number }, end: { lat: number, lon: number }, mode: "driving" | "cycling" | "walking") => {
-    // The public OSRM demo server only supports the 'car' profile.
-    // We fetch using 'car' to get the route coordinates, and then adjust duration and speeds according to the selected mode.
     const url = `https://router.project-osrm.org/route/v1/car/${start.lon},${start.lat};${end.lon},${end.lat}?overview=full&geometries=geojson&steps=true`;
     try {
       const res = await fetch(url);
       const data = await res.json();
       if (data.code === "Ok" && data.routes && data.routes[0]) {
         const route = data.routes[0];
-        
-        // Adjust duration based on travel mode speed in m/s
-        // Driving: 50 km/h (13.89 m/s), Cycling: 15 km/h (4.17 m/s), Walking: 5 km/h (1.39 m/s)
         let speedMps = 13.89;
-        if (mode === "cycling") {
-          speedMps = 4.17;
-        } else if (mode === "walking") {
-          speedMps = 1.39;
-        }
-        
+        if (mode === "cycling") speedMps = 4.17;
+        else if (mode === "walking") speedMps = 1.39;
         route.duration = route.distance / speedMps;
         if (route.legs) {
           route.legs.forEach((leg: any) => {
             leg.duration = leg.distance / speedMps;
-            if (leg.steps) {
-              leg.steps.forEach((step: any) => {
-                step.duration = step.distance / speedMps;
-              });
-            }
+            if (leg.steps) leg.steps.forEach((step: any) => { step.duration = step.distance / speedMps; });
           });
         }
         return route;
       }
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
     return null;
   };
 
   const handleCalculateRoute = async () => {
     if (!startPoint || !destPoint) return;
-
     setRoutingLoading(true);
     setRouteDetails(null);
     setRouteCoords([]);
@@ -1260,7 +1507,7 @@ export default function XakteirMapsPage() {
     setRoutingLoading(false);
 
     if (!route) {
-      toast({ variant: "destructive", title: "Routing Error", description: "Could not map a driving/walking route between these points." });
+      toast({ variant: "destructive", title: "Routing Error", description: "Could not find a route between these points." });
       return;
     }
 
@@ -1272,15 +1519,241 @@ export default function XakteirMapsPage() {
     const stepsWithDistances = route.legs[0].steps.map((step: any) => {
       const start = accum;
       accum += step.distance;
-      return {
-        ...step,
-        startDistance: start,
-        endDistance: accum
-      };
+      return { ...step, startDistance: start, endDistance: accum };
     });
     setSteps(stepsWithDistances);
   };
 
+  // ---- FEATURE 6: POI layer toggle ----
+  const togglePOI = async (categoryKey: string) => {
+    if (!mapRef.current || !leafletLoaded || !location) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    const newActive = new Set(activePOI);
+    if (newActive.has(categoryKey)) {
+      newActive.delete(categoryKey);
+      poiMarkersRef.current[categoryKey]?.forEach((m: any) => m.remove());
+      poiMarkersRef.current[categoryKey] = [];
+    } else {
+      newActive.add(categoryKey);
+      const cat = POI_CATEGORIES.find(c => c.key === categoryKey);
+      if (!cat) return;
+
+      const bbox = mapRef.current.getBounds();
+      const s = bbox.getSouth().toFixed(4), w = bbox.getWest().toFixed(4), n = bbox.getNorth().toFixed(4), e = bbox.getEast().toFixed(4);
+      const cacheKey = `poi_${categoryKey}_${s}_${w}_${n}_${e}`;
+      let nodes: any[] = [];
+
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        nodes = JSON.parse(cached);
+      } else {
+        try {
+          const amenityTag = cat.amenity ? `amenity=${cat.amenity}` : `leisure=${(cat as any).leisure}`;
+          const overpassQuery = `[out:json];node[${amenityTag}](${s},${w},${n},${e});out 30;`;
+          const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`);
+          const data = await res.json();
+          nodes = data.elements || [];
+          sessionStorage.setItem(cacheKey, JSON.stringify(nodes));
+        } catch (e) { toast({ variant: "destructive", title: "POI Error", description: "Could not load points of interest." }); }
+      }
+
+      poiMarkersRef.current[categoryKey] = nodes.slice(0, 30).map((node: any) => {
+        const icon = L.divIcon({
+          className: "",
+          html: `<div style="background:${cat.color};border:2px solid white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,0.4);">${cat.emoji}</div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        });
+        return L.marker([node.lat, node.lon], { icon })
+          .addTo(mapRef.current)
+          .bindPopup(`<b>${cat.emoji} ${node.tags?.name || cat.label}</b>${node.tags?.opening_hours ? `<br/>🕐 ${node.tags.opening_hours}` : ""}`);
+      });
+    }
+    setActivePOI(newActive);
+  };
+
+  // ---- FEATURE 10: Explore Nearby ----
+  const handleExplore = async () => {
+    if (!mapRef.current || !location) return;
+    setExploreLoading(true);
+    setExploreResults([]);
+
+    const center = mapRef.current.getCenter();
+    const lat = center.lat;
+    const lng = center.lng;
+    const radius = 1000;
+
+    const categoryMap: Record<string, string> = {
+      coffee: "[amenity=cafe]",
+      parks: "[leisure=park]",
+      museums: "[tourism=museum]",
+      restaurants: "[amenity=restaurant]",
+    };
+
+    const tag = categoryMap[exploreCategory] || "[amenity=cafe]";
+
+    try {
+      const q = `[out:json];node${tag}(around:${radius},${lat},${lng});out 20;`;
+      const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      const results = (data.elements || []).map((el: any) => ({
+        id: el.id,
+        name: el.tags?.name || "Unnamed",
+        lat: el.lat,
+        lng: el.lon,
+        distance: getDistance(lat, lng, el.lat, el.lon),
+        tags: el.tags
+      })).sort((a: any, b: any) => a.distance - b.distance);
+      setExploreResults(results);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Explore Error", description: "Could not fetch nearby places." });
+    }
+    setExploreLoading(false);
+  };
+
+  // ---- FEATURE 14: Boundary Viewer ----
+  const toggleBoundaries = async () => {
+    if (!mapRef.current || !leafletLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    if (boundaryEnabled) {
+      boundaryLayersRef.current.forEach(l => l.remove());
+      boundaryLayersRef.current = [];
+      setBoundaryEnabled(false);
+      return;
+    }
+
+    setBoundaryEnabled(true);
+    const center = mapRef.current.getCenter();
+
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(center.lat + "," + center.lng)}&format=json&polygon_geojson=1&limit=3`,
+        { headers: { "User-Agent": "XakteirMaps/1.0" } }
+      );
+      const data = await res.json();
+
+      const colors = ["#3b82f6", "#10b981", "#f59e0b"];
+      data.slice(0, 3).forEach((item: any, i: number) => {
+        if (item.geojson) {
+          try {
+            const layer = L.geoJSON(item.geojson, {
+              style: { color: colors[i], weight: 2, fillOpacity: 0.05, fillColor: colors[i] }
+            }).addTo(mapRef.current).bindPopup(`<b>${item.display_name}</b>`);
+            boundaryLayersRef.current.push(layer);
+          } catch (e) {}
+        }
+      });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Boundary Error", description: "Could not load boundaries." });
+      setBoundaryEnabled(false);
+    }
+  };
+
+  // ---- FEATURE 16: Share location link ----
+  const shareLocationLink = () => {
+    if (!mapRef.current) return;
+    const center = mapRef.current.getCenter();
+    const zoom = mapRef.current.getZoom();
+    const url = `${window.location.origin}/map?lat=${center.lat.toFixed(6)}&lng=${center.lng.toFixed(6)}&zoom=${zoom}`;
+    navigator.clipboard.writeText(url).then(() => {
+      toast({ title: "📋 Link Copied!", description: "Share this link to show your current map view." });
+    });
+  };
+
+  // ---- FEATURE 17: Embed code ----
+  const getEmbedCode = () => {
+    if (!mapRef.current) return "";
+    const center = mapRef.current.getCenter();
+    const zoom = mapRef.current.getZoom();
+    const url = `${window.location.origin}/map?lat=${center.lat.toFixed(6)}&lng=${center.lng.toFixed(6)}&zoom=${zoom}&embed=true`;
+    return `<iframe src="${url}" width="800" height="500" style="border:none;border-radius:12px;" allowfullscreen></iframe>`;
+  };
+
+  // ---- FEATURE 5: Save a place ----
+  const handleSavePlace = async () => {
+    if (!user || !firestore || !pendingPlaceLatlng || !newPlaceName.trim()) return;
+    try {
+      await addDoc(collection(firestore, "users", user.uid, "savedPlaces"), {
+        name: newPlaceName.trim(),
+        icon: newPlaceIcon,
+        lat: pendingPlaceLatlng.lat,
+        lng: pendingPlaceLatlng.lng,
+        createdAt: serverTimestamp()
+      });
+      toast({ title: "✅ Place Saved!", description: newPlaceName });
+      setPendingPlaceLatlng(null);
+      setNewPlaceName("");
+      setAddPlaceMode(false);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Could not save place." });
+    }
+  };
+
+  // ---- FEATURE 8: Save event ----
+  const handleSaveEvent = async () => {
+    if (!firestore || !pendingEventLatlng || !newEventName.trim()) return;
+    try {
+      await addDoc(collection(firestore, "mapEvents"), {
+        name: newEventName.trim(),
+        date: newEventDate,
+        description: newEventDesc,
+        lat: pendingEventLatlng.lat,
+        lng: pendingEventLatlng.lng,
+        userId: user?.uid || "anonymous",
+        createdAt: serverTimestamp()
+      });
+      toast({ title: "📅 Event Added!", description: newEventName });
+      setPendingEventLatlng(null);
+      setNewEventName(""); setNewEventDate(""); setNewEventDesc("");
+      setAddEventMode(false);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Could not save event." });
+    }
+  };
+
+  // ---- FEATURE 13: Save photo pin ----
+  const handleSavePhoto = async () => {
+    if (!firestore || !pendingPhotoLatlng || !newPhotoUrl.trim()) return;
+    try {
+      await addDoc(collection(firestore, "mapPhotos"), {
+        url: newPhotoUrl.trim(),
+        caption: newPhotoCaption,
+        lat: pendingPhotoLatlng.lat,
+        lng: pendingPhotoLatlng.lng,
+        userId: user?.uid || "anonymous",
+        createdAt: serverTimestamp()
+      });
+      toast({ title: "📸 Photo Pinned!" });
+      setPendingPhotoLatlng(null);
+      setNewPhotoUrl(""); setNewPhotoCaption("");
+      setAddPhotoMode(false);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Could not save photo." });
+    }
+  };
+
+  // ---- FEATURE 1: Incident reporting ----
+  const reportIncident = async (type: string) => {
+    if (!firestore || !location) return;
+    try {
+      await addDoc(collection(firestore, "mapIncidents"), {
+        type,
+        lat: location.lat,
+        lng: location.lon,
+        userId: user?.uid || "anonymous",
+        timestamp: serverTimestamp()
+      });
+      toast({ title: `🚨 Incident Reported`, description: `${type} reported at your location.` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Could not report incident." });
+    }
+  };
+
+  // Friend functions
   const handleSendFriendRequest = async () => {
     if (!user || !firestore || !friendSearch.trim() || isProcessing) return;
     setIsProcessing(true);
@@ -1288,55 +1761,39 @@ export default function XakteirMapsPage() {
       const target = friendSearch.trim().toLowerCase();
       const q = query(collection(firestore, "users"), where("email", "==", target));
       const snap = await getDocs(q);
-
       if (snap.empty) {
-        toast({ variant: "destructive", title: "User Not Found", description: "No profile matches this email address." });
-        setIsProcessing(false);
-        return;
+        toast({ variant: "destructive", title: "User Not Found", description: "No profile matches this email." });
+        setIsProcessing(false); return;
       }
-
       const friendDoc = snap.docs[0];
       const friendData = friendDoc.data();
-
       if (friendDoc.id === user.uid) {
         toast({ variant: "destructive", title: "Error", description: "You cannot friend yourself." });
-        setIsProcessing(false);
-        return;
+        setIsProcessing(false); return;
       }
-
       const id = [user.uid, friendDoc.id].sort().join("_");
       await setDoc(doc(firestore, "friendships", id), {
-        id,
-        requesterId: user.uid,
+        id, requesterId: user.uid,
         requesterName: user.displayName?.replace(/^@+/, "") || "Member",
         requesterEmail: user.email,
         recipientId: friendDoc.id,
         recipientName: friendData.displayName?.replace(/^@+/, "") || friendData.username || "Member",
         recipientEmail: friendData.email,
-        status: "pending",
-        timestamp: serverTimestamp()
+        status: "pending", timestamp: serverTimestamp()
       });
-
-      toast({ title: "Request Sent!", description: `Friend request sent to ${friendData.email}.` });
+      toast({ title: "Request Sent!" });
       setFriendSearch("");
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: "Failed to send request." });
-    } finally {
-      setIsProcessing(false);
-    }
+    } finally { setIsProcessing(false); }
   };
 
   const handleAcceptFriend = async (friendshipId: string) => {
     if (!firestore) return;
     try {
-      await updateDoc(doc(firestore, "friendships", friendshipId), {
-        status: "accepted",
-        acceptedAt: serverTimestamp()
-      });
+      await updateDoc(doc(firestore, "friendships", friendshipId), { status: "accepted", acceptedAt: serverTimestamp() });
       toast({ title: "Friend Request Accepted!" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Failed to accept request." });
-    }
+    } catch (e) { toast({ variant: "destructive", title: "Error", description: "Failed to accept." }); }
   };
 
   const handleDeclineFriend = async (friendshipId: string) => {
@@ -1344,80 +1801,97 @@ export default function XakteirMapsPage() {
     try {
       await deleteDocumentNonBlocking(doc(firestore, "friendships", friendshipId));
       toast({ title: "Request Declined" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error declined request" });
-    }
+    } catch (e) { toast({ variant: "destructive", title: "Error", description: "Failed to decline." }); }
   };
 
   const panToTarget = (lat: number, lon: number) => {
-    if (mapRef.current) {
-      mapRef.current.setView([lat, lon], 15);
-    }
+    if (mapRef.current) { mapRef.current.setView([lat, lon], 15); }
   };
 
   const swapStartEnd = () => {
     if (isSimulating || isNavigatingLive) return;
-    const tempPoint = startPoint;
-    const tempQuery = startQuery;
-    setStartPoint(destPoint);
-    setStartQuery(destQuery);
-    setDestPoint(tempPoint);
-    setDestQuery(tempQuery);
+    const tempPoint = startPoint; const tempQuery = startQuery;
+    setStartPoint(destPoint); setStartQuery(destQuery);
+    setDestPoint(tempPoint); setDestQuery(tempQuery);
   };
 
   const startJourney = () => {
     if (!routeDetails || routeCoords.length === 0) return;
-    setIsSimulating(true);
-    setIsNavigatingLive(false);
-    setSimDistanceTravelled(0);
-    setSimSpeed(0);
-    setArrived(false);
+    setIsSimulating(true); setIsNavigatingLive(false);
+    setSimDistanceTravelled(0); setSimSpeed(0); setArrived(false);
     setSimManualSpeedOverride(null);
     speakText("Starting journey. Head towards your destination.");
   };
 
   const startLiveNavigation = () => {
     if (!routeDetails || routeCoords.length === 0) return;
-    setIsNavigatingLive(true);
-    setIsSimulating(false);
-    setSimDistanceTravelled(0);
-    setSimSpeed(0);
-    setArrived(false);
+    setIsNavigatingLive(true); setIsSimulating(false);
+    setSimDistanceTravelled(0); setSimSpeed(0); setArrived(false);
     setSimManualSpeedOverride(null);
-    
     if (location) {
       const { distanceAlong } = findClosestPointAndDistance(routeCoords, location.lat, location.lon);
       setSimDistanceTravelled(distanceAlong);
       lastDistRef.current = distanceAlong;
-    } else {
-      lastDistRef.current = 0;
-    }
+    } else { lastDistRef.current = 0; }
     lastTimeRef.current = Date.now();
-    
     speakText("Starting live navigation. Head towards your destination.");
   };
 
   const resetJourney = () => {
-    setIsSimulating(false);
-    setIsNavigatingLive(false);
-    setRouteDetails(null);
-    setRouteCoords([]);
-    setSteps([]);
-    setDestPoint(null);
-    setDestQuery("");
-    setArrived(false);
-    setSimDistanceTravelled(0);
-    setSimSpeed(0);
+    setIsSimulating(false); setIsNavigatingLive(false);
+    setRouteDetails(null); setRouteCoords([]);
+    setSteps([]); setDestPoint(null); setDestQuery("");
+    setArrived(false); setSimDistanceTravelled(0); setSimSpeed(0);
   };
 
-  // Speedometer Dash math
+  // Speedometer math
   const maxSpeed = 180;
   const radius = 42;
-  const circ = 2 * Math.PI * radius; // ~263.89
-  const arcLength = circ * 0.75; // 270 degree dial = ~197.92
+  const circ = 2 * Math.PI * radius;
+  const arcLength = circ * 0.75;
   const speedRatio = Math.min(simSpeed, maxSpeed) / maxSpeed;
   const strokeDashoffset = arcLength - speedRatio * arcLength;
   const isSpeeding = simSpeed > simSpeedLimit;
+
+  // Measure distance total
+  const measureTotalDistance = useMemo(() => {
+    if (measurePoints.length < 2) return 0;
+    let total = 0;
+    for (let i = 0; i < measurePoints.length - 1; i++) {
+      total += getDistance(measurePoints[i].lat, measurePoints[i].lng, measurePoints[i+1].lat, measurePoints[i+1].lng);
+    }
+    return total;
+  }, [measurePoints]);
+
+  // If embed mode, show minimal UI
+  if (isEmbedMode) {
+    return (
+      <div className="w-full h-screen relative overflow-hidden">
+        <style>{`
+          @keyframes bounce-marker { 0% { transform: translateY(0); } 100% { transform: translateY(-8px); } }
+          @keyframes pulse-radar { 0% { transform: scale(0.6); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
+        `}</style>
+        {loading ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-zinc-950">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+          </div>
+        ) : (
+          <div id="leaflet-map-holder" className="w-full h-full" />
+        )}
+        <div className="absolute top-3 left-3 z-[400] bg-black/70 rounded-lg px-3 py-1.5 text-white text-xs font-bold">
+          🗺️ Xakteir Maps
+        </div>
+        <div className="absolute bottom-3 right-3 z-[400] flex gap-2">
+          <Button size="icon" variant="ghost" onClick={() => mapRef.current?.zoomIn()} className="h-9 w-9 bg-black/70 text-white rounded-lg">
+            <Plus className="w-4 h-4" />
+          </Button>
+          <Button size="icon" variant="ghost" onClick={() => mapRef.current?.zoomOut()} className="h-9 w-9 bg-black/70 text-white rounded-lg">
+            <Minus className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-[calc(100vh-68px)] animate-fade-in text-foreground relative overflow-hidden flex flex-col">
@@ -1434,12 +1908,19 @@ export default function XakteirMapsPage() {
           0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); border-color: rgba(239, 68, 68, 0.8); }
           50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.9); border-color: rgba(239, 68, 68, 1); }
         }
-        .speeding-alert-container {
-          animation: pulse-speeding 1s infinite;
-        }
+        .speeding-alert-container { animation: pulse-speeding 1s infinite; }
+        .map-cursor-measure { cursor: crosshair !important; }
       `}</style>
 
-      {/* Main stage - takes up full viewport */}
+      {/* ---- FEATURE 15: Offline Banner ---- */}
+      {offlineBannerVisible && (
+        <div className="absolute top-0 left-0 right-0 z-[1100] bg-amber-500 text-black text-center py-1.5 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
+          <WifiOff className="w-4 h-4" />
+          Offline Mode — Showing cached map tiles
+          <button onClick={() => setOfflineBannerVisible(false)} className="ml-2 underline">Dismiss</button>
+        </div>
+      )}
+
       <div className="flex-1 w-full h-full relative overflow-hidden">
         {loading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center space-y-6 bg-zinc-950 z-[900]">
@@ -1447,50 +1928,615 @@ export default function XakteirMapsPage() {
             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-500">Syncing Geo-Registry...</p>
           </div>
         ) : (
-          <div id="leaflet-map-holder" className="w-full h-full rounded-none border-none z-10" />
+          <div id="leaflet-map-holder" className={cn("w-full h-full rounded-none border-none z-10", measureMode && "map-cursor-measure")} />
         )}
 
-        {/* FLOATING MAP LAYERS PICKER (Bottom-Left) */}
+        {/* ---- FEATURE 20: Context Menu (Right-click reverse geocode) ---- */}
+        {contextMenu && (
+          <div
+            className="absolute z-[800] bg-zinc-900/95 border border-white/10 rounded-2xl shadow-2xl p-3 min-w-[220px]"
+            style={{ left: contextMenu.x, top: contextMenu.y, transform: "translate(5px, 5px)" }}
+          >
+            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2">📍 What's Here?</p>
+            {reverseGeoLoading ? (
+              <div className="flex items-center gap-2 text-zinc-400 text-xs"><Loader2 className="w-3 h-3 animate-spin" /> Looking up...</div>
+            ) : reverseGeoResult ? (
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-white leading-snug">{reverseGeoResult.display_name || "Unknown location"}</p>
+                <p className="text-[10px] text-zinc-400">{contextMenu.lat.toFixed(6)}, {contextMenu.lng.toFixed(6)}</p>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${contextMenu.lat.toFixed(6)}, ${contextMenu.lng.toFixed(6)}`);
+                      toast({ title: "📋 Coordinates copied!" });
+                      setContextMenu(null);
+                    }}
+                    className="flex-1 text-[9px] font-black uppercase bg-blue-600 text-white rounded-lg py-1.5 hover:bg-blue-500 flex items-center justify-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" /> Copy Coords
+                  </button>
+                  <button
+                    onClick={() => setContextMenu(null)}
+                    className="text-[9px] font-black uppercase bg-zinc-800 text-zinc-300 rounded-lg py-1.5 px-2 hover:bg-zinc-700"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* ---- FEATURE 9: Global Search Bar (Top Center) ---- */}
+        {!loading && !isSimulating && !isNavigatingLive && (
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[400] w-[340px] max-w-[calc(100vw-200px)] pointer-events-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Input
+                value={globalSearch}
+                onChange={e => setGlobalSearch(e.target.value)}
+                onFocus={() => setGlobalSearchActive(true)}
+                onBlur={() => setTimeout(() => { setGlobalSearchActive(false); setGlobalSuggestions([]); }, 200)}
+                placeholder="Search places, addresses..."
+                className="bg-black/80 border-white/10 text-white text-sm pl-9 pr-4 h-11 rounded-2xl shadow-2xl font-medium backdrop-blur-md"
+              />
+              {globalSuggestions.length > 0 && globalSearchActive && (
+                <Card className="absolute top-13 left-0 right-0 z-[500] bg-zinc-950/98 border-white/10 rounded-2xl p-2 max-h-56 overflow-y-auto shadow-2xl">
+                  {globalSuggestions.map((s, idx) => (
+                    <button
+                      key={idx}
+                      onMouseDown={() => {
+                        if (!mapRef.current) return;
+                        const L = (window as any).L;
+                        mapRef.current.setView([s.lat, s.lon], 14);
+                        if (globalSearchMarkerRef.current) globalSearchMarkerRef.current.remove();
+                        globalSearchMarkerRef.current = L.marker([s.lat, s.lon])
+                          .addTo(mapRef.current)
+                          .bindPopup(`<b>${s.name.slice(0, 60)}</b>`)
+                          .openPopup();
+                        setGlobalSearch(s.name.slice(0, 60));
+                        setGlobalSuggestions([]);
+                      }}
+                      className="w-full text-left p-2.5 hover:bg-white/5 rounded-lg text-[10px] font-bold text-zinc-300 truncate flex items-center gap-2"
+                    >
+                      <MapPin className="w-3 h-3 text-blue-400 shrink-0" />
+                      {s.name.slice(0, 70)}
+                    </button>
+                  ))}
+                </Card>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ---- Top-Right Controls ---- */}
         {!loading && (
-          <div className="absolute bottom-10 left-10 z-[400] flex gap-2">
-            <Card className="glass-card p-1.5 rounded-2xl border-white/10 flex gap-1 shadow-2xl bg-black/60">
-              <Button 
-                size="sm" 
-                variant={mapLayer === "dark" ? "default" : "ghost"}
-                onClick={() => setMapLayer("dark")}
-                className={cn("text-[9px] font-black uppercase tracking-wider h-8 rounded-lg px-3", mapLayer === "dark" ? "bg-blue-600" : "text-white")}
+          <div className="absolute top-6 right-6 z-[400] flex gap-2 pointer-events-auto flex-wrap justify-end">
+            {/* Friends toggle */}
+            <Button
+              onClick={() => setFriendsOpen(!friendsOpen)}
+              className={cn(
+                "glass-card border-white/10 text-white rounded-2xl flex items-center gap-2 h-10 px-4 font-black text-[10px] uppercase tracking-widest",
+                friendsOpen ? "bg-pink-600/90 hover:bg-pink-500/90 border-pink-500" : "bg-black/75 hover:bg-black/90"
+              )}
+            >
+              <UsersIcon className="w-4 h-4 text-pink-400" />
+              Friends ({activeFriends.length})
+            </Button>
+
+            {/* Find Me / Track */}
+            <Button
+              onClick={() => {
+                setTrackingEnabled(!trackingEnabled);
+                if (!trackingEnabled && location) panToTarget(location.lat, location.lon);
+              }}
+              className={cn(
+                "glass-card border-white/10 rounded-2xl h-10 w-10 flex items-center justify-center",
+                trackingEnabled ? "bg-blue-600/90 text-white" : "bg-black/75 text-blue-400 hover:bg-black/90"
+              )}
+            >
+              <Locate className="w-4 h-4" />
+            </Button>
+
+            {/* Share Location Link */}
+            <Button
+              onClick={shareLocationLink}
+              className="glass-card border-white/10 bg-black/75 hover:bg-black/90 rounded-2xl h-10 w-10 flex items-center justify-center text-purple-400"
+              title="Share map view"
+            >
+              <Share2 className="w-4 h-4" />
+            </Button>
+
+            {/* Embed Button */}
+            <Button
+              onClick={() => setEmbedModalOpen(true)}
+              className="glass-card border-white/10 bg-black/75 hover:bg-black/90 rounded-2xl h-10 w-10 flex items-center justify-center text-cyan-400"
+              title="Get embed code"
+            >
+              <Code2 className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* ---- LEFT SIDEBAR PANEL TOGGLE ---- */}
+        {!loading && !isSimulating && !isNavigatingLive && (
+          <div className="absolute top-6 left-6 z-[400] flex flex-col gap-2 pointer-events-auto">
+            {/* Panel selector icons */}
+            {[
+              { key: "route", icon: <Navigation className="w-4 h-4" />, label: "Route", color: "text-blue-400" },
+              { key: "saved", icon: <Star className="w-4 h-4" />, label: "Saved", color: "text-yellow-400" },
+              { key: "poi", icon: <MapPin className="w-4 h-4" />, label: "POI", color: "text-orange-400" },
+              { key: "explore", icon: <Globe className="w-4 h-4" />, label: "Explore", color: "text-green-400" },
+              { key: "events", icon: <Calendar className="w-4 h-4" />, label: "Events", color: "text-purple-400" },
+              { key: "photos", icon: <Camera className="w-4 h-4" />, label: "Photos", color: "text-pink-400" },
+              { key: "measure", icon: <Ruler className="w-4 h-4" />, label: "Measure", color: "text-amber-400" },
+            ].map(panel => (
+              <Button
+                key={panel.key}
+                onClick={() => setLeftPanel(leftPanel === panel.key as any ? null : panel.key as any)}
+                className={cn(
+                  "glass-card border-white/10 rounded-2xl h-10 w-10 flex items-center justify-center transition-all",
+                  leftPanel === panel.key ? "bg-blue-600/80 text-white" : `bg-black/75 hover:bg-black/90 ${panel.color}`
+                )}
+                title={panel.label}
               >
-                Dark
+                {panel.icon}
               </Button>
-              <Button 
-                size="sm" 
-                variant={mapLayer === "light" ? "default" : "ghost"}
-                onClick={() => setMapLayer("light")}
-                className={cn("text-[9px] font-black uppercase tracking-wider h-8 rounded-lg px-3", mapLayer === "light" ? "bg-blue-600" : "text-white")}
-              >
-                Light
-              </Button>
-              <Button 
-                size="sm" 
-                variant={mapLayer === "osm" ? "default" : "ghost"}
-                onClick={() => setMapLayer("osm")}
-                className={cn("text-[9px] font-black uppercase tracking-wider h-8 rounded-lg px-3", mapLayer === "osm" ? "bg-blue-600" : "text-white")}
-              >
-                Street
-              </Button>
-              <Button 
-                size="sm" 
-                variant={mapLayer === "satellite" ? "default" : "ghost"}
-                onClick={() => setMapLayer("satellite")}
-                className={cn("text-[9px] font-black uppercase tracking-wider h-8 rounded-lg px-3", mapLayer === "satellite" ? "bg-blue-600" : "text-white")}
-              >
-                Satellite
-              </Button>
+            ))}
+          </div>
+        )}
+
+        {/* ---- LEFT PANEL CONTENT ---- */}
+        {!loading && !isSimulating && !isNavigatingLive && leftPanel && (
+          <div className="absolute top-6 left-16 z-[400] w-[360px] max-w-[calc(100vw-100px)] pointer-events-auto max-h-[calc(100vh-160px)] overflow-y-auto">
+            <Card className="glass-card p-5 rounded-[2rem] bg-black/80 border-white/10 shadow-2xl flex flex-col gap-4">
+
+              {/* ---- Route Panel ---- */}
+              {leftPanel === "route" && (
+                <>
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                        <MapIcon className="w-4 h-4 text-blue-500" />
+                      </div>
+                      <div>
+                        <h1 className="text-sm font-black text-white tracking-tighter uppercase italic leading-none">Xakteir Maps</h1>
+                        <p className="text-[7px] font-black uppercase text-zinc-500 tracking-wider mt-0.5">Journey Planner</p>
+                      </div>
+                    </div>
+                    {routeDetails && (
+                      <Button onClick={resetJourney} size="icon" variant="ghost" className="h-7 w-7 rounded-lg text-zinc-400 hover:text-white">
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="relative flex flex-col gap-3">
+                    <div className="flex items-center gap-3 relative">
+                      <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/30 shrink-0 z-10">
+                        <div className="w-3.5 h-3.5 rounded-full bg-green-500 animate-pulse"></div>
+                      </div>
+                      <div className="flex-1 relative">
+                        <Input
+                          value={startQuery}
+                          onFocus={() => setActiveSearchInput("start")}
+                          onBlur={() => setTimeout(() => setActiveSearchInput(null), 200)}
+                          onChange={(e) => { setStartQuery(e.target.value); if (startPoint) setStartPoint(null); }}
+                          placeholder="Enter start location or EirCode..."
+                          className="bg-zinc-950/80 border-white/5 h-10 rounded-xl text-xs font-bold text-white pl-4 pr-10"
+                        />
+                        {startQuery !== "My Location" && (
+                          <button onClick={() => { setStartQuery("My Location"); if (location) setStartPoint({ lat: location.lat, lon: location.lon, name: "My Location" }); }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-wider text-blue-400 hover:text-blue-300">
+                            GPS
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pr-4 -my-2.5">
+                      <Button onClick={swapStartEnd} type="button" variant="ghost" size="icon" className="w-7 h-7 bg-zinc-900 border border-white/5 rounded-full hover:bg-zinc-800 text-zinc-400">
+                        <ArrowLeftLeftRight className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center gap-3 relative">
+                      <div className="w-9 h-9 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/30 shrink-0 z-10">
+                        <MapPin className="w-4 h-4 text-red-500" />
+                      </div>
+                      <div className="flex-1 relative">
+                        <Input
+                          value={destQuery}
+                          onFocus={() => setActiveSearchInput("dest")}
+                          onBlur={() => setTimeout(() => setActiveSearchInput(null), 200)}
+                          onChange={(e) => { setDestQuery(e.target.value); if (destPoint) setDestPoint(null); }}
+                          placeholder="Choose destination or EirCode..."
+                          className="bg-zinc-950/80 border-white/5 h-10 rounded-xl text-xs font-bold text-white pl-4"
+                        />
+                      </div>
+                    </div>
+
+                    {activeSearchInput === "start" && startSuggestions.length > 0 && (
+                      <Card className="absolute top-[44px] left-12 right-0 z-[500] bg-zinc-950/95 border-white/10 rounded-2xl p-2 max-h-48 overflow-y-auto shadow-2xl flex flex-col gap-1">
+                        {startSuggestions.map((s, idx) => (
+                          <button key={idx} onMouseDown={() => { setStartPoint({ lat: s.lat, lon: s.lon, name: s.name }); setStartQuery(s.name); setStartSuggestions([]); }}
+                            className="w-full text-left p-2.5 hover:bg-white/5 rounded-lg text-[10px] font-bold text-zinc-300 truncate">
+                            {s.name}
+                          </button>
+                        ))}
+                      </Card>
+                    )}
+
+                    {activeSearchInput === "dest" && destSuggestions.length > 0 && (
+                      <Card className="absolute top-[96px] left-12 right-0 z-[500] bg-zinc-950/95 border-white/10 rounded-2xl p-2 max-h-48 overflow-y-auto shadow-2xl flex flex-col gap-1">
+                        {destSuggestions.map((s, idx) => (
+                          <button key={idx} onMouseDown={() => { setDestPoint({ lat: s.lat, lon: s.lon, name: s.name }); setDestQuery(s.name); setDestSuggestions([]); }}
+                            className="w-full text-left p-2.5 hover:bg-white/5 rounded-lg text-[10px] font-bold text-zinc-300 truncate">
+                            {s.name}
+                          </button>
+                        ))}
+                      </Card>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["driving", "cycling", "walking"] as const).map(mode => (
+                      <Button key={mode} size="sm" variant={travelMode === mode ? "default" : "ghost"}
+                        onClick={() => setTravelMode(mode)}
+                        className={cn("h-9 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider border border-white/5",
+                          travelMode === mode ? "bg-blue-600 text-white" : "text-zinc-400 hover:bg-white/5")}>
+                        {mode === "driving" && <><Car className="w-3.5 h-3.5" /> Drive</>}
+                        {mode === "cycling" && <><Bike className="w-3.5 h-3.5" /> Cycle</>}
+                        {mode === "walking" && <><Footprints className="w-3.5 h-3.5" /> Walk</>}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {routingLoading && (
+                    <div className="flex items-center justify-center gap-2 py-4 text-blue-400 text-xs font-black uppercase tracking-widest">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Routing Path...
+                    </div>
+                  )}
+
+                  {routeDetails && !routingLoading && (
+                    <div className="flex flex-col gap-4 pt-2 border-t border-white/10">
+                      <div className="flex justify-between items-center bg-zinc-950/50 p-4 rounded-2xl border border-white/5">
+                        <div>
+                          <p className="text-lg font-black text-white">{formatDuration(routeDetails.duration)}</p>
+                          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide mt-0.5">Distance: {formatDistance(routeDetails.distance)}</p>
+                        </div>
+                        <Badge className="bg-emerald-600 text-white uppercase text-[8px] font-black py-1.5 px-3">Fastest Route</Badge>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Button onClick={startLiveNavigation} className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-[1.5rem] h-12 w-full font-black text-xs uppercase tracking-widest border-none flex items-center justify-center gap-2 shadow-lg">
+                          <Locate className="w-4 h-4" /> Start GPS Navigation
+                        </Button>
+                        <Button onClick={startJourney} className="bg-blue-600/30 hover:bg-blue-500/40 text-blue-400 rounded-[1.5rem] h-11 w-full font-black text-[10px] uppercase tracking-widest border border-blue-500/20 flex items-center justify-center gap-2">
+                          <FastForward className="w-4 h-4" /> Simulate Walkthrough
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* ---- Saved Places Panel (Feature 5) ---- */}
+              {leftPanel === "saved" && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><Star className="w-4 h-4 text-yellow-400" /> Saved Places</h2>
+                    <Button onClick={() => setAddPlaceMode(!addPlaceMode)} size="sm"
+                      className={cn("text-[9px] font-black uppercase h-7 rounded-lg px-3", addPlaceMode ? "bg-yellow-500 text-black" : "bg-zinc-800 text-yellow-400")}>
+                      {addPlaceMode ? "Cancel" : "+ Add"}
+                    </Button>
+                  </div>
+                  {addPlaceMode && (
+                    <div className="bg-zinc-900/60 rounded-2xl p-4 border border-white/5 space-y-3">
+                      <p className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Click on map to drop pin</p>
+                      {pendingPlaceLatlng && (
+                        <>
+                          <p className="text-[10px] text-blue-400 font-bold">📍 {pendingPlaceLatlng.lat.toFixed(4)}, {pendingPlaceLatlng.lng.toFixed(4)}</p>
+                          <Input value={newPlaceName} onChange={e => setNewPlaceName(e.target.value)} placeholder="Place name..." className="bg-black/60 border-white/5 h-9 rounded-xl text-xs text-white" />
+                          <div className="grid grid-cols-4 gap-2">
+                            {(["home", "work", "star", "heart"] as const).map(ic => (
+                              <button key={ic} onClick={() => setNewPlaceIcon(ic)}
+                                className={cn("h-10 rounded-xl text-lg border", newPlaceIcon === ic ? "bg-yellow-500/20 border-yellow-500" : "bg-zinc-800/60 border-white/5")}>
+                                {ic === "home" ? "🏠" : ic === "work" ? "💼" : ic === "star" ? "⭐" : "❤️"}
+                              </button>
+                            ))}
+                          </div>
+                          <Button onClick={handleSavePlace} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black text-xs rounded-xl h-9">Save Place</Button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    {savedPlaces.map(pl => (
+                      <div key={pl.id} onClick={() => panToTarget(pl.lat, pl.lng)}
+                        className="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-2xl cursor-pointer hover:border-yellow-500/30 transition-all">
+                        <span className="text-lg">{pl.icon === "home" ? "🏠" : pl.icon === "work" ? "💼" : pl.icon === "star" ? "⭐" : "❤️"}</span>
+                        <div>
+                          <p className="text-xs font-black text-white">{pl.name}</p>
+                          <p className="text-[9px] text-zinc-500">{pl.lat?.toFixed(3)}, {pl.lng?.toFixed(3)}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {savedPlaces.length === 0 && <p className="text-center text-zinc-600 text-xs py-6">No saved places yet</p>}
+                  </div>
+                </>
+              )}
+
+              {/* ---- POI Layer Panel (Feature 6) ---- */}
+              {leftPanel === "poi" && (
+                <>
+                  <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><MapPin className="w-4 h-4 text-orange-400" /> Points of Interest</h2>
+                  <p className="text-[9px] text-zinc-500 uppercase tracking-wider -mt-2">Toggle categories to see nearby places</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {POI_CATEGORIES.map(cat => (
+                      <button key={cat.key} onClick={() => togglePOI(cat.key)}
+                        className={cn("flex items-center gap-2 p-3 rounded-2xl border text-left transition-all",
+                          activePOI.has(cat.key) ? "border-white/30 bg-white/10" : "border-white/5 bg-white/3 hover:bg-white/5")}>
+                        <span className="text-lg">{cat.emoji}</span>
+                        <div>
+                          <p className="text-[10px] font-black text-white">{cat.label}</p>
+                          {activePOI.has(cat.key) && <p className="text-[8px] text-emerald-400 font-bold">Active</p>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* ---- Explore Nearby Panel (Feature 10) ---- */}
+              {leftPanel === "explore" && (
+                <>
+                  <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><Globe className="w-4 h-4 text-green-400" /> Explore Nearby</h2>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: "coffee", label: "☕ Coffee", },
+                      { key: "parks", label: "🌳 Parks" },
+                      { key: "museums", label: "🏛️ Museums" },
+                      { key: "restaurants", label: "🍽️ Restaurants" },
+                    ].map(c => (
+                      <button key={c.key} onClick={() => setExploreCategory(c.key)}
+                        className={cn("p-2.5 rounded-xl border text-[10px] font-black uppercase text-left transition-all",
+                          exploreCategory === c.key ? "bg-green-600/20 border-green-500/50 text-green-400" : "bg-white/5 border-white/5 text-zinc-400 hover:bg-white/8")}>
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                  <Button onClick={handleExplore} disabled={exploreLoading} className="bg-green-600 hover:bg-green-500 text-white font-black text-xs uppercase h-10 rounded-xl w-full flex items-center justify-center gap-2">
+                    {exploreLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                    Search 1km Radius
+                  </Button>
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {exploreResults.map((r, i) => (
+                      <div key={r.id || i} onClick={() => panToTarget(r.lat, r.lng)}
+                        className="p-3 bg-white/5 border border-white/5 rounded-2xl cursor-pointer hover:border-green-500/30 transition-all">
+                        <p className="text-xs font-black text-white">{r.name}</p>
+                        <p className="text-[9px] text-zinc-500 mt-0.5">{formatDistance(r.distance)} away</p>
+                      </div>
+                    ))}
+                    {exploreResults.length === 0 && !exploreLoading && <p className="text-center text-zinc-600 text-xs py-4">Hit 'Search' to explore</p>}
+                  </div>
+                </>
+              )}
+
+              {/* ---- Event Pins Panel (Feature 8) ---- */}
+              {leftPanel === "events" && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><Calendar className="w-4 h-4 text-purple-400" /> Map Events</h2>
+                    <Button onClick={() => setAddEventMode(!addEventMode)} size="sm"
+                      className={cn("text-[9px] font-black uppercase h-7 rounded-lg px-3", addEventMode ? "bg-purple-500 text-white" : "bg-zinc-800 text-purple-400")}>
+                      {addEventMode ? "Cancel" : "+ Add Event"}
+                    </Button>
+                  </div>
+                  {addEventMode && (
+                    <div className="bg-zinc-900/60 rounded-2xl p-4 border border-white/5 space-y-3">
+                      <p className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Click map to drop event pin</p>
+                      {pendingEventLatlng && (
+                        <>
+                          <p className="text-[10px] text-purple-400 font-bold">📅 {pendingEventLatlng.lat.toFixed(4)}, {pendingEventLatlng.lng.toFixed(4)}</p>
+                          <Input value={newEventName} onChange={e => setNewEventName(e.target.value)} placeholder="Event name..." className="bg-black/60 border-white/5 h-9 rounded-xl text-xs text-white" />
+                          <Input type="date" value={newEventDate} onChange={e => setNewEventDate(e.target.value)} className="bg-black/60 border-white/5 h-9 rounded-xl text-xs text-white" />
+                          <Input value={newEventDesc} onChange={e => setNewEventDesc(e.target.value)} placeholder="Description..." className="bg-black/60 border-white/5 h-9 rounded-xl text-xs text-white" />
+                          <Button onClick={handleSaveEvent} className="w-full bg-purple-600 hover:bg-purple-500 text-white font-black text-xs rounded-xl h-9">Create Event</Button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {mapEvents.map(ev => (
+                      <div key={ev.id} onClick={() => ev.lat && panToTarget(ev.lat, ev.lng)}
+                        className="p-3 bg-purple-500/5 border border-purple-500/20 rounded-2xl cursor-pointer hover:border-purple-500/40">
+                        <p className="text-xs font-black text-white">📅 {ev.name}</p>
+                        {ev.date && <p className="text-[9px] text-purple-400">{ev.date}</p>}
+                        {ev.description && <p className="text-[9px] text-zinc-500 mt-0.5">{ev.description}</p>}
+                      </div>
+                    ))}
+                    {mapEvents.length === 0 && <p className="text-center text-zinc-600 text-xs py-4">No events yet. Add one!</p>}
+                  </div>
+                </>
+              )}
+
+              {/* ---- Photo Map Panel (Feature 13) ---- */}
+              {leftPanel === "photos" && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><Camera className="w-4 h-4 text-pink-400" /> Photo Map</h2>
+                    <Button onClick={() => setPhotoLayerEnabled(!photoLayerEnabled)} size="sm"
+                      className={cn("text-[9px] font-black uppercase h-7 rounded-lg px-3", photoLayerEnabled ? "bg-pink-600 text-white" : "bg-zinc-800 text-pink-400")}>
+                      {photoLayerEnabled ? "Hide Layer" : "Show Layer"}
+                    </Button>
+                  </div>
+                  <Button onClick={() => setAddPhotoMode(!addPhotoMode)} size="sm"
+                    className={cn("text-[9px] font-black uppercase h-7 rounded-lg px-3 w-full", addPhotoMode ? "bg-pink-500 text-white" : "bg-zinc-800 text-pink-400 hover:bg-zinc-700")}>
+                    {addPhotoMode ? "Cancel Pin Mode" : "+ Pin a Photo"}
+                  </Button>
+                  {addPhotoMode && (
+                    <div className="bg-zinc-900/60 rounded-2xl p-4 border border-white/5 space-y-3">
+                      <p className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Click map to place photo</p>
+                      {pendingPhotoLatlng && (
+                        <>
+                          <Input value={newPhotoUrl} onChange={e => setNewPhotoUrl(e.target.value)} placeholder="Photo URL..." className="bg-black/60 border-white/5 h-9 rounded-xl text-xs text-white" />
+                          <Input value={newPhotoCaption} onChange={e => setNewPhotoCaption(e.target.value)} placeholder="Caption..." className="bg-black/60 border-white/5 h-9 rounded-xl text-xs text-white" />
+                          <Button onClick={handleSavePhoto} className="w-full bg-pink-600 hover:bg-pink-500 text-white font-black text-xs rounded-xl h-9">Pin Photo</Button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
+                    {mapPhotos.map(ph => (
+                      <div key={ph.id} onClick={() => setLightboxPhoto(ph)} className="cursor-pointer group relative">
+                        <img src={ph.url} alt={ph.caption || "Photo"} className="w-full h-20 object-cover rounded-xl border border-white/5 group-hover:border-pink-500/50 transition-all" onError={e => { (e.target as HTMLImageElement).src = "https://placehold.co/100x80/1e293b/60a5fa?text=Photo"; }} />
+                        {ph.caption && <p className="text-[9px] text-zinc-400 font-bold mt-1 truncate">{ph.caption}</p>}
+                      </div>
+                    ))}
+                    {mapPhotos.length === 0 && <p className="text-center text-zinc-600 text-xs py-4 col-span-2">No photos pinned yet</p>}
+                  </div>
+                </>
+              )}
+
+              {/* ---- Measure Distance Panel (Feature 11) ---- */}
+              {leftPanel === "measure" && (
+                <>
+                  <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2"><Ruler className="w-4 h-4 text-amber-400" /> Measure Distance</h2>
+                  <Button onClick={() => { setMeasureMode(!measureMode); if (measureMode) setMeasurePoints([]); }}
+                    className={cn("w-full h-10 rounded-xl font-black text-xs uppercase", measureMode ? "bg-amber-500 text-black" : "bg-amber-600/20 text-amber-400 border border-amber-500/30")}>
+                    {measureMode ? "🔴 Stop Measuring" : "📏 Start Measuring"}
+                  </Button>
+                  {measureMode && <p className="text-[9px] text-zinc-400 text-center">Click on map to add measurement points</p>}
+                  {measurePoints.length > 0 && (
+                    <>
+                      <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-center">
+                        <p className="text-2xl font-black text-amber-400">{formatDistance(measureTotalDistance)}</p>
+                        <p className="text-[9px] text-zinc-500 uppercase tracking-wider mt-1">{measurePoints.length} points</p>
+                      </div>
+                      <Button onClick={() => setMeasurePoints([])} variant="ghost" size="sm" className="text-zinc-500 hover:text-red-400 text-xs uppercase font-black w-full">
+                        <X className="w-3 h-3 mr-1" /> Clear Points
+                      </Button>
+                    </>
+                  )}
+                </>
+              )}
+
             </Card>
           </div>
         )}
 
-        {/* Map zoom controls */}
+        {/* ---- BOTTOM LEFT: Map Layers & Feature Toggles ---- */}
+        {!loading && (
+          <div className="absolute bottom-10 left-10 z-[400] flex flex-col gap-2">
+            {/* Map Style Switcher (Feature 2) */}
+            <Card className="glass-card p-1.5 rounded-2xl border-white/10 flex gap-1 shadow-2xl bg-black/60">
+              {MAP_STYLES.map(style => (
+                <Button key={style.key} size="sm" variant={mapLayer === style.key ? "default" : "ghost"}
+                  onClick={() => { setMapLayer(style.key); setHistoryMode(false); }}
+                  className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2.5", mapLayer === style.key && !historyMode ? "bg-blue-600" : "text-white")}>
+                  {style.label}
+                </Button>
+              ))}
+            </Card>
+
+            {/* Overlay Toggles Row */}
+            <Card className="glass-card p-1.5 rounded-2xl border-white/10 flex gap-1 shadow-2xl bg-black/60 flex-wrap">
+              {/* Traffic (Feature 1) */}
+              <Button size="sm" onClick={() => setTrafficEnabled(!trafficEnabled)}
+                className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2", trafficEnabled ? "bg-orange-600 text-white" : "text-zinc-400 hover:bg-white/5")}>
+                🚦 Traffic
+              </Button>
+              {/* Weather (Feature 7) */}
+              <Button size="sm" onClick={() => setWeatherOpen(!weatherOpen)}
+                className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2", weatherOpen ? "bg-sky-600 text-white" : "text-zinc-400 hover:bg-white/5")}>
+                ☁️ Weather
+              </Button>
+              {/* Heatmap (Feature 19) */}
+              <Button size="sm" onClick={() => setHeatmapEnabled(!heatmapEnabled)}
+                className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2", heatmapEnabled ? "bg-red-600 text-white" : "text-zinc-400 hover:bg-white/5")}>
+                🔥 Heatmap
+              </Button>
+              {/* Boundaries (Feature 14) */}
+              <Button size="sm" onClick={toggleBoundaries}
+                className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2", boundaryEnabled ? "bg-blue-700 text-white" : "text-zinc-400 hover:bg-white/5")}>
+                🗺️ Bounds
+              </Button>
+              {/* History (Feature 18) */}
+              <Button size="sm" onClick={() => setHistoryMode(!historyMode)}
+                className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2", historyMode ? "bg-amber-700 text-white" : "text-zinc-400 hover:bg-white/5")}>
+                🕰️ History
+              </Button>
+              {/* Location sharing (Feature 3) */}
+              {user && (
+                <Button size="sm" onClick={() => setLocationSharingEnabled(!locationSharingEnabled)}
+                  className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2", locationSharingEnabled ? "bg-green-700 text-white" : "text-zinc-400 hover:bg-white/5")}>
+                  {locationSharingEnabled ? "📡 Sharing" : "📡 Share"}
+                </Button>
+              )}
+            </Card>
+
+            {/* Weather panel (Feature 7) */}
+            {weatherOpen && (
+              <Card className="glass-card p-4 rounded-2xl border-white/10 bg-black/80 shadow-2xl space-y-3 w-72">
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-sky-400 flex items-center gap-2">☁️ Weather Overlay</h3>
+                {currentWeather && currentWeather.main && (
+                  <div className="bg-sky-500/10 border border-sky-500/20 rounded-xl p-3 flex items-center gap-3">
+                    <span className="text-3xl">{currentWeather.weather?.[0]?.main === "Rain" ? "🌧️" : currentWeather.weather?.[0]?.main === "Clouds" ? "☁️" : currentWeather.weather?.[0]?.main === "Snow" ? "❄️" : "☀️"}</span>
+                    <div>
+                      <p className="text-sm font-black text-white">{Math.round(currentWeather.main.temp)}°C</p>
+                      <p className="text-[9px] text-zinc-400">{currentWeather.weather?.[0]?.description} · {currentWeather.name}</p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase">Precipitation</span>
+                  <button onClick={() => setPrecipEnabled(!precipEnabled)} className={cn("w-10 h-5 rounded-full transition-all", precipEnabled ? "bg-blue-500" : "bg-zinc-700")} style={{ position: "relative" }}>
+                    <span className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all", precipEnabled ? "left-5" : "left-0.5")} />
+                  </button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase">Cloud Cover</span>
+                  <button onClick={() => setCloudsEnabled(!cloudsEnabled)} className={cn("w-10 h-5 rounded-full transition-all", cloudsEnabled ? "bg-blue-500" : "bg-zinc-700")} style={{ position: "relative" }}>
+                    <span className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all", cloudsEnabled ? "left-5" : "left-0.5")} />
+                  </button>
+                </div>
+                {(precipEnabled || cloudsEnabled) && (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[8px] text-zinc-500 uppercase font-bold"><span>Opacity</span><span>{Math.round(weatherOpacity * 100)}%</span></div>
+                    <Slider value={[weatherOpacity]} onValueChange={([v]) => setWeatherOpacity(v)} min={0.1} max={1} step={0.05} className="w-full" />
+                  </div>
+                )}
+              </Card>
+            )}
+
+            {/* History slider (Feature 18) */}
+            {historyMode && (
+              <Card className="glass-card p-4 rounded-2xl border-white/10 bg-black/80 shadow-2xl space-y-2 w-72">
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-amber-400 flex items-center gap-2">🕰️ Historical Imagery: {historyYear}</h3>
+                <Slider value={[historyYear]} onValueChange={([v]) => setHistoryYear(v)} min={1900} max={2023} step={1} className="w-full" />
+                <div className="flex justify-between text-[8px] text-zinc-500 font-bold"><span>1900</span><span>2023</span></div>
+                <p className="text-[9px] text-zinc-500">Showing Esri Wayback satellite imagery for {historyYear}</p>
+              </Card>
+            )}
+
+            {/* Traffic incident report (Feature 1) */}
+            {trafficEnabled && (
+              <Card className="glass-card p-3 rounded-2xl border-white/10 bg-black/80 shadow-2xl space-y-2">
+                <p className="text-[9px] font-black uppercase tracking-widest text-orange-400">Report Incident</p>
+                <div className="flex gap-2 flex-wrap">
+                  {["Accident", "Road Closure", "Congestion", "Hazard"].map(type => (
+                    <button key={type} onClick={() => reportIncident(type)}
+                      className="text-[8px] font-black uppercase bg-orange-600/20 text-orange-400 border border-orange-500/30 rounded-lg px-2 py-1.5 hover:bg-orange-600/40 transition-all">
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* ---- Map zoom controls ---- */}
         <div className="absolute bottom-10 right-10 flex flex-col gap-4 z-[400]">
           <Card className="glass-card p-2 rounded-3xl border-white/10 flex flex-col gap-2 shadow-2xl bg-black/60">
             <Button size="icon" variant="ghost" onClick={() => mapRef.current?.zoomIn()} className="h-12 w-12 rounded-2xl hover:bg-primary/10 hover:text-primary text-white"><Plus className="w-5 h-5" /></Button>
@@ -1498,432 +2544,35 @@ export default function XakteirMapsPage() {
           </Card>
         </div>
 
-        {/* FLOATING FRIENDS LIST TOGGLE (Top-Right) */}
-        {!loading && (
-          <div className="absolute top-6 right-6 z-[400] flex gap-3 pointer-events-auto">
-            <Button
-              onClick={() => setFriendsOpen(!friendsOpen)}
-              className={cn(
-                "glass-card border-white/10 text-white rounded-2xl flex items-center gap-2 h-12 px-5 font-black text-xs uppercase tracking-widest",
-                friendsOpen ? "bg-pink-600/90 hover:bg-pink-500/90 border-pink-500" : "bg-black/75 hover:bg-black/90"
-              )}
-            >
-              <UsersIcon className="w-4 h-4 text-pink-500" />
-              Friends ({activeFriends.length})
-            </Button>
-            <Button 
-              onClick={() => { if (location) panToTarget(location.lat, location.lon); }} 
-              variant="ghost" 
-              size="icon" 
-              className="glass-card bg-black/75 hover:bg-black/90 border-white/10 rounded-2xl h-12 w-12 text-blue-400"
-            >
-              <Locate className="w-5 h-5" />
-            </Button>
-          </div>
-        )}
-
-        {/* GOOGLE MAPS FLOATING SEARCH / ROUTE BUILDER (Top-Left) */}
-        {!loading && !isSimulating && !isNavigatingLive && (
-          <div className="absolute top-6 left-6 z-[400] w-[380px] max-w-[calc(100vw-50px)] pointer-events-auto">
-            <Card className="glass-card p-6 rounded-[2.5rem] bg-black/75 border-white/10 shadow-3xl flex flex-col gap-4">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                    <MapIcon className="w-4 h-4 text-blue-500" />
-                  </div>
-                  <div>
-                    <h1 className="text-sm font-black text-white tracking-tighter uppercase italic leading-none">Xakteir Maps</h1>
-                    <p className="text-[7px] font-black uppercase text-zinc-500 tracking-wider mt-0.5">Journey Planner</p>
-                  </div>
-                </div>
-                {routeDetails && (
-                  <Button onClick={resetJourney} size="icon" variant="ghost" className="h-7 w-7 rounded-lg text-zinc-400 hover:text-white">
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-
-              {/* Start & End Input Container */}
-              <div className="relative flex flex-col gap-3">
-                {/* Vertical connecting line indicator */}
-                <div className="absolute left-4.5 top-9.5 bottom-9.5 w-0.5 border-l-2 border-dashed border-zinc-700 pointer-events-none"></div>
-
-                {/* Start Point */}
-                <div className="flex items-center gap-3 relative">
-                  <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/30 shrink-0 z-10">
-                    <div className="w-3.5 h-3.5 rounded-full bg-green-500 animate-pulse"></div>
-                  </div>
-                  <div className="flex-1 relative">
-                    <Input
-                      value={startQuery}
-                      onFocus={() => setActiveSearchInput("start")}
-                      onBlur={() => setTimeout(() => setActiveSearchInput(null), 200)}
-                      onChange={(e) => { setStartQuery(e.target.value); if (startPoint) setStartPoint(null); }}
-                      placeholder="Enter start location or EirCode..."
-                      className="bg-zinc-950/80 border-white/5 h-10 rounded-xl text-xs font-bold text-white pl-4 pr-10"
-                    />
-                    {startQuery !== "My Location" && (
-                      <button 
-                        onClick={() => { setStartQuery("My Location"); if (location) setStartPoint({ lat: location.lat, lon: location.lon, name: "My Location" }); }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-wider text-blue-400 hover:text-blue-300"
-                      >
-                        GPS
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Swap Button in between */}
-                <div className="flex justify-end pr-4 -my-2.5">
-                  <Button 
-                    onClick={swapStartEnd} 
-                    type="button" 
-                    variant="ghost" 
-                    size="icon" 
-                    className="w-7 h-7 bg-zinc-900 border border-white/5 rounded-full hover:bg-zinc-800 text-zinc-400"
-                  >
-                    <ArrowLeftLeftRight className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-
-                {/* Destination Point */}
-                <div className="flex items-center gap-3 relative">
-                  <div className="w-9 h-9 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/30 shrink-0 z-10">
-                    <MapPin className="w-4.5 h-4.5 text-red-500" />
-                  </div>
-                  <div className="flex-1 relative">
-                    <Input
-                      value={destQuery}
-                      onFocus={() => setActiveSearchInput("dest")}
-                      onBlur={() => setTimeout(() => setActiveSearchInput(null), 200)}
-                      onChange={(e) => { setDestQuery(e.target.value); if (destPoint) setDestPoint(null); }}
-                      placeholder="Choose destination or EirCode..."
-                      className="bg-zinc-950/80 border-white/5 h-10 rounded-xl text-xs font-bold text-white pl-4"
-                    />
-                  </div>
-                </div>
-
-                {/* Autocomplete Suggestions */}
-                {activeSearchInput === "start" && startSuggestions.length > 0 && (
-                  <Card className="absolute top-[44px] left-12 right-0 z-[500] bg-zinc-950/95 border-white/10 rounded-2xl p-2 max-h-48 overflow-y-auto shadow-2xl flex flex-col gap-1">
-                    {startSuggestions.map((s, idx) => (
-                      <button
-                        key={idx}
-                        onMouseDown={() => {
-                          setStartPoint({ lat: s.lat, lon: s.lon, name: s.name });
-                          setStartQuery(s.name);
-                          setStartSuggestions([]);
-                        }}
-                        className="w-full text-left p-2.5 hover:bg-white/5 rounded-lg text-[10px] font-bold text-zinc-300 truncate"
-                      >
-                        {s.name}
-                      </button>
-                    ))}
-                  </Card>
-                )}
-
-                {activeSearchInput === "dest" && destSuggestions.length > 0 && (
-                  <Card className="absolute top-[96px] left-12 right-0 z-[500] bg-zinc-950/95 border-white/10 rounded-2xl p-2 max-h-48 overflow-y-auto shadow-2xl flex flex-col gap-1">
-                    {destSuggestions.map((s, idx) => (
-                      <button
-                        key={idx}
-                        onMouseDown={() => {
-                          setDestPoint({ lat: s.lat, lon: s.lon, name: s.name });
-                          setDestQuery(s.name);
-                          setDestSuggestions([]);
-                        }}
-                        className="w-full text-left p-2.5 hover:bg-white/5 rounded-lg text-[10px] font-bold text-zinc-300 truncate"
-                      >
-                        {s.name}
-                      </button>
-                    ))}
-                  </Card>
-                )}
-              </div>
-
-              {/* Transportation Mode Pickers */}
-              <div className="grid grid-cols-3 gap-2 mt-1">
-                <Button
-                  size="sm"
-                  variant={travelMode === "driving" ? "default" : "ghost"}
-                  onClick={() => setTravelMode("driving")}
-                  className={cn("h-9 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider border border-white/5", travelMode === "driving" ? "bg-blue-600 text-white" : "text-zinc-400 hover:bg-white/5")}
-                >
-                  <Car className="w-3.5 h-3.5" /> Drive
-                </Button>
-                <Button
-                  size="sm"
-                  variant={travelMode === "cycling" ? "default" : "ghost"}
-                  onClick={() => setTravelMode("cycling")}
-                  className={cn("h-9 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider border border-white/5", travelMode === "cycling" ? "bg-blue-600 text-white" : "text-zinc-400 hover:bg-white/5")}
-                >
-                  <Bike className="w-3.5 h-3.5" /> Cycle
-                </Button>
-                <Button
-                  size="sm"
-                  variant={travelMode === "walking" ? "default" : "ghost"}
-                  onClick={() => setTravelMode("walking")}
-                  className={cn("h-9 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider border border-white/5", travelMode === "walking" ? "bg-blue-600 text-white" : "text-zinc-400 hover:bg-white/5")}
-                >
-                  <Footprints className="w-3.5 h-3.5" /> Walk
-                </Button>
-              </div>
-
-              {/* Route Loading state */}
-              {routingLoading && (
-                <div className="flex items-center justify-center gap-2 py-4 text-blue-400 text-xs font-black uppercase tracking-widest">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Routing Path...
-                </div>
-              )}
-
-              {/* Route stats & Start Journey panel */}
-              {routeDetails && !routingLoading && (
-                <div className="flex flex-col gap-4 pt-2 border-t border-white/10">
-                  <div className="flex justify-between items-center bg-zinc-950/50 p-4 rounded-2xl border border-white/5">
-                    <div>
-                      <p className="text-lg font-black text-white">{formatDuration(routeDetails.duration)}</p>
-                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide mt-0.5">Distance: {formatDistance(routeDetails.distance)}</p>
-                    </div>
-                    <Badge className="bg-emerald-600 text-white uppercase text-[8px] font-black py-1.5 px-3">Fastest Route</Badge>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <Button 
-                      onClick={startLiveNavigation}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-[1.5rem] h-12 w-full font-black text-xs uppercase tracking-widest border-none flex items-center justify-center gap-2 shadow-lg"
-                    >
-                      <Locate className="w-4.5 h-4.5" /> Start GPS Navigation
-                    </Button>
-                    <Button 
-                      onClick={startJourney}
-                      className="bg-blue-600/30 hover:bg-blue-500/40 text-blue-400 rounded-[1.5rem] h-11 w-full font-black text-[10px] uppercase tracking-widest border border-blue-500/20 flex items-center justify-center gap-2"
-                    >
-                      <FastForward className="w-4 h-4" /> Simulate Walkthrough
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Card>
-          </div>
-        )}
-
-        {/* ACTIVE NAVIGATION HUD - TOP BANNER (Green Turn Indicators) */}
-        {(isSimulating || isNavigatingLive) && currentStepProgress && (
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[400] w-[450px] max-w-[calc(100vw-30px)]">
-            <Card className="bg-emerald-600 border border-emerald-500 rounded-[2.2rem] p-5 shadow-3xl flex items-center gap-4 text-white">
-              <div className="w-12 h-12 rounded-full bg-black/20 flex items-center justify-center border border-white/10 shrink-0">
-                {renderTurnIcon(currentStepProgress.modifier)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-sm font-black tracking-tight leading-tight uppercase line-clamp-2">{currentStepProgress.instruction}</h2>
-                <p className="text-[9px] font-bold tracking-widest uppercase text-emerald-200 mt-0.5">Route Navigation HUD</p>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* ACTIVE NAVIGATION HUD - BOTTOM DASHBOARD PANEL (Speedometer, limit, progress) */}
-        {(isSimulating || isNavigatingLive) && routeDetails && (
-          <div className="absolute bottom-6 left-6 right-6 z-[400] flex flex-col md:flex-row gap-4 justify-between items-center pointer-events-none">
-            
-            {/* SPEED HUD (LEFT) */}
-            <div className="flex gap-4 items-center pointer-events-auto">
-              {/* Circular Speedometer */}
-              <Card className={cn(
-                "glass-card p-4 rounded-[2.5rem] bg-black/80 flex items-center gap-4 shrink-0 transition-all border-white/10",
-                isSpeeding && "speeding-alert-container border-rose-500/80"
-              )}>
-                <div className="relative w-24 h-24 flex items-center justify-center">
-                  {/* SVG Gauge */}
-                  <svg className="w-24 h-24 transform -rotate-225" viewBox="0 0 100 100">
-                    {/* Grey dial background */}
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r={radius}
-                      fill="transparent"
-                      stroke="rgba(255,255,255,0.06)"
-                      strokeWidth="7"
-                      strokeDasharray={arcLength}
-                      className="stroke-round"
-                    />
-                    {/* Active Speed line */}
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r={radius}
-                      fill="transparent"
-                      stroke={isSpeeding ? "#ef4444" : "#10b981"}
-                      strokeWidth="7"
-                      strokeDasharray={arcLength}
-                      strokeDashoffset={strokeDashoffset}
-                      className="transition-all duration-100 ease-out"
-                      style={{ strokeLinecap: "round" }}
-                    />
-                  </svg>
-                  {/* Digital display */}
-                  <div className="absolute flex flex-col items-center justify-center">
-                    <span className={cn("text-2xl font-black italic tracking-tighter leading-none", isSpeeding ? "text-rose-500" : "text-white")}>
-                      {Math.round(simSpeed)}
-                    </span>
-                    <span className="text-[7px] font-black uppercase text-zinc-500 tracking-wider">km/h</span>
-                  </div>
-                </div>
-
-                {/* Speed Limit Sign & Warning text */}
-                <div className="flex flex-col items-center pr-2">
-                  {/* European/Irish Circular Speed Limit Sign */}
-                  <div className={cn(
-                    "w-12 h-12 rounded-full border-4 border-rose-600 bg-white flex items-center justify-center shadow-lg shrink-0",
-                    isSpeeding && "animate-bounce"
-                  )}>
-                    <span className="text-zinc-950 font-black text-sm tracking-tighter">{simSpeedLimit}</span>
-                  </div>
-                  <span className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mt-1">Limit</span>
-                </div>
-              </Card>
-
-              {/* Over speed warning indicator */}
-              {isSpeeding && (
-                <Card className="bg-rose-600 text-white rounded-2xl px-4 py-2 border-none flex items-center gap-2 text-[9px] font-black uppercase tracking-widest animate-pulse shadow-lg shrink-0">
-                  <ShieldAlert className="w-4 h-4 animate-bounce" /> SPEED ALERT!
-                </Card>
-              )}
-            </div>
-
-            {/* SIMULATION CONTROLS & TRIP STATUS (MIDDLE / RIGHT) */}
-            <Card className="glass-card p-6 rounded-[2.5rem] bg-black/85 border-white/10 shadow-3xl w-full md:max-w-2xl pointer-events-auto flex flex-col md:flex-row items-center gap-6">
-              
-              {/* Stats Panel */}
-              <div className="flex-1 w-full space-y-2 border-r border-white/10 pr-6">
-                <div className="flex justify-between items-end text-xs">
-                  <div>
-                    <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Remaining ETA</p>
-                    <p className="text-base font-black text-white mt-0.5">
-                      {formatDuration(((routeDetails.distance - simDistanceTravelled) / (simSpeed || 30)) * 3.6)}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Distance</p>
-                    <p className="text-xs font-black text-zinc-300 mt-0.5">
-                      {formatDistance(routeDetails.distance - simDistanceTravelled)} left
-                    </p>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <Progress 
-                  value={(simDistanceTravelled / routeDetails.distance) * 100}
-                  className="h-2 bg-zinc-950 border border-white/5 rounded-full"
-                />
-              </div>
-
-              {/* Control elements */}
-              <div className="flex flex-col gap-3 w-full md:w-auto">
-                <div className="flex gap-2 justify-center items-center">
-                  {isNavigatingLive ? (
-                    <Badge className="bg-emerald-600/80 text-white uppercase text-[8px] font-black py-1.5 px-3 animate-pulse">
-                      LIVE GPS ACTIVE
-                    </Badge>
-                  ) : (
-                    <>
-                      {/* Pause/Play */}
-                      <Button 
-                        size="icon" 
-                        onClick={() => setIsSimulating(!isSimulating)}
-                        className={cn("w-10 h-10 rounded-xl border-none text-white", isSimulating ? "bg-amber-600 hover:bg-amber-500" : "bg-emerald-600 hover:bg-emerald-500")}
-                      >
-                        {isSimulating ? <Pause className="w-4.5 h-4.5" /> : <Play className="w-4.5 h-4.5 fill-white" />}
-                      </Button>
-
-                      {/* Speed rate multiplier (toggle rates) */}
-                      <Button
-                        size="sm"
-                        onClick={() => setSimMultiplier(prev => prev === 1 ? 5 : prev === 5 ? 10 : prev === 10 ? 25 : prev === 25 ? 50 : 1)}
-                        className="bg-zinc-800 hover:bg-zinc-700 border border-white/5 h-10 rounded-xl px-3 text-[9px] font-black uppercase text-white tracking-widest shrink-0"
-                      >
-                        Rate: {simMultiplier}x
-                      </Button>
-                    </>
-                  )}
-
-                  {/* End simulation */}
-                  <Button 
-                    size="icon" 
-                    onClick={resetJourney}
-                    className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/5 hover:bg-rose-950 text-rose-500"
-                  >
-                    <Square className="w-4 h-4 fill-rose-500" />
-                  </Button>
-
-                  {/* Voice Mute Toggle */}
-                  <Button 
-                    size="icon" 
-                    onClick={() => setVoiceMuted(!voiceMuted)}
-                    className={cn("w-10 h-10 rounded-xl border border-white/5 text-white bg-zinc-900 hover:bg-zinc-800")}
-                  >
-                    {voiceMuted ? <VolumeX className="w-4.5 h-4.5 text-zinc-400" /> : <Volume2 className="w-4.5 h-4.5 text-blue-400" />}
-                  </Button>
-                </div>
-
-                {/* Manual speed override slider */}
-                {!isNavigatingLive && (
-                  <div className="w-44 flex flex-col gap-1 mx-auto">
-                    <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider text-zinc-400">
-                      <span>Manual Cruise</span>
-                      <span className={simManualSpeedOverride !== null ? "text-blue-400" : "text-zinc-500"}>
-                        {simManualSpeedOverride !== null ? `${simManualSpeedOverride} km/h` : "Auto"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Slider
-                        value={[simManualSpeedOverride !== null ? simManualSpeedOverride : 50]}
-                        onValueChange={(val) => setSimManualSpeedOverride(val[0])}
-                        min={0}
-                        max={160}
-                        step={5}
-                        className="flex-1"
-                      />
-                      {simManualSpeedOverride !== null && (
-                        <button 
-                          onClick={() => setSimManualSpeedOverride(null)}
-                          className="text-[8px] font-black text-rose-500 uppercase tracking-widest"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* FLOATING COLLAPSIBLE FRIENDS PANEL (Right Side Overlay) */}
+        {/* ---- Friends Panel (Top-Right) ---- */}
         {friendsOpen && !loading && (
-          <aside className="absolute right-6 top-22 bottom-6 w-96 max-w-[calc(100vw-50px)] glass-card p-6 rounded-[2.5rem] border-white/10 bg-zinc-950/85 shadow-3xl flex flex-col gap-6 overflow-y-auto z-[400] pointer-events-auto">
-            {/* Add Friend form */}
+          <aside className="absolute right-6 top-20 bottom-6 w-96 max-w-[calc(100vw-50px)] glass-card p-6 rounded-[2.5rem] border-white/10 bg-zinc-950/85 shadow-3xl flex flex-col gap-6 overflow-y-auto z-[400] pointer-events-auto">
+            {/* Location sharing toggle (Feature 3) */}
+            {user && (
+              <div className="flex items-center justify-between p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                <div>
+                  <p className="text-xs font-black text-white">Share My Location</p>
+                  <p className="text-[9px] text-zinc-500">Broadcast to friends every 30s</p>
+                </div>
+                <button onClick={() => setLocationSharingEnabled(!locationSharingEnabled)}
+                  className={cn("w-12 h-6 rounded-full transition-all relative", locationSharingEnabled ? "bg-blue-500" : "bg-zinc-700")}>
+                  <span className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-all", locationSharingEnabled ? "left-7" : "left-1")} />
+                </button>
+              </div>
+            )}
+
             <div className="space-y-4">
-              <h3 className="text-xs font-black uppercase italic tracking-tighter text-white flex items-center gap-2"><UserPlus className="w-4.5 h-4.5 text-blue-500" /> Link Friend Node</h3>
+              <h3 className="text-xs font-black uppercase italic tracking-tighter text-white flex items-center gap-2"><UserPlus className="w-4 h-4 text-blue-500" /> Link Friend Node</h3>
               <div className="flex gap-2">
-                <Input
-                  value={friendSearch}
-                  onChange={(e) => setFriendSearch(e.target.value)}
-                  placeholder="Friend's email..."
-                  className="bg-black/60 border-white/5 h-10 rounded-xl text-xs font-bold text-white"
-                />
-                <Button 
-                  onClick={handleSendFriendRequest} 
-                  disabled={isProcessing || !friendSearch.trim()}
-                  className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl h-10 px-4 font-black text-xs border-none"
-                >
+                <Input value={friendSearch} onChange={(e) => setFriendSearch(e.target.value)} placeholder="Friend's email..."
+                  className="bg-black/60 border-white/5 h-10 rounded-xl text-xs font-bold text-white" />
+                <Button onClick={handleSendFriendRequest} disabled={isProcessing || !friendSearch.trim()}
+                  className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl h-10 px-4 font-black text-xs border-none">
                   Link
                 </Button>
               </div>
             </div>
 
-            {/* Friend Requests */}
             {pendingRequests.length > 0 && (
               <div className="space-y-4 border-t border-white/5 pt-4">
                 <h4 className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Pending Requests ({pendingRequests.length})</h4>
@@ -1944,37 +2593,28 @@ export default function XakteirMapsPage() {
               </div>
             )}
 
-            {/* Active friends listing */}
             <div className="space-y-4 border-t border-white/5 pt-4 flex-1 flex flex-col min-h-0">
-              <h4 className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Active Friends Location ({activeFriends.length})</h4>
-              <div className="space-y-3 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+              <h4 className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Active Friends ({activeFriends.length})</h4>
+              <div className="space-y-3 overflow-y-auto flex-1">
                 {activeFriends.map((friend) => {
                   const hasLoc = friend.location?.lat && friend.location?.lon;
                   return (
-                    <div 
-                      key={friend.id} 
-                      onClick={() => { if (hasLoc) panToTarget(friend.location.lat, friend.location.lon); }}
-                      className={cn(
-                        "p-4 bg-white/5 border rounded-2xl flex items-center justify-between transition-all select-none",
-                        hasLoc ? "border-pink-500/20 hover:border-pink-500/40 cursor-pointer" : "border-transparent opacity-50"
-                      )}
-                    >
+                    <div key={friend.id} onClick={() => { if (hasLoc) panToTarget(friend.location.lat, friend.location.lon); }}
+                      className={cn("p-4 bg-white/5 border rounded-2xl flex items-center justify-between transition-all select-none",
+                        hasLoc ? "border-pink-500/20 hover:border-pink-500/40 cursor-pointer" : "border-transparent opacity-50")}>
                       <div>
                         <h4 className="text-sm font-black text-white uppercase italic">{friend.displayName || friend.username || "Member"}</h4>
                         <p className="text-[8px] font-bold text-zinc-500 uppercase mt-1 tracking-wider">
-                          {hasLoc ? `Coordinates: ${friend.location.lat.toFixed(4)}, ${friend.location.lon.toFixed(4)}` : "Geo Offline"}
+                          {hasLoc ? `${friend.location.lat.toFixed(4)}, ${friend.location.lon.toFixed(4)}` : "Geo Offline"}
                         </p>
                       </div>
-                      {hasLoc && (
-                        <Navigation className="w-4.5 h-4.5 text-pink-500 rotate-45 animate-pulse" />
-                      )}
+                      {hasLoc && <Navigation className="w-4 h-4 text-pink-500 rotate-45 animate-pulse" />}
                     </div>
                   );
                 })}
-
                 {activeFriends.length === 0 && (
-                  <div className="py-20 text-center opacity-25 space-y-4">
-                    <UsersIcon className="w-12 h-12 mx-auto text-zinc-500 animate-float" />
+                  <div className="py-16 text-center opacity-25 space-y-3">
+                    <UsersIcon className="w-12 h-12 mx-auto text-zinc-500" />
                     <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">No Friend Nodes Linked</p>
                   </div>
                 )}
@@ -1982,26 +2622,156 @@ export default function XakteirMapsPage() {
             </div>
           </aside>
         )}
+
+        {/* ---- ACTIVE NAVIGATION HUD ---- */}
+        {(isSimulating || isNavigatingLive) && currentStepProgress && (
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[400] w-[450px] max-w-[calc(100vw-30px)]">
+            <Card className="bg-emerald-600 border border-emerald-500 rounded-[2.2rem] p-5 shadow-3xl flex items-center gap-4 text-white">
+              <div className="w-12 h-12 rounded-full bg-black/20 flex items-center justify-center border border-white/10 shrink-0">
+                {renderTurnIcon(currentStepProgress.modifier)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-sm font-black tracking-tight leading-tight uppercase line-clamp-2">{currentStepProgress.instruction}</h2>
+                <p className="text-[9px] font-bold tracking-widest uppercase text-emerald-200 mt-0.5">Route Navigation HUD</p>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ---- ACTIVE NAVIGATION BOTTOM DASHBOARD ---- */}
+        {(isSimulating || isNavigatingLive) && routeDetails && (
+          <div className="absolute bottom-6 left-6 right-6 z-[400] flex flex-col md:flex-row gap-4 justify-between items-center pointer-events-none">
+            <div className="flex gap-4 items-center pointer-events-auto">
+              <Card className={cn("glass-card p-4 rounded-[2.5rem] bg-black/80 flex items-center gap-4 shrink-0 transition-all border-white/10", isSpeeding && "speeding-alert-container border-rose-500/80")}>
+                <div className="relative w-24 h-24 flex items-center justify-center">
+                  <svg className="w-24 h-24 transform -rotate-225" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r={radius} fill="transparent" stroke="rgba(255,255,255,0.06)" strokeWidth="7" strokeDasharray={arcLength} />
+                    <circle cx="50" cy="50" r={radius} fill="transparent" stroke={isSpeeding ? "#ef4444" : "#10b981"} strokeWidth="7" strokeDasharray={arcLength} strokeDashoffset={strokeDashoffset} className="transition-all duration-100 ease-out" style={{ strokeLinecap: "round" }} />
+                  </svg>
+                  <div className="absolute flex flex-col items-center justify-center">
+                    <span className={cn("text-2xl font-black italic tracking-tighter leading-none", isSpeeding ? "text-rose-500" : "text-white")}>{Math.round(simSpeed)}</span>
+                    <span className="text-[7px] font-black uppercase text-zinc-500 tracking-wider">km/h</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center pr-2">
+                  <div className={cn("w-12 h-12 rounded-full border-4 border-rose-600 bg-white flex items-center justify-center shadow-lg shrink-0", isSpeeding && "animate-bounce")}>
+                    <span className="text-zinc-950 font-black text-sm tracking-tighter">{simSpeedLimit}</span>
+                  </div>
+                  <span className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mt-1">Limit</span>
+                </div>
+              </Card>
+
+              {isSpeeding && (
+                <Card className="bg-rose-600 text-white rounded-2xl px-4 py-2 border-none flex items-center gap-2 text-[9px] font-black uppercase tracking-widest animate-pulse shadow-lg shrink-0">
+                  <ShieldAlert className="w-4 h-4 animate-bounce" /> SPEED ALERT!
+                </Card>
+              )}
+            </div>
+
+            <Card className="glass-card p-6 rounded-[2.5rem] bg-black/85 border-white/10 shadow-3xl w-full md:max-w-2xl pointer-events-auto flex flex-col md:flex-row items-center gap-6">
+              <div className="flex-1 w-full space-y-2 border-r border-white/10 pr-6">
+                <div className="flex justify-between items-end text-xs">
+                  <div>
+                    <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Remaining ETA</p>
+                    <p className="text-base font-black text-white mt-0.5">{formatDuration(((routeDetails.distance - simDistanceTravelled) / (simSpeed || 30)) * 3.6)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Distance</p>
+                    <p className="text-xs font-black text-zinc-300 mt-0.5">{formatDistance(routeDetails.distance - simDistanceTravelled)} left</p>
+                  </div>
+                </div>
+                <Progress value={(simDistanceTravelled / routeDetails.distance) * 100} className="h-2 bg-zinc-950 border border-white/5 rounded-full" />
+              </div>
+
+              <div className="flex flex-col gap-3 w-full md:w-auto">
+                <div className="flex gap-2 justify-center items-center">
+                  {isNavigatingLive ? (
+                    <Badge className="bg-emerald-600/80 text-white uppercase text-[8px] font-black py-1.5 px-3 animate-pulse">LIVE GPS ACTIVE</Badge>
+                  ) : (
+                    <>
+                      <Button size="icon" onClick={() => setIsSimulating(!isSimulating)}
+                        className={cn("w-10 h-10 rounded-xl border-none text-white", isSimulating ? "bg-amber-600 hover:bg-amber-500" : "bg-emerald-600 hover:bg-emerald-500")}>
+                        {isSimulating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
+                      </Button>
+                      <Button size="sm" onClick={() => setSimMultiplier(prev => prev === 1 ? 5 : prev === 5 ? 10 : prev === 10 ? 25 : prev === 25 ? 50 : 1)}
+                        className="bg-zinc-800 hover:bg-zinc-700 border border-white/5 h-10 rounded-xl px-3 text-[9px] font-black uppercase text-white tracking-widest shrink-0">
+                        {simMultiplier}x
+                      </Button>
+                    </>
+                  )}
+                  <Button size="icon" onClick={resetJourney} className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/5 hover:bg-rose-950 text-rose-500">
+                    <Square className="w-4 h-4 fill-rose-500" />
+                  </Button>
+                  <Button size="icon" onClick={() => setVoiceMuted(!voiceMuted)} className="w-10 h-10 rounded-xl border border-white/5 text-white bg-zinc-900 hover:bg-zinc-800">
+                    {voiceMuted ? <VolumeX className="w-4 h-4 text-zinc-400" /> : <Volume2 className="w-4 h-4 text-blue-400" />}
+                  </Button>
+                </div>
+
+                {!isNavigatingLive && (
+                  <div className="w-44 flex flex-col gap-1 mx-auto">
+                    <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider text-zinc-400">
+                      <span>Manual Cruise</span>
+                      <span className={simManualSpeedOverride !== null ? "text-blue-400" : "text-zinc-500"}>
+                        {simManualSpeedOverride !== null ? `${simManualSpeedOverride} km/h` : "Auto"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Slider value={[simManualSpeedOverride !== null ? simManualSpeedOverride : 50]} onValueChange={(val) => setSimManualSpeedOverride(val[0])} min={0} max={160} step={5} className="flex-1" />
+                      {simManualSpeedOverride !== null && (
+                        <button onClick={() => setSimManualSpeedOverride(null)} className="text-[8px] font-black text-rose-500 uppercase tracking-widest">Clear</button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
 
-      {/* TRIP CELEBRATION MODAL OVERLAY */}
+      {/* ---- FEATURE 17: Embed Modal ---- */}
+      {embedModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[1000] flex items-center justify-center p-6">
+          <Card className="glass-card max-w-lg w-full p-8 rounded-[3rem] border-white/10 bg-zinc-950/95 flex flex-col gap-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-black text-white uppercase italic flex items-center gap-2"><Code2 className="w-5 h-5 text-cyan-400" /> Embed This Map</h2>
+              <Button size="icon" variant="ghost" onClick={() => setEmbedModalOpen(false)} className="text-zinc-400 hover:text-white"><X className="w-4 h-4" /></Button>
+            </div>
+            <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Copy this code to embed the map on any webpage:</p>
+            <div className="bg-zinc-900 border border-white/5 rounded-2xl p-4 font-mono text-[10px] text-cyan-300 break-all select-all">
+              {getEmbedCode()}
+            </div>
+            <Button onClick={() => { navigator.clipboard.writeText(getEmbedCode()); toast({ title: "📋 Embed code copied!" }); setEmbedModalOpen(false); }}
+              className="bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs uppercase h-11 rounded-2xl flex items-center justify-center gap-2">
+              <Copy className="w-4 h-4" /> Copy Embed Code
+            </Button>
+          </Card>
+        </div>
+      )}
+
+      {/* ---- FEATURE 13: Photo Lightbox ---- */}
+      {lightboxPhoto && (
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-md z-[1000] flex items-center justify-center p-6" onClick={() => setLightboxPhoto(null)}>
+          <div className="max-w-2xl w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <img src={lightboxPhoto.url} alt={lightboxPhoto.caption} className="w-full max-h-[70vh] object-contain rounded-3xl border border-white/10 shadow-2xl" />
+            {lightboxPhoto.caption && <p className="text-center text-white font-bold text-sm">{lightboxPhoto.caption}</p>}
+            <Button onClick={() => setLightboxPhoto(null)} variant="ghost" className="w-full text-zinc-400 hover:text-white uppercase font-black text-xs">Close</Button>
+          </div>
+        </div>
+      )}
+
+      {/* ---- TRIP CELEBRATION MODAL ---- */}
       {arrived && routeDetails && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[1000] flex items-center justify-center p-6">
           <Card className="glass-card max-w-md w-full p-8 rounded-[3.5rem] border-white/10 bg-zinc-950/90 text-center flex flex-col items-center gap-6 relative overflow-hidden shadow-3xl">
-            {/* Background grid */}
-            <div className="absolute inset-0 arcade-grid opacity-5 pointer-events-none" />
-            
-            {/* Success icon */}
+            <div className="absolute inset-0 opacity-5 pointer-events-none" />
             <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/30 text-emerald-400">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-
             <div className="space-y-2">
               <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">Journey Completed!</h2>
               <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">You have arrived safely at your destination.</p>
             </div>
-
-            {/* Trip summary details */}
             <div className="w-full bg-zinc-900/50 rounded-3xl p-5 border border-white/5 grid grid-cols-2 gap-4 text-left">
               <div>
                 <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500 block">Total Distance</span>
@@ -2012,11 +2782,8 @@ export default function XakteirMapsPage() {
                 <span className="text-sm font-black text-white">{formatDuration(routeDetails.duration)}</span>
               </div>
             </div>
-
-            <Button 
-              onClick={() => { setArrived(false); resetJourney(); }}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-widest w-full h-12 rounded-2xl border-none shadow-lg mt-2"
-            >
+            <Button onClick={() => { setArrived(false); resetJourney(); }}
+              className="bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-widest w-full h-12 rounded-2xl border-none shadow-lg mt-2">
               Back to Planner
             </Button>
           </Card>
@@ -2026,7 +2793,7 @@ export default function XakteirMapsPage() {
   );
 }
 
-// Subcomponent replacement for vertical double arrow icon since lucide doesn't have it standard
+// Subcomponent for vertical double arrow icon
 function ArrowLeftLeftRight({ className }: { className?: string }) {
   return (
     <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

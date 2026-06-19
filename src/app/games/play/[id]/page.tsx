@@ -175,25 +175,50 @@ export default function GamePlayerPage() {
  
   const GameComponent = GAME_MAP[gameId];
  
-  const handleTouchStart = (key: string) => {
+  const KEY_CODES: Record<string, number> = {
+    ArrowLeft: 37,
+    ArrowUp: 38,
+    ArrowRight: 39,
+    ArrowDown: 40,
+    Space: 32,
+    Enter: 13
+  };
+
+  const handleTouchStart = (e: React.TouchEvent, key: string) => {
+    e.preventDefault();
     if (navigator.vibrate) navigator.vibrate(20);
+    const keyCode = KEY_CODES[key] || 0;
+    const actualKey = key === "Space" ? " " : key;
+    const actualCode = key === "Space" ? "Space" : key;
+
     const event = new KeyboardEvent("keydown", {
-      key: key,
-      code: key,
+      key: actualKey,
+      code: actualCode,
       bubbles: true,
       cancelable: true
     });
+    Object.defineProperty(event, 'keyCode', { get: () => keyCode });
+    Object.defineProperty(event, 'which', { get: () => keyCode });
+
     window.dispatchEvent(event);
     document.dispatchEvent(event);
   };
- 
-  const handleTouchEnd = (key: string) => {
+
+  const handleTouchEnd = (e: React.TouchEvent, key: string) => {
+    e.preventDefault();
+    const keyCode = KEY_CODES[key] || 0;
+    const actualKey = key === "Space" ? " " : key;
+    const actualCode = key === "Space" ? "Space" : key;
+
     const event = new KeyboardEvent("keyup", {
-      key: key,
-      code: key,
+      key: actualKey,
+      code: actualCode,
       bubbles: true,
       cancelable: true
     });
+    Object.defineProperty(event, 'keyCode', { get: () => keyCode });
+    Object.defineProperty(event, 'which', { get: () => keyCode });
+
     window.dispatchEvent(event);
     document.dispatchEvent(event);
   };
@@ -228,29 +253,29 @@ export default function GamePlayerPage() {
           {/* D-Pad on Left */}
           <div className="relative w-36 h-36 flex items-center justify-center pointer-events-auto bg-black/40 backdrop-blur-md rounded-full border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
             <button
-              onTouchStart={() => handleTouchStart("ArrowUp")}
-              onTouchEnd={() => handleTouchEnd("ArrowUp")}
+              onTouchStart={(e) => handleTouchStart(e, "ArrowUp")}
+              onTouchEnd={(e) => handleTouchEnd(e, "ArrowUp")}
               className="absolute top-1 w-11 h-11 bg-white/10 active:bg-cyan-500/40 border border-white/10 rounded-xl flex items-center justify-center text-lg active:shadow-[0_0_15px_rgba(6,182,212,0.5)] active:border-cyan-400 transition-all text-white font-bold"
             >
               ▲
             </button>
             <button
-              onTouchStart={() => handleTouchStart("ArrowDown")}
-              onTouchEnd={() => handleTouchEnd("ArrowDown")}
+              onTouchStart={(e) => handleTouchStart(e, "ArrowDown")}
+              onTouchEnd={(e) => handleTouchEnd(e, "ArrowDown")}
               className="absolute bottom-1 w-11 h-11 bg-white/10 active:bg-cyan-500/40 border border-white/10 rounded-xl flex items-center justify-center text-lg active:shadow-[0_0_15px_rgba(6,182,212,0.5)] active:border-cyan-400 transition-all text-white font-bold"
             >
               ▼
             </button>
             <button
-              onTouchStart={() => handleTouchStart("ArrowLeft")}
-              onTouchEnd={() => handleTouchEnd("ArrowLeft")}
+              onTouchStart={(e) => handleTouchStart(e, "ArrowLeft")}
+              onTouchEnd={(e) => handleTouchEnd(e, "ArrowLeft")}
               className="absolute left-1 w-11 h-11 bg-white/10 active:bg-cyan-500/40 border border-white/10 rounded-xl flex items-center justify-center text-lg active:shadow-[0_0_15px_rgba(6,182,212,0.5)] active:border-cyan-400 transition-all text-white font-bold"
             >
               ◀
             </button>
             <button
-              onTouchStart={() => handleTouchStart("ArrowRight")}
-              onTouchEnd={() => handleTouchEnd("ArrowRight")}
+              onTouchStart={(e) => handleTouchStart(e, "ArrowRight")}
+              onTouchEnd={(e) => handleTouchEnd(e, "ArrowRight")}
               className="absolute right-1 w-11 h-11 bg-white/10 active:bg-cyan-500/40 border border-white/10 rounded-xl flex items-center justify-center text-lg active:shadow-[0_0_15px_rgba(6,182,212,0.5)] active:border-cyan-400 transition-all text-white font-bold"
             >
               ▶
@@ -261,16 +286,16 @@ export default function GamePlayerPage() {
           {/* Action Buttons on Right */}
           <div className="flex gap-4 items-center pointer-events-auto select-none">
             <button
-              onTouchStart={() => handleTouchStart("Enter")}
-              onTouchEnd={() => handleTouchEnd("Enter")}
+              onTouchStart={(e) => handleTouchStart(e, "Enter")}
+              onTouchEnd={(e) => handleTouchEnd(e, "Enter")}
               className="w-16 h-16 rounded-full bg-rose-500/20 active:bg-rose-500/50 border border-rose-500/30 flex flex-col items-center justify-center text-white font-black text-sm shadow-[0_0_10px_rgba(244,63,94,0.1)] active:shadow-[0_0_25px_rgba(244,63,94,0.6)] active:border-rose-400 transition-all"
             >
               <span className="text-xs uppercase opacity-60">B</span>
               <span className="text-[10px] -mt-1 uppercase tracking-tight">Enter</span>
             </button>
             <button
-              onTouchStart={() => handleTouchStart("Space")}
-              onTouchEnd={() => handleTouchEnd("Space")}
+              onTouchStart={(e) => handleTouchStart(e, "Space")}
+              onTouchEnd={(e) => handleTouchEnd(e, "Space")}
               className="w-20 h-20 rounded-full bg-emerald-500/20 active:bg-emerald-500/50 border border-emerald-500/30 flex flex-col items-center justify-center text-white font-black text-base shadow-[0_0_10px_rgba(16,185,129,0.1)] active:shadow-[0_0_30px_rgba(16,185,129,0.6)] active:border-emerald-400 transition-all"
             >
               <span className="text-sm uppercase opacity-60">A</span>

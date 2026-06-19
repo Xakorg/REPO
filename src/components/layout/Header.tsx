@@ -78,16 +78,21 @@ import { RenderHat } from "@/components/RenderHat";
 import { useSuiteStore } from "@/lib/store";
 
 const APPS = [
-  { name: "Search", icon: SearchIcon, href: "https://xakteir.com/search", color: "text-blue-400", bg: "bg-blue-400/10" },
+  // Main Apps
+  { name: "Mail", icon: Mail, href: "https://xakteir.com/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
   { name: "Chat", icon: MessageCircle, href: "https://chat.xakteir.com/", color: "text-emerald-400", bg: "bg-emerald-400/10" },
   { name: "Xak AI", icon: Bot, href: "https://xakteir.com/ai-chat", color: "text-primary", bg: "bg-primary/10" },
+  { name: "Drive", icon: HardDrive, href: "https://xakteir.com/drive", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "Games", icon: Gamepad2, href: "https://xakteir.com/games", color: "text-purple-400", bg: "bg-purple-400/10" },
+  { name: "Maps", icon: Map, href: "https://maps.xakteir.com/", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { name: "Apps", icon: LayoutGrid, href: "https://xakteir.com/apps", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  
+  // Other Apps
+  { name: "Search", icon: SearchIcon, href: "https://xakteir.com/search", color: "text-blue-400", bg: "bg-blue-400/10" },
   { name: "Whiteboard", icon: Presentation, href: "https://xakteir.com/whiteboard", color: "text-amber-400", bg: "bg-amber-400/10" },
   { name: "Studio", icon: Sparkles, href: "/studio", color: "text-purple-500", bg: "bg-purple-500/10" },
   { name: "Premium", icon: Award, href: "/premium", color: "text-amber-500", bg: "bg-amber-500/10" },
   { name: "Settings", icon: Settings, href: "/settings", color: "text-zinc-500", bg: "bg-zinc-500/10" },
-  { name: "Mail", icon: Mail, href: "https://xakteir.com/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
-  { name: "Drive", icon: HardDrive, href: "https://xakteir.com/drive", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Games", icon: Gamepad2, href: "https://xakteir.com/games", color: "text-purple-400", bg: "bg-purple-400/10" },
   { name: "XakSports", icon: Gamepad2, href: "/xaksports", color: "text-orange-400", bg: "bg-orange-400/10" },
   { name: "XakArena", icon: Swords, href: "/xakarena", color: "text-rose-500", bg: "bg-rose-500/10" },
   { name: "XakCode", icon: Code2, href: "https://code.xakteir.com/", color: "text-sky-400", bg: "bg-sky-500/10" },
@@ -101,16 +106,12 @@ const APPS = [
   { name: "Notes", icon: Code2, href: "https://xakteir.com/notes", color: "text-indigo-400", bg: "bg-indigo-400/10" },
   { name: "Social", icon: Users, href: "https://xakteir.com/social", color: "text-pink-500", bg: "bg-pink-500/10" },
   { name: "Shop", icon: ShoppingBag, href: "https://xakteir.com/shop", color: "text-emerald-500", bg: "bg-emerald-500/10" },
-  
-  // Newly Added Apps
   { name: "Dev Centre", icon: Code2, href: "/dev-centre", color: "text-blue-500", bg: "bg-blue-500/10" },
   { name: "Art Studio", icon: Palette, href: "https://xakteir.com/art", color: "text-pink-400", bg: "bg-pink-400/10" },
-  { name: "App Store", icon: LayoutGrid, href: "https://xakteir.com/apps", color: "text-indigo-400", bg: "bg-indigo-400/10" },
   { name: "Archive", icon: Archive, href: "https://xakteir.com/archive", color: "text-amber-500", bg: "bg-amber-500/10" },
   { name: "Authenticator", icon: ShieldCheck, href: "https://xakteir.com/authenticator", color: "text-teal-400", bg: "bg-teal-400/10" },
   { name: "XakBuddy", icon: Heart, href: "https://xakteir.com/buddy", color: "text-rose-400", bg: "bg-rose-400/10" },
   { name: "XakInstaller", icon: Download, href: "https://xakteir.com/installer", color: "text-sky-500", bg: "bg-sky-500/10" },
-  { name: "Xakteir Maps", icon: Map, href: "https://maps.xakteir.com/", color: "text-emerald-400", bg: "bg-emerald-400/10" },
   { name: "News", icon: Newspaper, href: "https://xakteir.com/news", color: "text-rose-500", bg: "bg-rose-500/10" },
   { name: "Search Console", icon: SearchIcon, href: "https://xakteir.com/search-console", color: "text-teal-400", bg: "bg-teal-400/10" },
   { name: "XakSign", icon: CheckSquare, href: "https://xakteir.com/sign", color: "text-amber-400", bg: "bg-amber-400/10" },
@@ -149,14 +150,7 @@ function AppLauncherContent({ router }: { router: any }) {
                 app.bg
               )}
             >
-              <app.icon 
-                className="w-6 h-6" 
-                style={{
-                  stroke: "url(#mesh-gradient)",
-                  fill: "url(#mesh-gradient)",
-                  fillOpacity: 0.15
-                }} 
-              />
+              <app.icon className={cn("w-6 h-6", app.color)} />
               <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover/btn:text-white truncate w-full text-center">{app.name}</span>
             </button>
           ))}
@@ -296,7 +290,7 @@ export function Header() {
                     style={{
                       stroke: "url(#mesh-gradient)",
                       fill: "url(#mesh-gradient)",
-                      fillOpacity: 0.2
+                      fillOpacity: 0.95
                     }}
                   />
                   <span className="text-[12px] font-black uppercase tracking-widest text-white/90">Apps</span>
@@ -315,7 +309,9 @@ export function Header() {
                    <Menu 
                      className="w-6 h-6 transition-all group-active:scale-95" 
                      style={{
-                       stroke: "url(#mesh-gradient)"
+                       stroke: "url(#mesh-gradient)",
+                       fill: "url(#mesh-gradient)",
+                       fillOpacity: 0.95
                      }}
                    />
                  </Button>
