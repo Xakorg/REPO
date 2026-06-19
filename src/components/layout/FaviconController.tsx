@@ -204,6 +204,19 @@ export function FaviconController() {
   }, [activeApp.title]);
  
   // 5. Update Favicon dynamically using canvas
+  const drawMail = (ctx: CanvasRenderingContext2D) => {
+    ctx.lineWidth = 4;
+    ctx.lineJoin = "round";
+    // Envelope body
+    ctx.strokeRect(12, 18, 40, 28);
+    // Envelope flap
+    ctx.beginPath();
+    ctx.moveTo(12, 18);
+    ctx.lineTo(32, 32);
+    ctx.lineTo(52, 18);
+    ctx.stroke();
+  };
+
   useEffect(() => {
     const canvas = document.createElement("canvas");
     canvas.width = 64;
@@ -665,7 +678,8 @@ export function FaviconController() {
       // Draw dynamic favicon
       ctx.strokeStyle = "#ffffff";
       ctx.fillStyle = "none";
-      if (activeApp.icon === "chat") drawChat(ctx);
+      if (activeApp.icon === "mail") drawMail(ctx);
+      else if (activeApp.icon === "chat") drawChat(ctx);
       else if (activeApp.icon === "games") drawGamepad(ctx);
       else if (activeApp.icon === "suite") drawLayers(ctx);
       else if (activeApp.icon === "calculator") drawCalculator(ctx);

@@ -27,6 +27,16 @@ export function LockedAccountGuard({ children }: { children: React.ReactNode }) 
   if (!mounted) return null;
 
   if (user && userData?.isBanned) {
+    if (userData.bannedUntil && Date.now() > userData.bannedUntil) {
+      // Unban automatically if the time has passed
+      import("firebase/firestore").then(({ updateDoc }) => {
+         if (userDocRef) {
+           updateDoc(userDocRef, { isBanned: false, bannedUntil: null });
+         }
+      });
+      return <>{children}</>;
+    }
+
     return (
       <div className="fixed inset-0 z-[9999] overflow-hidden flex flex-col items-center justify-center p-6 text-foreground">
         {/* VIBRANT COLOUR CHANGING BACKGROUND */}
@@ -62,6 +72,15 @@ export function LockedAccountGuard({ children }: { children: React.ReactNode }) 
               </h1>
               <p className="text-lg text-white/80 font-bold italic leading-relaxed opacity-90 max-w-md mx-auto">
                  Access to the Xakteir Hub has been terminated for this account. 
+                 <br /><br />
+                 {userData.bannedUntil ? (
+                   <>
+                     Your account will automatically unlock on:<br/>
+                     <span className="text-rose-400 font-black">{new Date(userData.bannedUntil).toLocaleString()}</span>
+                   </>
+                 ) : (
+                   "This ban is permanent."
+                 )}
                  <br /><br />
                  If you believe this is an error, contact a Hub Administrator immediately.
               </p>

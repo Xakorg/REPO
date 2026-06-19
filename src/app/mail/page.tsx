@@ -225,7 +225,8 @@ export default function MailPage() {
   // ── Feature 13: Signature Builder ──
   const [signature, setSignature] = useState("");
   const [editingSignature, setEditingSignature] = useState(false);
-  const signatureEditorRef = useRef<HTMLDivElement>(null);
+  const [isDrawingSignature, setIsDrawingSignature] = useState(false);
+  const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // ── Feature 14: Vacation Auto-Responder ──
   const [vacationEnabled, setVacationEnabled] = useState(false);
@@ -233,6 +234,12 @@ export default function MailPage() {
   const [vacationMessage, setVacationMessage] = useState("I am currently out of office. I will reply when I return.");
   const [vacationStart, setVacationStart] = useState("");
   const [vacationEnd, setVacationEnd] = useState("");
+
+  // ── Feature: Custom Folders & Rules ──
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newRuleCondition, setNewRuleCondition] = useState("Sender contains");
+  const [newRuleValue, setNewRuleValue] = useState("");
+  const [newRuleFolder, setNewRuleFolder] = useState("");
 
   // ── Feature 15: Email Analytics ──
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -438,6 +445,33 @@ export default function MailPage() {
     localStorage.setItem("lastMailCheck", Date.now().toString());
   }, [rawEmails]);
 
+  // ─── Process Rules for Inbox Emails ──────────────────────────────────────
+  useEffect(() => {
+    if (!firestore || !user || !rawEmails || !userData?.mailRules) return;
+    const inboxEmails = rawEmails.filter(e => (e.folder === "inbox" || !e.folder) && !e.isDeleted);
+    
+    inboxEmails.forEach(async (email) => {
+      for (const rule of userData.mailRules) {
+        let match = false;
+        const sEmail = (email.senderEmail || "").toLowerCase();
+        const sSub = (email.subject || "").toLowerCase();
+        const val = (rule.value || "").toLowerCase();
+
+        if (rule.condition === "Sender contains" && sEmail.includes(val)) match = true;
+        if (rule.condition === "Subject contains" && sSub.includes(val)) match = true;
+        
+        if (match && rule.targetFolder) {
+          try {
+            await updateDoc(doc(firestore, "emails", email.id), { folder: rule.targetFolder });
+          } catch (e) {
+            console.error("Rule error", e);
+          }
+          break;
+        }
+      }
+    });
+  }, [rawEmails, userData?.mailRules, firestore, user]);
+
   // ─── Email filtering pipeline ────────────────────────────────────────────
   const emails = useMemo(() => {
     if (!rawEmails) return [];
@@ -456,7 +490,8 @@ export default function MailPage() {
     else if (folder === "Sent") filtered = filtered.filter(e => !e.isDeleted);
     else if (folder === "Trash") filtered = filtered.filter(e => e.isDeleted);
     else if (folder === "Spam") filtered = filtered.filter(e => e.folder === "spam" && !e.isDeleted);
-    else filtered = filtered.filter(e => !e.isDeleted && (!e.snoozedUntil || e.snoozedUntil <= new Date().toISOString()) && e.folder !== "sent" && e.folder !== "spam");
+    else if (folder === "Inbox") filtered = filtered.filter(e => !e.isDeleted && (!e.snoozedUntil || e.snoozedUntil <= new Date().toISOString()) && e.folder !== "sent" && e.folder !== "spam" && !(userData?.mailCustomFolders || []).includes(e.folder));
+    else filtered = filtered.filter(e => !e.isDeleted && e.folder === folder);
 
     // Feature 20: Label filter
     if (selectedLabelFilter) {
@@ -570,14 +605,20 @@ export default function MailPage() {
   }, [rawEmails, user]);
 
   // ─── Folders definition ──────────────────────────────────────────────────
-  const folders = useMemo(() => [
-    { name: "Inbox", icon: Inbox, color: "bg-blue-500" },
-    { name: "Starred", icon: Star, color: "bg-amber-500" },
-    { name: "Snoozed", icon: Clock, color: "bg-orange-500" },
-    { name: "Sent", icon: Send, color: "bg-green-500" },
-    { name: "Spam", icon: Shield, color: "bg-rose-500" },
-    { name: "Trash", icon: Trash2, color: "bg-red-900" },
-  ], []);
+  const folders = useMemo(() => {
+    const base = [
+      { name: "Inbox", icon: Inbox, color: "bg-blue-500" },
+      { name: "Starred", icon: Star, color: "bg-amber-500" },
+      { name: "Snoozed", icon: Clock, color: "bg-orange-500" },
+      { name: "Sent", icon: Send, color: "bg-green-500" },
+      { name: "Spam", icon: Shield, color: "bg-rose-500" },
+      { name: "Trash", icon: Trash2, color: "bg-red-900" },
+    ];
+    const custom = (userData?.mailCustomFolders || []).map((cf: string) => ({
+      name: cf, icon: FolderOpen, color: "bg-indigo-500"
+    }));
+    return [...base, ...custom];
+  }, [userData?.mailCustomFolders]);
 
   const unreadCount = useMemo(() => (rawEmails || []).filter(e => !e.isRead && !e.isDeleted).length, [rawEmails]);
 
@@ -819,15 +860,7 @@ export default function MailPage() {
     toast({ title: "Marked as spam", description: `Emails from ${domain} will be blocked.` });
   };
 
-  // ─── Feature 13: Save signature ──────────────────────────────────────────
-  const handleSaveSignature = async () => {
-    if (!firestore || !user) return;
-    const html = signatureEditorRef.current?.innerHTML || signature;
-    await setDoc(doc(firestore, "users", user.uid, "settings", "signature"), { html });
-    setSignature(html);
-    setEditingSignature(false);
-    toast({ title: "✅ Signature saved" });
-  };
+  // ─── Feature 13: Save signature (Now inline) ──────────────────────────────────────────
 
   // ─── Feature 14: Save vacation responder ─────────────────────────────────
   const handleSaveVacation = async () => {
@@ -851,6 +884,39 @@ export default function MailPage() {
     setUserLabels(prev => [...prev, { id: ref.id, name: newLabelName, color: newLabelColor, emailIds: [] }]);
     setNewLabelName(""); setShowLabelModal(false);
     toast({ title: "✅ Label created" });
+  };
+
+  // ─── Feature: Rules and Custom Folders ────────────────────────────────────
+  const handleCreateFolder = async () => {
+    if (!firestore || !user || !newFolderName.trim()) return;
+    const f = newFolderName.trim();
+    if ((userData?.mailCustomFolders || []).includes(f)) return;
+    await updateDoc(doc(firestore, "users", user.uid), {
+      mailCustomFolders: [...(userData?.mailCustomFolders || []), f]
+    });
+    setNewFolderName("");
+    toast({ title: "✅ Folder created" });
+  };
+
+  const handleCreateRule = async () => {
+    if (!firestore || !user || !newRuleValue.trim() || !newRuleFolder.trim()) return;
+    const newRule = {
+      id: crypto.randomUUID(),
+      condition: newRuleCondition,
+      value: newRuleValue.trim(),
+      targetFolder: newRuleFolder.trim()
+    };
+    await updateDoc(doc(firestore, "users", user.uid), {
+      mailRules: [...(userData?.mailRules || []), newRule]
+    });
+    setNewRuleValue("");
+    toast({ title: "✅ Rule created" });
+  };
+
+  const handleDeleteRule = async (ruleId: string) => {
+    if (!firestore || !user || !userData?.mailRules) return;
+    const filtered = userData.mailRules.filter((r: any) => r.id !== ruleId);
+    await updateDoc(doc(firestore, "users", user.uid), { mailRules: filtered });
   };
 
   const handleAssignLabel = async (labelId: string, emailId: string) => {
@@ -1035,6 +1101,26 @@ export default function MailPage() {
       <Loader2 className="animate-spin text-primary w-12 h-12" />
     </div>
   );
+
+  if (userData?.bannedApps?.includes('mail')) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-black text-white flex flex-col items-center justify-center">
+         <div className="absolute inset-0 bg-blue-500/10 arcade-grid opacity-20 pointer-events-none" />
+         <div className="relative z-10 flex flex-col items-center text-center max-w-md p-8 glass-card rounded-[3rem] border border-blue-500/20">
+             <div className="w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center mb-6 border border-blue-500/20">
+               <Lock className="w-10 h-10 text-blue-500" />
+             </div>
+             <h1 className="text-3xl font-black uppercase italic tracking-tighter mb-4 text-blue-500">Access Restricted</h1>
+             <p className="text-sm font-medium text-white/70 italic mb-8">
+               Your account has been banned from accessing XakMail. If you believe this is an error, please contact a Hub Administrator.
+             </p>
+             <Button onClick={() => window.location.href = "/"} className="bg-blue-500 hover:bg-blue-600 text-white font-black uppercase tracking-widest rounded-xl h-12 px-8">
+               Return to Hub
+             </Button>
+         </div>
+      </div>
+    );
+  }
 
   // ─── Attachment viewer modal ──────────────────────────────────────────────
   const AttachmentChip = ({ att }: { att: { name: string; url: string; type?: string } }) => {
@@ -2046,7 +2132,7 @@ export default function MailPage() {
 
           {/* Settings navigation */}
           <div className="flex gap-2 flex-wrap mb-4">
-            {["general", "signature", "vacation", "aliases", "labels", "external"].map(tab => (
+            {["general", "signature", "vacation", "folders & rules", "aliases", "labels", "external"].map(tab => (
               <button key={tab} onClick={() => setSettingsTab(tab)} className={cn("px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold tracking-wider transition-colors", settingsTab === tab ? "bg-primary text-black" : "bg-white/5 text-white/50 hover:text-white")}>
                 {tab}
               </button>
@@ -2107,29 +2193,176 @@ export default function MailPage() {
           {/* ── Feature 13: Signature Builder ── */}
           {settingsTab === "signature" && (
             <div className="space-y-4">
-              <Label className="font-bold">Email Signature</Label>
-              <p className="text-xs text-white/50">This will be appended to your composed emails automatically.</p>
+              <Label className="font-bold">Drawn Signature</Label>
+              <p className="text-xs text-white/50">Draw your signature here. It will be appended to your composed emails automatically.</p>
 
-              {/* Basic formatting toolbar */}
-              <div className="flex gap-1 bg-white/5 border border-white/10 rounded-t-xl p-2">
-                <button className="p-1.5 hover:bg-white/10 rounded" onClick={() => document.execCommand("bold")}><Bold className="w-3.5 h-3.5" /></button>
-                <button className="p-1.5 hover:bg-white/10 rounded" onClick={() => document.execCommand("italic")}><Italic className="w-3.5 h-3.5" /></button>
-                <button className="p-1.5 hover:bg-white/10 rounded" onClick={() => { const url = prompt("URL:"); if (url) document.execCommand("createLink", false, url); }}><Link2 className="w-3.5 h-3.5" /></button>
-                <div className="w-px bg-white/10 mx-1" />
-                {["#ffffff", "#00e5ff", "#fbbf24", "#4ade80", "#f87171"].map(color => (
-                  <button key={color} className="w-5 h-5 rounded-full border border-white/20 hover:scale-110 transition-transform" style={{ backgroundColor: color }} onClick={() => document.execCommand("foreColor", false, color)} />
-                ))}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 overflow-hidden relative flex flex-col items-center">
+                <canvas 
+                  ref={signatureCanvasRef}
+                  width={400}
+                  height={150}
+                  className="bg-black/50 cursor-crosshair border border-white/20 rounded-lg max-w-[400px] w-full touch-none"
+                  onMouseDown={(e) => {
+                    const ctx = signatureCanvasRef.current?.getContext('2d');
+                    if (!ctx) return;
+                    setIsDrawingSignature(true);
+                    ctx.beginPath();
+                    ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                  }}
+                  onMouseMove={(e) => {
+                    if (!isDrawingSignature) return;
+                    const ctx = signatureCanvasRef.current?.getContext('2d');
+                    if (!ctx) return;
+                    ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = "round";
+                    ctx.stroke();
+                  }}
+                  onMouseUp={() => setIsDrawingSignature(false)}
+                  onMouseLeave={() => setIsDrawingSignature(false)}
+                  onTouchStart={(e) => {
+                    const canvas = signatureCanvasRef.current;
+                    const ctx = canvas?.getContext('2d');
+                    if (!ctx || !canvas) return;
+                    setIsDrawingSignature(true);
+                    const rect = canvas.getBoundingClientRect();
+                    ctx.beginPath();
+                    ctx.moveTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+                  }}
+                  onTouchMove={(e) => {
+                    if (!isDrawingSignature) return;
+                    const canvas = signatureCanvasRef.current;
+                    const ctx = canvas?.getContext('2d');
+                    if (!ctx || !canvas) return;
+                    const rect = canvas.getBoundingClientRect();
+                    ctx.lineTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = "round";
+                    ctx.stroke();
+                  }}
+                  onTouchEnd={() => setIsDrawingSignature(false)}
+                />
+                
+                {signature && !signature.startsWith('<img') && (
+                  <div className="mt-4 p-2 bg-rose-500/10 text-rose-400 text-xs rounded border border-rose-500/20 w-full text-center">
+                    Legacy text signature detected. Drawing a new one will overwrite it.
+                  </div>
+                )}
+                
+                <div className="flex gap-4 mt-4 w-full justify-center">
+                  <Button 
+                    variant="outline" 
+                    className="text-xs"
+                    onClick={() => {
+                      const canvas = signatureCanvasRef.current;
+                      if (!canvas) return;
+                      const ctx = canvas.getContext('2d');
+                      ctx?.clearRect(0, 0, canvas.width, canvas.height);
+                    }}
+                  >
+                    Clear Canvas
+                  </Button>
+                  <Button 
+                    onClick={async () => {
+                      if (!firestore || !user) return;
+                      const canvas = signatureCanvasRef.current;
+                      if (!canvas) return;
+                      
+                      // Check if canvas is empty
+                      const ctx = canvas.getContext('2d');
+                      if (!ctx) return;
+                      const pixelBuffer = new Uint32Array(ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer);
+                      const isCanvasBlank = !pixelBuffer.some(color => color !== 0);
+
+                      let html = "";
+                      if (!isCanvasBlank) {
+                         const dataUrl = canvas.toDataURL("image/png");
+                         html = `<img src="${dataUrl}" alt="signature" style="max-height: 80px;" />`;
+                      }
+                      
+                      await setDoc(doc(firestore, "users", user.uid, "settings", "signature"), { html });
+                      setSignature(html);
+                      toast({ title: "✅ Signature saved" });
+                    }} 
+                    className="bg-primary text-black font-black uppercase text-xs"
+                  >
+                    <Save className="w-4 h-4 mr-2" /> Save Signature
+                  </Button>
+                </div>
               </div>
-              <div
-                ref={signatureEditorRef}
-                contentEditable
-                suppressContentEditableWarning
-                className="min-h-[120px] bg-white/5 border border-t-0 border-white/10 rounded-b-xl p-4 text-sm text-white outline-none"
-                dangerouslySetInnerHTML={{ __html: signature }}
-              />
-              <Button onClick={handleSaveSignature} className="bg-primary text-black font-black uppercase text-xs">
-                <Save className="w-4 h-4 mr-2" /> Save Signature
-              </Button>
+            </div>
+          )}
+
+          {/* ── Feature: Folders & Rules ── */}
+          {settingsTab === "folders & rules" && (
+            <div className="space-y-8">
+              {/* Custom Folders */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="font-bold">Custom Folders</Label>
+                  <p className="text-xs text-white/50">Create your own folders to organize your inbox.</p>
+                </div>
+                <div className="flex gap-2">
+                  <Input value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="Folder Name" className="bg-white/5 border-white/10 text-white" />
+                  <Button onClick={handleCreateFolder} className="bg-primary text-black font-black uppercase text-xs">Create Folder</Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {(userData?.mailCustomFolders || []).map((cf: string) => (
+                    <Badge key={cf} variant="outline" className="border-indigo-500/30 bg-indigo-500/10 text-indigo-400">
+                      <FolderOpen className="w-3 h-3 mr-1" /> {cf}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="w-full h-px bg-white/10" />
+
+              {/* Rules */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="font-bold">Inbox Rules</Label>
+                  <p className="text-xs text-white/50">Automatically route incoming emails into your folders.</p>
+                </div>
+                
+                <div className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <Select value={newRuleCondition} onValueChange={setNewRuleCondition}>
+                      <SelectTrigger className="bg-black/50 border-white/10 text-white"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                        <SelectItem value="Sender contains">Sender contains</SelectItem>
+                        <SelectItem value="Subject contains">Subject contains</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input value={newRuleValue} onChange={e => setNewRuleValue(e.target.value)} placeholder="Text to match..." className="bg-black/50 border-white/10 text-white" />
+                    <Select value={newRuleFolder} onValueChange={setNewRuleFolder}>
+                      <SelectTrigger className="bg-black/50 border-white/10 text-white"><SelectValue placeholder="Move to folder..." /></SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                        {folders.map(f => (
+                          <SelectItem key={f.name} value={f.name}>{f.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={handleCreateRule} disabled={!newRuleValue || !newRuleFolder} className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-black uppercase text-xs">
+                    <CheckCircle className="w-4 h-4 mr-2" /> Add Rule
+                  </Button>
+                </div>
+
+                <div className="space-y-2 mt-4">
+                  {(userData?.mailRules || []).map((rule: any) => (
+                    <div key={rule.id} className="flex justify-between items-center p-3 bg-black/40 border border-white/5 rounded-lg">
+                      <div className="text-xs">
+                        <span className="text-white/50">If</span> <span className="font-bold text-indigo-400">{rule.condition}</span> <span className="text-white/50">"</span><span className="font-bold text-white">{rule.value}</span><span className="text-white/50">", move to</span> <span className="font-bold text-indigo-400">{rule.targetFolder}</span>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteRule(rule.id)} className="h-6 w-6 text-rose-500 hover:bg-rose-500/20 rounded-full">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 

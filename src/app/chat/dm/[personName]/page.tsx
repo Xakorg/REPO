@@ -40,6 +40,7 @@ import { RenderHat } from "@/components/RenderHat";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { ThreadPanel } from "@/components/chat/ThreadPanel";
 import { ReactionPicker } from "@/components/chat/ReactionPicker";
+import { BookmarksPanel } from "@/components/chat/BookmarksPanel";
 import { DrawCanvas } from "@/components/chat/DrawCanvas";
 import { MediaGallery } from "@/components/chat/MediaGallery";
 import { Dice5, Paintbrush, Flame, MessagesSquare, Ghost, Palette, Gamepad2, BellRing, Image as ImageIcon, MonitorUp, Sparkles, Trophy, Coins, MapPin, Plus } from "lucide-react";
@@ -110,6 +111,9 @@ export default function DirectMessagePage() {
   // @mention autocomplete states
   const [showMentionList, setShowMentionList] = useState(false);
   const [mentionCandidates, setMentionCandidates] = useState<any[]>([]);
+  const [activeThreadMessage, setActiveThreadMessage] = useState<any>(null);
+  const [disappearingMessages, setDisappearingMessages] = useState(false);
+  const [showBookmarks, setShowBookmarks] = useState(false);
 
   // ── Feature 1: Read Receipts ──
   const [chatDocData, setChatDocData] = useState<any>(null);
@@ -855,7 +859,8 @@ export default function DirectMessagePage() {
         channelName: `DM with ${friendUser?.displayName || personName}`,
         timestamp: serverTimestamp(),
         isWhisper: isWhisperMode,
-        isUrgent: isUrgent
+        isUrgent: isUrgent,
+        ephemeral: disappearingMessages
       };
 
       // ── Phase 2: Ecosystem Bridge Payload Interception ──
@@ -1006,12 +1011,22 @@ export default function DirectMessagePage() {
     return messages.filter(m => m.pinned === true);
   }, [messages]);
 
-  // Search filtered messages
+  // Search filtered messages & remove expired ephemeral messages (24h)
   const filteredMessages = useMemo(() => {
     if (!messages) return [];
-    if (!messageSearchQuery.trim()) return messages;
+    
+    // Filter out ephemeral messages older than 24h
+    let active = messages.filter((m) => {
+      if (m.ephemeral) {
+        if (!m.timestamp) return true; // optimistic
+        if (Date.now() - m.timestamp.toMillis() > 24 * 60 * 60 * 1000) return false;
+      }
+      return true;
+    });
+
+    if (!messageSearchQuery.trim()) return active;
     const qStr = messageSearchQuery.toLowerCase();
-    return messages.filter(m => m.content?.toLowerCase().includes(qStr));
+    return active.filter(m => m.content?.toLowerCase().includes(qStr));
   }, [messages, messageSearchQuery]);
 
 
@@ -1329,7 +1344,6 @@ export default function DirectMessagePage() {
                 className="bg-black/40 border-white/5 h-9 rounded-xl pl-9 pr-3 text-xs font-bold text-white focus:border-primary uppercase placeholder:text-zinc-600 animate-none"
               />
             </div>
-
             <Button 
               onClick={() => setShowPinnedDrawer(true)} 
               variant="ghost" 
@@ -1605,7 +1619,7 @@ export default function DirectMessagePage() {
                               <ReactionPicker onSelect={(emoji) => handleReact(msg.id, emoji)} />
                               
                               <div className="w-px h-3 bg-white/10 mx-1" />
-                              <button onClick={() => setReplyingToMessage(msg)} className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="Reply"><CornerUpLeft className="w-3 h-3" /></button>
+                              <button onClick={() => setActiveThreadMessage(msg)} className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="Reply"><CornerUpLeft className="w-3 h-3" /></button>
                               <button onClick={() => handleTogglePin(msg.id, msg.pinned)} className={cn("text-zinc-400 hover:text-white hover:scale-110 transition-all", msg.pinned && "text-amber-500")} title="Pin Message"><Pin className="w-3 h-3" /></button>
                               
                               {/* ── Feature 4: Copy button ── */}
@@ -1898,6 +1912,14 @@ export default function DirectMessagePage() {
 
             {/* ── Phase 2: AI Quick Replies ── */}
             <div className="flex gap-2 pb-2 overflow-x-auto no-scrollbar px-2">
+              <button
+                type="button"
+                onClick={() => setDisappearingMessages(!disappearingMessages)}
+                className={cn("px-3 py-1 text-[10px] font-black uppercase tracking-widest border rounded-full transition-all flex items-center gap-1 whitespace-nowrap", disappearingMessages ? "bg-amber-500/20 text-amber-400 border-amber-500/40" : "bg-white/5 text-zinc-500 border-white/5 hover:text-white")}
+                title="Disappearing Messages (24h)"
+              >
+                <Clock className="w-3 h-3" /> 24H
+              </button>
               <Button onClick={() => setChatInput("Haha yeah")} variant="outline" className="h-6 px-3 rounded-full text-[10px] bg-primary/10 border-primary/20 text-primary whitespace-nowrap hover:bg-primary/20">
                 <Sparkles className="w-3 h-3 mr-1" /> Haha yeah
               </Button>

@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useAuth, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
-import { collection, doc, query, limit, orderBy, serverTimestamp } from "firebase/firestore";
+import { collection, doc, query, limit, orderBy, serverTimestamp, getDoc } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, TerminalSquare, Activity } from "lucide-react";
@@ -43,7 +43,15 @@ export default function AdminDashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [userToManage, setUserToManage] = useState<any>(null);
   const [coinsToGive, setCoinsToGive] = useState<number>(0);
-  const [adminPerms, setAdminPerms] = useState({ isAdmin: false });
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [adminPerms, setAdminPerms] = useState({ 
+    isAdmin: false,
+    canBan: false,
+    canGiveAdmins: false,
+    canSendBroadcasts: false,
+    canChangePasswords: false,
+    canAppBan: false
+  });
   const [broadcast, setBroadcast] = useState({ title: "", content: "" });
   
   // Support state
@@ -92,11 +100,20 @@ export default function AdminDashboardPage() {
     if (!firestore || !userToManage) return;
     updateDocumentNonBlocking(doc(firestore, "users", userToManage.id), {
       currencyBalance: Number(coinsToGive),
-      isHidden: !!userToManage.isHidden
+      isHidden: !!userToManage.isHidden,
+      bannedApps: userToManage.bannedApps || []
     });
     const adminDocRef = doc(firestore, "admins", userToManage.id);
     if (adminPerms.isAdmin) {
-      setDocumentNonBlocking(adminDocRef, { email: userToManage.email, displayName: userToManage.displayName }, { merge: true });
+      setDocumentNonBlocking(adminDocRef, { 
+        email: userToManage.email, 
+        displayName: userToManage.displayName,
+        canBan: adminPerms.canBan,
+        canGiveAdmins: adminPerms.canGiveAdmins,
+        canSendBroadcasts: adminPerms.canSendBroadcasts,
+        canChangePasswords: adminPerms.canChangePasswords,
+        canAppBan: adminPerms.canAppBan
+      }, { merge: true });
       updateDocumentNonBlocking(doc(firestore, "users", userToManage.id), { role: "admin" });
     } else {
       deleteDocumentNonBlocking(adminDocRef);
@@ -319,7 +336,24 @@ export default function AdminDashboardPage() {
                           <button onClick={() => { 
                             setUserToManage(u); 
                             setCoinsToGive(u.currencyBalance || 0); 
-                            setAdminPerms({ isAdmin: u.role === 'admin' || SUPER_ADMIN_EMAILS.includes(u.email?.toLowerCase()) || false });
+                            getDoc(doc(firestore!, "admins", u.id)).then((snap) => {
+                              if (snap.exists()) {
+                                const d = snap.data();
+                                setAdminPerms({
+                                  isAdmin: true,
+                                  canBan: !!d.canBan,
+                                  canGiveAdmins: !!d.canGiveAdmins,
+                                  canSendBroadcasts: !!d.canSendBroadcasts,
+                                  canChangePasswords: !!d.canChangePasswords,
+                                  canAppBan: !!d.canAppBan
+                                });
+                              } else {
+                                setAdminPerms({ 
+                                  isAdmin: u.role === 'admin' || SUPER_ADMIN_EMAILS.includes(u.email?.toLowerCase()) || false,
+                                  canBan: false, canGiveAdmins: false, canSendBroadcasts: false, canChangePasswords: false, canAppBan: false
+                                });
+                              }
+                            });
                           }} className="font-black italic hover:text-primary transition-all text-2xl uppercase text-white flex items-center gap-4">
                             {u.displayName?.replace(/^@+/, "")}
                             {(SUPER_ADMIN_EMAILS.includes(u.email?.toLowerCase()) || u.role === 'admin') && <ShieldCheck className="w-5 h-5 text-amber-400" />}
@@ -328,7 +362,12 @@ export default function AdminDashboardPage() {
                         </TableCell>
                         <TableCell className="text-xs font-black text-muted-foreground opacity-60 uppercase tracking-widest">@{u.username}</TableCell>
                         <TableCell className="text-right px-12">
-                           <Button onClick={() => updateDocumentNonBlocking(doc(firestore!, "users", u.id), { isBanned: !u.isBanned })} variant="outline" className={cn("rounded-xl h-12 px-8 font-black text-[10px] uppercase", u.isBanned ? "text-green-500 border-green-500/20" : "text-rose-500 border-rose-500/20")}>
+                           <Button 
+                             onClick={() => updateDocumentNonBlocking(doc(firestore!, "users", u.id), { isBanned: !u.isBanned })} 
+                             disabled={u.id === user?.uid || (!isSuperAdmin && !adminRole?.canBan)}
+                             variant="outline" 
+                             className={cn("rounded-xl h-12 px-8 font-black text-[10px] uppercase", u.isBanned ? "text-green-500 border-green-500/20" : "text-rose-500 border-rose-500/20", (u.id === user?.uid || (!isSuperAdmin && !adminRole?.canBan)) ? "opacity-50 cursor-not-allowed" : "")}
+                           >
                              {u.isBanned ? "Unlock" : "Lock Identity"}
                            </Button>
                         </TableCell>
@@ -503,10 +542,38 @@ export default function AdminDashboardPage() {
                    <input 
                       type="checkbox" 
                       checked={adminPerms.isAdmin}
-                      onChange={(e) => setAdminPerms({ isAdmin: e.target.checked })}
-                      className="w-6 h-6 rounded border-white/10 bg-zinc-900 accent-primary text-black cursor-pointer"
+                      disabled={!isSuperAdmin && !adminRole?.canGiveAdmins}
+                      onChange={(e) => setAdminPerms({ ...adminPerms, isAdmin: e.target.checked })}
+                      className="w-6 h-6 rounded border-white/10 bg-zinc-900 accent-primary text-black cursor-pointer disabled:opacity-50"
                    />
                 </div>
+
+                {adminPerms.isAdmin && (isSuperAdmin || adminRole?.canGiveAdmins) && (
+                  <div className="space-y-4 p-6 bg-white/5 rounded-2xl border border-white/5">
+                    <h4 className="text-sm font-black uppercase text-white mb-4">Granular Permissions</h4>
+                    
+                    {[
+                      { key: 'canBan', label: 'Can Ban Users', desc: 'Allows locking user accounts.' },
+                      { key: 'canGiveAdmins', label: 'Can Give Admins', desc: 'Allows granting admin rights to others.' },
+                      { key: 'canSendBroadcasts', label: 'Can Send Broadcasts', desc: 'Allows sending platform-wide messages.' },
+                      { key: 'canChangePasswords', label: 'Can Change Passwords', desc: 'Allows forcing user password resets.' },
+                      { key: 'canAppBan', label: 'Can App Ban', desc: 'Allows banning users from specific apps.' }
+                    ].map(perm => (
+                      <div key={perm.key} className="flex justify-between items-center">
+                        <div>
+                          <h4 className="text-xs font-bold text-white">{perm.label}</h4>
+                          <p className="text-[10px] text-muted-foreground italic">{perm.desc}</p>
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          checked={(adminPerms as any)[perm.key]}
+                          onChange={(e) => setAdminPerms({ ...adminPerms, [perm.key]: e.target.checked })}
+                          className="w-4 h-4 rounded border-white/10 bg-zinc-900 accent-primary text-black cursor-pointer"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="flex justify-between items-center p-6 bg-white/5 rounded-2xl border border-white/5">
                    <div>
@@ -522,6 +589,72 @@ export default function AdminDashboardPage() {
                       className="w-6 h-6 rounded border-white/10 bg-zinc-900 accent-primary text-black cursor-pointer"
                    />
                 </div>
+
+                {(isSuperAdmin || adminRole?.canChangePasswords) && (
+                  <div className="p-6 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-4">
+                     <div>
+                        <h4 className="text-sm font-black uppercase text-amber-400">Change Password</h4>
+                        <p className="text-xs text-muted-foreground mt-1 italic font-medium">Force a password change for this user.</p>
+                     </div>
+                     <div className="flex gap-4">
+                       <Input 
+                         type="password" 
+                         placeholder="New Password" 
+                         className="bg-zinc-900 border-white/10 text-white"
+                         value={newPasswordInput}
+                         onChange={(e) => setNewPasswordInput(e.target.value)}
+                       />
+                       <Button 
+                         variant="outline"
+                         className="font-black uppercase text-xs text-white"
+                         onClick={async () => {
+                           if (!newPasswordInput || !user) return;
+                           const res = await fetch("/api/admin/change-password", {
+                             method: "POST",
+                             headers: {
+                               "Content-Type": "application/json",
+                               "Authorization": "Bearer " + await user.getIdToken()
+                             },
+                             body: JSON.stringify({ targetUid: userToManage.id, newPassword: newPasswordInput })
+                           });
+                           if (res.ok) {
+                             toast({ title: "Password changed successfully" });
+                             setNewPasswordInput("");
+                           } else {
+                             const data = await res.json();
+                             toast({ variant: "destructive", title: "Failed to change password", description: data.error });
+                           }
+                         }}
+                       >Update</Button>
+                     </div>
+                  </div>
+                )}
+
+                {(isSuperAdmin || adminRole?.canAppBan) && (
+                  <div className="p-6 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-4">
+                     <div>
+                        <h4 className="text-sm font-black uppercase text-white">App Bans</h4>
+                        <p className="text-[10px] text-muted-foreground italic mt-1">Restrict user from accessing specific sub-apps.</p>
+                     </div>
+                     <div className="flex gap-8">
+                        {['xakchat', 'mail'].map(app => (
+                          <div key={app} className="flex items-center gap-3">
+                             <input 
+                               type="checkbox"
+                               checked={userToManage?.bannedApps?.includes(app)}
+                               onChange={(e) => {
+                                 const current = userToManage?.bannedApps || [];
+                                 const updated = e.target.checked ? [...current, app] : current.filter((a: string) => a !== app);
+                                 setUserToManage({ ...userToManage, bannedApps: updated });
+                               }}
+                               className="w-5 h-5 rounded border-white/10 bg-zinc-900 accent-rose-500 cursor-pointer"
+                             />
+                             <label className="text-xs font-bold uppercase text-white">{app}</label>
+                          </div>
+                        ))}
+                     </div>
+                  </div>
+                )}
 
                 <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/10 flex justify-between items-center">
                    <div>

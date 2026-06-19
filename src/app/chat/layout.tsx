@@ -110,6 +110,12 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
 
   const [mounted, setMounted] = useState(false);
   const [rightPanel, setRightPanel] = useState<'members' | 'extensions'>('members');
+
+  const userDocRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+  const { data: userData } = useDoc(userDocRef);
   
   // Modals
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -317,12 +323,6 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   }
 
   const isBuiltInServer = ['home', 'xakteir', 'gaming', 'dev', 'discover'].includes(serverName);
-
-  const userRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return doc(firestore, "users", user.uid);
-  }, [firestore, user]);
-  const { data: userData } = useDoc(userRef);
 
   useEffect(() => {
     if (showGlobalSettingsModal && userData) {

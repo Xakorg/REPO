@@ -1,14 +1,25 @@
 // Utility for username normalization and offensive-word detection
 const BLACKLIST = [
+  "fuck",
+  "fucker",
+  "fucking",
+  "shit",
+  "bitch",
+  "ass",
+  "asshole",
+  "cunt",
+  "dick",
+  "cock",
+  "pussy",
+  "whore",
+  "slut",
+  "bastard",
+  "motherfucker",
   "nigger",
   "nigga",
-  "fuck",
-  "fuk",
-  "shit",
-  "sht",
-  "bitch",
-  "biatch",
-  "cunt"
+  "faggot",
+  "fag",
+  "retard"
 ];
 
 export function normalizeUsername(name: string) {

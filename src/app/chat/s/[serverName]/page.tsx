@@ -36,6 +36,10 @@ import {
   BookMarked,
   BarChart2
 } from "lucide-react";
+import { AnimatedGridPattern } from "@/components/magicui/animated-grid-pattern";
+import { ThreadPanel } from "@/components/chat/ThreadPanel";
+import { ReactionPicker } from "@/components/chat/ReactionPicker";
+import { BookmarksPanel } from "@/components/chat/BookmarksPanel";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,6 +54,7 @@ import { collection, serverTimestamp, query, orderBy, limit, doc, addDoc, update
 import { useToast } from "@/hooks/use-toast";
 import { RenderHat } from "@/components/RenderHat";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { isOffensive } from "@/lib/username";
 import Link from "next/link";
 import Room3D from "./Room3D";
 
@@ -130,8 +135,10 @@ export default function ServerChatPage() {
   const [mentionQuery, setMentionQuery] = useState("");
   const [showMentionList, setShowMentionList] = useState(false);
   const [mentionCandidates, setMentionCandidates] = useState<any[]>([]);
+  const [activeThreadMessage, setActiveThreadMessage] = useState<any>(null);
+  const [showBookmarks, setShowBookmarks] = useState(false);
 
-  // Channel custom settings modal states
+  // Poll state
   const [showChannelSettingsModal, setShowChannelSettingsModal] = useState(false);
   const [editChannelName, setEditChannelName] = useState("");
   const [editChannelTopic, setEditChannelTopic] = useState("");
@@ -958,10 +965,22 @@ export default function ServerChatPage() {
     }
 
     // Toxicity warning
-    const offensiveWords = ["toxic", "noob", "spam", "abuse", "swear"];
-    const hasOffensive = offensiveWords.some(w => chatInput.toLowerCase().includes(w));
-    if (hasOffensive) {
-      toast({ variant: "destructive", title: "Toxicity Flagged", description: "Your message contains offensive language. Action blocked." });
+    if (isOffensive(chatInput)) {
+      const newLevel = (userData?.banLevel || 0) + 1;
+      let banDuration = 3600000; // 1 hr default
+      if (newLevel === 2) banDuration = 86400000; // 24 hours
+      else if (newLevel === 3) banDuration = 2592000000; // 1 month
+      else if (newLevel === 4) banDuration = 315360000000; // 10 years
+      else if (newLevel >= 5) banDuration = 3153600000000; // Permanent
+
+      updateDocumentNonBlocking(doc(firestore, "users", user.uid), {
+        isBanned: true,
+        bannedUntil: Date.now() + banDuration,
+        banLevel: newLevel,
+        banReason: `Auto-ban: Offensive language (Level ${newLevel})`
+      });
+
+      toast({ variant: "destructive", title: "Identity Locked", description: "Your account has been locked due to a protocol violation." });
       return;
     }
 
@@ -1597,6 +1616,15 @@ export default function ServerChatPage() {
                 </span>
               )}
             </Button>
+            
+            <Button 
+              onClick={() => setShowBookmarks(!showBookmarks)} 
+              variant="ghost" 
+              className={cn("h-9 w-9 p-0 hover:bg-white/5 text-zinc-400 hover:text-amber-400 rounded-xl relative", showBookmarks && "text-amber-500")}
+              title="Bookmarks"
+            >
+              <Bookmark className="w-4 h-4" />
+            </Button>
 
             {serverName !== "xakteir" && hasPermission("manageChannels") && (
               <Button 
@@ -1843,12 +1871,11 @@ export default function ServerChatPage() {
                                 "absolute -top-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center bg-[#0a0a15] border border-white/10 rounded-full px-2.5 py-1.5 shadow-2xl gap-2 z-30",
                                 isOwn ? "left-0" : "right-0"
                               )}>
-                                {/* Quick reaction emojis */}
-                                {['👍', '❤️', '🔥', '😂'].map(emoji => (
-                                  <button key={emoji} onClick={() => handleReact(msg.id, emoji)} className="hover:scale-125 transition-transform text-xs">{emoji}</button>
-                                ))}
+                                {/* Reaction Emoji Picker */}
+                                <ReactionPicker onSelect={(emoji) => handleReact(msg.id, emoji)} />
+                                
                                 <div className="w-px h-3 bg-white/10 mx-1" />
-                                <button onClick={() => setReplyingToMessage(msg)} className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="Threaded Reply"><CornerUpLeft className="w-3 h-3" /></button>
+                                <button onClick={() => setActiveThreadMessage(msg)} className="text-zinc-400 hover:text-white hover:scale-110 transition-all" title="Threaded Reply"><CornerUpLeft className="w-3 h-3" /></button>
                                 <button onClick={() => handleTogglePin(msg.id, msg.pinned)} className={cn("text-zinc-400 hover:text-white hover:scale-110 transition-all", msg.pinned && "text-amber-500")} title="Pin Message"><Pin className="w-3 h-3" /></button>
                                 
                                 {/* Feature 3: Copy */}
@@ -2487,9 +2514,25 @@ export default function ServerChatPage() {
                 </div>
                 <Button type="submit" size="icon" className="h-12 w-12 md:h-16 md:w-16 bg-primary rounded-[1rem] md:rounded-[1.5rem] shadow-2xl active:scale-90 flex items-center justify-center shrink-0 border-none"><Send className="w-5 h-5 md:w-6 md:h-6 text-white" /></Button>
              </form>
-           </div>
-         )}
-      </div>
+            </div>
+          )}
+       </div>
+
+      {/* Thread Panel */}
+      {activeThreadMessage && (
+        <ThreadPanel 
+          message={activeThreadMessage} 
+          onClose={() => setActiveThreadMessage(null)} 
+          channelId={channel?.id} 
+        />
+      )}
+
+      {/* Bookmarks Panel */}
+      {showBookmarks && (
+        <BookmarksPanel 
+          onClose={() => setShowBookmarks(false)} 
+        />
+      )}
     </main>
   );
 }

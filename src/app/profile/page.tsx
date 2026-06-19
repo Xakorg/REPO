@@ -237,6 +237,22 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 ml-4">Account Privacy</label>
+                <div 
+                  className="flex items-center justify-between bg-zinc-900/50 border border-white/5 rounded-2xl p-4 px-6 cursor-pointer hover:bg-zinc-800/50 transition-colors" 
+                  onClick={() => updateProperty('isPublic', !(userData?.isPublic ?? true))}
+                >
+                  <div className="flex-1">
+                    <h4 className="text-white font-bold">Public Profile</h4>
+                    <p className="text-zinc-400 text-xs mt-1">Allow others to find and view your Xakteir profile.</p>
+                  </div>
+                  <div className={cn("w-12 h-6 rounded-full transition-colors flex items-center p-1", (userData?.isPublic ?? true) ? "bg-primary" : "bg-white/10")}>
+                    <div className={cn("w-4 h-4 rounded-full bg-black transition-transform", (userData?.isPublic ?? true) ? "translate-x-6" : "translate-x-0")} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
                 <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 ml-4">Avatar URL</label>
                 <div className="flex gap-4">
                   <Input 

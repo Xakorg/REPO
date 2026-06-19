@@ -35,8 +35,9 @@ export default function AuthPage() {
   const [showAnimation, setShowAnimation] = useState(false);
   const [askLinkGmail, setAskLinkGmail] = useState(false);
 
-  const [email, setEmail] = useState("");
+  const [usernameInput, setUsernameInput] = useState("");
   const [password, setPassword] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
   const [otpCode, setOtpCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -168,18 +169,20 @@ export default function AuthPage() {
   const handleSignup = async () => {
     if (!auth || !firestore) return;
 
-    if (email.toLowerCase().endsWith("@xakteir.com")) {
-      toast({ variant: "destructive", title: "Error", description: "Registration with @xakteir.com is reserved." });
-      return;
-    }
-
     if (password !== confirmPassword) {
       toast({ variant: "destructive", title: "Error", description: "Passwords do not match." });
       return;
     }
 
     setIsLoading(true);
-    const chosen = email.split('@')[0];
+    const chosen = usernameInput.trim().toLowerCase();
+    
+    if (!chosen || chosen.length < 3) {
+      setIsLoading(false);
+      toast({ variant: "destructive", title: "Invalid", description: "Username must be at least 3 characters." });
+      return;
+    }
+
     if (isOffensive(chosen)) {
       setIsLoading(false);
       toast({ variant: "destructive", title: "Invalid", description: "Username not allowed." });
@@ -196,7 +199,9 @@ export default function AuthPage() {
       }
     } catch (e) {}
 
-    createUserWithEmailAndPassword(auth, email, password)
+    const finalEmail = `${chosen}@mail.xakteir.com`;
+
+    createUserWithEmailAndPassword(auth, finalEmail, password)
       .then(async (userCredential) => {
         const user = userCredential.user;
         const finalUsername = chosen;
@@ -205,18 +210,19 @@ export default function AuthPage() {
         await setDoc(doc(firestore, "users", user.uid), {
           id: user.uid,
           username: finalUsername,
-          email: email.toLowerCase(),
-          xakteirEmail: `${finalUsername}@mail.xakteir.com`,
+          email: finalEmail,
+          xakteirEmail: finalEmail,
           displayName: finalUsername,
           registrationDateTime: new Date().toISOString(),
           role: 'user',
           currencyBalance: 1000,
           agreedToTerms: true,
           twoFactorEnabled: false,
+          isPublic: isPublic,
           photoURL: `https://api.dicebear.com/7.x/bottts/svg?seed=${finalUsername}`
         });
 
-        saveToVault(user.uid, 'password', email, password);
+        saveToVault(user.uid, 'password', finalEmail, password);
         finishWizard();
       })
       .catch((error) => {
@@ -283,36 +289,37 @@ export default function AuthPage() {
         {wizardStep === 1 && (
           <div className="relative z-10 w-full max-w-2xl flex flex-col space-y-8 animate-in slide-in-from-right-8">
             <div className="text-center space-y-4">
-              <Mail className="w-20 h-20 text-primary mx-auto opacity-80" />
-              <h2 className="text-3xl sm:text-5xl font-black italic uppercase tracking-tighter text-white">Enter Your Desired Email</h2>
-              <p className="text-base sm:text-lg font-bold text-white/50">This will be your primary Xakteir identity.</p>
+              <AtSign className="w-20 h-20 text-primary mx-auto opacity-80" />
+              <h2 className="text-3xl sm:text-5xl font-black italic uppercase tracking-tighter text-white">Choose Your Username</h2>
+              <p className="text-base sm:text-lg font-bold text-white/50">This will be your permanent Xakteir identity and email address.</p>
             </div>
             
-            <div className="relative">
-              <Input 
-                type="email" 
-                value={email} 
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                }} 
-                placeholder="youremail@example.com" 
-                className="h-20 sm:h-24 bg-white/5 border-white/10 text-xl sm:text-3xl font-bold rounded-[2rem] text-center px-12 sm:px-16 text-white" 
-                autoFocus
-              />
+            <div className="relative flex items-center justify-center">
+              <div className="flex bg-white/5 border border-white/10 rounded-[2rem] h-20 sm:h-24 w-full overflow-hidden focus-within:border-primary transition-colors pl-12 pr-4 sm:pl-16 sm:pr-8">
+                <input 
+                  type="text" 
+                  value={usernameInput} 
+                  onChange={(e) => {
+                    // Only allow alphanumeric for username
+                    const val = e.target.value.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+                    setUsernameInput(val);
+                  }} 
+                  placeholder="username" 
+                  className="bg-transparent text-xl sm:text-3xl font-bold text-white text-right outline-none w-1/2" 
+                  autoFocus
+                />
+                <div className="flex items-center text-xl sm:text-3xl font-bold text-white/40 pl-1 pointer-events-none w-1/2 text-left">
+                  @mail.xakteir.com
+                </div>
+              </div>
               <div className="absolute left-2 sm:-left-12 top-1/2 -translate-y-1/2"><Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary/50 animate-pulse" /></div>
               <div className="absolute right-2 sm:-right-12 top-1/2 -translate-y-1/2"><Mail className="w-6 h-6 sm:w-8 sm:h-8 text-primary/50 animate-bounce" /></div>
             </div>
 
-            {email.includes('@') && !email.toLowerCase().endsWith('@mail.xakteir.com') ? (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 text-center animate-in fade-in slide-in-from-top-4">
-                <p className="text-red-400 font-bold text-lg">Please enter an email ending with @mail.xakteir.com</p>
-              </div>
-            ) : (
-               <Button onClick={() => setWizardStep(2)} disabled={!email || !email.toLowerCase().endsWith('@mail.xakteir.com')} className="h-20 w-full text-2xl bg-primary text-black hover:bg-primary/90 rounded-[3rem] font-black uppercase tracking-widest shadow-[0_0_40px_rgba(var(--primary),0.3)] transition-all">
-                 Next
-               </Button>
-            )}
-             <button onClick={() => setWizardStep(0)} className="text-white/40 font-bold hover:text-white uppercase tracking-widest text-xs pt-4">Back</button>
+            <Button onClick={() => setWizardStep(2)} disabled={!usernameInput || usernameInput.length < 3} className="h-20 w-full text-2xl bg-primary text-black hover:bg-primary/90 rounded-[3rem] font-black uppercase tracking-widest shadow-[0_0_40px_rgba(var(--primary),0.3)] transition-all">
+              Next
+            </Button>
+            <button onClick={() => setWizardStep(0)} className="text-white/40 font-bold hover:text-white uppercase tracking-widest text-xs pt-4">Back</button>
           </div>
         )}
 
@@ -344,6 +351,16 @@ export default function AuthPage() {
                   className="h-16 sm:h-20 bg-white/5 border-white/10 text-xl sm:text-2xl font-bold rounded-[2rem] text-center px-12 text-white" 
                 />
                 <ShieldCheck className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-white/20" />
+              </div>
+
+              <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-[2rem] p-4 px-6 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => setIsPublic(!isPublic)}>
+                <div className="flex-1">
+                  <h4 className="text-white font-bold">Public Profile</h4>
+                  <p className="text-zinc-400 text-xs mt-1">Allow others to find and view your Xakteir profile.</p>
+                </div>
+                <div className={cn("w-12 h-6 rounded-full transition-colors flex items-center p-1", isPublic ? "bg-primary" : "bg-white/10")}>
+                  <div className={cn("w-4 h-4 rounded-full bg-black transition-transform", isPublic ? "translate-x-6" : "translate-x-0")} />
+                </div>
               </div>
             </div>
 
