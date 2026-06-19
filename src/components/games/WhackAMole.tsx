@@ -9,6 +9,22 @@ export default function WhackAMole() {
   const [misses, setMisses] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [playing, setPlaying] = useState(false);
+  const [hasPlayed, setHasPlayed] = useState(false);
+
+  useEffect(() => {
+    if (playing) {
+      setHasPlayed(true);
+    }
+  }, [playing]);
+
+  useEffect(() => {
+    if (!playing && timeLeft === 0 && hasPlayed) {
+      window.dispatchEvent(new CustomEvent("xakteir-game-score", {
+        detail: { score, points: Math.max(1, Math.floor(score / 50)) }
+      }));
+      setHasPlayed(false);
+    }
+  }, [playing, timeLeft, score, hasPlayed]);
 
   useEffect(() => {
     if (!playing) return;

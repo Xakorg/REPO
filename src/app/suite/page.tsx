@@ -1276,8 +1276,8 @@ export default function XakteirSuitePage() {
                 (activeDoc ? (
                   <div className="flex-1 flex flex-col md:flex-row overflow-hidden h-full min-h-[650px] bg-[#0e0e18]">
                     {/* Slides Thumbnails rail */}
-                    <div className="w-48 border-r border-white/5 bg-black/45 flex flex-col p-4 space-y-3 shrink-0 overflow-y-auto">
-                      <div className="flex justify-between items-center mb-2">
+                    <div className="w-full md:w-48 border-b md:border-r border-white/5 bg-black/45 flex flex-row md:flex-col p-4 gap-3 shrink-0 overflow-x-auto md:overflow-y-auto items-center md:items-stretch">
+                      <div className="flex md:justify-between justify-start gap-4 items-center mb-0 md:mb-2 shrink-0">
                         <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
                           Slides
                         </span>
@@ -1289,13 +1289,13 @@ export default function XakteirSuitePage() {
                           <Plus className="w-3.5 h-3.5" />
                         </Button>
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex flex-row md:flex-col gap-2 overflow-visible">
                         {parsedSlides.map((slide: any, index: number) => (
                           <div
                             key={slide.id || index}
                             onClick={() => setActiveSlideIndex(index)}
                             className={cn(
-                              "p-3 rounded-xl border cursor-pointer relative group/thumb transition-all text-left",
+                              "p-3 rounded-xl border cursor-pointer relative group/thumb transition-all text-left w-32 md:w-auto shrink-0",
                               activeSlideIndex === index
                                 ? "bg-primary/20 border-primary text-white"
                                 : "bg-white/5 border-transparent text-muted-foreground hover:bg-white/10 hover:text-white",

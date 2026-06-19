@@ -4,16 +4,55 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { GAMES_DB, GameMeta } from "@/lib/games-db";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, ShoppingBag, Settings, Sparkles, Gamepad2 } from "lucide-react";
+import { Play, ShoppingBag, Settings, Sparkles, Gamepad2, Trophy, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, orderBy, limit } from "firebase/firestore";
 
 export default function PlayStationGamesLibrary() {
   const router = useRouter();
   const [libraryIds, setLibraryIds] = useState<string[]>([]);
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [launchingGame, setLaunchingGame] = useState<string | null>(null);
+  const [isLightMode, setIsLightMode] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
+  const firestore = useFirestore();
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const leaderboardQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(
+      collection(firestore, "leaderboard"),
+      orderBy("points", "desc"),
+      limit(10)
+    );
+  }, [firestore]);
+
+  const { data: topPlayers, isLoading: leaderboardLoading } = useCollection(leaderboardQuery);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("games_theme");
+    if (stored === "light") {
+      setIsLightMode(true);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextMode = !isLightMode;
+    setIsLightMode(nextMode);
+    localStorage.setItem("games_theme", nextMode ? "light" : "dark");
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("xakteir_game_library");
@@ -87,7 +126,10 @@ export default function PlayStationGamesLibrary() {
   };
 
   return (
-    <div className="w-full h-screen bg-black text-white font-sans overflow-hidden relative selection:bg-white/20">
+    <div className={cn(
+      "w-full h-screen font-sans overflow-hidden relative selection:bg-white/20 transition-colors duration-500",
+      isLightMode ? "light-theme" : "bg-black text-white"
+    )}>
       
       {/* 1. Dynamic Fullscreen Background (PS5 Style) */}
       <AnimatePresence mode="wait">
@@ -121,25 +163,99 @@ export default function PlayStationGamesLibrary() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.1),transparent_50%)] pointer-events-none" />
 
       {/* 2. Top Status Bar */}
-      <header className="absolute top-0 left-0 right-0 p-8 flex justify-between items-center z-50">
-        <div className="flex items-center gap-6">
-          <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-            <Sparkles className="w-6 h-6 text-white" />
+      <header className="absolute top-0 left-0 right-0 p-4 md:p-8 flex justify-between items-center z-50 bg-gradient-to-b from-black/50 to-transparent">
+        <div className="flex items-center gap-4 md:gap-6">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+            <Gamepad2 
+              className="w-5 h-5 md:w-6 md:h-6" 
+              style={{
+                stroke: "url(#mesh-gradient)",
+                fill: "url(#mesh-gradient)",
+                fillOpacity: 0.2
+              }} 
+            />
           </div>
-          <div className="flex gap-8 text-sm font-black uppercase tracking-widest text-white/50">
+          <div className="flex gap-4 md:gap-8 text-xs md:text-sm font-black uppercase tracking-widest text-white/50">
             <span className="text-white">Games</span>
             <span className="hover:text-white transition-colors cursor-pointer" onClick={() => router.push('/games/store')}>Store</span>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer border border-white/20">
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* Global Leaderboard Trigger */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors border border-white/20">
+                <Trophy className="w-5 h-5 text-amber-400" />
+              </button>
+            </SheetTrigger>
+            <SheetContent className="bg-zinc-950/95 border-l border-white/10 text-white font-sans overflow-y-auto">
+              <SheetHeader className="pb-6 border-b border-white/10">
+                <SheetTitle className="text-2xl font-black uppercase tracking-wider text-white flex items-center gap-3">
+                  <Trophy className="w-6 h-6 text-amber-400 animate-pulse" /> Global Rankings
+                </SheetTitle>
+              </SheetHeader>
+              
+              <div className="py-6 space-y-4">
+                {leaderboardLoading ? (
+                  <div className="text-center py-12 text-white/40 font-bold uppercase tracking-widest text-xs">Loading scoreboard...</div>
+                ) : !topPlayers || topPlayers.length === 0 ? (
+                  <div className="text-center py-12 text-white/40 font-bold uppercase tracking-widest text-xs">No records. Play to join! 🏆</div>
+                ) : (
+                  <div className="space-y-3">
+                    {topPlayers.map((player: any, idx: number) => (
+                      <div 
+                        key={player.id || idx}
+                        className={cn(
+                          "p-4 rounded-2xl flex items-center justify-between border transition-all",
+                          idx === 0 ? "bg-amber-500/10 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.15)]" :
+                          idx === 1 ? "bg-slate-400/10 border-slate-400/30" :
+                          idx === 2 ? "bg-amber-700/10 border-amber-700/30" :
+                          "bg-white/5 border-white/10"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={cn(
+                            "text-base font-black w-5 text-center",
+                            idx === 0 ? "text-amber-400" :
+                            idx === 1 ? "text-slate-300" :
+                            idx === 2 ? "text-amber-600" :
+                            "text-white/40"
+                          )}>
+                            {idx + 1}
+                          </span>
+                          <div>
+                            <div className="font-bold text-xs text-white uppercase tracking-wider">{player.displayName}</div>
+                            <div className="text-[9px] text-white/30 uppercase tracking-widest mt-0.5">ID: {player.uid?.slice(0, 6)}...</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-emerald-400 text-base">{player.points || 0}</span>
+                          <span className="text-[8px] font-black uppercase tracking-wider text-white/30">PTS</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Theme Toggle Button */}
+          <button 
+            onClick={toggleTheme}
+            className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors border border-white/20 text-white"
+          >
+            {isLightMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+          </button>
+
+          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer border border-white/20 text-white">
             <Settings className="w-5 h-5" />
           </div>
         </div>
       </header>
 
-      {/* 3. Game Info (Top Left) */}
-      <div className="absolute top-40 left-16 z-40 max-w-2xl">
+      {/* 3. Game Info */}
+      <div className="absolute top-28 md:top-40 left-6 md:left-16 right-6 md:right-auto z-40 max-w-2xl text-left">
         <AnimatePresence mode="wait">
           {activeItem ? (
             <motion.div
@@ -149,17 +265,17 @@ export default function PlayStationGamesLibrary() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
             >
-              <img src={activeItem.iconUrl} alt="logo" className="w-24 h-24 rounded-3xl bg-zinc-900 border-2 border-white/10 mb-6 shadow-2xl" />
-              <h1 className="text-6xl font-black tracking-tighter mb-4">{activeItem.title}</h1>
-              <p className="text-lg text-white/70 font-medium mb-8 leading-relaxed line-clamp-3">{activeItem.description}</p>
-              <div className="flex items-center gap-4">
+              <img src={activeItem.iconUrl} alt="logo" className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl bg-zinc-900 border-2 border-white/10 mb-4 md:mb-6 shadow-2xl" />
+              <h1 className="text-3xl md:text-6xl font-black tracking-tighter mb-2 md:mb-4">{activeItem.title}</h1>
+              <p className="text-sm md:text-lg text-white/70 font-medium mb-6 md:mb-8 leading-relaxed line-clamp-3 md:line-clamp-none">{activeItem.description}</p>
+              <div className="flex items-center gap-3 md:gap-4">
                 <button 
                   onClick={() => handleLaunch(activeItem)}
-                  className="px-10 py-4 bg-white text-black rounded-full font-black tracking-widest uppercase hover:scale-105 transition-transform flex items-center gap-3 shadow-[0_0_40px_rgba(255,255,255,0.3)]"
+                  className="px-8 py-3.5 md:px-10 md:py-4 bg-white text-black rounded-full font-black tracking-widest uppercase hover:scale-105 transition-all flex items-center gap-2.5 md:gap-3 shadow-[0_0_40px_rgba(255,255,255,0.3)] text-xs md:text-sm"
                 >
-                  <Play className="w-5 h-5 fill-black" /> Play
+                  <Play className="w-4 h-4 md:w-5 md:h-5 fill-black" /> Play
                 </button>
-                <div className="text-xs font-bold tracking-widest uppercase text-white/50 bg-white/10 px-4 py-4 rounded-full backdrop-blur-md border border-white/10">
+                <div className="text-[10px] md:text-xs font-bold tracking-widest uppercase text-white/50 bg-white/10 px-4 py-3 md:py-4 rounded-full backdrop-blur-md border border-white/10">
                   {activeItem.type}
                 </div>
               </div>
@@ -172,14 +288,14 @@ export default function PlayStationGamesLibrary() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
             >
-              <div className="w-24 h-24 rounded-3xl bg-indigo-600 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(79,70,229,0.5)]">
-                <ShoppingBag className="w-10 h-10 text-white" />
+              <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl bg-indigo-600 flex items-center justify-center mb-4 md:mb-6 shadow-[0_0_30px_rgba(79,70,229,0.5)]">
+                <ShoppingBag className="w-8 h-8 md:w-10 md:h-10 text-white" />
               </div>
-              <h1 className="text-6xl font-black tracking-tighter mb-4">Store</h1>
-              <p className="text-lg text-white/70 font-medium mb-8 leading-relaxed">Discover your next favorite game. Expand your library with native 3D, retro emulators, and top-down adventures.</p>
+              <h1 className="text-3xl md:text-6xl font-black tracking-tighter mb-2 md:mb-4">Store</h1>
+              <p className="text-sm md:text-lg text-white/70 font-medium mb-6 md:mb-8 leading-relaxed">Discover your next favorite game. Expand your library with native 3D, retro emulators, and top-down adventures.</p>
               <button 
                 onClick={() => router.push('/games/store')}
-                className="px-10 py-4 bg-indigo-600 text-white rounded-full font-black tracking-widest uppercase hover:scale-105 transition-transform flex items-center gap-3 shadow-[0_0_40px_rgba(79,70,229,0.4)]"
+                className="px-8 py-3.5 md:px-10 md:py-4 bg-indigo-600 text-white rounded-full font-black tracking-widest uppercase hover:scale-105 transition-all flex items-center gap-2.5 md:gap-3 shadow-[0_0_40px_rgba(79,70,229,0.4)] text-xs md:text-sm"
               >
                 Browse Catalog
               </button>
@@ -189,10 +305,10 @@ export default function PlayStationGamesLibrary() {
       </div>
 
       {/* 4. The 1-Line Carousel (Bottom) */}
-      <div className="absolute bottom-20 left-0 right-0 z-40">
+      <div className="absolute bottom-6 md:bottom-20 left-0 right-0 z-40">
         <div 
           ref={carouselRef}
-          className="flex items-end gap-4 px-[10vw] overflow-x-auto no-scrollbar scroll-smooth pb-10 pt-4"
+          className="flex items-end gap-3 md:gap-4 px-[8vw] md:px-[10vw] overflow-x-auto no-scrollbar scroll-smooth pb-8 pt-4"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {libraryGames.map((game, idx) => (
@@ -203,14 +319,14 @@ export default function PlayStationGamesLibrary() {
             >
               <motion.div
                 animate={{
-                  width: focusedIndex === idx ? 280 : 120,
-                  height: focusedIndex === idx ? 280 : 120,
-                  y: focusedIndex === idx ? -20 : 0
+                  width: focusedIndex === idx ? (isMobile ? 180 : 280) : (isMobile ? 80 : 120),
+                  height: focusedIndex === idx ? (isMobile ? 180 : 280) : (isMobile ? 80 : 120),
+                  y: focusedIndex === idx ? -10 : 0
                 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className={cn(
-                  "rounded-3xl overflow-hidden cursor-pointer shadow-2xl transition-colors duration-300",
-                  focusedIndex === idx ? "border-4 border-white" : "border border-white/20 bg-white/5 hover:bg-white/20 hover:border-white/40"
+                  "rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer shadow-2xl transition-colors duration-300",
+                  focusedIndex === idx ? "border-2 md:border-4 border-white" : "border border-white/20 bg-white/5 hover:bg-white/20 hover:border-white/40"
                 )}
               >
                 <img 
@@ -224,7 +340,7 @@ export default function PlayStationGamesLibrary() {
               </motion.div>
               {/* Label underneath small icons */}
               {focusedIndex !== idx && (
-                <div className="absolute -bottom-8 left-0 right-0 text-center text-xs font-bold tracking-widest uppercase text-white/50 opacity-0 group-hover:opacity-100 transition-opacity truncate px-2">
+                <div className="absolute -bottom-6 left-0 right-0 text-center text-[10px] font-bold tracking-widest uppercase text-white/50 opacity-0 group-hover:opacity-100 transition-opacity truncate px-1">
                   {game.title}
                 </div>
               )}
@@ -234,27 +350,27 @@ export default function PlayStationGamesLibrary() {
           {/* "Store" Card at the end of the line */}
           <div
             onClick={() => setFocusedIndex(libraryGames.length)}
-            className="shrink-0 relative group outline-none ml-4"
+            className="shrink-0 relative group outline-none ml-2 md:ml-4"
           >
             <motion.div
               animate={{
-                width: focusedIndex === libraryGames.length ? 280 : 120,
-                height: focusedIndex === libraryGames.length ? 280 : 120,
-                y: focusedIndex === libraryGames.length ? -20 : 0
+                width: focusedIndex === libraryGames.length ? (isMobile ? 180 : 280) : (isMobile ? 80 : 120),
+                height: focusedIndex === libraryGames.length ? (isMobile ? 180 : 280) : (isMobile ? 80 : 120),
+                y: focusedIndex === libraryGames.length ? -10 : 0
               }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className={cn(
-                "rounded-3xl cursor-pointer shadow-2xl flex items-center justify-center transition-colors duration-300",
-                focusedIndex === libraryGames.length ? "bg-indigo-600 border-4 border-white" : "bg-white/5 border border-white/20 hover:bg-white/20 hover:border-white/40"
+                "rounded-2xl md:rounded-3xl cursor-pointer shadow-2xl flex items-center justify-center transition-colors duration-300",
+                focusedIndex === libraryGames.length ? "bg-indigo-600 border-2 md:border-4 border-white" : "bg-white/5 border border-white/20 hover:bg-white/20 hover:border-white/40"
               )}
             >
               <ShoppingBag className={cn(
                 "transition-all duration-300",
-                focusedIndex === libraryGames.length ? "w-20 h-20 text-white" : "w-10 h-10 text-white/50 group-hover:text-white"
+                focusedIndex === libraryGames.length ? (isMobile ? "w-12 h-12 text-white" : "w-20 h-20 text-white") : (isMobile ? "w-6 h-6 text-white/50" : "w-10 h-10 text-white/50 group-hover:text-white")
               )} />
             </motion.div>
             {focusedIndex !== libraryGames.length && (
-              <div className="absolute -bottom-8 left-0 right-0 text-center text-xs font-bold tracking-widest uppercase text-white/50 opacity-0 group-hover:opacity-100 transition-opacity truncate px-2">
+              <div className="absolute -bottom-6 left-0 right-0 text-center text-[10px] font-bold tracking-widest uppercase text-white/50 opacity-0 group-hover:opacity-100 transition-opacity truncate px-1">
                 Store
               </div>
             )}

@@ -22,14 +22,24 @@ export default function MathQuiz() {
   const [streak, setStreak] = useState(0);
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const [timeLeft, setTimeLeft] = useState(20);
+  const [gameOver, setGameOver] = useState(false);
 
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    if (timeLeft <= 0) {
+      if (!gameOver) {
+        setGameOver(true);
+        window.dispatchEvent(new CustomEvent("xakteir-game-score", {
+          detail: { score, points: Math.max(1, Math.floor(score / 15)) }
+        }));
+      }
+      return;
+    }
     const t = setInterval(() => setTimeLeft(p => p - 1), 1000);
     return () => clearInterval(t);
-  }, [q]);
+  }, [timeLeft, q, gameOver, score]);
 
   const answer = (choice: number) => {
+    if (timeLeft <= 0 || gameOver) return;
     if (choice === q.ans) {
       setScore(s => s + 10 + streak * 5);
       setStreak(s => s + 1);
@@ -41,6 +51,14 @@ export default function MathQuiz() {
     setTimeout(() => { setQ(genQ()); setTimeLeft(20); setFeedback(null); }, 600);
   };
 
+  const restart = () => {
+    setScore(0);
+    setStreak(0);
+    setQ(genQ());
+    setTimeLeft(20);
+    setGameOver(false);
+  };
+
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-950 to-indigo-950 gap-8">
       <div className="flex gap-10 text-white font-black text-xl uppercase tracking-widest">
@@ -49,24 +67,36 @@ export default function MathQuiz() {
         {streak > 1 && <span className="text-amber-400">🔥 {streak}x Streak!</span>}
       </div>
 
-      <div className={`flex items-center justify-center w-72 h-36 rounded-3xl border-4 text-7xl font-black text-white transition-colors duration-300 ${
-        feedback === "correct" ? "bg-emerald-500/20 border-emerald-500" : feedback === "wrong" ? "bg-rose-500/20 border-rose-500" : "bg-white/5 border-white/10"
-      }`}>
-        {q.q} = ?
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        {q.choices.map(c => (
-          <button key={c} onClick={() => answer(c)}
-            className="w-40 h-16 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-2xl font-black transition-all active:scale-95">
-            {c}
+      {timeLeft <= 0 ? (
+        <div className="text-center space-y-6">
+          <h2 className="text-5xl font-black text-rose-500 tracking-wider">TIME'S UP!</h2>
+          <p className="text-2xl text-zinc-300">Final Score: <span className="text-emerald-400 font-bold">{score}</span></p>
+          <button onClick={restart} className="px-10 py-4 bg-emerald-500 hover:bg-emerald-400 text-white rounded-full font-black tracking-widest uppercase hover:scale-105 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+            Play Again
           </button>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <>
+          <div className={`flex items-center justify-center w-72 h-36 rounded-3xl border-4 text-7xl font-black text-white transition-colors duration-300 ${
+            feedback === "correct" ? "bg-emerald-500/20 border-emerald-500" : feedback === "wrong" ? "bg-rose-500/20 border-rose-500" : "bg-white/5 border-white/10"
+          }`}>
+            {q.q} = ?
+          </div>
 
-      <div className="w-64 h-2 bg-zinc-800 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full transition-all ${timeLeft <= 5 ? "bg-rose-500" : "bg-indigo-500"}`} style={{ width: `${(timeLeft / 20) * 100}%` }} />
-      </div>
+          <div className="grid grid-cols-2 gap-4">
+            {q.choices.map(c => (
+              <button key={c} onClick={() => answer(c)}
+                className="w-40 h-16 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-2xl font-black transition-all active:scale-95">
+                {c}
+              </button>
+            ))}
+          </div>
+
+          <div className="w-64 h-2 bg-zinc-800 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full transition-all ${timeLeft <= 5 ? "bg-rose-500" : "bg-indigo-500"}`} style={{ width: `${(timeLeft / 20) * 100}%` }} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

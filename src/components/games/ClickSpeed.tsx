@@ -14,6 +14,9 @@ export default function ClickSpeed() {
     } else if (timeLeft === 0 && playing) {
       setPlaying(false);
       setBest(b => Math.max(b, clicks));
+      window.dispatchEvent(new CustomEvent("xakteir-game-score", {
+        detail: { score: clicks, points: Math.max(1, Math.floor(clicks / 10)) }
+      }));
     }
   }, [playing, timeLeft, clicks]);
 

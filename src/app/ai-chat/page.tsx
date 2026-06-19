@@ -73,6 +73,8 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebas
 import { collection, query, orderBy, limit, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 function FormattedContent({ 
@@ -487,8 +489,61 @@ export default function XakAIPage() {
       </aside>
 
       <main className="flex-1 flex flex-col relative bg-transparent">
-        <header className="h-16 border-b border-white/10 flex items-center justify-between px-8 bg-black/20 backdrop-blur-xl sticky top-0 z-20">
+        <header className="h-16 border-b border-white/10 flex items-center justify-between px-4 md:px-8 bg-black/20 backdrop-blur-xl sticky top-0 z-20">
           <div className="flex items-center gap-3">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="lg:hidden w-10 h-10 bg-white/5 border border-white/10 rounded-xl">
+                  <Menu className="w-4 h-4 text-white" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="bg-[#05030d] border-white/10 p-0 w-[300px] flex flex-col shadow-[0_0_100px_rgba(0,0,0,0.8)] text-white">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Chat Sessions</SheetTitle>
+                </SheetHeader>
+                
+                <div className="p-6 shrink-0">
+                   <Button 
+                    onClick={() => setActiveSessionId(null)} 
+                    disabled={!user}
+                    className="w-full h-12 bg-white/5 hover:bg-white/10 text-white border-2 border-white/10 rounded-xl font-bold flex items-center justify-start px-5 gap-3 shadow-xl transition-all"
+                   >
+                      <Plus className="w-4 h-4" /> New Session
+                   </Button>
+                </div>
+                
+                <ScrollArea className="flex-1 px-4 py-2">
+                   <div className="space-y-1">
+                      <h3 className="px-4 text-[9px] font-black uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+                        <History className="w-3 h-3" /> Chat History
+                      </h3>
+                      {!user ? (
+                        <div className="px-4 py-10 text-center space-y-4">
+                          <Lock className="w-6 h-6 mx-auto opacity-20" />
+                          <p className="text-[10px] font-bold text-white/30 uppercase leading-relaxed">Sign in to save your history.</p>
+                        </div>
+                      ) : (
+                        sessions?.map(s => (
+                          <button 
+                            key={s.id} 
+                            onClick={() => setActiveSessionId(s.id)} 
+                            className={cn(
+                              "w-full px-4 py-3 rounded-xl text-left transition-all flex items-center justify-between group",
+                              activeSessionId === s.id ? "bg-primary/20 text-white border border-primary/20" : "hover:bg-white/5 text-white/60"
+                            )}
+                          >
+                             <div className="flex items-center gap-3 truncate">
+                                <MessageSquare className="w-3.5 h-3.5 shrink-0 opacity-40" />
+                                <span className="text-[10px] font-bold truncate block uppercase tracking-wider">{s.title || "Untitled"}</span>
+                             </div>
+                          </button>
+                        ))
+                      )}
+                   </div>
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
+
             <Bot className="w-6 h-6 text-primary animate-pulse" />
             <span className="text-xl font-black uppercase italic tracking-tighter">Xak AI</span>
           </div>

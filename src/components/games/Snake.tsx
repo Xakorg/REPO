@@ -97,7 +97,14 @@ export default function Snake() {
       if (gameOver) { draw(); return; }
       dir = nextDir;
       const head = { x: (snake[0].x + dir.x + COLS) % COLS, y: (snake[0].y + dir.y + ROWS) % ROWS };
-      if (snake.some(s => s.x === head.x && s.y === head.y)) { gameOver = true; draw(); return; }
+      if (snake.some(s => s.x === head.x && s.y === head.y)) { 
+        gameOver = true; 
+        window.dispatchEvent(new CustomEvent("xakteir-game-score", {
+          detail: { score, points: Math.max(1, Math.floor(score / 5)) }
+        }));
+        draw(); 
+        return; 
+      }
       snake.unshift(head);
       if (head.x === food.x && head.y === food.y) { score++; spawnFood(); } else { snake.pop(); }
       draw();

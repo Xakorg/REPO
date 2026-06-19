@@ -149,7 +149,14 @@ function AppLauncherContent({ router }: { router: any }) {
                 app.bg
               )}
             >
-              <app.icon className={cn("w-6 h-6", app.color)} />
+              <app.icon 
+                className="w-6 h-6" 
+                style={{
+                  stroke: "url(#mesh-gradient)",
+                  fill: "url(#mesh-gradient)",
+                  fillOpacity: 0.15
+                }} 
+              />
               <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover/btn:text-white truncate w-full text-center">{app.name}</span>
             </button>
           ))}
@@ -283,8 +290,15 @@ export function Header() {
           <div className="hidden lg:block">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" className="h-12 px-8 bg-zinc-900/60 border-2 border-white/10 rounded-2xl transition-all flex items-center gap-4 shadow-xl">
-                  <LayoutGrid className="w-6 h-6 text-white/60" />
+                <Button variant="ghost" className="h-12 px-8 bg-zinc-900/60 border-2 border-white/10 rounded-2xl transition-all flex items-center gap-4 shadow-xl group">
+                  <LayoutGrid 
+                    className="w-6 h-6 transition-all group-hover:scale-110" 
+                    style={{
+                      stroke: "url(#mesh-gradient)",
+                      fill: "url(#mesh-gradient)",
+                      fillOpacity: 0.2
+                    }}
+                  />
                   <span className="text-[12px] font-black uppercase tracking-widest text-white/90">Apps</span>
                 </Button>
               </PopoverTrigger>
@@ -293,12 +307,17 @@ export function Header() {
               </PopoverContent>
             </Popover>
           </div>
-
+ 
           <div className="lg:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                 <Button variant="ghost" size="icon" className="w-12 h-12 bg-zinc-900/60 border-2 border-white/10 rounded-2xl shadow-xl">
-                   <Menu className="w-6 h-6 text-white/60" />
+                 <Button variant="ghost" size="icon" className="w-12 h-12 bg-zinc-900/60 border-2 border-white/10 rounded-2xl shadow-xl group">
+                   <Menu 
+                     className="w-6 h-6 transition-all group-active:scale-95" 
+                     style={{
+                       stroke: "url(#mesh-gradient)"
+                     }}
+                   />
                  </Button>
               </SheetTrigger>
               <SheetContent side="left" className="bg-[#0a0a15] border-white/10 p-0 w-[400px] shadow-[0_0_100px_rgba(0,0,0,0.8)]">

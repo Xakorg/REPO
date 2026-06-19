@@ -1,13 +1,16 @@
 "use client";
-
+ 
 import { useParams, useRouter } from "next/navigation";
 import { GAMES_DB } from "@/lib/games-db";
-import { Loader, ArrowLeft } from "lucide-react";
+import { Loader, ArrowLeft, Trophy } from "lucide-react";
 import { useState, useEffect, Suspense, lazy } from "react";
-
+import { useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
+import { doc, increment } from "firebase/firestore";
+import { motion, AnimatePresence } from "framer-motion";
+ 
 // --- Bespoke Game Engines ---
 import dynamic from "next/dynamic";
-
+ 
 const GAME_MAP: Record<string, React.ComponentType<any>> = {
   xaksports:    dynamic(() => import("@/components/games/XakSports")),
   xakarena:     dynamic(() => import("@/components/games/XakArena")),
@@ -65,23 +68,136 @@ const GAME_MAP: Record<string, React.ComponentType<any>> = {
   word:         dynamic(() => import("@/components/games/WordSearch")),
   xbr:          dynamic(() => import("@/components/games/XBRArena")),
 };
-
+ 
 export default function GamePlayerPage() {
   const params = useParams();
   const router = useRouter();
   const gameId = params?.id as string;
   const game = GAMES_DB.find(g => g.id === gameId);
   const [loading, setLoading] = useState(true);
-
+  const [reward, setReward] = useState<{
+    show: boolean;
+    points: number;
+    title: string;
+    description: string;
+  } | null>(null);
+ 
+  const { user } = useUser();
+  const firestore = useFirestore();
+ 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 1200);
     return () => clearTimeout(t);
   }, []);
-
+ 
+  // Playtime points logic (+2 points every 30s)
+  useEffect(() => {
+    if (!user || !firestore || !game) return;
+    const isXakteirGame = game.developer === "xakteir" || game.developer === "Xakteir Studios";
+    if (!isXakteirGame) return;
+ 
+    const interval = setInterval(async () => {
+      try {
+        await setDocumentNonBlocking(
+          doc(firestore, "leaderboard", user.uid),
+          {
+            uid: user.uid,
+            displayName: user.displayName || user.email?.split("@")[0] || "Anonymous",
+            photoURL: user.photoURL || "",
+            points: increment(2),
+            updatedAt: new Date().toISOString()
+          },
+          { merge: true }
+        );
+        // Show reward alert
+        setReward({
+          show: true,
+          points: 2,
+          title: "Playtime Reward! ⏱️",
+          description: `You earned +2 points just for playing ${game.title}!`
+        });
+        
+        // Auto hide after 4 seconds
+        setTimeout(() => {
+          setReward(prev => prev && prev.title.includes("Playtime") ? null : prev);
+        }, 4000);
+ 
+        if (navigator.vibrate) navigator.vibrate(100);
+      } catch (e) {
+        console.error("Failed to add playtime points:", e);
+      }
+    }, 30000); // Every 30 seconds
+ 
+    return () => clearInterval(interval);
+  }, [user, firestore, game]);
+ 
+  // Score event listener logic
+  useEffect(() => {
+    if (!user || !firestore || !game) return;
+    const isXakteirGame = game.developer === "xakteir" || game.developer === "Xakteir Studios";
+    if (!isXakteirGame) return;
+ 
+    const handleScoreEvent = async (e: Event) => {
+      const customEvent = e as CustomEvent<{ score: number; points: number }>;
+      const { score, points } = customEvent.detail;
+      if (!points || points <= 0) return;
+ 
+      try {
+        await setDocumentNonBlocking(
+          doc(firestore, "leaderboard", user.uid),
+          {
+            uid: user.uid,
+            displayName: user.displayName || user.email?.split("@")[0] || "Anonymous",
+            photoURL: user.photoURL || "",
+            points: increment(points),
+            updatedAt: new Date().toISOString()
+          },
+          { merge: true }
+        );
+        // Show big reward modal
+        setReward({
+          show: true,
+          points: points,
+          title: "High Score! 🏆",
+          description: `Wow! You scored ${score} in ${game.title} and got +${points} Leaderboard Points!`
+        });
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      } catch (err) {
+        console.error("Failed to save event score:", err);
+      }
+    };
+ 
+    window.addEventListener("xakteir-game-score", handleScoreEvent);
+    return () => window.removeEventListener("xakteir-game-score", handleScoreEvent);
+  }, [user, firestore, game]);
+ 
   if (!game) return <div className="p-20 text-white font-sans text-center">Game Not Found.</div>;
-
+ 
   const GameComponent = GAME_MAP[gameId];
-
+ 
+  const handleTouchStart = (key: string) => {
+    if (navigator.vibrate) navigator.vibrate(20);
+    const event = new KeyboardEvent("keydown", {
+      key: key,
+      code: key,
+      bubbles: true,
+      cancelable: true
+    });
+    window.dispatchEvent(event);
+    document.dispatchEvent(event);
+  };
+ 
+  const handleTouchEnd = (key: string) => {
+    const event = new KeyboardEvent("keyup", {
+      key: key,
+      code: key,
+      bubbles: true,
+      cancelable: true
+    });
+    window.dispatchEvent(event);
+    document.dispatchEvent(event);
+  };
+ 
   return (
     <div className="w-full h-screen bg-black overflow-hidden relative font-sans text-white">
       {loading && (
@@ -94,17 +210,106 @@ export default function GamePlayerPage() {
           <p className="text-xs text-white/40 mt-2">Loading {game.type} Core for {game.title}</p>
         </div>
       )}
-
+ 
       <div className="absolute top-0 left-0 right-0 p-4 flex justify-between z-10 bg-gradient-to-b from-black/80 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300">
         <button onClick={() => router.push('/games')} className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full font-bold hover:bg-white hover:text-black transition-colors">
           <ArrowLeft className="w-4 h-4" /> Exit
         </button>
         <h1 className="text-xl font-black italic tracking-widest uppercase">{game.title}</h1>
       </div>
-
+ 
       <div className="w-full h-full">
         {!loading && GameComponent && <GameComponent />}
       </div>
+ 
+      {/* Mobile Virtual Gamepad */}
+      {!loading && (
+        <div className="md:hidden fixed inset-x-0 bottom-0 p-6 flex justify-between items-end pointer-events-none z-30 select-none">
+          {/* D-Pad on Left */}
+          <div className="relative w-36 h-36 flex items-center justify-center pointer-events-auto bg-black/40 backdrop-blur-md rounded-full border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+            <button
+              onTouchStart={() => handleTouchStart("ArrowUp")}
+              onTouchEnd={() => handleTouchEnd("ArrowUp")}
+              className="absolute top-1 w-11 h-11 bg-white/10 active:bg-cyan-500/40 border border-white/10 rounded-xl flex items-center justify-center text-lg active:shadow-[0_0_15px_rgba(6,182,212,0.5)] active:border-cyan-400 transition-all text-white font-bold"
+            >
+              ▲
+            </button>
+            <button
+              onTouchStart={() => handleTouchStart("ArrowDown")}
+              onTouchEnd={() => handleTouchEnd("ArrowDown")}
+              className="absolute bottom-1 w-11 h-11 bg-white/10 active:bg-cyan-500/40 border border-white/10 rounded-xl flex items-center justify-center text-lg active:shadow-[0_0_15px_rgba(6,182,212,0.5)] active:border-cyan-400 transition-all text-white font-bold"
+            >
+              ▼
+            </button>
+            <button
+              onTouchStart={() => handleTouchStart("ArrowLeft")}
+              onTouchEnd={() => handleTouchEnd("ArrowLeft")}
+              className="absolute left-1 w-11 h-11 bg-white/10 active:bg-cyan-500/40 border border-white/10 rounded-xl flex items-center justify-center text-lg active:shadow-[0_0_15px_rgba(6,182,212,0.5)] active:border-cyan-400 transition-all text-white font-bold"
+            >
+              ◀
+            </button>
+            <button
+              onTouchStart={() => handleTouchStart("ArrowRight")}
+              onTouchEnd={() => handleTouchEnd("ArrowRight")}
+              className="absolute right-1 w-11 h-11 bg-white/10 active:bg-cyan-500/40 border border-white/10 rounded-xl flex items-center justify-center text-lg active:shadow-[0_0_15px_rgba(6,182,212,0.5)] active:border-cyan-400 transition-all text-white font-bold"
+            >
+              ▶
+            </button>
+            <div className="w-8 h-8 rounded-full bg-zinc-950 border border-white/5 shadow-inner" />
+          </div>
+ 
+          {/* Action Buttons on Right */}
+          <div className="flex gap-4 items-center pointer-events-auto select-none">
+            <button
+              onTouchStart={() => handleTouchStart("Enter")}
+              onTouchEnd={() => handleTouchEnd("Enter")}
+              className="w-16 h-16 rounded-full bg-rose-500/20 active:bg-rose-500/50 border border-rose-500/30 flex flex-col items-center justify-center text-white font-black text-sm shadow-[0_0_10px_rgba(244,63,94,0.1)] active:shadow-[0_0_25px_rgba(244,63,94,0.6)] active:border-rose-400 transition-all"
+            >
+              <span className="text-xs uppercase opacity-60">B</span>
+              <span className="text-[10px] -mt-1 uppercase tracking-tight">Enter</span>
+            </button>
+            <button
+              onTouchStart={() => handleTouchStart("Space")}
+              onTouchEnd={() => handleTouchEnd("Space")}
+              className="w-20 h-20 rounded-full bg-emerald-500/20 active:bg-emerald-500/50 border border-emerald-500/30 flex flex-col items-center justify-center text-white font-black text-base shadow-[0_0_10px_rgba(16,185,129,0.1)] active:shadow-[0_0_30px_rgba(16,185,129,0.6)] active:border-emerald-400 transition-all"
+            >
+              <span className="text-sm uppercase opacity-60">A</span>
+              <span className="text-[10px] -mt-1 uppercase tracking-wider">Space</span>
+            </button>
+          </div>
+        </div>
+      )}
+ 
+      {/* Reward Popup */}
+      <AnimatePresence>
+        {reward?.show && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 50 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4 pointer-events-auto"
+          >
+            <div className="bg-[#0e0c1b]/95 backdrop-blur-xl border border-emerald-500/40 p-5 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] flex items-center gap-4 text-left">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                <Trophy className="w-6 h-6 text-emerald-400 animate-bounce" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-black uppercase tracking-wider text-emerald-400">{reward.title}</h3>
+                <p className="text-xs text-white/70 font-semibold mt-1">{reward.description}</p>
+                <div className="mt-2 text-[10px] font-black text-white/40 uppercase tracking-widest flex items-center gap-1.5">
+                  <span>Score Recorded</span> • <span className="text-emerald-400">+{reward.points} Points</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setReward(null)} 
+                className="text-white/40 hover:text-white text-xs font-black uppercase px-2.5 py-1.5 hover:bg-white/5 rounded-lg transition-colors border border-white/5"
+              >
+                Nice
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -61,7 +61,13 @@ export function FaviconController() {
         icon: "games",
         count: 0,
       };
-    } else if (pathname?.startsWith("/suite")) {
+    } else if (
+      pathname?.startsWith("/suite") ||
+      pathname?.startsWith("/write") ||
+      pathname?.startsWith("/slides") ||
+      pathname?.startsWith("/sheets") ||
+      pathname?.startsWith("/forms")
+    ) {
       return {
         name: "Suite",
         title: "Xakteir Suite",
@@ -76,12 +82,12 @@ export function FaviconController() {
       count: 0,
     };
   }, [pathname, unreadEmailsCount, unreadChatsCount]);
-
+ 
   // 4. Update Document Title
   useEffect(() => {
     document.title = activeApp.title;
   }, [activeApp.title]);
-
+ 
   // 5. Update Favicon dynamically using canvas
   useEffect(() => {
     const canvas = document.createElement("canvas");
@@ -89,7 +95,7 @@ export function FaviconController() {
     canvas.height = 64;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
+ 
     // Draw background/gradient inside shape using canvas operations
     ctx.clearRect(0, 0, 64, 64);
     
@@ -97,7 +103,7 @@ export function FaviconController() {
     ctx.save();
     ctx.translate(8, 8); // Padding
     ctx.scale(2, 2);     // scale 24x24 path to 48x48 viewport
-
+ 
     // Drawing functions
     const drawEnvelope = (c: CanvasRenderingContext2D) => {
       c.lineWidth = 2.5;
@@ -114,7 +120,7 @@ export function FaviconController() {
       c.lineTo(22, 6);
       c.stroke();
     };
-
+ 
     const drawChat = (c: CanvasRenderingContext2D) => {
       c.lineWidth = 2.5;
       c.lineCap = "round";
@@ -131,7 +137,7 @@ export function FaviconController() {
       c.closePath();
       c.stroke();
     };
-
+ 
     const drawGamepad = (c: CanvasRenderingContext2D) => {
       c.lineWidth = 2.5;
       c.lineCap = "round";
@@ -146,7 +152,7 @@ export function FaviconController() {
       c.beginPath(); c.arc(15, 13, 0.5, 0, 2*Math.PI); c.stroke();
       c.beginPath(); c.arc(18, 11, 0.5, 0, 2*Math.PI); c.stroke();
     };
-
+ 
     const drawLayers = (c: CanvasRenderingContext2D) => {
       c.lineWidth = 2.5;
       c.lineCap = "round";
@@ -164,17 +170,36 @@ export function FaviconController() {
       c.moveTo(2, 17); c.lineTo(12, 22); c.lineTo(22, 17);
       c.stroke();
     };
-
+ 
+    const drawXakteirX = (c: CanvasRenderingContext2D) => {
+      c.lineWidth = 3.5;
+      c.lineCap = "round";
+      c.lineJoin = "round";
+      
+      // Draw first diagonal path of X
+      c.beginPath();
+      c.moveTo(6, 6);
+      c.bezierCurveTo(8.4, 6, 15.6, 18, 18, 18);
+      c.stroke();
+      
+      // Draw second diagonal path of X
+      c.beginPath();
+      c.moveTo(18, 6);
+      c.bezierCurveTo(15.6, 6, 8.4, 18, 6, 18);
+      c.stroke();
+    };
+ 
     // Set styling color to pure white first so we can mask/gradient clip it
     ctx.strokeStyle = "#ffffff";
     ctx.fillStyle = "none";
     if (activeApp.icon === "mail") drawEnvelope(ctx);
     else if (activeApp.icon === "chat") drawChat(ctx);
     else if (activeApp.icon === "games") drawGamepad(ctx);
-    else drawLayers(ctx);
-
+    else if (activeApp.icon === "suite") drawLayers(ctx);
+    else drawXakteirX(ctx);
+ 
     ctx.restore();
-
+ 
     // Composite the color changing mesh gradient into the white shape outline!
     ctx.globalCompositeOperation = "source-in";
     const gradient = ctx.createLinearGradient(0, 0, 64, 64);
@@ -185,22 +210,22 @@ export function FaviconController() {
     gradient.addColorStop(1, "#9900ff");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 64, 64);
-
+ 
     // Reset composite to overlay notifications on top
     ctx.globalCompositeOperation = "source-over";
-
+ 
     // Draw notification badge circle and count
     if (activeApp.count > 0) {
       const x = 50;
       const y = 14;
       const radius = 10;
-
+ 
       // Draw shadow
       ctx.beginPath();
       ctx.arc(x, y, radius + 1, 0, 2 * Math.PI);
       ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
       ctx.fill();
-
+ 
       // Draw red circle
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, 2 * Math.PI);
@@ -209,7 +234,7 @@ export function FaviconController() {
       ctx.lineWidth = 2;
       ctx.strokeStyle = "#ffffff";
       ctx.stroke();
-
+ 
       // Draw unread text count
       ctx.fillStyle = "#ffffff";
       ctx.font = "black 9px sans-serif";
@@ -217,16 +242,17 @@ export function FaviconController() {
       ctx.textBaseline = "middle";
       ctx.fillText(activeApp.count > 99 ? "99+" : activeApp.count.toString(), x, y + 0.5);
     }
-
-    // Set the favicon link
-    let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "icon";
-      document.head.appendChild(link);
-    }
+ 
+    // Set the favicon link robustly by replacing all default next icons
+    const existingLinks = document.querySelectorAll("link[rel~='icon'], link[rel='shortcut icon']");
+    existingLinks.forEach(el => el.remove());
+ 
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.type = "image/png";
     link.href = canvas.toDataURL("image/png");
+    document.head.appendChild(link);
   }, [activeApp.icon, activeApp.count]);
-
+ 
   return null;
 }
