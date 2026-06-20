@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit } from "firebase/firestore";
-import DynamicFavicon from "@/components/DynamicFavicon";
+// Removed DynamicFavicon import
 
 export default function PlayStationGamesLibrary() {
   const router = useRouter();

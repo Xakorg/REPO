@@ -234,8 +234,14 @@ export default function XakViewPage() {
   useEffect(() => {
     const delayDebounce = setTimeout(async () => {
       setIsYTSearching(true);
+      setYtApiError(null);
       const results = await searchYoutubeVideos(searchQuery);
-      setYoutubeVideos(results);
+      if (results && !Array.isArray(results) && results.error) {
+        setYtApiError(results.message || "Failed to fetch YouTube videos");
+        setYoutubeVideos([]);
+      } else {
+        setYoutubeVideos(results || []);
+      }
       setIsYTSearching(false);
     }, 800);
     return () => clearTimeout(delayDebounce);
@@ -256,30 +262,57 @@ export default function XakViewPage() {
     }
     const videoId = match[1];
     setIsImporting(true);
+
+    let title = "YouTube Video";
+    let author = "YouTube Creator";
+    let authorId = "youtube_creator";
+    let authorPhoto = `https://api.dicebear.com/7.x/identicon/svg?seed=${videoId}`;
+    let description = "YouTube Video imported into XakView.";
+    let views = Math.floor(Math.random() * 900000) + 100000;
+    let likes = Math.floor(Math.random() * 50000) + 5000;
+
     try {
-      const res = await fetch(
-        `https://noembed.com/embed?url=${encodeURIComponent(url)}`,
-      );
-      const data = await res.json();
+      const apiKey = (typeof window !== "undefined" ? localStorage.getItem("xakview_youtube_api_key") : null) || "AIzaSyCgN4iYJl6F6p5dGwsY43Tgd5mbs4WDRJY";
+      const ytUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${apiKey}`;
+      const res = await fetch(ytUrl);
+      
+      if (res.ok) {
+        const ytData = await res.json();
+        if (ytData.items && ytData.items.length > 0) {
+          const snippet = ytData.items[0].snippet;
+          const stats = ytData.items[0].statistics;
+          title = snippet?.title || title;
+          author = snippet?.channelTitle || author;
+          authorId = "youtube_" + (snippet?.channelId || "creator");
+          authorPhoto = `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(author)}`;
+          description = snippet?.description || description;
+          if (stats?.viewCount) views = parseInt(stats.viewCount);
+          if (stats?.likeCount) likes = parseInt(stats.likeCount);
+        }
+      } else {
+        const fallbackRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
+        const fallbackData = await fallbackRes.json();
+        title = fallbackData.title || title;
+        author = fallbackData.author_name || author;
+        authorId = "youtube_" + (fallbackData.author_name ? fallbackData.author_name.replace(/\s+/g, "").toLowerCase() : "creator");
+        authorPhoto = `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(author)}`;
+        description = `YouTube video by ${author}. Imported to XakView.`;
+      }
 
       await addDocumentNonBlocking(collection(firestore, "videos"), {
-        title: data.title || "YouTube Video",
+        title,
         youtubeId: videoId,
-        author: data.author_name || "YouTube Creator",
-        authorId:
-          "youtube_" +
-          (data.author_name
-            ? data.author_name.replace(/\s+/g, "").toLowerCase()
-            : "creator"),
-        authorPhoto: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(data.author_name || videoId)}`,
-        description: `YouTube video by ${data.author_name || "Creator"}. Imported to XakView.`,
-        views: Math.floor(Math.random() * 900000) + 100000,
-        likes: Math.floor(Math.random() * 50000) + 5000,
+        author,
+        authorId,
+        authorPhoto,
+        description,
+        views,
+        likes,
         timestamp: serverTimestamp(),
       });
       toast({
         title: "Video Imported!",
-        description: `"${data.title}" has been added to XakView.`,
+        description: `"${title}" has been added to XakView.`,
       });
       setYoutubeImportInput("");
     } catch (err) {
@@ -547,6 +580,17 @@ export default function XakViewPage() {
 
   return (
     <div className="space-y-10 animate-fade-in py-6 max-w-[1600px] mx-auto text-foreground px-6 pb-20">
+      {ytApiError && (
+        <div className="bg-rose-500/10 border-2 border-rose-500/20 text-rose-400 p-4 rounded-[1.5rem] flex items-center justify-between text-xs font-bold shadow-2xl relative z-30">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
+            <span>YouTube API Error: {ytApiError}. Configure your own YouTube API Key to search and load videos.</span>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setShowYTSettings(true)} className="border-rose-500/20 text-rose-400 hover:bg-rose-500/10 rounded-xl h-8 text-[10px] uppercase font-black px-4 bg-rose-500/5">
+            Set API Key
+          </Button>
+        </div>
+      )}
       {/* Header Panel */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 glass-card p-10 rounded-[3rem] border-white/10 shadow-2xl relative overflow-hidden bg-black/40">
         <div className="absolute top-0 right-0 p-10 opacity-5">
@@ -628,6 +672,70 @@ export default function XakViewPage() {
         </div>
 
         <div className="flex flex-col md:flex-row items-center gap-4 relative z-10 w-full md:w-auto">
+          <Dialog open={showYTSettings} onOpenChange={setShowYTSettings}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-12 px-4 rounded-2xl border-white/10 bg-white/5 text-rose-500 hover:text-rose-400 hover:bg-white/10 transition-all shrink-0"
+                title="YouTube Integration"
+              >
+                <Sliders className="w-5 h-5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="glass-card border-4 border-white/10 rounded-[2.5rem] bg-zinc-950 text-white max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-black uppercase italic tracking-tighter text-white flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center text-white text-xs">YT</span>
+                  YouTube Integration
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6 py-4">
+                {/* API Key configuration */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Custom YouTube API Key</label>
+                  <p className="text-[10px] text-zinc-500 leading-normal">
+                    Enter your own YouTube Data API v3 key to unlock search and popular feeds. Leave blank to use default.
+                  </p>
+                  <Input
+                    type="password"
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder="AIzaSy..."
+                    className="bg-black/60 border-white/10 h-11 rounded-xl text-xs text-white"
+                  />
+                  <Button onClick={handleSaveApiKey} className="w-full h-10 bg-rose-600 hover:bg-rose-500 text-white font-black uppercase text-xs tracking-wider rounded-xl">
+                    Save API Key
+                  </Button>
+                </div>
+
+                <div className="h-px bg-white/5" />
+
+                {/* Import by URL */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Import Video by URL</label>
+                  <p className="text-[10px] text-zinc-500 leading-normal">
+                    Paste any YouTube video URL to import it directly into your local database.
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      value={youtubeImportInput}
+                      onChange={(e) => setYoutubeImportInput(e.target.value)}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      className="bg-black/60 border-white/10 h-11 rounded-xl text-xs text-white flex-1"
+                    />
+                    <Button 
+                      disabled={isImporting} 
+                      onClick={() => handleImportYoutube(youtubeImportInput)} 
+                      className="h-11 px-4 bg-white/10 hover:bg-white/15 text-white font-black uppercase text-xs rounded-xl border border-white/10 shrink-0"
+                    >
+                      {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Import"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <div className="relative group shrink-0 w-64">
             {isYTSearching ? (
               <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-500 animate-spin" />

@@ -1241,7 +1241,6 @@ export default function MailPage() {
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
-      <DynamicFavicon app="mail" />
       {/* Offline banner */}
       {isOffline && (
         <div className="bg-amber-500 text-black text-center text-xs font-bold py-1 uppercase">
