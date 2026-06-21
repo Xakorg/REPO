@@ -410,7 +410,7 @@ export default function XakteirMapsPage() {
   const globalSearchMarkerRef = useRef<any>(null);
 
   // ---- LEFT SIDEBAR PANELS ----
-  const [leftPanel, setLeftPanel] = useState<"route" | "saved" | "poi" | "explore" | "events" | "photos" | "measure" | null>("route");
+  const [leftPanel, setLeftPanel] = useState<"route" | "saved" | "poi" | "explore" | "layers" | "events" | "photos" | "measure" | null>("route");
 
   // Load Leaflet Assets dynamically
   useEffect(() => {
@@ -790,8 +790,8 @@ export default function XakteirMapsPage() {
     if (trafficEnabled) {
       if (!trafficLayerRef.current) {
         trafficLayerRef.current = L.tileLayer(
-          "https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
-          { opacity: 0.6, attribution: "© OpenStreetMap traffic data" }
+          "https://{s}.gps-tile.openstreetmap.org/lines/{z}/{x}/{y}.png",
+          { opacity: 0.8, attribution: "© OpenStreetMap public GPS traces", subdomains: ["a", "b", "c"] }
         ).addTo(mapRef.current);
       }
     } else {
@@ -837,12 +837,12 @@ export default function XakteirMapsPage() {
 
   // Fetch current weather for map center
   useEffect(() => {
-    if (!location || !weatherOpen) return;
+    if (!location || (!weatherOpen && leftPanel !== "layers")) return;
     fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${location.lat}&lon=${location.lon}&appid=${OWM_KEY}&units=metric`)
       .then(r => r.json())
       .then(d => setCurrentWeather(d))
       .catch(() => {});
-  }, [location, weatherOpen]);
+  }, [location, weatherOpen, leftPanel]);
 
   // ---- FEATURE 11: Measure distance drawing ----
   useEffect(() => {
@@ -1631,22 +1631,23 @@ export default function XakteirMapsPage() {
 
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(center.lat + "," + center.lng)}&format=json&polygon_geojson=1&limit=3`,
+        `https://nominatim.openstreetmap.org/reverse?lat=${center.lat}&lon=${center.lng}&format=json&polygon_geojson=1`,
         { headers: { "User-Agent": "XakteirMaps/1.0" } }
       );
       const data = await res.json();
 
-      const colors = ["#3b82f6", "#10b981", "#f59e0b"];
-      data.slice(0, 3).forEach((item: any, i: number) => {
-        if (item.geojson) {
-          try {
-            const layer = L.geoJSON(item.geojson, {
-              style: { color: colors[i], weight: 2, fillOpacity: 0.05, fillColor: colors[i] }
-            }).addTo(mapRef.current).bindPopup(`<b>${item.display_name}</b>`);
-            boundaryLayersRef.current.push(layer);
-          } catch (e) {}
+      if (data && data.geojson) {
+        const layer = L.geoJSON(data.geojson, {
+          style: { color: "#3b82f6", weight: 2, fillOpacity: 0.05, fillColor: "#3b82f6" }
+        }).addTo(mapRef.current).bindPopup(`<b>${data.display_name}</b>`);
+        boundaryLayersRef.current.push(layer);
+
+        // Fit bounds to show the boundary if available
+        const bounds = layer.getBounds();
+        if (bounds && bounds.isValid()) {
+          mapRef.current.fitBounds(bounds, { padding: [50, 50] });
         }
-      });
+      }
     } catch (e) {
       toast({ variant: "destructive", title: "Boundary Error", description: "Could not load boundaries." });
       setBoundaryEnabled(false);
@@ -2067,6 +2068,7 @@ export default function XakteirMapsPage() {
               { key: "saved", icon: <Star className="w-4 h-4" />, label: "Saved", color: "text-yellow-400" },
               { key: "poi", icon: <MapPin className="w-4 h-4" />, label: "POI", color: "text-orange-400" },
               { key: "explore", icon: <Globe className="w-4 h-4" />, label: "Explore", color: "text-green-400" },
+              { key: "layers", icon: <Layers className="w-4 h-4" />, label: "Layers & Styles", color: "text-cyan-400" },
               { key: "events", icon: <Calendar className="w-4 h-4" />, label: "Events", color: "text-purple-400" },
               { key: "photos", icon: <Camera className="w-4 h-4" />, label: "Photos", color: "text-pink-400" },
               { key: "measure", icon: <Ruler className="w-4 h-4" />, label: "Measure", color: "text-amber-400" },
@@ -2322,6 +2324,193 @@ export default function XakteirMapsPage() {
                 </>
               )}
 
+              {/* ---- Layers & Styles Panel ---- */}
+              {leftPanel === "layers" && (
+                <>
+                  <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-cyan-400" /> Layers & Styles
+                  </h2>
+
+                  {/* Base Map Styles */}
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase text-zinc-500 tracking-wider">Map Style</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {MAP_STYLES.map(style => (
+                        <Button
+                          key={style.key}
+                          onClick={() => { setMapLayer(style.key); setHistoryMode(false); }}
+                          className={cn(
+                            "h-9 rounded-xl text-[10px] font-black uppercase tracking-wider text-left justify-start px-3 transition-all",
+                            mapLayer === style.key && !historyMode 
+                              ? "bg-blue-600 text-white" 
+                              : "bg-white/5 border border-white/5 text-zinc-400 hover:bg-white/8 hover:text-white"
+                          )}
+                        >
+                          {style.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="w-full h-px bg-white/10 my-1" />
+
+                  {/* Overlays */}
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-black uppercase text-zinc-500 tracking-wider">Map Overlays</p>
+
+                    {/* Traffic Toggle */}
+                    <div className="space-y-2 border-t border-white/5 pt-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">🚦</span>
+                          <div>
+                            <p className="text-xs font-black text-white">Traffic Flow</p>
+                            <p className="text-[8px] text-zinc-500 uppercase font-bold">OSM GPS Traffic traces</p>
+                          </div>
+                        </div>
+                        <button onClick={() => setTrafficEnabled(!trafficEnabled)} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", trafficEnabled ? "bg-orange-600" : "bg-zinc-700")}>
+                          <span className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all", trafficEnabled ? "left-5" : "left-0.5")} />
+                        </button>
+                      </div>
+
+                      {trafficEnabled && (
+                        <div className="bg-white/5 p-2.5 rounded-xl border border-white/5 space-y-2">
+                          <p className="text-[8px] font-black uppercase tracking-widest text-orange-400">Report Traffic Incident</p>
+                          <div className="flex gap-1.5 flex-wrap">
+                            {["Accident", "Road Closure", "Congestion", "Hazard"].map(type => (
+                              <button key={type} onClick={() => reportIncident(type)}
+                                className="text-[8px] font-black uppercase bg-orange-600/20 text-orange-400 border border-orange-500/30 rounded-lg px-2 py-1.5 hover:bg-orange-600/40 transition-all shrink-0">
+                                {type}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Weather radar settings */}
+                    <div className="space-y-2 border-t border-white/5 pt-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">🌧️</span>
+                          <div>
+                            <p className="text-xs font-black text-white">Precipitation Radar</p>
+                            <p className="text-[8px] text-zinc-500 uppercase font-bold">Rain / Snow Overlay</p>
+                          </div>
+                        </div>
+                        <button onClick={() => setPrecipEnabled(!precipEnabled)} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", precipEnabled ? "bg-blue-500" : "bg-zinc-700")}>
+                          <span className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all", precipEnabled ? "left-5" : "left-0.5")} />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">☁️</span>
+                          <div>
+                            <p className="text-xs font-black text-white">Cloud Cover</p>
+                            <p className="text-[8px] text-zinc-500 uppercase font-bold">Real-time clouds</p>
+                          </div>
+                        </div>
+                        <button onClick={() => setCloudsEnabled(!cloudsEnabled)} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", cloudsEnabled ? "bg-blue-500" : "bg-zinc-700")}>
+                          <span className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all", cloudsEnabled ? "left-5" : "left-0.5")} />
+                        </button>
+                      </div>
+
+                      {(precipEnabled || cloudsEnabled) && (
+                        <div className="space-y-1 bg-white/5 p-2.5 rounded-xl border border-white/5">
+                          <div className="flex justify-between text-[8px] text-zinc-500 uppercase font-bold">
+                            <span>Weather Opacity</span>
+                            <span>{Math.round(weatherOpacity * 100)}%</span>
+                          </div>
+                          <Slider value={[weatherOpacity]} onValueChange={([v]) => setWeatherOpacity(v)} min={0.1} max={1} step={0.05} className="w-full animate-none" />
+                        </div>
+                      )}
+
+                      {currentWeather && currentWeather.main && (
+                        <div className="bg-sky-500/10 border border-sky-500/20 rounded-xl p-2.5 flex items-center gap-2.5 mt-2">
+                          <span className="text-2xl">{currentWeather.weather?.[0]?.main === "Rain" ? "🌧️" : currentWeather.weather?.[0]?.main === "Clouds" ? "☁️" : currentWeather.weather?.[0]?.main === "Snow" ? "❄️" : "☀️"}</span>
+                          <div>
+                            <p className="text-xs font-black text-white">{Math.round(currentWeather.main.temp)}°C</p>
+                            <p className="text-[8px] text-zinc-400 font-bold">{currentWeather.weather?.[0]?.description} · {currentWeather.name}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Heatmap Overlay */}
+                    <div className="flex items-center justify-between border-t border-white/5 pt-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🔥</span>
+                        <div>
+                          <p className="text-xs font-black text-white">Activity Heatmap</p>
+                          <p className="text-[8px] text-zinc-500 uppercase font-bold">Popular events & photos</p>
+                        </div>
+                      </div>
+                      <button onClick={() => setHeatmapEnabled(!heatmapEnabled)} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", heatmapEnabled ? "bg-red-600" : "bg-zinc-700")}>
+                        <span className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all", heatmapEnabled ? "left-5" : "left-0.5")} />
+                      </button>
+                    </div>
+
+                    {/* Bounds (Administrative boundaries) */}
+                    <div className="flex items-center justify-between border-t border-white/5 pt-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🗺️</span>
+                        <div>
+                          <p className="text-xs font-black text-white">Administrative Bounds</p>
+                          <p className="text-[8px] text-zinc-500 uppercase font-bold">Highlight local borders</p>
+                        </div>
+                      </div>
+                      <button onClick={toggleBoundaries} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", boundaryEnabled ? "bg-blue-700" : "bg-zinc-700")}>
+                        <span className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all", boundaryEnabled ? "left-5" : "left-0.5")} />
+                      </button>
+                    </div>
+
+                    {/* History Mode (Esri Wayback) */}
+                    <div className="space-y-2 border-t border-white/5 pt-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">🕰️</span>
+                          <div>
+                            <p className="text-xs font-black text-white">History Wayback</p>
+                            <p className="text-[8px] text-zinc-500 uppercase font-bold">Historical satellite imagery</p>
+                          </div>
+                        </div>
+                        <button onClick={() => setHistoryMode(!historyMode)} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", historyMode ? "bg-amber-700" : "bg-zinc-700")}>
+                          <span className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all", historyMode ? "left-5" : "left-0.5")} />
+                        </button>
+                      </div>
+
+                      {historyMode && (
+                        <div className="space-y-1 bg-white/5 p-2.5 rounded-xl border border-white/5">
+                          <div className="flex justify-between text-[8px] text-zinc-500 uppercase font-bold">
+                            <span>Wayback Year</span>
+                            <span>{historyYear}</span>
+                          </div>
+                          <Slider value={[historyYear]} onValueChange={([v]) => setHistoryYear(v)} min={1900} max={2023} step={1} className="w-full animate-none" />
+                          <div className="flex justify-between text-[8px] text-zinc-500 font-bold"><span>1900</span><span>2023</span></div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Real-time location sharing */}
+                    {user && (
+                      <div className="flex items-center justify-between border-t border-white/5 pt-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">📡</span>
+                          <div>
+                            <p className="text-xs font-black text-white">Live Location Sharing</p>
+                            <p className="text-[8px] text-zinc-500 uppercase font-bold">Share GPS details with friends</p>
+                          </div>
+                        </div>
+                        <button onClick={() => setLocationSharingEnabled(!locationSharingEnabled)} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", locationSharingEnabled ? "bg-green-700" : "bg-zinc-700")}>
+                          <span className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all", locationSharingEnabled ? "left-5" : "left-0.5")} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
               {/* ---- Event Pins Panel (Feature 8) ---- */}
               {leftPanel === "events" && (
                 <>
@@ -2425,116 +2614,7 @@ export default function XakteirMapsPage() {
           </div>
         )}
 
-        {/* ---- BOTTOM LEFT: Map Layers & Feature Toggles ---- */}
-        {!loading && (
-          <div className="absolute bottom-10 left-10 z-[400] flex flex-col gap-2">
-            {/* Map Style Switcher (Feature 2) */}
-            <Card className="glass-card p-1.5 rounded-2xl border-white/10 flex gap-1 shadow-2xl bg-black/60">
-              {MAP_STYLES.map(style => (
-                <Button key={style.key} size="sm" variant={mapLayer === style.key ? "default" : "ghost"}
-                  onClick={() => { setMapLayer(style.key); setHistoryMode(false); }}
-                  className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2.5", mapLayer === style.key && !historyMode ? "bg-blue-600" : "text-white")}>
-                  {style.label}
-                </Button>
-              ))}
-            </Card>
 
-            {/* Overlay Toggles Row */}
-            <Card className="glass-card p-1.5 rounded-2xl border-white/10 flex gap-1 shadow-2xl bg-black/60 flex-wrap">
-              {/* Traffic (Feature 1) */}
-              <Button size="sm" onClick={() => setTrafficEnabled(!trafficEnabled)}
-                className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2", trafficEnabled ? "bg-orange-600 text-white" : "text-zinc-400 hover:bg-white/5")}>
-                🚦 Traffic
-              </Button>
-              {/* Weather (Feature 7) */}
-              <Button size="sm" onClick={() => setWeatherOpen(!weatherOpen)}
-                className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2", weatherOpen ? "bg-sky-600 text-white" : "text-zinc-400 hover:bg-white/5")}>
-                ☁️ Weather
-              </Button>
-              {/* Heatmap (Feature 19) */}
-              <Button size="sm" onClick={() => setHeatmapEnabled(!heatmapEnabled)}
-                className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2", heatmapEnabled ? "bg-red-600 text-white" : "text-zinc-400 hover:bg-white/5")}>
-                🔥 Heatmap
-              </Button>
-              {/* Boundaries (Feature 14) */}
-              <Button size="sm" onClick={toggleBoundaries}
-                className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2", boundaryEnabled ? "bg-blue-700 text-white" : "text-zinc-400 hover:bg-white/5")}>
-                🗺️ Bounds
-              </Button>
-              {/* History (Feature 18) */}
-              <Button size="sm" onClick={() => setHistoryMode(!historyMode)}
-                className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2", historyMode ? "bg-amber-700 text-white" : "text-zinc-400 hover:bg-white/5")}>
-                🕰️ History
-              </Button>
-              {/* Location sharing (Feature 3) */}
-              {user && (
-                <Button size="sm" onClick={() => setLocationSharingEnabled(!locationSharingEnabled)}
-                  className={cn("text-[8px] font-black uppercase tracking-wider h-8 rounded-lg px-2", locationSharingEnabled ? "bg-green-700 text-white" : "text-zinc-400 hover:bg-white/5")}>
-                  {locationSharingEnabled ? "📡 Sharing" : "📡 Share"}
-                </Button>
-              )}
-            </Card>
-
-            {/* Weather panel (Feature 7) */}
-            {weatherOpen && (
-              <Card className="glass-card p-4 rounded-2xl border-white/10 bg-black/80 shadow-2xl space-y-3 w-72">
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-sky-400 flex items-center gap-2">☁️ Weather Overlay</h3>
-                {currentWeather && currentWeather.main && (
-                  <div className="bg-sky-500/10 border border-sky-500/20 rounded-xl p-3 flex items-center gap-3">
-                    <span className="text-3xl">{currentWeather.weather?.[0]?.main === "Rain" ? "🌧️" : currentWeather.weather?.[0]?.main === "Clouds" ? "☁️" : currentWeather.weather?.[0]?.main === "Snow" ? "❄️" : "☀️"}</span>
-                    <div>
-                      <p className="text-sm font-black text-white">{Math.round(currentWeather.main.temp)}°C</p>
-                      <p className="text-[9px] text-zinc-400">{currentWeather.weather?.[0]?.description} · {currentWeather.name}</p>
-                    </div>
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-bold text-zinc-400 uppercase">Precipitation</span>
-                  <button onClick={() => setPrecipEnabled(!precipEnabled)} className={cn("w-10 h-5 rounded-full transition-all", precipEnabled ? "bg-blue-500" : "bg-zinc-700")} style={{ position: "relative" }}>
-                    <span className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all", precipEnabled ? "left-5" : "left-0.5")} />
-                  </button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-bold text-zinc-400 uppercase">Cloud Cover</span>
-                  <button onClick={() => setCloudsEnabled(!cloudsEnabled)} className={cn("w-10 h-5 rounded-full transition-all", cloudsEnabled ? "bg-blue-500" : "bg-zinc-700")} style={{ position: "relative" }}>
-                    <span className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all", cloudsEnabled ? "left-5" : "left-0.5")} />
-                  </button>
-                </div>
-                {(precipEnabled || cloudsEnabled) && (
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[8px] text-zinc-500 uppercase font-bold"><span>Opacity</span><span>{Math.round(weatherOpacity * 100)}%</span></div>
-                    <Slider value={[weatherOpacity]} onValueChange={([v]) => setWeatherOpacity(v)} min={0.1} max={1} step={0.05} className="w-full" />
-                  </div>
-                )}
-              </Card>
-            )}
-
-            {/* History slider (Feature 18) */}
-            {historyMode && (
-              <Card className="glass-card p-4 rounded-2xl border-white/10 bg-black/80 shadow-2xl space-y-2 w-72">
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-amber-400 flex items-center gap-2">🕰️ Historical Imagery: {historyYear}</h3>
-                <Slider value={[historyYear]} onValueChange={([v]) => setHistoryYear(v)} min={1900} max={2023} step={1} className="w-full" />
-                <div className="flex justify-between text-[8px] text-zinc-500 font-bold"><span>1900</span><span>2023</span></div>
-                <p className="text-[9px] text-zinc-500">Showing Esri Wayback satellite imagery for {historyYear}</p>
-              </Card>
-            )}
-
-            {/* Traffic incident report (Feature 1) */}
-            {trafficEnabled && (
-              <Card className="glass-card p-3 rounded-2xl border-white/10 bg-black/80 shadow-2xl space-y-2">
-                <p className="text-[9px] font-black uppercase tracking-widest text-orange-400">Report Incident</p>
-                <div className="flex gap-2 flex-wrap">
-                  {["Accident", "Road Closure", "Congestion", "Hazard"].map(type => (
-                    <button key={type} onClick={() => reportIncident(type)}
-                      className="text-[8px] font-black uppercase bg-orange-600/20 text-orange-400 border border-orange-500/30 rounded-lg px-2 py-1.5 hover:bg-orange-600/40 transition-all">
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              </Card>
-            )}
-          </div>
-        )}
 
         {/* ---- Map zoom controls ---- */}
         <div className="absolute bottom-10 right-10 flex flex-col gap-4 z-[400]">

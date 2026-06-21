@@ -57,7 +57,7 @@ export function FaviconController() {
   // 3. Determine active app, name, and unread count
   const activeApp = useMemo(() => {
     const isMail = hostname.startsWith("mail.") || pathname?.startsWith("/mail");
-    const isChat = hostname.startsWith("chat.") || pathname?.startsWith("/chat") || pathname?.startsWith("/s") || pathname?.startsWith("/dm");
+    const isChat = hostname.startsWith("chat.") || pathname?.startsWith("/chat") || pathname?.startsWith("/s/") || pathname?.startsWith("/dm");
     const isMaps = hostname.startsWith("maps.") || pathname?.startsWith("/map");
     const isCode = hostname.startsWith("code.") || pathname?.startsWith("/xakcode") || pathname?.startsWith("/code") || pathname?.startsWith("/console") || pathname?.startsWith("/hosting") || pathname?.startsWith("/utilities") || pathname?.startsWith("/git");
     const isGames = pathname?.startsWith("/games");

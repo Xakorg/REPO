@@ -30,8 +30,12 @@ import {
   Bell,
   MessageSquare,
   Users as UsersIcon,
+  Sliders,
+  Settings,
+  AlertTriangle,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -56,18 +60,29 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-const YOUTUBE_API_KEY = "AIzaSyCgN4iYJl6F6p5dGwsY43Tgd5mbs4WDRJY";
-
 const searchYoutubeVideos = async (queryText: string) => {
   try {
+    const apiKey = (typeof window !== "undefined" ? localStorage.getItem("xakview_youtube_api_key") : null) || "AIzaSyCgN4iYJl6F6p5dGwsY43Tgd5mbs4WDRJY";
     let url = "";
-    if (queryText.trim()) {
-      url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=${encodeURIComponent(queryText)}&type=video&key=${YOUTUBE_API_KEY}`;
+
+    // Check if query is a YouTube URL
+    const ytUrlRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const urlMatch = queryText.match(ytUrlRegex);
+
+    if (urlMatch) {
+      const videoId = urlMatch[1];
+      url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${apiKey}`;
+    } else if (queryText.trim()) {
+      url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=${encodeURIComponent(queryText)}&type=video&key=${apiKey}`;
     } else {
-      url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&maxResults=25&key=${YOUTUBE_API_KEY}`;
+      url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&maxResults=25&key=${apiKey}`;
     }
+
     const res = await fetch(url);
-    if (!res.ok) return [];
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return { error: true, message: data.error?.message || `HTTP ${res.status} Error` };
+    }
     const data = await res.json();
     if (data.items) {
       return data.items.map((item: any) => {
@@ -82,15 +97,16 @@ const searchYoutubeVideos = async (queryText: string) => {
           authorId: "youtube_" + (snippet?.channelId || "creator"),
           authorPhoto: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(snippet?.channelTitle || videoId)}`,
           views: stats?.viewCount ? parseInt(stats.viewCount) : Math.floor(Math.random() * 500000) + 50000,
-          likes: stats?.likeCount ? parseInt(stats.likeCount) : Math.floor(Math.random() * 50000) + 5000,
+          likes: stats?.likeCount ? parseInt(stats.likeCount) : Math.floor(Math.random() * 5000) + 500,
           description: snippet?.description || `YouTube video by ${snippet?.channelTitle || "Creator"}.`,
           isYoutube: true,
           thumbnail: snippet?.thumbnails?.medium?.url || snippet?.thumbnails?.default?.url || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
         };
       });
     }
-  } catch (e) {
+  } catch (e: any) {
     console.warn(`Failed YouTube search`, e);
+    return { error: true, message: e.message || "Network Error" };
   }
   return [];
 };
@@ -103,6 +119,33 @@ export default function XakViewPage() {
   const [activeViewTab, setActiveViewTab] = useState<
     "videos" | "live" | "creators" | "history" | "shorts"
   >("videos");
+
+  const [showYTSettings, setShowYTSettings] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [ytApiError, setYtApiError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedKey = localStorage.getItem("xakview_youtube_api_key");
+      if (savedKey) setApiKeyInput(savedKey);
+    }
+  }, []);
+
+  const handleSaveApiKey = () => {
+    if (typeof window !== "undefined") {
+      if (apiKeyInput.trim()) {
+        localStorage.setItem("xakview_youtube_api_key", apiKeyInput.trim());
+        toast({ title: "API Key Saved", description: "Your custom YouTube API Key is now active." });
+      } else {
+        localStorage.removeItem("xakview_youtube_api_key");
+        toast({ title: "API Key Reset", description: "Reverted to default YouTube API Key." });
+      }
+      setShowYTSettings(false);
+      // Trigger a re-search
+      setSearchQuery(prev => prev + " ");
+      setTimeout(() => setSearchQuery(prev => prev.trim()), 50);
+    }
+  };
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedVideoState, setSelectedVideo] = useState<any>(null);

@@ -56,6 +56,7 @@ import { collection, query, limit, doc, setDoc, deleteDoc, serverTimestamp } fro
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { performWebSearch, performImageSearch } from "./actions";
 
 type SearchCategory = "all" | "sites" | "images" | "people";
 
@@ -158,21 +159,7 @@ const LOCAL_DEFINITIONS: Record<string, { title: string, definition: string, typ
   }
 };
 
-const searchWebEngine = async (queryText: string) => {
-  try {
-    const res = await fetch(`/api/search-web?q=${encodeURIComponent(queryText)}`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data && Array.isArray(data.results)) {
-        return data.results;
-      }
-    }
-  } catch (e) {
-    console.error("Failed to query /api/search-web proxy", e);
-  }
-  return [];
-};
-
+// searchWebEngine removed in favor of Server Actions
 
 // Removed Wikipedia summary fetching entirely.
 
@@ -587,25 +574,30 @@ function SearchContent() {
     }
 
     try {
-      // Real Web search Engine fetch
-      void searchWebEngine(target).then(results => {
-        if (results && results.length > 0) {
-          setExternalSites(results);
-        }
-        const endTime = performance.now();
-        setSearchTime(parseFloat(((endTime - startTime) / 1000).toFixed(2)));
-      });
+      // Real Web search Engine fetch via SearxNG action
+      const results = await performWebSearch(target);
+      if (results && results.length > 0) {
+        setExternalSites(results);
+      }
+      const endTime = performance.now();
+      setSearchTime(parseFloat(((endTime - startTime) / 1000).toFixed(2)));
 
       const response = await aiPoweredWebSearch({ query: target });
       if (response && response.answer) {
         setAiResult(response.answer);
       }
-      // Fetch images from Wikimedia proxy
+      
+      // Fetch images from SearxNG action
       try {
-        const imgRes = await fetch(`/api/search-images?q=${encodeURIComponent(target)}`);
-        if (imgRes.ok) {
-          const json = await imgRes.json();
-          setImages(json.images || []);
+        const imgResults = await performImageSearch(target);
+        if (imgResults && imgResults.length > 0) {
+          setImages(imgResults.map(r => ({
+            title: r.title,
+            thumb: r.img_src,
+            page: r.url
+          })));
+        } else {
+          setImages([]);
         }
       } catch (e) {
         console.error('Image fetch failed', e);
@@ -619,12 +611,15 @@ function SearchContent() {
     }
   }, [queryInput, router, saveToHistory, safeSearchActive]);
 
+  const initialSearchDone = useRef(false);
+
   useEffect(() => {
-    if (initialQuery) {
+    if (initialQuery && !initialSearchDone.current) {
+      initialSearchDone.current = true;
       setQueryInput(initialQuery);
       handleSearch(initialQuery);
     }
-  }, [initialQuery, handleSearch]);
+  }, [initialQuery]);
 
   // Click outside to close history/suggestion dropdown
   useEffect(() => {
