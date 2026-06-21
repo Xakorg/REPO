@@ -636,9 +636,9 @@ export default function AdminDashboardPage() {
                         <h4 className="text-sm font-black uppercase text-white">App Bans</h4>
                         <p className="text-[10px] text-muted-foreground italic mt-1">Restrict user from accessing specific sub-apps.</p>
                      </div>
-                     <div className="flex gap-8">
-                        {['xakchat', 'mail'].map(app => (
-                          <div key={app} className="flex items-center gap-3">
+                     <div className="flex gap-4 flex-wrap">
+                        {['xakchat', 'mail', 'whiteboard', 'suite', 'learn-pro', 'drive', 'calculator', 'calendar', 'ai-chat', 'xakview', 'games', 'buddy', 'map', 'social', 'classroom', 'art', 'pics', 'xakcode', 'meet', 'tasks', 'xakconsole', 'notes', 'translate', 'shop'].map(app => (
+                          <div key={app} className="flex items-center gap-2 bg-black/20 px-3 py-2 rounded-xl border border-white/5">
                              <input 
                                type="checkbox"
                                checked={userToManage?.bannedApps?.includes(app)}
@@ -647,9 +647,9 @@ export default function AdminDashboardPage() {
                                  const updated = e.target.checked ? [...current, app] : current.filter((a: string) => a !== app);
                                  setUserToManage({ ...userToManage, bannedApps: updated });
                                }}
-                               className="w-5 h-5 rounded border-white/10 bg-zinc-900 accent-rose-500 cursor-pointer"
+                               className="w-4 h-4 rounded border-white/10 bg-zinc-900 accent-rose-500 cursor-pointer"
                              />
-                             <label className="text-xs font-bold uppercase text-white">{app}</label>
+                             <label className="text-[10px] font-bold uppercase text-white tracking-widest">{app.replace('-', ' ')}</label>
                           </div>
                         ))}
                      </div>

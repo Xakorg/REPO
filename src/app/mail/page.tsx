@@ -241,6 +241,14 @@ export default function MailPage() {
   const [newRuleValue, setNewRuleValue] = useState("");
   const [newRuleFolder, setNewRuleFolder] = useState("");
 
+  // ── Feature: Nicknames ──
+  const [newNickname, setNewNickname] = useState("");
+  const [newNicknameEmail, setNewNicknameEmail] = useState("");
+
+  // ── Feature: Custom Notifications ──
+  const [newNotifFolder, setNewNotifFolder] = useState("Inbox");
+  const [newNotifSender, setNewNotifSender] = useState("");
+
   // ── Feature 15: Email Analytics ──
   const [showAnalytics, setShowAnalytics] = useState(false);
 
@@ -472,6 +480,36 @@ export default function MailPage() {
     });
   }, [rawEmails, userData?.mailRules, firestore, user]);
 
+  // ─── Process New Email Notifications ──────────────────────────────────────
+  const previousEmailIds = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!rawEmails || !userData) return;
+    const currentIds = new Set(rawEmails.map(e => e.id));
+    
+    if (previousEmailIds.current.size > 0) {
+      rawEmails.forEach(email => {
+        if (!previousEmailIds.current.has(email.id) && email.senderUserId !== user?.uid) {
+          const notifyFolders = userData.mailNotifyFolders || ["inbox"];
+          const notifySenders = userData.mailNotifySenders || [];
+          
+          let shouldNotify = false;
+          if (notifyFolders.includes(email.folder || "inbox")) shouldNotify = true;
+          if (notifySenders.some((s: string) => email.senderEmail?.toLowerCase().includes(s.toLowerCase()))) shouldNotify = true;
+          
+          if (shouldNotify) {
+            toast({ title: `📩 New email from ${email.senderName || email.senderEmail}`, description: email.subject });
+            if ("Notification" in window && Notification.permission === "granted") {
+              new Notification(`New email from ${email.senderName || email.senderEmail}`, { body: email.subject });
+            }
+          }
+        }
+      });
+    }
+
+    previousEmailIds.current = currentIds;
+  }, [rawEmails, userData, user]);
+
   // ─── Email filtering pipeline ────────────────────────────────────────────
   const emails = useMemo(() => {
     if (!rawEmails) return [];
@@ -699,6 +737,11 @@ export default function MailPage() {
     if (!auth || !auth.currentUser) return toast({ variant: "destructive", title: "Not authenticated" });
     if (!recipient || !subject || !body) return toast({ variant: "destructive", title: "Missing fields" });
 
+    // Resolve Nickname
+    let finalRecipient = recipient;
+    const nickObj = (userData?.mailNicknames || []).find((n: any) => n.nickname.toLowerCase() === recipient.toLowerCase());
+    if (nickObj) finalRecipient = nickObj.email;
+
     setIsSending(true);
     let undone = false;
     let progress = 0;
@@ -756,7 +799,7 @@ export default function MailPage() {
             Authorization: `Bearer ${await auth.currentUser!.getIdToken()}`,
           },
           body: JSON.stringify({
-            to: recipient,
+            to: finalRecipient,
             subject,
             body: finalBody,
             senderAddress,
@@ -771,8 +814,8 @@ export default function MailPage() {
             senderName: user.displayName || "Me",
             senderEmail: senderAddress,
             senderUserId: user.uid,
-            recipientEmail: recipient,
-            recipientList: [recipient.toLowerCase()],
+            recipientEmail: finalRecipient,
+            recipientList: [finalRecipient.toLowerCase()],
             body: isEncrypted ? body : finalBody,
             sentDateTime: new Date().toISOString(),
             sentAt: new Date().toISOString(),
@@ -805,7 +848,10 @@ export default function MailPage() {
   // ─── Feature 7: Mail Merge ───────────────────────────────────────────────
   const handleMailMerge = async () => {
     if (!auth?.currentUser || !recipient || !subject || !body) return;
-    const recipients = mergeRecipients.split(",").map(r => r.trim()).filter(Boolean);
+    const recipients = mergeRecipients.split(",").map(r => r.trim()).map(r => {
+      const nickObj = (userData?.mailNicknames || []).find((n: any) => n.nickname.toLowerCase() === r.toLowerCase());
+      return nickObj ? nickObj.email : r;
+    }).filter(Boolean);
     if (!recipients.length) return toast({ variant: "destructive", title: "No recipients listed" });
     setIsMerging(true);
     for (let i = 0; i < recipients.length; i++) {
@@ -917,6 +963,54 @@ export default function MailPage() {
     if (!firestore || !user || !userData?.mailRules) return;
     const filtered = userData.mailRules.filter((r: any) => r.id !== ruleId);
     await updateDoc(doc(firestore, "users", user.uid), { mailRules: filtered });
+  };
+
+  const handleCreateNickname = async () => {
+    if (!firestore || !user || !newNickname.trim() || !newNicknameEmail.trim()) return;
+    const nn = {
+      id: crypto.randomUUID(),
+      nickname: newNickname.trim(),
+      email: newNicknameEmail.trim()
+    };
+    await updateDoc(doc(firestore, "users", user.uid), {
+      mailNicknames: [...(userData?.mailNicknames || []), nn]
+    });
+    setNewNickname(""); setNewNicknameEmail("");
+    toast({ title: "✅ Nickname created" });
+  };
+
+  const handleDeleteNickname = async (id: string) => {
+    if (!firestore || !user || !userData?.mailNicknames) return;
+    const filtered = userData.mailNicknames.filter((n: any) => n.id !== id);
+    await updateDoc(doc(firestore, "users", user.uid), { mailNicknames: filtered });
+  };
+
+  const handleAddNotifFolder = async () => {
+    if (!firestore || !user || !newNotifFolder) return;
+    const current = userData?.mailNotifyFolders || ["inbox"];
+    if (current.includes(newNotifFolder)) return;
+    await updateDoc(doc(firestore, "users", user.uid), { mailNotifyFolders: [...current, newNotifFolder] });
+    setNewNotifFolder("");
+  };
+
+  const handleRemoveNotifFolder = async (f: string) => {
+    if (!firestore || !user) return;
+    const current = userData?.mailNotifyFolders || ["inbox"];
+    await updateDoc(doc(firestore, "users", user.uid), { mailNotifyFolders: current.filter((x: string) => x !== f) });
+  };
+
+  const handleAddNotifSender = async () => {
+    if (!firestore || !user || !newNotifSender.trim()) return;
+    const current = userData?.mailNotifySenders || [];
+    if (current.includes(newNotifSender.trim())) return;
+    await updateDoc(doc(firestore, "users", user.uid), { mailNotifySenders: [...current, newNotifSender.trim()] });
+    setNewNotifSender("");
+  };
+
+  const handleRemoveNotifSender = async (s: string) => {
+    if (!firestore || !user) return;
+    const current = userData?.mailNotifySenders || [];
+    await updateDoc(doc(firestore, "users", user.uid), { mailNotifySenders: current.filter((x: string) => x !== s) });
   };
 
   const handleAssignLabel = async (labelId: string, emailId: string) => {
@@ -1070,7 +1164,10 @@ export default function MailPage() {
       setAttachments(prev => [...prev, { name: file.name, url, type: file.type, size: file.size }]);
       toast({ title: "Attachment uploaded" });
     } catch { toast({ variant: "destructive", title: "Upload failed" }); }
-    finally { setIsUploadingAttachment(false); if (attachmentInputRef.current) attachmentInputRef.current.value = ""; }
+    finally { 
+      setIsUploadingAttachment(false); 
+      if (attachmentInputRef.current) attachmentInputRef.current.value = ""; 
+    }
   };
 
   // ─── Feature 19: Search highlight ────────────────────────────────────────
@@ -1144,6 +1241,7 @@ export default function MailPage() {
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
+      <DynamicFavicon app="mail" />
       {/* Offline banner */}
       {isOffline && (
         <div className="bg-amber-500 text-black text-center text-xs font-bold py-1 uppercase">
@@ -2132,7 +2230,7 @@ export default function MailPage() {
 
           {/* Settings navigation */}
           <div className="flex gap-2 flex-wrap mb-4">
-            {["general", "signature", "vacation", "folders & rules", "aliases", "labels", "external"].map(tab => (
+            {["general", "signature", "vacation", "folders & rules", "aliases", "nicknames", "notifications", "labels", "external"].map(tab => (
               <button key={tab} onClick={() => setSettingsTab(tab)} className={cn("px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold tracking-wider transition-colors", settingsTab === tab ? "bg-primary text-black" : "bg-white/5 text-white/50 hover:text-white")}>
                 {tab}
               </button>
@@ -2434,6 +2532,106 @@ export default function MailPage() {
                   </Button>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ── Feature: Nicknames ── */}
+          {settingsTab === "nicknames" && (
+            <div className="space-y-5">
+              <div>
+                <Label className="font-bold">Address Book Nicknames</Label>
+                <p className="text-xs text-white/50">Assign simple names to full email addresses (e.g. typing "john" sends to "john.doe@example.com").</p>
+              </div>
+              <div className="space-y-2">
+                {(userData?.mailNicknames || []).map((n: any) => (
+                  <div key={n.id} className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-xl">
+                    <div>
+                      <p className="text-xs font-bold text-white">{n.nickname}</p>
+                      <p className="text-[10px] text-white/50">{n.email}</p>
+                    </div>
+                    <button className="text-rose-400 hover:text-rose-300" onClick={() => handleDeleteNickname(n.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-3 p-4 bg-white/5 border border-white/10 rounded-xl">
+                <p className="text-xs font-bold text-white/60 uppercase tracking-widest">Add Nickname</p>
+                <Input value={newNickname} onChange={e => setNewNickname(e.target.value)} placeholder="Nickname (e.g. mom)" className="bg-white/5 border-white/10 text-white" />
+                <Input value={newNicknameEmail} onChange={e => setNewNicknameEmail(e.target.value)} placeholder="Full email address" className="bg-white/5 border-white/10 text-white" />
+                <Button onClick={handleCreateNickname} disabled={!newNickname || !newNicknameEmail} className="w-full bg-primary text-black font-black uppercase text-xs">
+                  <Plus className="w-4 h-4 mr-2" /> Add Nickname
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Feature: Custom Notifications ── */}
+          {settingsTab === "notifications" && (
+            <div className="space-y-8">
+              <div className="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10">
+                <div>
+                  <Label className="font-bold text-white">Browser Push Notifications</Label>
+                  <p className="text-xs text-white/50">Allow Xakteir to send system notifications for new emails.</p>
+                </div>
+                <Button 
+                  onClick={() => {
+                    if ("Notification" in window) {
+                      Notification.requestPermission().then(p => toast({ title: `Permission ${p}` }));
+                    } else {
+                      toast({ title: "Not supported by browser" });
+                    }
+                  }} 
+                  className="bg-indigo-500 text-white font-bold text-xs"
+                >
+                  Request Permission
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label className="font-bold">Notify for Specific Folders</Label>
+                  <p className="text-xs text-white/50">Only receive notifications when emails arrive in these folders.</p>
+                </div>
+                <div className="flex gap-2">
+                  <Select value={newNotifFolder} onValueChange={setNewNotifFolder}>
+                    <SelectTrigger className="bg-black/50 border-white/10 text-white flex-1"><SelectValue placeholder="Select folder..." /></SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                      {folders.map(f => (
+                        <SelectItem key={f.name} value={f.name.toLowerCase()}>{f.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={handleAddNotifFolder} className="bg-primary text-black font-black uppercase text-xs">Add Folder</Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(userData?.mailNotifyFolders || ["inbox"]).map((f: string) => (
+                    <Badge key={f} variant="outline" className="border-indigo-500/30 bg-indigo-500/10 text-indigo-400">
+                      {f} <button className="ml-2 hover:text-white" onClick={() => handleRemoveNotifFolder(f)}>×</button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="w-full h-px bg-white/10" />
+
+              <div className="space-y-4">
+                <div>
+                  <Label className="font-bold">Notify for Specific Senders</Label>
+                  <p className="text-xs text-white/50">Receive notifications when an email from these senders arrives.</p>
+                </div>
+                <div className="flex gap-2">
+                  <Input value={newNotifSender} onChange={e => setNewNotifSender(e.target.value)} placeholder="example@domain.com" className="bg-white/5 border-white/10 text-white" />
+                  <Button onClick={handleAddNotifSender} className="bg-primary text-black font-black uppercase text-xs">Add Sender</Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(userData?.mailNotifySenders || []).map((s: string) => (
+                    <Badge key={s} variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+                      {s} <button className="ml-2 hover:text-white" onClick={() => handleRemoveNotifSender(s)}>×</button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 

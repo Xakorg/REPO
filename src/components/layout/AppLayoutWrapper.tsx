@@ -8,10 +8,12 @@ import { Footer } from "./Footer";
 export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // Game routes include xaksports, xakarena, and play pages
+  // Game routes include xaksports, xakarena, retro, neural_defense, and play pages
   const isGameRoute = pathname?.startsWith("/xaksports") || 
                       pathname?.startsWith("/xakarena") || 
-                      pathname?.startsWith("/games/play/");
+                      pathname?.startsWith("/games/play/") ||
+                      pathname?.startsWith("/games/retro") ||
+                      pathname?.startsWith("/games/neural_defense");
 
   const [showOverlay, setShowOverlay] = useState(false);
 
@@ -25,8 +27,8 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
       // Reveal if cursor is within 50px of the top edge
       if (e.clientY < 50) {
         setShowOverlay(true);
-      } else if (e.clientY > 160) { 
-        // Hide if mouse moves away from header/interaction area
+      } else if (e.clientY > 160 && e.clientY < window.innerHeight - 100) { 
+        // Hide if mouse moves away from header/interaction area and is not near the bottom footer
         setShowOverlay(false);
       }
     };

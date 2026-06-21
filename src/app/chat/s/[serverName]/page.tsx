@@ -34,7 +34,10 @@ import {
   Clock,
   ChevronRight,
   BookMarked,
-  BarChart2
+  BarChart2,
+  Video,
+  MonitorUp,
+  Flame
 } from "lucide-react";
 import { AnimatedGridPattern } from "@/components/magicui/animated-grid-pattern";
 import { ThreadPanel } from "@/components/chat/ThreadPanel";
@@ -158,6 +161,14 @@ export default function ServerChatPage() {
   // Feature 7: Message Forwarding
   const [forwardMsg, setForwardMsg] = useState<any | null>(null);
   const [forwardDest, setForwardDest] = useState("");
+
+  // Feature 8: Call, Docs, Streaks
+  const [showCallModal, setShowCallModal] = useState(false);
+  const [callType, setCallType] = useState<"voice" | "video">("voice");
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [showDocsModal, setShowDocsModal] = useState(false);
+  const [docContent, setDocContent] = useState("");
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   // Feature 8: Sticker Picker
   const [showStickerPicker, setShowStickerPicker] = useState(false);
@@ -1624,6 +1635,33 @@ export default function ServerChatPage() {
               title="Bookmarks"
             >
               <Bookmark className="w-4 h-4" />
+            </Button>
+
+            <Button 
+              onClick={() => setShowDocsModal(true)} 
+              variant="ghost" 
+              className={cn("h-9 w-9 p-0 hover:bg-white/5 text-zinc-400 hover:text-emerald-400 rounded-xl relative", showDocsModal && "text-emerald-500")}
+              title="Co-edit Document"
+            >
+              <FileText className="w-4 h-4" />
+            </Button>
+            
+            <Button 
+              onClick={() => { setCallType("video"); setShowCallModal(true); }} 
+              variant="ghost" 
+              className="h-9 w-9 p-0 hover:bg-white/5 text-zinc-400 hover:text-blue-400 rounded-xl relative"
+              title="Start Call"
+            >
+              <Video className="w-4 h-4" />
+            </Button>
+
+            <Button 
+              onClick={() => setShowLeaderboard(true)} 
+              variant="ghost" 
+              className={cn("h-9 w-9 p-0 hover:bg-white/5 text-zinc-400 hover:text-orange-400 rounded-xl relative", showLeaderboard && "text-orange-500")}
+              title="Streaks Leaderboard"
+            >
+              <Flame className="w-4 h-4" />
             </Button>
 
             {serverName !== "xakteir" && hasPermission("manageChannels") && (

@@ -52,6 +52,7 @@ import { RenderHat, RenderAura, RenderDecor, getNameplateClass } from "@/compone
 import { Card } from "@/components/ui/card";
 import { getIceServers } from "@/lib/webrtc/config";
 import { IceCandidateBuffer } from "@/lib/webrtc/ice-buffer";
+import DynamicFavicon from "@/components/DynamicFavicon";
 
 const SERVERS = [
   { id: 'home', name: 'Home', icon: Home, color: 'bg-primary', href: '/chat' },
@@ -1213,8 +1214,11 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   if (!mounted) return null;
   if (!user) return <>{children}</>;
 
+
+
   return (
     <div className="h-[calc(100vh-80px)] flex overflow-hidden bg-zinc-950 text-white relative">
+      <DynamicFavicon app="chat" />
       {userData?.customCss && <style dangerouslySetInnerHTML={{ __html: userData.customCss }} />}
       <div className="absolute inset-0 arcade-grid opacity-[0.02] pointer-events-none" />
 
