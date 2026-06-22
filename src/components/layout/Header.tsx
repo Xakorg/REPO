@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { navigateTo } from "@/lib/navigation";
 import { 
   LayoutGrid, 
   Bot,
@@ -142,8 +143,7 @@ function AppLauncherContent({ router }: { router: any }) {
             <button 
               key={app.name}
               onClick={() => { 
-                if (app.href.startsWith("http")) window.location.href = app.href;
-                else router.push(app.href); 
+                navigateTo(app.href, router);
               }} 
               className={cn(
                 "p-3 rounded-2xl flex flex-col items-center gap-2 transition-all hover:bg-white/5 hover:scale-105 group/btn border-2 border-transparent hover:border-white/5 shadow-md", 
@@ -196,7 +196,7 @@ export function Header() {
     const vaultStr = localStorage.getItem('xakteir_vault');
     if (!vaultStr) {
       setIsSwitching(false);
-      router.push(`/auth?email=${encodeURIComponent(acc.email)}`);
+      navigateTo(`/auth?email=${encodeURIComponent(acc.email)}`, router);
       return;
     }
     
@@ -218,10 +218,10 @@ export function Header() {
         }
       } catch (e: any) {
         toast({ variant: "destructive", title: "Switch Failed", description: "Session expired. Please sign in again." });
-        router.push(`/auth?email=${encodeURIComponent(acc.email)}`);
+        navigateTo(`/auth?email=${encodeURIComponent(acc.email)}`, router);
       }
     } else {
-      router.push(`/auth?email=${encodeURIComponent(acc.email)}`);
+      navigateTo(`/auth?email=${encodeURIComponent(acc.email)}`, router);
     }
     setIsSwitching(false);
   };
@@ -380,7 +380,7 @@ export function Header() {
           )}
 
           {isAdmin && (
-            <Button onClick={() => router.push('/admin')} variant="ghost" size="icon" className="w-12 h-12 bg-zinc-900/60 border-2 border-white/10 rounded-2xl relative group shadow-xl">
+            <Button onClick={() => navigateTo('/admin', router)} variant="ghost" size="icon" className="w-12 h-12 bg-zinc-900/60 border-2 border-white/10 rounded-2xl relative group shadow-xl">
               <Award className="w-6 h-6 text-yellow-400" />
             </Button>
           )}
@@ -438,7 +438,7 @@ export function Header() {
                 </div>
 
                 {accounts.length < 5 && (
-                  <button onClick={() => { router.push('/auth/add-acct'); }} className="w-[calc(100%-12px)] mx-1.5 flex items-center justify-center gap-2 p-3 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-all border border-dashed border-primary/20 hover:border-primary/40 mt-1">
+                  <button onClick={() => { navigateTo('/auth/add-acct', router); }} className="w-[calc(100%-12px)] mx-1.5 flex items-center justify-center gap-2 p-3 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-all border border-dashed border-primary/20 hover:border-primary/40 mt-1">
                     <Plus className="w-4 h-4" /> Add Profile
                   </button>
                 )}
@@ -446,10 +446,10 @@ export function Header() {
                 <div className="h-0.5 bg-white/5 my-3 mx-1.5" />
 
                 <div className="space-y-1 p-1.5 text-white">
-                   <button onClick={() => router.push('/profile')} className="w-full flex items-center gap-4 p-3.5 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all text-left">
+                   <button onClick={() => navigateTo('/profile', router)} className="w-full flex items-center gap-4 p-3.5 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all text-left">
                       <UserIcon className="w-4 h-4 text-primary" /> Profile
                    </button>
-                   <button onClick={() => { auth && signOut(auth); localStorage.removeItem("xakteir_accounts"); localStorage.removeItem("xakteir_active_account_id"); window.dispatchEvent(new Event("xakteir-accounts-changed")); router.push('/'); }} className="w-full flex items-center gap-4 p-3.5 rounded-2xl hover:bg-rose-500/10 text-[10px] font-black uppercase tracking-widest text-rose-500 transition-all text-left">
+                   <button onClick={() => { auth && signOut(auth); localStorage.removeItem("xakteir_accounts"); localStorage.removeItem("xakteir_active_account_id"); window.dispatchEvent(new Event("xakteir-accounts-changed")); navigateTo('/', router); }} className="w-full flex items-center gap-4 p-3.5 rounded-2xl hover:bg-rose-500/10 text-[10px] font-black uppercase tracking-widest text-rose-500 transition-all text-left">
                       <LogOut className="w-4 h-4" /> Sign Out
                    </button>
                 </div>

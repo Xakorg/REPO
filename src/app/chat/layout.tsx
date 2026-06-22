@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { navigateTo } from "@/lib/navigation";
 import Link from "next/link";
 import { 
   Hash, 
@@ -564,7 +565,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       const serverRef = await addDoc(collection(firestore, "servers"), { name: serverNameInput.trim(), iconColor: serverColorInput, iconUrl: serverIconUrl, description: serverDescription, ownerId: user.uid, isPrivate: serverIsPrivate, members: [user.uid], createdAt: serverTimestamp() });
       await addDoc(collection(firestore, "servers", serverRef.id, "channels"), { name: "general", createdAt: serverTimestamp() });
       setShowCreateServerModal(false);
-      router.push(`/chat/s/${serverRef.id}?c=general`);
+      navigateTo(`/chat/s/${serverRef.id}?c=general`, router);
     } catch(e) { toast({ variant: "destructive", title: "Creation Failed" }); } finally { setIsCreatingServer(false); }
   };
 
@@ -582,7 +583,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       setShowCreateChannelModal(false);
       setChannelNameInput("");
       if (channelTypeInput === "text") {
-        router.push(`/chat/s/${serverName}?c=${formattedChannelName}`);
+        navigateTo(`/chat/s/${serverName}?c=${formattedChannelName}`, router);
       } else {
         toast({ title: "Voice channel created!" });
       }
@@ -590,7 +591,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   };
 
   const handleStartDM = (friendUsername: string) => {
-    router.push(`/chat/dm/${friendUsername}`);
+    navigateTo(`/chat/dm/${friendUsername}`, router);
   };
 
   // Group status listener for active voice users in current server
@@ -1239,7 +1240,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                   {allServers.map(s => (
                     <button 
                       key={s.id}
-                      onClick={() => router.push(s.href)}
+                      onClick={() => navigateTo(s.href, router)}
                       className={cn(
                         "w-10 h-10 rounded-[1.2rem] flex items-center justify-center transition-all duration-300 relative overflow-hidden shrink-0",
                         activeServer === s.id ? "bg-primary text-black rounded-[0.8rem]" : "bg-white/5 text-white/40 hover:bg-primary hover:text-black hover:rounded-[0.8rem]"
@@ -1290,7 +1291,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                                 return (
                                   <button 
                                     key={ch.id}
-                                    onClick={() => router.push(`/chat/s/${activeServer}/${ch.id}`)}
+                                    onClick={() => navigateTo(`/chat/s/${activeServer}/${ch.id}`, router)}
                                     className={cn(
                                       "w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] transition-all text-left font-bold",
                                       isSel ? "bg-primary/20 text-white" : "text-white/40 hover:bg-white/5 hover:text-white"
@@ -1319,7 +1320,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             {allServers.map(s => (
               <button 
                 key={s.id}
-                onClick={() => router.push(s.href)}
+                onClick={() => navigateTo(s.href, router)}
                 className={cn(
                   "w-12 h-12 rounded-[1.2rem] flex items-center justify-center transition-all duration-300 relative group overflow-hidden shrink-0",
                   activeServer === s.id ? "bg-primary text-black rounded-[0.8rem]" : "bg-white/5 text-white/40 hover:bg-primary hover:text-black hover:rounded-[0.8rem]",
@@ -1402,7 +1403,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                   {/* 3D ROOM BUTTON */}
                   <div className="space-y-1 mb-4">
                     <button 
-                      onClick={() => router.push(`/chat/s/${activeServer}?room3d=true`)} 
+                      onClick={() => navigateTo(`/chat/s/${activeServer}?room3d=true`, router)} 
                       className={cn(
                         "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-all bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-white font-bold hover:from-indigo-500/40 hover:to-purple-500/40 border border-white/5",
                         searchParams.get("room3d") === "true" ? "ring-2 ring-purple-500" : ""
@@ -1485,7 +1486,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                             return (
                               <button 
                                 key={ch.id} 
-                                onClick={() => router.push(`/chat/s/${activeServer}?c=${ch.name}`)} 
+                                onClick={() => navigateTo(`/chat/s/${activeServer}?c=${ch.name}`, router)} 
                                 className={cn(
                                   "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-all",
                                   isActive ? "bg-primary/20 text-white font-bold" : "text-white/40 hover:bg-white/5 hover:text-white"
@@ -2552,7 +2553,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               onClick={() => {
                 if (startDmSearchQuery.trim()) {
                   setShowStartDmDialog(false);
-                  router.push(`/chat/dm/${startDmSearchQuery.trim().toLowerCase()}`);
+                  navigateTo(`/chat/dm/${startDmSearchQuery.trim().toLowerCase()}`, router);
                   setStartDmSearchQuery("");
                 }
               }}
@@ -2574,7 +2575,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                       key={m.id}
                       onClick={() => {
                         setShowStartDmDialog(false);
-                        router.push(`/chat/dm/${uName}`);
+                        navigateTo(`/chat/dm/${uName}`, router);
                         setStartDmSearchQuery("");
                       }}
                       className="w-full flex items-center gap-3 p-2 rounded-xl text-xs hover:bg-white/5 text-left transition-all"
@@ -2826,13 +2827,13 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                 <div className="space-y-1">
                   <p className="text-[9px] font-black uppercase text-white/20 px-3 pb-2">Quick Navigation</p>
                   {activeDms?.slice(0, 5).map(chat => (
-                    <button key={chat.id} onClick={() => { setShowGlobalSearch(false); router.push(`/chat/dm/${chat.participants.find((p: string) => p !== user.uid)}`); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-left transition-colors">
+                    <button key={chat.id} onClick={() => { setShowGlobalSearch(false); navigateTo(`/chat/dm/${chat.participants.find((p: string) => p !== user.uid)}`, router); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-left transition-colors">
                       <MessageCircle className="w-4 h-4 text-primary shrink-0" />
                       <span className="text-sm text-white/70">DM conversation</span>
                     </button>
                   ))}
                   {allServers.map(s => (
-                    <button key={s.id} onClick={() => { setShowGlobalSearch(false); router.push(s.href); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-left transition-colors">
+                    <button key={s.id} onClick={() => { setShowGlobalSearch(false); navigateTo(s.href, router); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-left transition-colors">
                       <Hash className="w-4 h-4 text-primary shrink-0" />
                       <span className="text-sm text-white/70">{s.name}</span>
                     </button>
@@ -2841,7 +2842,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               ) : (
                 <div className="space-y-1">
                   {hubMembers?.filter((m: any) => m.displayName?.toLowerCase().includes(globalSearchQuery.toLowerCase()) || m.username?.toLowerCase().includes(globalSearchQuery.toLowerCase())).slice(0, 6).map((m: any) => (
-                    <button key={m.id} onClick={() => { setShowGlobalSearch(false); router.push(`/chat/dm/${m.username}`); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-left transition-colors">
+                    <button key={m.id} onClick={() => { setShowGlobalSearch(false); navigateTo(`/chat/dm/${m.username}`, router); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 text-left transition-colors">
                       <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary shrink-0">{(m.displayName || '?')[0]}</div>
                       <div>
                         <p className="text-sm text-white font-bold">{m.displayName}</p>
@@ -2896,7 +2897,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                   setGroupDmName("");
                   setGroupDmMembers([]);
                   toast({ title: `Group '${groupDmName}' created!` });
-                  router.push(`/chat/dm/${docRef.id}`);
+                  navigateTo(`/chat/dm/${docRef.id}`, router);
                 } catch(e) { toast({ variant: "destructive", title: "Failed to create group" }); } finally { setIsCreatingGroupDm(false); }
               }}
               className="w-full h-11 bg-primary hover:bg-primary/90 text-black font-black uppercase text-[10px] rounded-xl shadow-lg border-none"
@@ -3032,7 +3033,7 @@ function DMContactItem({ chatId, participants, activeChatId, currentUserId }: { 
 
   return (
     <button
-      onClick={() => router.push(`/chat/dm/${username}`)}
+      onClick={() => navigateTo(`/chat/dm/${username}`, router)}
       className={cn(
         "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all text-left group",
         isSelected ? "bg-primary/20 text-white font-bold" : "text-white/40 hover:bg-white/5"

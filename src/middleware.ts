@@ -30,9 +30,9 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/auth', req.url));
     }
 
-    // Rewrite Root to the IDE
+    // Redirect Root to the IDE prefixed route
     if (path === '/') {
-      return NextResponse.rewrite(new URL('/xakcode', req.url));
+      return NextResponse.redirect(new URL('/xakcode', req.url));
     }
 
     // Explicit requests to /xakcode/... paths are allowed directly 
@@ -40,11 +40,11 @@ export function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
-    // Rewrite XakCode sub-routes (/console, /hosting, /utilities, etc.)
+    // Redirect XakCode sub-routes (/console, /hosting, /utilities, etc.)
     const xakcodeRoutes = ['/console', '/hosting', '/utilities', '/settings', '/git'];
     const rootSegment = '/' + path.split('/')[1]; // handles /console and /console/something
     if (xakcodeRoutes.includes(rootSegment)) {
-      return NextResponse.rewrite(new URL(`/xakcode${path}`, req.url));
+      return NextResponse.redirect(new URL(`/xakcode${path}`, req.url));
     }
 
     // For any OTHER path (like /map, /games, App Launcher navigation), kick them back to the main domain
@@ -59,14 +59,14 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/auth', req.url));
     }
 
-    if (path === '/') return NextResponse.rewrite(new URL('/chat', req.url));
+    if (path === '/') return NextResponse.redirect(new URL('/chat', req.url));
     if (path.startsWith('/chat')) return NextResponse.next();
     
-    // Rewrite Chat sub-routes
+    // Redirect Chat sub-routes
     const chatRoutes = ['/s', '/dm', '/settings'];
     const rootSegment = '/' + path.split('/')[1]; 
     if (chatRoutes.includes(rootSegment)) {
-      return NextResponse.rewrite(new URL(`/chat${path}`, req.url));
+      return NextResponse.redirect(new URL(`/chat${path}`, req.url));
     }
     return NextResponse.redirect(`https://xakteir.com${path}`);
   }
@@ -79,32 +79,35 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/auth', req.url));
     }
 
-    if (path === '/') return NextResponse.rewrite(new URL('/map', req.url));
+    if (path === '/') return NextResponse.redirect(new URL('/map', req.url));
     if (path.startsWith('/map')) return NextResponse.next();
     
-    // Rewrite Maps sub-routes (e.g., settings)
+    // Redirect Maps sub-routes (e.g., settings)
     const mapRoutes = ['/settings'];
     const rootSegment = '/' + path.split('/')[1]; 
     if (mapRoutes.includes(rootSegment)) {
-      return NextResponse.rewrite(new URL(`/map${path}`, req.url));
+      return NextResponse.redirect(new URL(`/map${path}`, req.url));
     }
     return NextResponse.redirect(`https://xakteir.com${path}`);
   }
 
-  // Redirect paths on xakteir.com to their respective subdomains
+  // Redirect paths on xakteir.com to their respective subdomains (only in production)
+  const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.startsWith('192.168.');
+  
   if (
+    !isLocalhost &&
     hostname !== 'code.xakteir.com' && hostname !== 'www.code.xakteir.com' &&
     hostname !== 'chat.xakteir.com' && hostname !== 'www.chat.xakteir.com' &&
     hostname !== 'maps.xakteir.com' && hostname !== 'www.maps.xakteir.com'
   ) {
-    if (path === '/xakcode') return NextResponse.redirect('https://code.xakteir.com/');
-    if (path.startsWith('/xakcode/')) return NextResponse.redirect(`https://code.xakteir.com${path.replace('/xakcode', '')}`);
+    if (path === '/xakcode') return NextResponse.redirect('https://code.xakteir.com/xakcode');
+    if (path.startsWith('/xakcode/')) return NextResponse.redirect(`https://code.xakteir.com${path}`);
     
-    if (path === '/chat') return NextResponse.redirect('https://chat.xakteir.com/');
-    if (path.startsWith('/chat/')) return NextResponse.redirect(`https://chat.xakteir.com${path.replace('/chat', '')}`);
+    if (path === '/chat') return NextResponse.redirect('https://chat.xakteir.com/chat');
+    if (path.startsWith('/chat/')) return NextResponse.redirect(`https://chat.xakteir.com${path}`);
     
-    if (path === '/map') return NextResponse.redirect('https://maps.xakteir.com/');
-    if (path.startsWith('/map/')) return NextResponse.redirect(`https://maps.xakteir.com${path.replace('/map', '')}`);
+    if (path === '/map') return NextResponse.redirect('https://maps.xakteir.com/map');
+    if (path.startsWith('/map/')) return NextResponse.redirect(`https://maps.xakteir.com${path}`);
   }
 
   // Default behavior for xakteir.com (allow everything)
