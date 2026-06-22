@@ -105,12 +105,15 @@ export default function AppsPage() {
                         {!app.logo || hasError ? (
                           <app.icon className={cn("w-8 h-8 md:w-10 md:h-10 transition-colors duration-500", app.color, "group-hover:text-white")} />
                         ) : (
-                          <img 
-                            src={app.logo} 
-                            alt={app.name} 
-                            className="w-10 h-10 md:w-12 md:h-12 object-contain transition-transform group-hover:scale-110 duration-500"
-                            onError={() => setImgError(prev => ({ ...prev, [app.name]: true }))}
-                          />
+                          <svg className="w-10 h-10 md:w-12 md:h-12 transition-transform group-hover:scale-110 duration-500" viewBox="0 0 512 512">
+                            <image 
+                              href={app.logo} 
+                              x="0" 
+                              y="0" 
+                              height="512" 
+                              width="512"
+                            />
+                          </svg>
                         )}
                       </div>
                       <CardTitle className="text-2xl md:text-3xl font-black text-white group-hover:text-primary transition-colors uppercase italic tracking-tighter leading-none">{app.name}</CardTitle>

@@ -276,3 +276,19 @@
 .animate-pet-float {
   animation: pet-float 2s ease-in-out infinite;
 }
+
+@keyframes launcher-dot-cycle {
+  0%, 100% { background-color: #818cf8; }
+  11% { background-color: #22d3ee; }
+  22% { background-color: #c084fc; }
+  33% { background-color: #fbbf24; }
+  44% { background-color: #f43f5e; }
+  55% { background-color: #34d399; }
+  66% { background-color: #3b82f6; }
+  77% { background-color: #ec4899; }
+  88% { background-color: #2dd4bf; }
+}
+
+.animate-launcher-dot {
+  animation: launcher-dot-cycle 9s linear infinite;
+}
