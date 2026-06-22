@@ -400,7 +400,7 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* View Workspace Panels */}
-        <div className="flex-1 flex flex-col overflow-hidden relative">
+        <div className="flex-1 flex flex-col overflow-hidden relative" key={pathname}>
           {children}
         </div>
       </div>

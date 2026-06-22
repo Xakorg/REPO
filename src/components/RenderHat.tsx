@@ -213,30 +213,92 @@ export function RenderPet({ petKey }: { petKey?: string }) {
   switch (petKey) {
     case 'cyberwolf':
       return (
-        <div className="absolute -right-8 bottom-0 w-12 h-12 pointer-events-none drop-shadow-[0_0_10px_rgba(56,189,248,0.5)] z-40">
-           <svg viewBox="0 0 50 50" className="w-full h-full fill-sky-500 animate-pulse">
-              <path d="M10 40 L20 20 L30 25 L40 10 L45 30 L35 50 Z" />
-              <circle cx="35" cy="20" r="2" className="fill-white" />
-           </svg>
+        <div 
+          className="absolute top-1/2 left-1/2 w-16 h-16 pointer-events-none animate-pet-orbit"
+          style={{ margin: '-32px 0 0 -32px' }}
+        >
+          <div className="w-full h-full animate-pet-bob flex items-center justify-center">
+            <svg viewBox="0 0 60 60" className="w-14 h-14 drop-shadow-[0_0_12px_rgba(56,189,248,0.7)]">
+              {/* Body */}
+              <path d="M15 45 C15 32, 45 32, 45 45 Z" fill="#0284c7" />
+              <path d="M20 45 C20 36, 40 36, 40 45 Z" fill="#0ea5e9" />
+              {/* Head */}
+              <path d="M22 25 L38 25 L30 40 Z" fill="#0ea5e9" />
+              {/* Ears */}
+              <path d="M22 25 L16 10 L26 20 Z" fill="#0284c7" />
+              <path d="M38 25 L44 10 L34 20 Z" fill="#0284c7" />
+              {/* Glowing neon detailing */}
+              <path d="M25 22 L22 25 M35 22 L38 25" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" />
+              {/* Smiling Eyes */}
+              <path d="M23 29 Q25 26 27 29" stroke="#38bdf8" strokeWidth="3" fill="none" strokeLinecap="round" />
+              <path d="M33 29 Q35 26 37 29" stroke="#38bdf8" strokeWidth="3" fill="none" strokeLinecap="round" />
+              {/* Snout & Smile */}
+              <polygon points="28,33 32,33 30,35" fill="#0f172a" />
+              <path d="M28 36 Q30 38 32 36" stroke="#0f172a" strokeWidth="2" fill="none" strokeLinecap="round" />
+              {/* Wiggling Tail */}
+              <path d="M15 42 C10 40, 5 45, 8 50 C12 50, 15 46, 15 42" fill="#0284c7" className="animate-tail-wiggle" />
+            </svg>
+          </div>
         </div>
       );
     case 'minidragon':
       return (
-        <div className="absolute -left-6 top-4 w-10 h-10 pointer-events-none drop-shadow-[0_0_15px_rgba(239,68,68,0.6)] z-40 animate-bounce" style={{ animationDuration: '3s' }}>
-           <svg viewBox="0 0 50 50" className="w-full h-full fill-red-500">
-              <path d="M25 0 Q40 10 50 25 Q35 40 25 50 Q10 35 0 25 Q10 10 25 0 Z" />
-              <path d="M0 25 L10 15 L20 30 Z" className="fill-orange-400" />
-              <path d="M50 25 L40 15 L30 30 Z" className="fill-orange-400" />
-           </svg>
+        <div 
+          className="absolute top-1/2 left-1/2 w-16 h-16 pointer-events-none animate-pet-orbit"
+          style={{ margin: '-32px 0 0 -32px' }}
+        >
+          <div className="w-full h-full animate-pet-float flex items-center justify-center">
+            <svg viewBox="0 0 60 60" className="w-14 h-14 drop-shadow-[0_0_12px_rgba(239,68,68,0.7)]">
+              {/* Wings with flapping animation */}
+              <path d="M14 26 Q4 16 16 32 Z" fill="#ea580c" className="animate-pulse origin-right" />
+              <path d="M46 26 Q56 16 44 32 Z" fill="#ea580c" className="animate-pulse origin-left" />
+              {/* Body */}
+              <circle cx="30" cy="38" r="14" fill="#dc2626" />
+              <circle cx="30" cy="40" r="9" fill="#f97316" />
+              {/* Head */}
+              <circle cx="30" cy="22" r="11" fill="#dc2626" />
+              {/* Horns */}
+              <path d="M25 12 L19 5 L26 10 Z" fill="#ea580c" />
+              <path d="M35 12 L41 5 L34 10 Z" fill="#ea580c" />
+              {/* Smiling Happy Eyes */}
+              <path d="M23 20 Q25 17 27 20" stroke="#fef08a" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+              <path d="M33 20 Q35 17 37 20" stroke="#fef08a" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+              {/* Cheek Blush */}
+              <circle cx="21" cy="23" r="2" fill="#f43f5e" opacity="0.8" />
+              <circle cx="39" cy="23" r="2" fill="#f43f5e" opacity="0.8" />
+              {/* Cute Smile */}
+              <path d="M27 24 Q30 27 33 24" stroke="#78350f" strokeWidth="2" fill="none" strokeLinecap="round" />
+              {/* Flame Breath */}
+              <path d="M30 25 L32 28 L28 28 Z" fill="#f97316" className="animate-ping" style={{ animationDuration: '0.8s' }} />
+            </svg>
+          </div>
         </div>
       );
     case 'voidentity':
       return (
-        <div className="absolute -right-6 top-0 w-14 h-14 pointer-events-none drop-shadow-[0_0_20px_rgba(168,85,247,0.8)] z-40 mix-blend-color-dodge">
-           <div className="w-full h-full bg-purple-600 rounded-full animate-ping opacity-50 blur-sm" />
-           <div className="absolute inset-2 bg-black rounded-full shadow-inner flex items-center justify-center">
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-           </div>
+        <div 
+          className="absolute top-1/2 left-1/2 w-16 h-16 pointer-events-none animate-pet-orbit"
+          style={{ margin: '-32px 0 0 -32px' }}
+        >
+          <div className="w-full h-full animate-pet-float flex items-center justify-center">
+            <svg viewBox="0 0 60 60" className="w-14 h-14 drop-shadow-[0_0_15px_rgba(168,85,247,0.8)]">
+              {/* Outer void glow */}
+              <circle cx="30" cy="30" r="24" fill="#7e22ce" opacity="0.25" className="animate-pulse" />
+              {/* Shifting body */}
+              <path d="M30 14 C39 14, 46 21, 46 30 C46 39, 39 46, 30 46 C21 46, 14 39, 14 30 C14 21, 21 14, 30 14 Z" fill="url(#void-gradient-logo)" className="animate-pulse" />
+              {/* Smiling Eyes */}
+              <path d="M22 25 Q24 22 26 25" stroke="#e9d5ff" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+              <path d="M34 25 Q36 22 38 25" stroke="#e9d5ff" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+              <path d="M28 29 Q30 32 32 29" stroke="#e9d5ff" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+              <defs>
+                <radialGradient id="void-gradient-logo" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#1e1b4b" />
+                  <stop offset="70%" stopColor="#581c87" />
+                  <stop offset="100%" stopColor="#120024" />
+                </radialGradient>
+              </defs>
+            </svg>
+          </div>
         </div>
       );
     default:

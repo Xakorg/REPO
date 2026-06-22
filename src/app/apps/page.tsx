@@ -35,27 +35,28 @@ import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 
 const ALL_APPS = [
-  { name: "Search", description: "Search the web and platform.", icon: Search, color: "text-blue-400", href: "/search", features: ["Fast", "AI Power"] },
-  { name: "Chat", description: "Global messaging and community servers.", icon: MessageCircle, color: "text-emerald-400", href: "/chat", features: ["Servers", "Extensions", "AI"] },
-  { name: "Xak AI", description: "Smart assistant for code and tasks.", icon: Bot, color: "text-primary", href: "/ai-chat", features: ["Memory", "Context"] },
-  { name: "Whiteboard", description: "Collaborative drawing and planning.", icon: Presentation, color: "text-amber-400", href: "/whiteboard", features: ["Live", "Tools"] },
-  { name: "Suite", description: "Documents, spreadsheets, and forms.", icon: Layers, color: "text-primary", href: "/suite", features: ["Work", "Cloud"] },
-  { name: "Mail", description: "Email service for members.", icon: Mail, color: "text-blue-400", href: "/mail", features: ["Inbox", "Direct"] },
-  { name: "Drive", description: "Cloud storage for your files.", icon: HardDrive, color: "text-amber-500", href: "/drive", features: ["Secure", "Storage"] },
-  { name: "Games", description: "Play built-in and community games.", icon: Gamepad2, color: "text-purple-400", href: "/games", features: ["Arcade", "Multiplayer"] },
-  { name: "XakCode", description: "AI-powered IDE with project hosting and deployment controls.", icon: Code2, color: "text-sky-400", href: "/xakcode", features: ["IDE", "AI", "Hosting"] },
-  { name: "XakView", description: "Watch YouTube videos, livestreams, and follow creators.", icon: Video, color: "text-rose-500", href: "/xakview", features: ["YouTube Embeds", "Livestreams", "Creators"] },
-  { name: "Xakteir Plan", description: "Plan calendar and define goals with tracking milestones.", icon: Calendar, color: "text-amber-500", href: "/calendar", features: ["Calendar", "Goals", "Milestones"] },
-  { name: "XakPicks", description: "Share public photos and manage personal albums.", icon: ImageIcon, color: "text-pink-500", href: "/pics", features: ["Albums", "Photos", "Uploads"] },
-  { name: "Xakteir Classroom", description: "Educational portal for assignments, submissions, and grades.", icon: GraduationCap, color: "text-indigo-400", href: "/classroom", features: ["Assignments", "Submissions", "Grades"] },
-  { name: "Art Studio", description: "Generate images with AI.", icon: Palette, color: "text-rose-500", href: "/art", features: ["AI Art", "Creative"] },
-  { name: "Social", description: "Connect with the community.", icon: Users, color: "text-pink-500", href: "/social", features: ["Feed", "Profile"] },
-  { name: "Calculator", description: "Math and logic tool.", icon: Calculator, color: "text-blue-500", href: "/calculator", features: ["Math", "History"] },
-  { name: "Translate", description: "Language translation service.", icon: Languages, color: "text-blue-300", href: "/translate", features: ["Global", "Speech"] },
-  { name: "Notifications", description: "Manage alerts and messages.", icon: Bell, color: "text-primary", href: "/notifications", features: ["Updates", "Alerts"] },
+  { name: "Search", description: "Search the web and platform.", icon: Search, color: "text-blue-400", href: "/search", features: ["Fast", "AI Power"], logo: "/apps-logos/search.png" },
+  { name: "Chat", description: "Global messaging and community servers.", icon: MessageCircle, color: "text-emerald-400", href: "/chat", features: ["Servers", "Extensions", "AI"], logo: "/apps-logos/chat.png" },
+  { name: "Xak AI", description: "Smart assistant for code and tasks.", icon: Bot, color: "text-primary", href: "/ai-chat", features: ["Memory", "Context"], logo: "/apps-logos/ai-chat.png" },
+  { name: "Whiteboard", description: "Collaborative drawing and planning.", icon: Presentation, color: "text-amber-400", href: "/whiteboard", features: ["Live", "Tools"], logo: "/apps-logos/whiteboard.png" },
+  { name: "Suite", description: "Documents, spreadsheets, and forms.", icon: Layers, color: "text-primary", href: "/suite", features: ["Work", "Cloud"], logo: "/apps-logos/suite.png" },
+  { name: "Mail", description: "Email service for members.", icon: Mail, color: "text-blue-400", href: "/mail", features: ["Inbox", "Direct"], logo: "/apps-logos/mail.png" },
+  { name: "Drive", description: "Cloud storage for your files.", icon: HardDrive, color: "text-amber-500", href: "/drive", features: ["Secure", "Storage"], logo: "/apps-logos/drive.png" },
+  { name: "Games", description: "Play built-in and community games.", icon: Gamepad2, color: "text-purple-400", href: "/games", features: ["Arcade", "Multiplayer"], logo: "/apps-logos/games.png" },
+  { name: "XakCode", description: "AI-powered IDE with project hosting and deployment controls.", icon: Code2, color: "text-sky-400", href: "/xakcode", features: ["IDE", "AI", "Hosting"], logo: "/apps-logos/xakcode.png" },
+  { name: "XakView", description: "Watch YouTube videos, livestreams, and follow creators.", icon: Video, color: "text-rose-500", href: "/xakview", features: ["YouTube Embeds", "Livestreams", "Creators"], logo: "/apps-logos/xakview.png" },
+  { name: "Xakteir Plan", description: "Plan calendar and define goals with tracking milestones.", icon: Calendar, color: "text-amber-500", href: "/calendar", features: ["Calendar", "Goals", "Milestones"], logo: "/apps-logos/calendar.png" },
+  { name: "XakPicks", description: "Share public photos and manage personal albums.", icon: ImageIcon, color: "text-pink-500", href: "/pics", features: ["Albums", "Photos", "Uploads"], logo: "/apps-logos/pics.png" },
+  { name: "Xakteir Classroom", description: "Educational portal for assignments, submissions, and grades.", icon: GraduationCap, color: "text-indigo-400", href: "/classroom", features: ["Assignments", "Submissions", "Grades"], logo: "/apps-logos/classroom.png" },
+  { name: "Art Studio", description: "Generate images with AI.", icon: Palette, color: "text-rose-500", href: "/art", features: ["AI Art", "Creative"], logo: "/apps-logos/art.png" },
+  { name: "Social", description: "Connect with the community.", icon: Users, color: "text-pink-500", href: "/social", features: ["Feed", "Profile"], logo: "/apps-logos/social.png" },
+  { name: "Calculator", description: "Math and logic tool.", icon: Calculator, color: "text-blue-500", href: "/calculator", features: ["Math", "History"], logo: "/apps-logos/calculator.png" },
+  { name: "Translate", description: "Language translation service.", icon: Languages, color: "text-blue-300", href: "/translate", features: ["Global", "Speech"], logo: "/apps-logos/translate.png" },
+  { name: "Notifications", description: "Manage alerts and messages.", icon: Bell, color: "text-primary", href: "/notifications", features: ["Updates", "Alerts"], logo: "/apps-logos/notifications.png" },
 ];
 
 export default function AppsPage() {
+  const [imgError, setImgError] = useState<Record<string, boolean>>({});
   const firestore = useFirestore();
   const configRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -69,8 +70,18 @@ export default function AppsPage() {
     <div className="max-w-7xl mx-auto space-y-12 md:space-y-16 py-8 md:py-12 animate-in fade-in slide-in-from-bottom-4 duration-700 px-4 md:px-6 text-white pb-32">
       <header className="text-center space-y-6 md:space-y-8">
         <div className="flex justify-center mb-4 md:mb-6 animate-float">
-          <div className="w-16 h-16 md:w-24 md:h-24 rounded-[2rem] md:rounded-[3rem] bg-primary flex items-center justify-center shadow-2xl border-4 border-white/20">
-            <LayoutGrid className="w-8 h-8 md:w-12 md:h-12 text-white" />
+          <div className="w-16 h-16 md:w-24 md:h-24 rounded-[2rem] md:rounded-[3rem] bg-zinc-900 flex items-center justify-center shadow-2xl border-4 border-white/20">
+            <svg className="w-8 h-8 md:w-12 md:h-12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="3" width="5" height="5" rx="1.5" fill="#818cf8" />
+              <rect x="9.5" y="3" width="5" height="5" rx="1.5" fill="#22d3ee" />
+              <rect x="16" y="3" width="5" height="5" rx="1.5" fill="#c084fc" />
+              <rect x="3" y="9.5" width="5" height="5" rx="1.5" fill="#fbbf24" />
+              <rect x="9.5" y="9.5" width="5" height="5" rx="1.5" fill="#f43f5e" />
+              <rect x="16" y="9.5" width="5" height="5" rx="1.5" fill="#34d399" />
+              <rect x="3" y="16" width="5" height="5" rx="1.5" fill="#3b82f6" />
+              <rect x="9.5" y="16" width="5" height="5" rx="1.5" fill="#ec4899" />
+              <rect x="16" y="16" width="5" height="5" rx="1.5" fill="#2dd4bf" />
+            </svg>
           </div>
         </div>
         <div className="space-y-2 md:space-y-4">
@@ -84,13 +95,23 @@ export default function AppsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
         {ALL_APPS.map((app) => {
           const isLocked = lockedApps.includes(app.name);
+          const hasError = imgError[app.name];
           return (
             <div key={app.name} className={cn("group animate-in fade-in duration-500", isLocked && "cursor-not-allowed")}>
                 <Link href={isLocked ? "#" : app.href}>
                   <Card className={cn("h-full glass-card border-4 border-white/10 rounded-[2.5rem] md:rounded-[4rem] overflow-hidden transition-all duration-500 shadow-2xl flex flex-col hover:border-primary/50 hover:-translate-y-2 md:hover:-translate-y-4 bg-zinc-950/40", isLocked && "opacity-50 grayscale")}>
                     <CardHeader className="p-8 md:p-10 pb-0 flex-1">
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] md:rounded-[2.5rem] bg-secondary/50 flex items-center justify-center mb-6 md:mb-8 group-hover:bg-primary transition-all duration-500 border-4 border-white/10 shadow-xl">
-                        <app.icon className={cn("w-8 h-8 md:w-10 md:h-10 transition-colors duration-500", app.color, "group-hover:text-white")} />
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] md:rounded-[2.5rem] bg-secondary/50 flex items-center justify-center mb-6 md:mb-8 group-hover:bg-primary transition-all duration-500 border-4 border-white/10 shadow-xl overflow-hidden">
+                        {!app.logo || hasError ? (
+                          <app.icon className={cn("w-8 h-8 md:w-10 md:h-10 transition-colors duration-500", app.color, "group-hover:text-white")} />
+                        ) : (
+                          <img 
+                            src={app.logo} 
+                            alt={app.name} 
+                            className="w-10 h-10 md:w-12 md:h-12 object-contain transition-transform group-hover:scale-110 duration-500"
+                            onError={() => setImgError(prev => ({ ...prev, [app.name]: true }))}
+                          />
+                        )}
                       </div>
                       <CardTitle className="text-2xl md:text-3xl font-black text-white group-hover:text-primary transition-colors uppercase italic tracking-tighter leading-none">{app.name}</CardTitle>
                       <CardDescription className="text-sm md:text-lg font-bold leading-relaxed mt-3 md:mt-4 line-clamp-2 italic opacity-60 text-white">

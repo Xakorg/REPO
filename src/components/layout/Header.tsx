@@ -80,52 +80,53 @@ import { useSuiteStore } from "@/lib/store";
 
 const APPS = [
   // Main Apps
-  { name: "Mail", icon: Mail, href: "https://xakteir.com/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
-  { name: "Chat", icon: MessageCircle, href: "https://chat.xakteir.com/", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-  { name: "Xak AI", icon: Bot, href: "https://xakteir.com/ai-chat", color: "text-primary", bg: "bg-primary/10" },
-  { name: "Drive", icon: HardDrive, href: "https://xakteir.com/drive", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Games", icon: Gamepad2, href: "https://xakteir.com/games", color: "text-purple-400", bg: "bg-purple-400/10" },
-  { name: "Maps", icon: Map, href: "https://maps.xakteir.com/", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-  { name: "Apps", icon: LayoutGrid, href: "https://xakteir.com/apps", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "Mail", icon: Mail, href: "https://xakteir.com/mail", color: "text-blue-400", bg: "bg-blue-400/10", logo: "/apps-logos/mail.png" },
+  { name: "Chat", icon: MessageCircle, href: "https://chat.xakteir.com/", color: "text-emerald-400", bg: "bg-emerald-400/10", logo: "/apps-logos/chat.png" },
+  { name: "Xak AI", icon: Bot, href: "https://xakteir.com/ai-chat", color: "text-primary", bg: "bg-primary/10", logo: "/apps-logos/ai-chat.png" },
+  { name: "Drive", icon: HardDrive, href: "https://xakteir.com/drive", color: "text-amber-500", bg: "bg-amber-500/10", logo: "/apps-logos/drive.png" },
+  { name: "Games", icon: Gamepad2, href: "https://xakteir.com/games", color: "text-purple-400", bg: "bg-purple-400/10", logo: "/apps-logos/games.png" },
+  { name: "Maps", icon: Map, href: "https://maps.xakteir.com/", color: "text-emerald-400", bg: "bg-emerald-400/10", logo: "/apps-logos/maps.png" },
+  { name: "Apps", icon: LayoutGrid, href: "https://xakteir.com/apps", color: "text-indigo-400", bg: "bg-indigo-400/10", logo: "/apps-logos/apps.png" },
   
   // Other Apps
-  { name: "Search", icon: SearchIcon, href: "https://xakteir.com/search", color: "text-blue-400", bg: "bg-blue-400/10" },
-  { name: "Whiteboard", icon: Presentation, href: "https://xakteir.com/whiteboard", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Studio", icon: Sparkles, href: "/studio", color: "text-purple-500", bg: "bg-purple-500/10" },
-  { name: "Premium", icon: Award, href: "/premium", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Settings", icon: Settings, href: "/settings", color: "text-zinc-500", bg: "bg-zinc-500/10" },
-  { name: "XakSports", icon: Gamepad2, href: "/xaksports", color: "text-orange-400", bg: "bg-orange-400/10" },
-  { name: "XakArena", icon: Swords, href: "/xakarena", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "XakCode", icon: Code2, href: "https://code.xakteir.com/", color: "text-sky-400", bg: "bg-sky-500/10" },
-  { name: "XakView", icon: Video, href: "https://xakteir.com/xakview", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "Xakteir Plan", icon: CalendarIcon, href: "https://xakteir.com/calendar", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "XakPicks", icon: ImageIcon, href: "https://xakteir.com/pics", color: "text-pink-500", bg: "bg-pink-500/10" },
-  { name: "Classroom", icon: GraduationCap, href: "https://xakteir.com/classroom", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "Meet", icon: VideoIcon, href: "https://xakteir.com/meet", color: "text-rose-400", bg: "bg-rose-400/10" },
-  { name: "Translate", icon: Zap, href: "https://xakteir.com/translate", color: "text-blue-300", bg: "bg-blue-300/10" },
-  { name: "Calculator", icon: Calculator, href: "https://xakteir.com/calculator", color: "text-zinc-400", bg: "bg-zinc-400/10" },
-  { name: "Notes", icon: Code2, href: "https://xakteir.com/notes", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "Social", icon: Users, href: "https://xakteir.com/social", color: "text-pink-500", bg: "bg-pink-500/10" },
-  { name: "Shop", icon: ShoppingBag, href: "https://xakteir.com/shop", color: "text-emerald-500", bg: "bg-emerald-500/10" },
-  { name: "Dev Centre", icon: Code2, href: "/dev-centre", color: "text-blue-500", bg: "bg-blue-500/10" },
-  { name: "Art Studio", icon: Palette, href: "https://xakteir.com/art", color: "text-pink-400", bg: "bg-pink-400/10" },
-  { name: "Archive", icon: Archive, href: "https://xakteir.com/archive", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Authenticator", icon: ShieldCheck, href: "https://xakteir.com/authenticator", color: "text-teal-400", bg: "bg-teal-400/10" },
-  { name: "XakBuddy", icon: Heart, href: "https://xakteir.com/buddy", color: "text-rose-400", bg: "bg-rose-400/10" },
-  { name: "XakInstaller", icon: Download, href: "https://xakteir.com/installer", color: "text-sky-500", bg: "bg-sky-500/10" },
-  { name: "News", icon: Newspaper, href: "https://xakteir.com/news", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "Search Console", icon: SearchIcon, href: "https://xakteir.com/search-console", color: "text-teal-400", bg: "bg-teal-400/10" },
-  { name: "XakSign", icon: CheckSquare, href: "https://xakteir.com/sign", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Stream Feed", icon: Radio, href: "https://xakteir.com/stream", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "Tasks Tracker", icon: CheckSquare, href: "https://xakteir.com/tasks", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-  { name: "Weather", icon: Sun, href: "https://xakteir.com/weather", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Support", icon: HelpCircle, href: "https://xakteir.com/contact", color: "text-zinc-400", bg: "bg-zinc-400/10" },
-  { name: "Profile", icon: UserIcon, href: "https://xakteir.com/profile", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "About", icon: Info, href: "https://xakteir.com/about", color: "text-zinc-400", bg: "bg-zinc-400/10" }
+  { name: "Search", icon: SearchIcon, href: "https://xakteir.com/search", color: "text-blue-400", bg: "bg-blue-400/10", logo: "/apps-logos/search.png" },
+  { name: "Whiteboard", icon: Presentation, href: "https://xakteir.com/whiteboard", color: "text-amber-400", bg: "bg-amber-400/10", logo: "/apps-logos/whiteboard.png" },
+  { name: "Studio", icon: Sparkles, href: "/studio", color: "text-purple-500", bg: "bg-purple-500/10", logo: "/apps-logos/studio.png" },
+  { name: "Premium", icon: Award, href: "/premium", color: "text-amber-500", bg: "bg-amber-500/10", logo: "/apps-logos/premium.png" },
+  { name: "Settings", icon: Settings, href: "/settings", color: "text-zinc-500", bg: "bg-zinc-500/10", logo: "/apps-logos/settings.png" },
+  { name: "XakSports", icon: Gamepad2, href: "/xaksports", color: "text-orange-400", bg: "bg-orange-400/10", logo: "/apps-logos/xaksports.png" },
+  { name: "XakArena", icon: Swords, href: "/xakarena", color: "text-rose-500", bg: "bg-rose-500/10", logo: "/apps-logos/xakarena.png" },
+  { name: "XakCode", icon: Code2, href: "https://code.xakteir.com/", color: "text-sky-400", bg: "bg-sky-500/10", logo: "/apps-logos/xakcode.png" },
+  { name: "XakView", icon: Video, href: "https://xakteir.com/xakview", color: "text-rose-500", bg: "bg-rose-500/10", logo: "/apps-logos/xakview.png" },
+  { name: "Xakteir Plan", icon: CalendarIcon, href: "https://xakteir.com/calendar", color: "text-amber-500", bg: "bg-amber-500/10", logo: "/apps-logos/calendar.png" },
+  { name: "XakPicks", icon: ImageIcon, href: "https://xakteir.com/pics", color: "text-pink-500", bg: "bg-pink-500/10", logo: "/apps-logos/pics.png" },
+  { name: "Classroom", icon: GraduationCap, href: "https://xakteir.com/classroom", color: "text-indigo-400", bg: "bg-indigo-400/10", logo: "/apps-logos/classroom.png" },
+  { name: "Meet", icon: VideoIcon, href: "https://xakteir.com/meet", color: "text-rose-400", bg: "bg-rose-400/10", logo: "/apps-logos/meet.png" },
+  { name: "Translate", icon: Zap, href: "https://xakteir.com/translate", color: "text-blue-300", bg: "bg-blue-300/10", logo: "/apps-logos/translate.png" },
+  { name: "Calculator", icon: Calculator, href: "https://xakteir.com/calculator", color: "text-zinc-400", bg: "bg-zinc-400/10", logo: "/apps-logos/calculator.png" },
+  { name: "Notes", icon: Code2, href: "https://xakteir.com/notes", color: "text-indigo-400", bg: "bg-indigo-400/10", logo: "/apps-logos/notes.png" },
+  { name: "Social", icon: Users, href: "https://xakteir.com/social", color: "text-pink-500", bg: "bg-pink-500/10", logo: "/apps-logos/social.png" },
+  { name: "Shop", icon: ShoppingBag, href: "https://xakteir.com/shop", color: "text-emerald-500", bg: "bg-emerald-500/10", logo: "/apps-logos/shop.png" },
+  { name: "Dev Centre", icon: Code2, href: "/dev-centre", color: "text-blue-500", bg: "bg-blue-500/10", logo: "/apps-logos/dev-centre.png" },
+  { name: "Art Studio", icon: Palette, href: "https://xakteir.com/art", color: "text-pink-400", bg: "bg-pink-400/10", logo: "/apps-logos/art.png" },
+  { name: "Archive", icon: Archive, href: "https://xakteir.com/archive", color: "text-amber-500", bg: "bg-amber-500/10", logo: "/apps-logos/archive.png" },
+  { name: "Authenticator", icon: ShieldCheck, href: "https://xakteir.com/authenticator", color: "text-teal-400", bg: "bg-teal-400/10", logo: "/apps-logos/authenticator.png" },
+  { name: "XakBuddy", icon: Heart, href: "https://xakteir.com/buddy", color: "text-rose-400", bg: "bg-rose-400/10", logo: "/apps-logos/buddy.png" },
+  { name: "XakInstaller", icon: Download, href: "https://xakteir.com/installer", color: "text-sky-500", bg: "bg-sky-500/10", logo: "/apps-logos/installer.png" },
+  { name: "News", icon: Newspaper, href: "https://xakteir.com/news", color: "text-rose-500", bg: "bg-rose-500/10", logo: "/apps-logos/news.png" },
+  { name: "Search Console", icon: SearchIcon, href: "https://xakteir.com/search-console", color: "text-teal-400", bg: "bg-teal-400/10", logo: "/apps-logos/search-console.png" },
+  { name: "XakSign", icon: CheckSquare, href: "https://xakteir.com/sign", color: "text-amber-400", bg: "bg-amber-400/10", logo: "/apps-logos/sign.png" },
+  { name: "Stream Feed", icon: Radio, href: "https://xakteir.com/stream", color: "text-rose-500", bg: "bg-rose-500/10", logo: "/apps-logos/stream.png" },
+  { name: "Tasks Tracker", icon: CheckSquare, href: "https://xakteir.com/tasks", color: "text-emerald-400", bg: "bg-emerald-400/10", logo: "/apps-logos/tasks.png" },
+  { name: "Weather", icon: Sun, href: "https://xakteir.com/weather", color: "text-amber-400", bg: "bg-amber-400/10", logo: "/apps-logos/weather.png" },
+  { name: "Support", icon: HelpCircle, href: "https://xakteir.com/contact", color: "text-zinc-400", bg: "bg-zinc-400/10", logo: "/apps-logos/support.png" },
+  { name: "Profile", icon: UserIcon, href: "https://xakteir.com/profile", color: "text-indigo-400", bg: "bg-indigo-400/10", logo: "/apps-logos/profile.png" },
+  { name: "About", icon: Info, href: "https://xakteir.com/about", color: "text-zinc-400", bg: "bg-zinc-400/10", logo: "/apps-logos/about.png" }
 ];
 
 function AppLauncherContent({ router }: { router: any }) {
   const [appSearch, setAppSearch] = useState("");
+  const [imgError, setImgError] = useState<Record<string, boolean>>({});
   const filteredApps = APPS.filter(app => app.name.toLowerCase().includes(appSearch.toLowerCase()));
 
   return (
@@ -139,21 +140,33 @@ function AppLauncherContent({ router }: { router: any }) {
       </div>
       <div className="flex-1 max-h-[380px] overflow-y-auto pr-1">
         <div className="p-5 grid grid-cols-3 gap-3">
-          {filteredApps.map(app => (
-            <button 
-              key={app.name}
-              onClick={() => { 
-                navigateTo(app.href, router);
-              }} 
-              className={cn(
-                "p-3 rounded-2xl flex flex-col items-center gap-2 transition-all hover:bg-white/5 hover:scale-105 group/btn border-2 border-transparent hover:border-white/5 shadow-md", 
-                app.bg
-              )}
-            >
-              <app.icon className={cn("w-6 h-6", app.color)} />
-              <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover/btn:text-white truncate w-full text-center">{app.name}</span>
-            </button>
-          ))}
+          {filteredApps.map(app => {
+            const hasError = imgError[app.name];
+            return (
+              <button 
+                key={app.name}
+                onClick={() => { 
+                  navigateTo(app.href, router);
+                }} 
+                className={cn(
+                  "p-3 rounded-2xl flex flex-col items-center gap-2 transition-all hover:bg-white/5 hover:scale-105 group/btn border-2 border-transparent hover:border-white/5 shadow-md", 
+                  app.bg
+                )}
+              >
+                {!app.logo || hasError ? (
+                  <app.icon className={cn("w-6 h-6 transition-colors duration-300", app.color, "group-hover/btn:text-white")} />
+                ) : (
+                  <img 
+                    src={app.logo} 
+                    alt={app.name} 
+                    className="w-7 h-7 object-contain transition-transform group-hover/btn:scale-110 duration-300"
+                    onError={() => setImgError(prev => ({ ...prev, [app.name]: true }))}
+                  />
+                )}
+                <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover/btn:text-white truncate w-full text-center">{app.name}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -285,14 +298,17 @@ export function Header() {
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="ghost" className="h-12 px-8 bg-zinc-900/60 border-2 border-white/10 rounded-2xl transition-all flex items-center gap-4 shadow-xl group">
-                  <LayoutGrid 
-                    className="w-6 h-6 transition-all group-hover:scale-110" 
-                    style={{
-                      stroke: "url(#mesh-gradient)",
-                      fill: "url(#mesh-gradient)",
-                      fillOpacity: 0.95
-                    }}
-                  />
+                  <div className="w-5 h-5 grid grid-cols-3 gap-[3px] transition-transform duration-300 group-hover:scale-110 shrink-0">
+                    <div className="rounded-[2px] bg-white/80 group-hover:bg-[#818cf8] transition-colors duration-300 w-1.5 h-1.5 shadow-[0_0_4px_rgba(129,140,248,0.2)]"></div>
+                    <div className="rounded-[2px] bg-white/80 group-hover:bg-[#22d3ee] transition-colors duration-300 w-1.5 h-1.5"></div>
+                    <div className="rounded-[2px] bg-white/80 group-hover:bg-[#c084fc] transition-colors duration-300 w-1.5 h-1.5"></div>
+                    <div className="rounded-[2px] bg-white/80 group-hover:bg-[#fbbf24] transition-colors duration-300 w-1.5 h-1.5"></div>
+                    <div className="rounded-[2px] bg-white/80 group-hover:bg-[#f43f5e] transition-colors duration-300 w-1.5 h-1.5"></div>
+                    <div className="rounded-[2px] bg-white/80 group-hover:bg-[#34d399] transition-colors duration-300 w-1.5 h-1.5"></div>
+                    <div className="rounded-[2px] bg-white/80 group-hover:bg-[#3b82f6] transition-colors duration-300 w-1.5 h-1.5"></div>
+                    <div className="rounded-[2px] bg-white/80 group-hover:bg-[#ec4899] transition-colors duration-300 w-1.5 h-1.5"></div>
+                    <div className="rounded-[2px] bg-white/80 group-hover:bg-[#2dd4bf] transition-colors duration-300 w-1.5 h-1.5"></div>
+                  </div>
                   <span className="text-[12px] font-black uppercase tracking-widest text-white/90">Apps</span>
                 </Button>
               </PopoverTrigger>
@@ -306,14 +322,17 @@ export function Header() {
             <Sheet>
               <SheetTrigger asChild>
                  <Button variant="ghost" size="icon" className="w-12 h-12 bg-zinc-900/60 border-2 border-white/10 rounded-2xl shadow-xl group">
-                   <Menu 
-                     className="w-6 h-6 transition-all group-active:scale-95" 
-                     style={{
-                       stroke: "url(#mesh-gradient)",
-                       fill: "url(#mesh-gradient)",
-                       fillOpacity: 0.95
-                     }}
-                   />
+                    <div className="w-5 h-5 grid grid-cols-3 gap-[3px] transition-transform duration-300 group-hover:scale-110 shrink-0">
+                      <div className="rounded-[2px] bg-white/80 group-hover:bg-[#818cf8] transition-colors duration-300 w-1.5 h-1.5 shadow-[0_0_4px_rgba(129,140,248,0.2)]"></div>
+                      <div className="rounded-[2px] bg-white/80 group-hover:bg-[#22d3ee] transition-colors duration-300 w-1.5 h-1.5"></div>
+                      <div className="rounded-[2px] bg-white/80 group-hover:bg-[#c084fc] transition-colors duration-300 w-1.5 h-1.5"></div>
+                      <div className="rounded-[2px] bg-white/80 group-hover:bg-[#fbbf24] transition-colors duration-300 w-1.5 h-1.5"></div>
+                      <div className="rounded-[2px] bg-white/80 group-hover:bg-[#f43f5e] transition-colors duration-300 w-1.5 h-1.5"></div>
+                      <div className="rounded-[2px] bg-white/80 group-hover:bg-[#34d399] transition-colors duration-300 w-1.5 h-1.5"></div>
+                      <div className="rounded-[2px] bg-white/80 group-hover:bg-[#3b82f6] transition-colors duration-300 w-1.5 h-1.5"></div>
+                      <div className="rounded-[2px] bg-white/80 group-hover:bg-[#ec4899] transition-colors duration-300 w-1.5 h-1.5"></div>
+                      <div className="rounded-[2px] bg-white/80 group-hover:bg-[#2dd4bf] transition-colors duration-300 w-1.5 h-1.5"></div>
+                    </div>
                  </Button>
               </SheetTrigger>
               <SheetContent side="left" className="bg-[#0a0a15] border-white/10 p-0 w-[400px] shadow-[0_0_100px_rgba(0,0,0,0.8)]">

@@ -14,7 +14,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate-logos": "node scripts/generate-logos.js"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.2.0",
@@ -85,6 +86,7 @@
     "require-in-the-middle": "^7.3.0",
     "resend": "^6.12.4",
     "server-only": "^0.0.1",
+    "sharp": "^0.35.2",
     "simple-peer": "^9.11.1",
     "stripe": "^17.7.0",
     "tailwind-merge": "^3.0.1",

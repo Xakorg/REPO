@@ -106,7 +106,7 @@ export default function DevCentreLayout({ children }: { children: React.ReactNod
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 p-8 md:p-12 overflow-y-auto animate-in fade-in duration-500">
+      <div className="flex-1 p-8 md:p-12 overflow-y-auto animate-in fade-in duration-500" key={pathname}>
         {children}
       </div>
     </div>

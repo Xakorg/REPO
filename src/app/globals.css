@@ -224,3 +224,55 @@
 .light-theme .bg-white\/10 {
   background-color: rgba(0, 0, 0, 0.08) !important;
 }
+
+/* Dynamic Pet Animations */
+@keyframes pet-orbit {
+  0% {
+    transform: translate(-100px, 35px) scale(1);
+    z-index: 40;
+  }
+  25% {
+    transform: translate(0px, 60px) scale(1.15);
+    z-index: 40;
+  }
+  50% {
+    transform: translate(100px, 35px) scale(1);
+    z-index: 40;
+  }
+  75% {
+    transform: translate(0px, -45px) scale(0.85);
+    z-index: 10;
+  }
+  100% {
+    transform: translate(-100px, 35px) scale(1);
+    z-index: 40;
+  }
+}
+.animate-pet-orbit {
+  animation: pet-orbit 8s linear infinite;
+}
+
+@keyframes pet-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-pet-bob {
+  animation: pet-bob 0.8s ease-in-out infinite;
+}
+
+@keyframes tail-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(20deg); }
+}
+.animate-tail-wiggle {
+  transform-origin: bottom left;
+  animation: tail-wiggle 0.3s ease-in-out infinite;
+}
+
+@keyframes pet-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.02); }
+}
+.animate-pet-float {
+  animation: pet-float 2s ease-in-out infinite;
+}

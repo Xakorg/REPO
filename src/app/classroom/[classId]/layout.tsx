@@ -131,7 +131,7 @@ export default function ClassroomLayout({
       </div>
 
       {/* Renders children sub-pages */}
-      <div className="pt-2">
+      <div className="pt-2" key={pathname}>
         {children}
       </div>
     </div>
