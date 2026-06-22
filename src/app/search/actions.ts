@@ -34,6 +34,40 @@ export async function performWebSearch(query: string) {
       continue;
     }
   }
+
+  // Fallback to DuckDuckGo HTML if all SearxNG instances fail
+  try {
+    const res = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    });
+    if (res.ok) {
+      const html = await res.text();
+      const results = [];
+      const blockRegex = /<div class="result__body">.*?<\/div>\s*<\/div>/gs;
+      let blockMatch;
+      while ((blockMatch = blockRegex.exec(html)) !== null) {
+        const block = blockMatch[0];
+        const titleMatch = block.match(/<h2 class="result__title">\s*<a[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/s);
+        const snippetMatch = block.match(/<a class="result__snippet[^>]*>(.*?)<\/a>/s);
+        if (titleMatch && snippetMatch) {
+          let url = titleMatch[1];
+          if (url.startsWith('//duckduckgo.com/l/?uddg=')) {
+            url = decodeURIComponent(url.split('uddg=')[1].split('&')[0]);
+          }
+          results.push({
+            url: url,
+            title: titleMatch[2].replace(/<[^>]+>/g, '').trim(),
+            description: snippetMatch[1].replace(/<[^>]+>/g, '').trim(),
+            engine: 'duckduckgo'
+          });
+        }
+      }
+      if (results.length > 0) return results;
+    }
+  } catch (e) {
+    console.error('DuckDuckGo fallback failed', e);
+  }
+
   return [];
 }
 

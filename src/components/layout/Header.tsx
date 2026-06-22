@@ -80,53 +80,52 @@ import { useSuiteStore } from "@/lib/store";
 
 const APPS = [
   // Main Apps
-  { name: "Mail", icon: Mail, href: "/mail", color: "text-blue-400", bg: "bg-blue-400/10", logo: "/apps-logos/mail.png" },
-  { name: "Chat", icon: MessageCircle, href: "/chat", color: "text-emerald-400", bg: "bg-emerald-400/10", logo: "/apps-logos/chat.png" },
-  { name: "Xak AI", icon: Bot, href: "/ai-chat", color: "text-primary", bg: "bg-primary/10", logo: "/apps-logos/ai-chat.png" },
-  { name: "Drive", icon: HardDrive, href: "/drive", color: "text-amber-500", bg: "bg-amber-500/10", logo: "/apps-logos/drive.png" },
-  { name: "Games", icon: Gamepad2, href: "/games", color: "text-purple-400", bg: "bg-purple-400/10", logo: "/apps-logos/games.png" },
-  { name: "Maps", icon: Map, href: "/map", color: "text-emerald-400", bg: "bg-emerald-400/10", logo: "/apps-logos/maps.png" },
-  { name: "Apps", icon: LayoutGrid, href: "/apps", color: "text-indigo-400", bg: "bg-indigo-400/10", logo: "/apps-logos/apps.png" },
+  { name: "Mail", icon: Mail, href: "/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
+  { name: "Chat", icon: MessageCircle, href: "/chat", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { name: "Xak AI", icon: Bot, href: "/ai-chat", color: "text-primary", bg: "bg-primary/10" },
+  { name: "Drive", icon: HardDrive, href: "/drive", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "Games", icon: Gamepad2, href: "/games", color: "text-purple-400", bg: "bg-purple-400/10" },
+  { name: "Maps", icon: Map, href: "/map", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { name: "Apps", icon: LayoutGrid, href: "/apps", color: "text-indigo-400", bg: "bg-indigo-400/10" },
   
   // Other Apps
-  { name: "Search", icon: SearchIcon, href: "/search", color: "text-blue-400", bg: "bg-blue-400/10", logo: "/apps-logos/search.png" },
-  { name: "Whiteboard", icon: Presentation, href: "/whiteboard", color: "text-amber-400", bg: "bg-amber-400/10", logo: "/apps-logos/whiteboard.png" },
-  { name: "Studio", icon: Sparkles, href: "/studio", color: "text-purple-500", bg: "bg-purple-500/10", logo: "/apps-logos/studio.png" },
-  { name: "Premium", icon: Award, href: "/premium", color: "text-amber-500", bg: "bg-amber-500/10", logo: "/apps-logos/premium.png" },
-  { name: "Settings", icon: Settings, href: "/settings", color: "text-zinc-500", bg: "bg-zinc-500/10", logo: "/apps-logos/settings.png" },
-  { name: "XakSports", icon: Gamepad2, href: "/xaksports", color: "text-orange-400", bg: "bg-orange-400/10", logo: "/apps-logos/xaksports.png" },
-  { name: "XakArena", icon: Swords, href: "/xakarena", color: "text-rose-500", bg: "bg-rose-500/10", logo: "/apps-logos/xakarena.png" },
-  { name: "XakCode", icon: Code2, href: "/xakcode", color: "text-sky-400", bg: "bg-sky-500/10", logo: "/apps-logos/xakcode.png" },
-  { name: "XakView", icon: Video, href: "/xakview", color: "text-rose-500", bg: "bg-rose-500/10", logo: "/apps-logos/xakview.png" },
-  { name: "Xakteir Plan", icon: CalendarIcon, href: "/calendar", color: "text-amber-500", bg: "bg-amber-500/10", logo: "/apps-logos/calendar.png" },
-  { name: "XakPicks", icon: ImageIcon, href: "/pics", color: "text-pink-500", bg: "bg-pink-500/10", logo: "/apps-logos/pics.png" },
-  { name: "Classroom", icon: GraduationCap, href: "/classroom", color: "text-indigo-400", bg: "bg-indigo-400/10", logo: "/apps-logos/classroom.png" },
-  { name: "Meet", icon: VideoIcon, href: "/meet", color: "text-rose-400", bg: "bg-rose-400/10", logo: "/apps-logos/meet.png" },
-  { name: "Translate", icon: Zap, href: "/translate", color: "text-blue-300", bg: "bg-blue-300/10", logo: "/apps-logos/translate.png" },
-  { name: "Calculator", icon: Calculator, href: "/calculator", color: "text-zinc-400", bg: "bg-zinc-400/10", logo: "/apps-logos/calculator.png" },
-  { name: "Notes", icon: Code2, href: "/notes", color: "text-indigo-400", bg: "bg-indigo-400/10", logo: "/apps-logos/notes.png" },
-  { name: "Social", icon: Users, href: "/social", color: "text-pink-500", bg: "bg-pink-500/10", logo: "/apps-logos/social.png" },
-  { name: "Shop", icon: ShoppingBag, href: "/shop", color: "text-emerald-500", bg: "bg-emerald-500/10", logo: "/apps-logos/shop.png" },
-  { name: "Dev Centre", icon: Code2, href: "/dev-centre", color: "text-blue-500", bg: "bg-blue-500/10", logo: "/apps-logos/dev-centre.png" },
-  { name: "Art Studio", icon: Palette, href: "/art", color: "text-pink-400", bg: "bg-pink-400/10", logo: "/apps-logos/art.png" },
-  { name: "Archive", icon: Archive, href: "/archive", color: "text-amber-500", bg: "bg-amber-500/10", logo: "/apps-logos/archive.png" },
-  { name: "Authenticator", icon: ShieldCheck, href: "/authenticator", color: "text-teal-400", bg: "bg-teal-400/10", logo: "/apps-logos/authenticator.png" },
-  { name: "XakBuddy", icon: Heart, href: "/buddy", color: "text-rose-400", bg: "bg-rose-400/10", logo: "/apps-logos/buddy.png" },
-  { name: "XakInstaller", icon: Download, href: "/installer", color: "text-sky-500", bg: "bg-sky-500/10", logo: "/apps-logos/installer.png" },
-  { name: "News", icon: Newspaper, href: "/news", color: "text-rose-500", bg: "bg-rose-500/10", logo: "/apps-logos/news.png" },
-  { name: "Search Console", icon: SearchIcon, href: "/search-console", color: "text-teal-400", bg: "bg-teal-400/10", logo: "/apps-logos/search-console.png" },
-  { name: "XakSign", icon: CheckSquare, href: "/sign", color: "text-amber-400", bg: "bg-amber-400/10", logo: "/apps-logos/sign.png" },
-  { name: "Stream Feed", icon: Radio, href: "/stream", color: "text-rose-500", bg: "bg-rose-500/10", logo: "/apps-logos/stream.png" },
-  { name: "Tasks Tracker", icon: CheckSquare, href: "/tasks", color: "text-emerald-400", bg: "bg-emerald-400/10", logo: "/apps-logos/tasks.png" },
-  { name: "Weather", icon: Sun, href: "/weather", color: "text-amber-400", bg: "bg-amber-400/10", logo: "/apps-logos/weather.png" },
-  { name: "Support", icon: HelpCircle, href: "/contact", color: "text-zinc-400", bg: "bg-zinc-400/10", logo: "/apps-logos/support.png" },
-  { name: "Profile", icon: UserIcon, href: "/profile", color: "text-indigo-400", bg: "bg-indigo-400/10", logo: "/apps-logos/profile.png" },
-  { name: "About", icon: Info, href: "/about", color: "text-zinc-400", bg: "bg-zinc-400/10", logo: "/apps-logos/about.png" }
+  { name: "Search", icon: SearchIcon, href: "/search", color: "text-blue-400", bg: "bg-blue-400/10" },
+  { name: "Whiteboard", icon: Presentation, href: "/whiteboard", color: "text-amber-400", bg: "bg-amber-400/10" },
+  { name: "Studio", icon: Sparkles, href: "/studio", color: "text-purple-500", bg: "bg-purple-500/10" },
+  { name: "Premium", icon: Award, href: "/premium", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "Settings", icon: Settings, href: "/settings", color: "text-zinc-500", bg: "bg-zinc-500/10" },
+  { name: "XakSports", icon: Gamepad2, href: "/xaksports", color: "text-orange-400", bg: "bg-orange-400/10" },
+  { name: "XakArena", icon: Swords, href: "/xakarena", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "XakCode", icon: Code2, href: "/xakcode", color: "text-sky-400", bg: "bg-sky-500/10" },
+  { name: "XakView", icon: Video, href: "/xakview", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Xakteir Plan", icon: CalendarIcon, href: "/calendar", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "XakPicks", icon: ImageIcon, href: "/pics", color: "text-pink-500", bg: "bg-pink-500/10" },
+  { name: "Classroom", icon: GraduationCap, href: "/classroom", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "Meet", icon: VideoIcon, href: "/meet", color: "text-rose-400", bg: "bg-rose-400/10" },
+  { name: "Translate", icon: Zap, href: "/translate", color: "text-blue-300", bg: "bg-blue-300/10" },
+  { name: "Calculator", icon: Calculator, href: "/calculator", color: "text-zinc-400", bg: "bg-zinc-400/10" },
+  { name: "Notes", icon: Code2, href: "/notes", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "Social", icon: Users, href: "/social", color: "text-pink-500", bg: "bg-pink-500/10" },
+  { name: "Shop", icon: ShoppingBag, href: "/shop", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  { name: "Dev Centre", icon: Code2, href: "/dev-centre", color: "text-blue-500", bg: "bg-blue-500/10" },
+  { name: "Art Studio", icon: Palette, href: "/art", color: "text-pink-400", bg: "bg-pink-400/10" },
+  { name: "Archive", icon: Archive, href: "/archive", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "Authenticator", icon: ShieldCheck, href: "/authenticator", color: "text-teal-400", bg: "bg-teal-400/10" },
+  { name: "XakBuddy", icon: Heart, href: "/buddy", color: "text-rose-400", bg: "bg-rose-400/10" },
+  { name: "XakInstaller", icon: Download, href: "/installer", color: "text-sky-500", bg: "bg-sky-500/10" },
+  { name: "News", icon: Newspaper, href: "/news", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Search Console", icon: SearchIcon, href: "/search-console", color: "text-teal-400", bg: "bg-teal-400/10" },
+  { name: "XakSign", icon: CheckSquare, href: "/sign", color: "text-amber-400", bg: "bg-amber-400/10" },
+  { name: "Stream Feed", icon: Radio, href: "/stream", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Tasks Tracker", icon: CheckSquare, href: "/tasks", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { name: "Weather", icon: Sun, href: "/weather", color: "text-amber-400", bg: "bg-amber-400/10" },
+  { name: "Support", icon: HelpCircle, href: "/contact", color: "text-zinc-400", bg: "bg-zinc-400/10" },
+  { name: "Profile", icon: UserIcon, href: "/profile", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "About", icon: Info, href: "/about", color: "text-zinc-400", bg: "bg-zinc-400/10" }
 ];
 
 function AppLauncherContent({ router }: { router: any }) {
   const [appSearch, setAppSearch] = useState("");
-  const [imgError, setImgError] = useState<Record<string, boolean>>({});
   const filteredApps = APPS.filter(app => app.name.toLowerCase().includes(appSearch.toLowerCase()));
 
   return (
@@ -141,7 +140,6 @@ function AppLauncherContent({ router }: { router: any }) {
       <div className="flex-1 max-h-[380px] overflow-y-auto pr-1">
         <div className="p-5 grid grid-cols-3 gap-3">
           {filteredApps.map(app => {
-            const hasError = imgError[app.name];
             return (
               <button 
                 key={app.name}
@@ -153,21 +151,7 @@ function AppLauncherContent({ router }: { router: any }) {
                   app.bg
                 )}
               >
-                {!app.logo || hasError ? (
-                  <app.icon className={cn("w-6 h-6 transition-colors duration-300", app.color, "group-hover/btn:text-white")} />
-                ) : (
-                  <svg className="w-7 h-7 transition-transform group-hover/btn:scale-110 duration-300" viewBox="0 0 512 512">
-                    <image 
-                      href={app.logo} 
-                      x="0" 
-                      y="0" 
-                      height="512" 
-                      width="512"
-                      // Since onError is not directly supported on SVG <image> elements in all browsers,
-                      // we can use a hidden dummy img element or standard fallback behavior.
-                    />
-                  </svg>
-                )}
+                <app.icon className={cn("w-6 h-6 transition-transform group-hover/btn:scale-110 duration-300", app.color)} />
                 <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover/btn:text-white truncate w-full text-center">{app.name}</span>
               </button>
             );

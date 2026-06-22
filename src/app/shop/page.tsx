@@ -123,6 +123,8 @@ export default function ShopPage() {
   const [giftTarget, setGiftTarget] = useState("");
   const [timeRemaining, setTimeRemaining] = useState("");
 
+  const [previewSetId, setPreviewSetId] = useState<string | null>(null);
+
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "users", user.uid);
@@ -179,18 +181,83 @@ export default function ShopPage() {
     return () => clearInterval(interval);
   }, []);
 
+  const SHOP_SETS = [
+    {
+      id: "cyberpunk",
+      name: "Cyberpunk Pack",
+      description: "Equip your avatar with glowing devil horns, digital glitches, a wiggling holographic Cyber Wolf companion, and the synthwave sunset.",
+      price: 9000,
+      items: [
+        { type: 'hat', key: 'horns' },
+        { type: 'aura', key: 'glitch' },
+        { type: 'nameplate', key: 'pro' },
+        { type: 'pet', key: 'cyberwolf' },
+        { type: 'banner', key: 'retrowave' }
+      ],
+      itemsList: ["Devil Horns", "Cyber Glitch Aura", "Pro Nameplate", "Cyber Wolf Pet", "Retrowave Sunset Banner"],
+      bg: "bg-gradient-to-br from-[#0c0a09] to-[#450a0a]",
+      accentColor: "#f43f5e",
+      rarity: "Exotic"
+    },
+    {
+      id: "cosmic",
+      name: "Cosmic Odyssey",
+      description: "Traverse the final frontier with the Galactic Crown, shifting phantom mist, an orbiting Void Entity, and an endless stellar backdrop.",
+      price: 11000,
+      items: [
+        { type: 'hat', key: 'crown' },
+        { type: 'aura', key: 'glitch' },
+        { type: 'nameplate', key: 'pro' },
+        { type: 'pet', key: 'voidentity' },
+        { type: 'banner', key: 'galactic' }
+      ],
+      itemsList: ["Galactic Crown", "Cosmic Void Aura", "Pro Nameplate", "Void Entity Pet", "Galactic Void Banner"],
+      bg: "bg-gradient-to-br from-[#0a0a15] to-[#1e1b4b]",
+      accentColor: "#a855f7",
+      rarity: "Exotic"
+    },
+    {
+      id: "royal",
+      name: "Royal Golden Elite",
+      description: "Drape yourself in royal heritage. Includes the golden crown, holy golden glow aura, and a cute Mini Dragon companion.",
+      price: 8000,
+      items: [
+        { type: 'hat', key: 'crown' },
+        { type: 'aura', key: 'gold' },
+        { type: 'nameplate', key: 'gold' },
+        { type: 'pet', key: 'minidragon' },
+        { type: 'banner', key: 'matrix' }
+      ],
+      itemsList: ["Royal Crown", "Divine Shine Aura", "Gold Elite Tag", "Mini Dragon Pet", "Matrix Rain Banner"],
+      bg: "bg-gradient-to-br from-[#1c1917] to-[#2d1a00]",
+      accentColor: "#f59e0b",
+      rarity: "Mythic"
+    }
+  ];
+
   const displayedItems = activeCategory === "Weekly" 
     ? weekItems 
     : ALL_SHOP_ITEMS.filter(i => activeCategory === "All" || i.category === activeCategory);
 
-  const [selectedItem, setSelectedItem] = useState(displayedItems[0]);
+  const [selectedItem, setSelectedItem] = useState<any>(activeCategory === "Featured Sets" ? null : displayedItems[0]);
 
   useEffect(() => {
+    if (activeCategory === "Featured Sets") {
+      setPreviewSetId(SHOP_SETS[0].id);
+      setSelectedItem(null);
+    } else {
+      setPreviewSetId(null);
       setSelectedItem(displayedItems[0]);
+    }
   }, [activeCategory, displayedItems]);
 
+  const handleSelectItem = (item: any) => {
+    setPreviewSetId(null);
+    setSelectedItem(item);
+  };
+
   const handleSyncItem = async () => {
-    if (!user || !firestore) return;
+    if (!user || !firestore || !selectedItem) return;
     if (balance < selectedItem.price) {
       toast({ variant: "destructive", title: "Low Credits" });
       return;
@@ -210,8 +277,32 @@ export default function ShopPage() {
     }
   };
 
+  const handleBuyBundle = async (bundle: any) => {
+    if (!user || !firestore) return;
+    if (balance < bundle.price) {
+      toast({ variant: "destructive", title: "Low Credits" });
+      return;
+    }
+    
+    setIsSyncing(true);
+    try {
+      const updateObj: Record<string, any> = {
+        currencyBalance: increment(-bundle.price)
+      };
+      bundle.items.forEach((item: any) => {
+        updateObj[item.type] = item.key;
+      });
+      await updateDoc(doc(firestore, "users", user.uid), updateObj);
+      toast({ title: "Bundle Acquired!", description: `All items in ${bundle.name} equipped.` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Sync Failed" });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handleGift = async () => {
-    if (!user || !firestore || !giftTarget.trim()) return;
+    if (!user || !firestore || !selectedItem || !giftTarget.trim()) return;
     if (balance < selectedItem.price) {
       toast({ variant: "destructive", title: "Low Credits" });
       return;
@@ -254,7 +345,7 @@ export default function ShopPage() {
     }
   };
 
-  const categories = ["Weekly", "All", "Pets", "Banners", "Auras", "Name Plates", "Hats", "Decorations"];
+  const categories = ["Weekly", "Featured Sets", "All", "Pets", "Banners", "Auras", "Name Plates", "Hats", "Decorations"];
 
   const getRarityGlow = (rarity: string) => {
     switch (rarity) {
@@ -278,8 +369,37 @@ export default function ShopPage() {
     }
   };
 
+  const previewSet = useMemo(() => {
+    if (!previewSetId) return null;
+    return SHOP_SETS.find(s => s.id === previewSetId);
+  }, [previewSetId]);
+
+  const previewHat = previewSet 
+    ? previewSet.items.find(i => i.type === 'hat')?.key 
+    : (selectedItem?.type === 'hat' ? selectedItem.key : userData?.hat);
+
+  const previewAura = previewSet 
+    ? previewSet.items.find(i => i.type === 'aura')?.key 
+    : (selectedItem?.type === 'aura' ? selectedItem.key : userData?.aura);
+
+  const previewDecor = previewSet 
+    ? previewSet.items.find(i => i.type === 'decor')?.key 
+    : (selectedItem?.type === 'decor' ? selectedItem.key : userData?.decor);
+
+  const previewPet = previewSet 
+    ? previewSet.items.find(i => i.type === 'pet')?.key 
+    : (selectedItem?.type === 'pet' ? selectedItem.key : userData?.pet);
+
+  const previewBanner = previewSet 
+    ? previewSet.items.find(i => i.type === 'banner')?.key 
+    : (selectedItem?.type === 'banner' ? selectedItem.key : userData?.banner);
+
+  const previewNameplate = previewSet 
+    ? previewSet.items.find(i => i.type === 'nameplate')?.key 
+    : (selectedItem?.type === 'nameplate' ? selectedItem.key : userData?.nameplate);
+
   return (
-    <div className="max-w-[1600px] mx-auto space-y-12 py-12 animate-fade-in pb-32 px-6">
+    <div className="max-w-[1600px] mx-auto space-y-12 py-12 animate-fade-in pb-32 px-6 text-white">
       <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 bg-card/40 backdrop-blur-xl p-12 rounded-[4rem] border border-white/5 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none"><ShoppingBag className="w-96 h-96 -rotate-12 text-primary" /></div>
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
@@ -350,55 +470,128 @@ export default function ShopPage() {
 
           <motion.div layout className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <AnimatePresence mode="popLayout">
-            {displayedItems.map((item, i) => (
-              <motion.div
-                key={`${item.id}-${i}`}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.5), type: "spring" }}
-              >
-              <Card 
-                onClick={() => setSelectedItem(item)} 
-                className={cn(
-                    "glass-card cursor-pointer rounded-[3rem] overflow-hidden transition-all duration-500 group h-full", 
-                    selectedItem?.id === item.id 
-                        ? cn("scale-[1.02] border-2", getRarityGlow(item.rarity))
-                        : "border border-white/5 hover:border-white/20 hover:scale-[1.01]"
-                )}
-              >
-                <div className={cn("h-56 flex items-center justify-center relative overflow-hidden", item.bg)}>
-                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20" />
-                  <motion.div 
-                    whileHover={{ scale: 1.2, rotate: 5 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                    className={cn("w-20 h-20 flex items-center justify-center drop-shadow-xl", item.color)}
+            {activeCategory === "Featured Sets" ? (
+              SHOP_SETS.map((set, i) => (
+                <motion.div
+                  key={set.id}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.4, delay: i * 0.1, type: "spring" }}
+                >
+                  <Card 
+                    onClick={() => {
+                      setPreviewSetId(set.id);
+                      setSelectedItem(null);
+                    }}
+                    className={cn(
+                      "glass-card cursor-pointer rounded-[3rem] overflow-hidden transition-all duration-500 group h-full flex flex-col justify-between border-2", 
+                      previewSetId === set.id 
+                        ? "shadow-[0_0_40px_rgba(245,158,11,0.5)] border-amber-500/50 scale-[1.02]"
+                        : "border-white/5 hover:border-white/20 hover:scale-[1.01]"
+                    )}
                   >
-                     {item.type === 'hat' ? <Award className="w-16 h-16" /> : 
-                      item.type === 'decor' ? <Sparkles className="w-16 h-16" /> :
-                      item.type === 'aura' ? <Flame className="w-16 h-16" /> :
-                      item.type === 'nameplate' ? <User className="w-16 h-16" /> :
-                      <User className="w-16 h-16" />}
-                  </motion.div>
-                  <Badge className={cn("absolute top-6 right-6 border-none text-[10px] font-black uppercase px-3 py-1 shadow-lg", getRarityBadge(item.rarity))}>
-                      {item.rarity}
-                  </Badge>
-                </div>
-                <CardContent className="p-8">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-2xl font-black text-foreground uppercase italic tracking-tighter leading-none pr-4">{item.name}</h3>
-                    <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/5 shadow-inner shrink-0">
-                      <Zap className="w-4 h-4 text-amber-500 fill-amber-500/50" />
-                      <span className="text-lg font-black italic">{item.price}</span>
+                    <div className={cn("h-48 flex flex-col justify-center p-8 relative overflow-hidden", set.bg)}>
+                      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20" />
+                      <div className="flex justify-between items-start z-10">
+                        <Badge className="bg-indigo-600 text-white animate-pulse shadow-[0_0_15px_rgba(79,70,229,0.8)] border-none text-[10px] font-black uppercase px-3 py-1">
+                          {set.rarity}
+                        </Badge>
+                        <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/5 shadow-inner">
+                          <Zap className="w-4 h-4 text-amber-500 fill-amber-500/50" />
+                          <span className="text-lg font-black italic">{set.price}</span>
+                        </div>
+                      </div>
+                      <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter mt-6 z-10 leading-none">{set.name}</h3>
                     </div>
+                    <CardContent className="p-8 flex-1 flex flex-col justify-between gap-6">
+                      <p className="text-sm text-muted-foreground font-bold italic leading-relaxed opacity-85">{set.description}</p>
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Includes:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {set.itemsList.map((item, idx) => (
+                            <span key={idx} className="text-[8px] font-black uppercase tracking-[0.1em] text-white/70 bg-white/5 border border-white/10 px-2 py-1 rounded-md">{item}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="p-8 pt-0 flex gap-4">
+                      <Button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewSetId(set.id);
+                          setSelectedItem(null);
+                        }}
+                        variant="outline" 
+                        className="flex-1 h-12 rounded-xl border-white/10 text-xs font-black uppercase tracking-wider hover:bg-white/5 bg-transparent"
+                      >
+                        Preview
+                      </Button>
+                      <Button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBuyBundle(set);
+                        }}
+                        className="flex-1 h-12 bg-amber-500 hover:bg-amber-400 text-black font-black uppercase text-xs tracking-wider"
+                      >
+                        Buy Bundle
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </motion.div>
+              ))
+            ) : (
+              displayedItems.map((item, i) => (
+                <motion.div
+                  key={`${item.id}-${i}`}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.5), type: "spring" }}
+                >
+                <Card 
+                  onClick={() => handleSelectItem(item)} 
+                  className={cn(
+                      "glass-card cursor-pointer rounded-[3rem] overflow-hidden transition-all duration-500 group h-full", 
+                      selectedItem?.id === item.id 
+                          ? cn("scale-[1.02] border-2", getRarityGlow(item.rarity))
+                          : "border border-white/5 hover:border-white/20 hover:scale-[1.01]"
+                  )}
+                >
+                  <div className={cn("h-56 flex items-center justify-center relative overflow-hidden", item.bg)}>
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20" />
+                    <motion.div 
+                      whileHover={{ scale: 1.2, rotate: 5 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                      className={cn("w-20 h-20 flex items-center justify-center drop-shadow-xl", item.color)}
+                    >
+                       {item.type === 'hat' ? <Award className="w-16 h-16" /> : 
+                        item.type === 'decor' ? <Sparkles className="w-16 h-16" /> :
+                        item.type === 'aura' ? <Flame className="w-16 h-16" /> :
+                        item.type === 'nameplate' ? <User className="w-16 h-16" /> :
+                        item.type === 'pet' ? <RenderPet petKey={item.key} /> :
+                        <User className="w-16 h-16" />}
+                    </motion.div>
+                    <Badge className={cn("absolute top-6 right-6 border-none text-[10px] font-black uppercase px-3 py-1 shadow-lg", getRarityBadge(item.rarity))}>
+                        {item.rarity}
+                    </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground font-bold italic line-clamp-2 leading-relaxed opacity-80">{item.description}</p>
-                </CardContent>
-              </Card>
-              </motion.div>
-            ))}
+                  <CardContent className="p-8 text-left">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-2xl font-black text-foreground uppercase italic tracking-tighter leading-none pr-4">{item.name}</h3>
+                      <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/5 shadow-inner shrink-0">
+                        <Zap className="w-4 h-4 text-amber-500 fill-amber-500/50" />
+                        <span className="text-lg font-black italic">{item.price}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground font-bold italic line-clamp-2 leading-relaxed opacity-80">{item.description}</p>
+                  </CardContent>
+                </Card>
+                </motion.div>
+              ))
+            )}
             </AnimatePresence>
-            {displayedItems.length === 0 && (
+            {displayedItems.length === 0 && activeCategory !== "Featured Sets" && (
                 <div className="col-span-2 py-20 text-center">
                     <p className="text-muted-foreground font-black uppercase tracking-widest text-lg">No items found in this category.</p>
                 </div>
@@ -408,62 +601,127 @@ export default function ShopPage() {
 
         <div className="lg:col-span-4">
           <div className="sticky top-12 space-y-8">
-            <Card className="glass-card rounded-[3.5rem] border border-white/10 overflow-hidden shadow-2xl backdrop-blur-2xl relative">
-              <RenderBanner bannerKey={selectedItem?.type === 'banner' ? selectedItem.key : userData?.banner} />
-              <div className="h-48 bg-gradient-to-br from-primary/20 via-transparent to-accent/20 flex items-start justify-center pt-8 relative overflow-hidden z-10">
-                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.1),transparent_70%)]" />
-                 <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/50 relative z-10 bg-black/50 px-4 py-1 rounded-full backdrop-blur-md">Live Profile Preview</p>
+            <Card className="glass-card rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl backdrop-blur-2xl relative w-full text-left bg-[#0c0c16]/95">
+              {/* Banner Area */}
+              <div className="h-32 w-full relative overflow-hidden z-10">
+                <RenderBanner bannerKey={previewBanner} className="absolute inset-0 w-full h-full object-cover" />
+                {!previewBanner && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-900 to-purple-900" />
+                )}
+                {/* Banner overlay gradient for premium feel */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               </div>
-              <CardContent className="p-10 -mt-24 text-center relative z-10">
-                <div className="relative rounded-full p-2 mx-auto w-max z-20">
-                  <RenderDecor decorKey={selectedItem?.type === 'decor' ? selectedItem.key : userData?.decor} />
-                  <RenderAura auraKey={selectedItem?.type === 'aura' ? selectedItem.key : userData?.aura} />
-                  <RenderHat hatKey={selectedItem?.type === 'hat' ? selectedItem.key : userData?.hat} />
-                  <RenderPet petKey={selectedItem?.type === 'pet' ? selectedItem.key : userData?.pet} />
+
+              {/* User Avatar + Decoration + Badges section */}
+              <div className="px-6 relative z-20 flex justify-between items-end -mt-16 mb-4">
+                <div className="relative p-1 rounded-[3rem] bg-[#0c0c16] z-20">
+                  <RenderDecor decorKey={previewDecor} />
+                  <RenderAura auraKey={previewAura} />
+                  <RenderHat hatKey={previewHat} />
+                  <RenderPet petKey={previewPet} />
                   
-                  <Avatar className="w-40 h-40 border-[8px] border-card rounded-[3rem] shadow-2xl mx-auto overflow-hidden bg-secondary relative z-20">
+                  <Avatar className="w-28 h-28 border-[6px] border-[#0c0c16] rounded-[2.2rem] shadow-2xl overflow-hidden bg-secondary relative z-20">
                     <AvatarImage src={user?.photoURL || ""} className="object-cover" />
-                    <AvatarFallback className="bg-primary text-5xl font-black text-white">{user?.displayName?.[0] || 'U'}</AvatarFallback>
+                    <AvatarFallback className="bg-primary text-3xl font-black text-white">{user?.displayName?.[0] || 'U'}</AvatarFallback>
                   </Avatar>
+                  
+                  {/* Discord-style Online Indicator dot */}
+                  <div className="absolute bottom-1 right-1 w-6 h-6 bg-emerald-500 border-4 border-[#0c0c16] rounded-full z-30" />
                 </div>
+
+                {/* Discord-style Profile Badges */}
+                <div className="flex gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/5 shadow-md mb-2">
+                  {/* Early Supporter Badge */}
+                  <div className="w-5 h-5 flex items-center justify-center text-yellow-400 hover:scale-110 transition-transform cursor-pointer" title="Early Supporter">
+                    <Star className="w-4 h-4 fill-yellow-400" />
+                  </div>
+                  {/* HypeSquad Bravery Badge */}
+                  <div className="w-5 h-5 flex items-center justify-center text-purple-400 hover:scale-110 transition-transform cursor-pointer" title="HypeSquad Bravery">
+                    <Flame className="w-4 h-4 fill-purple-400" />
+                  </div>
+                  {/* Active Developer Badge */}
+                  <div className="w-5 h-5 flex items-center justify-center text-emerald-400 hover:scale-110 transition-transform cursor-pointer" title="Active Developer">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  {/* Nitro / Premium Member Badge */}
+                  <div className="w-5 h-5 flex items-center justify-center text-pink-400 hover:scale-110 transition-transform cursor-pointer" title="Xakteir Premium">
+                    <Award className="w-4 h-4 fill-pink-400" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Username + Tag */}
+              <div className="px-8 pb-4">
                 <h4 className={cn(
-                  "text-4xl font-black tracking-tighter mt-8 italic uppercase leading-none break-words relative z-20",
-                  getNameplateClass(selectedItem?.type === 'nameplate' ? selectedItem.key : userData?.nameplate)
+                  "text-3xl font-black tracking-tighter italic uppercase leading-none break-words relative z-20",
+                  getNameplateClass(previewNameplate)
                 )}>
                   {user?.displayName?.replace(/^@+/, "") || "Member"}
                 </h4>
-              </CardContent>
-              <CardFooter className="p-10 pt-0 flex flex-col gap-4">
-                <Button 
+                <p className="text-[10px] text-muted-foreground font-black tracking-widest mt-1">@{(user?.displayName || "member").replace(/^@+/, "").toLowerCase()}</p>
+              </div>
+
+              <div className="px-8 py-2"><hr className="border-white/5" /></div>
+
+              {/* About Me / Bio Section */}
+              <div className="px-8 py-4 space-y-4">
+                <div>
+                  <h5 className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-1">About Me</h5>
+                  <p className="text-xs text-white/80 font-bold leading-relaxed italic">
+                    Multiverse voyager & code explorer. Exploring the outer edges of the Xakteir ecosystem.
+                  </p>
+                </div>
+
+                <div>
+                  <h5 className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-1">Xakteir Member Since</h5>
+                  <p className="text-xs text-white/60 font-bold">Jun 2024</p>
+                </div>
+              </div>
+
+              <CardFooter className="p-8 pt-2 flex flex-col gap-4">
+                {previewSet ? (
+                  <Button 
+                    onClick={() => handleBuyBundle(previewSet)} 
+                    disabled={isSyncing} 
+                    className="w-full bg-amber-500 hover:bg-amber-400 text-black h-16 rounded-[2rem] font-black text-lg uppercase italic shadow-[0_10px_30px_rgba(245,158,11,0.3)] transition-all hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(245,158,11,0.4)] active:translate-y-0 active:shadow-none"
+                  >
+                    {isSyncing ? <Loader2 className="w-6 h-6 animate-spin" /> : `Acquire Bundle`}
+                  </Button>
+                ) : (
+                  <Button 
                     onClick={handleSyncItem} 
                     disabled={isSyncing || !selectedItem} 
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-16 rounded-[2rem] font-black text-lg uppercase italic shadow-[0_10px_30px_rgba(var(--primary),0.3)] transition-all hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(var(--primary),0.4)] active:translate-y-0 active:shadow-none"
-                >
-                  {isSyncing ? <Loader2 className="w-6 h-6 animate-spin" /> : "Equip Item"}
-                </Button>
+                  >
+                    {isSyncing ? <Loader2 className="w-6 h-6 animate-spin" /> : "Equip Item"}
+                  </Button>
+                )}
                 
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full h-14 rounded-[2rem] border-white/10 bg-transparent hover:bg-white/5 font-black uppercase text-xs tracking-widest text-muted-foreground hover:text-white transition-all">
-                      <Gift className="w-4 h-4 mr-3" /> Gift to Friend
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-foreground p-10 backdrop-blur-3xl shadow-[0_0_100px_rgba(0,0,0,0.5)]">
-                    <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic tracking-tighter">Gift Transmission</DialogTitle></DialogHeader>
-                    <div className="space-y-6 py-6">
-                      <div className="space-y-2">
-                         <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-2">Recipient's Username</label>
-                         <Input 
-                            value={giftTarget} 
-                            onChange={(e) => setGiftTarget(e.target.value)} 
-                            placeholder="username" 
-                            className="bg-black/40 border-white/10 h-16 rounded-2xl font-bold text-lg px-6 focus-visible:ring-primary shadow-inner" 
-                        />
+                {/* Only show gifting if we are previewing a single item */}
+                {!previewSet && selectedItem && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full h-14 rounded-[2rem] border-white/10 bg-transparent hover:bg-white/5 font-black uppercase text-xs tracking-widest text-muted-foreground hover:text-white transition-all">
+                        <Gift className="w-4 h-4 mr-3" /> Gift to Friend
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-foreground p-10 backdrop-blur-3xl shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+                      <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic tracking-tighter">Gift Transmission</DialogTitle></DialogHeader>
+                      <div className="space-y-6 py-6">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-2">Recipient's Username</label>
+                           <Input 
+                              value={giftTarget} 
+                              onChange={(e) => setGiftTarget(e.target.value)} 
+                              placeholder="username" 
+                              className="bg-black/40 border-white/10 h-16 rounded-2xl font-bold text-lg px-6 focus-visible:ring-primary shadow-inner" 
+                          />
+                        </div>
+                        <Button onClick={handleGift} disabled={isSyncing || !giftTarget} className="w-full h-16 bg-primary rounded-2xl font-black uppercase text-lg shadow-xl">Transmit Gift</Button>
                       </div>
-                      <Button onClick={handleGift} disabled={isSyncing || !giftTarget} className="w-full h-16 bg-primary rounded-2xl font-black uppercase text-lg shadow-xl">Transmit Gift</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                    </DialogContent>
+                  </Dialog>
+                )}
               </CardFooter>
             </Card>
           </div>

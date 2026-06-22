@@ -48,7 +48,6 @@ import {
   ArrowRight,
   RotateCcw
 } from "lucide-react";
-import { aiPoweredWebSearch } from "@/ai/flows/ai-powered-web-search-flow";
 import defaultSites from '@/lib/defaultSites';
 import { useSearchParams, useRouter } from "next/navigation";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
@@ -247,8 +246,6 @@ function SearchContent() {
   const initialQuery = searchParams.get('q') || "";
   
   const [queryInput, setQueryInput] = useState(initialQuery);
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [aiResult, setAiResult] = useState<string | null>(null);
   const [images, setImages] = useState<Array<{title:string, thumb?:string, page?:string}>>([]);
   const [activeCategory, setActiveCategory] = useState<SearchCategory>("all");
   const [externalSites, setExternalSites] = useState<any[]>([]);
@@ -273,8 +270,7 @@ function SearchContent() {
   const [searchTime, setSearchTime] = useState<number | null>(null);
 
   // TTS states
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const speechUtterance = useRef<SpeechSynthesisUtterance | null>(null);
+
 
   // Voice Search states
   const [isListening, setIsListening] = useState(false);
@@ -494,7 +490,6 @@ function SearchContent() {
     // Trigger SafeSearch warning check
     if (safeSearchActive && containsExplicitContent(target)) {
       setSafeSearchWarning(true);
-      setAiResult(null);
       setWikiDefinition(null);
       setExternalSites([]);
       return;
@@ -509,10 +504,8 @@ function SearchContent() {
     }
 
     // Decouple UI state
-    setAiResult(null);
     setWikiDefinition(null);
     setExternalSites([]);
-    setIsAiLoading(true);
     setIsWebSearching(true);
     setShowDropdown(false);
     
@@ -582,10 +575,7 @@ function SearchContent() {
       const endTime = performance.now();
       setSearchTime(parseFloat(((endTime - startTime) / 1000).toFixed(2)));
 
-      const response = await aiPoweredWebSearch({ query: target });
-      if (response && response.answer) {
-        setAiResult(response.answer);
-      }
+
       
       // Fetch images from SearxNG action
       try {
@@ -606,7 +596,6 @@ function SearchContent() {
     } catch (err) {
       console.error("AI Search Error:", err);
     } finally {
-      setIsAiLoading(false);
       setIsWebSearching(false);
     }
   }, [queryInput, router, saveToHistory, safeSearchActive]);
@@ -649,29 +638,6 @@ function SearchContent() {
     window.addEventListener("keydown", handleKeys);
     return () => window.removeEventListener("keydown", handleKeys);
   }, []);
-
-  // Text to Speech logic
-  const handleTTS = () => {
-    if (!window.speechSynthesis || !aiResult) return;
-    
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-      return;
-    }
-
-    const cleanText = aiResult.replace(/[*#`_\-]/g, "");
-    speechUtterance.current = new SpeechSynthesisUtterance(cleanText);
-    speechUtterance.current.onend = () => {
-      setIsSpeaking(false);
-    };
-    speechUtterance.current.onerror = () => {
-      setIsSpeaking(false);
-    };
-
-    setIsSpeaking(true);
-    window.speechSynthesis.speak(speechUtterance.current);
-  };
 
   // Voice Search Recognition using Web Speech API
   const handleVoiceSearch = () => {
@@ -1030,8 +996,7 @@ function SearchContent() {
   const checkTttWinner = (board: Array<string | null>, player: string) => {
     const wins = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8],
-      [0, 3, 6], [1, 4, 7], [2, 5, 8],
-      [0, 4, 8], [2, 4, 6]
+      [0, 3, 6], [1, 4, 7], [2, 4, 6]
     ];
     return wins.some(comb => comb.every(idx => board[idx] === player));
   };
@@ -2034,7 +1999,7 @@ function SearchContent() {
                 </Card>
               )}
 
-              {/* 11. Search Console verification widget */}
+              {/* 11. Site Console verification widget */}
               {isVerificationWidget && (
                 <Card className={cn("p-6 bg-zinc-900/40 border rounded-[2rem] shadow-2xl space-y-4 animate-in zoom-in-95", tc.border)}>
                   <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400">
@@ -2268,80 +2233,6 @@ console.log(solve("hello"));`}
             </Card>
           )}
 
-          {/* AI Quick Response Section (Only on "All" category) */}
-          {activeCategory === "all" && (isAiLoading || aiResult) && !safeSearchWarning && (
-            <div className="space-y-4 animate-in slide-in-from-top-2 duration-500 max-w-3xl">
-              <div className="flex items-center justify-between text-zinc-500">
-                <div className="flex items-center gap-2">
-                  <Sparkles className={cn("w-3.5 h-3.5", tc.text)} />
-                  <span className="text-[10px] font-black uppercase tracking-widest italic">AI Quick Response</span>
-                  {/* AI Intent Badge & ELI5 Toggle */}
-                  <span className="ml-2 text-[8px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold hidden sm:inline-block">Intent: Informational</span>
-                  <Button variant="ghost" size="sm" className="h-5 px-2 ml-2 text-[9px] font-bold uppercase tracking-wider rounded border border-zinc-800 bg-zinc-900 hidden sm:inline-block hover:bg-white hover:text-black">ELI5</Button>
-                </div>
-                {aiResult && (
-                  <Button
-                    onClick={handleTTS}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 hover:bg-zinc-900"
-                  >
-                    {isSpeaking ? <VolumeX className="w-3.5 h-3.5 text-rose-500" /> : <Volume2 className="w-3.5 h-3.5 text-zinc-400" />}
-                    {isSpeaking ? "Stop Voice" : "Listen AI"}
-                  </Button>
-                )}
-              </div>
-              <Card className="p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-3xl relative overflow-hidden shadow-2xl flex flex-col md:flex-row gap-6">
-                {isAiLoading ? (
-                  <div className="flex items-center gap-4 italic text-zinc-400 font-medium">
-                    <Loader2 className={cn("w-4 h-4 animate-spin", tc.text)} /> Researching answer...
-                  </div>
-                ) : (
-                  <div className="flex-1">
-                    <p className="text-base leading-relaxed text-zinc-200 font-medium italic whitespace-pre-wrap">
-                      {aiResult}
-                    </p>
-                    {images?.[0]?.thumb && (
-                      <div className="mt-4 flex items-center gap-4 bg-black/30 p-3 rounded-2xl border border-white/5 max-w-md">
-                        <img src={images[0].thumb} alt={images[0].title} className="w-20 h-20 object-cover rounded-xl shadow-md border border-white/10" />
-                        <div>
-                          <div className="text-sm font-bold text-white truncate w-48">{images[0].title}</div>
-                          <a 
-                            href={images[0].page} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            className={cn("text-xs hover:underline inline-flex items-center gap-1 mt-1 font-bold uppercase tracking-wider", tc.text)}
-                          >
-                            Source <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Contradiction Alert Card */}
-                    <div className="mt-4 bg-amber-950/20 border border-amber-900/50 p-3 rounded-xl flex gap-3 text-sm">
-                      <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0" />
-                      <div>
-                        <div className="font-bold text-amber-500 text-xs uppercase tracking-wider">Source Contradiction Detected</div>
-                        <div className="text-amber-200/70 text-xs mt-1">Some sources claim differently on this topic. Verify citations before concluding.</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* AI related Image gallery */}
-                {images && images.length > 1 && (
-                  <div className="w-full md:w-48 grid grid-cols-4 md:grid-cols-2 gap-2">
-                    {images.slice(1,5).map((img, idx) => (
-                      <a key={idx} href={img.page} target="_blank" rel="noreferrer" className="block relative group overflow-hidden rounded-xl border border-white/10">
-                        <img src={img.thumb} alt={img.title} className="w-full h-20 object-cover group-hover:scale-110 transition-transform duration-300" />
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            </div>
-          )}
 
           {/* Results Lists */}
           <div className="space-y-10 pb-20 max-w-3xl">
@@ -2611,53 +2502,7 @@ console.log(solve("hello"));`}
         
         {/* Sidebar Stubs */}
         <div className="hidden lg:block w-80 space-y-6 sticky top-24 h-[calc(100vh-100px)]">
-          {/* AI Summary Sidebar */}
-          {aiResult && (
-            <Card className="p-5 border-white/10 bg-zinc-900/50 backdrop-blur-xl relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-primary to-blue-500" />
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-white tracking-tight">AI Summary</h3>
-                <div className="ml-auto flex gap-2">
-                   <button onClick={handleTTS} className="p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/60 transition-colors" title="Read Aloud">
-                     {isSpeaking ? <VolumeX className="w-4 h-4 text-primary" /> : <Volume2 className="w-4 h-4" />}
-                   </button>
-                </div>
-              </div>
-              <div className="text-sm text-zinc-300 leading-relaxed max-h-[300px] overflow-y-auto pr-2 custom-scrollbar whitespace-pre-wrap">
-                {aiResult.split('\n').map((paragraph, idx) => {
-                  const parts = paragraph.split(/(\*\*.*?\*\*)/g);
-                  return (
-                    <p key={idx} className="mb-2">
-                      {parts.map((part, pIdx) => {
-                        if (part.startsWith('**') && part.endsWith('**')) {
-                          return <strong key={pIdx} className="text-white font-bold">{part.slice(2, -2)}</strong>;
-                        }
-                        const subParts = part.split(/(\*.*?\*)/g);
-                        return subParts.map((sub, sIdx) => {
-                          if (sub.startsWith('*') && sub.endsWith('*')) {
-                            return <strong key={sIdx} className="text-white font-bold">{sub.slice(1, -1)}</strong>;
-                          }
-                          return <span key={sIdx}>{sub}</span>;
-                        });
-                      })}
-                    </p>
-                  );
-                })}
-              </div>
 
-                <div className="mt-6 pt-4 border-t border-white/10 flex flex-col gap-2">
-                  <Button variant="secondary" className="w-full justify-between bg-white/5 hover:bg-white/10 border border-white/5 text-white">
-                    <span>Generate Flashcards</span>
-                    <Sparkles className="w-4 h-4 text-primary" />
-                  </Button>
-                  <Button variant="secondary" className="w-full justify-between bg-white/5 hover:bg-white/10 border border-white/5 text-white" onClick={() => setCompareMode(!compareMode)}>
-                    <span>Compare With...</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </div>
-            </Card>
-          )}
 
           {/* Semantic Concept Mapping / Knowledge Graph */}
           {queryInput && (
