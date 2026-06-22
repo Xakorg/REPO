@@ -480,7 +480,7 @@ CRITICAL GUIDELINES:
       ? [createDocument, createGoal, createFile, generateImage, generateVideo, editLocalFile, runTerminalCommand, generate3DObject, readWebpage, saveToMemory, queryMemory] 
       : [generateImage, generateVideo, editLocalFile, runTerminalCommand, generate3DObject, readWebpage];
 
-    const googleSearchConfig = { googleSearchRetrieval: { dynamicRetrievalConfig: { mode: 'MODE_DYNAMIC', dynamicThreshold: 0.3 } } };
+    const googleSearchConfig = { googleSearchRetrieval: {} };
 
     while (retries > 0) {
       try {
@@ -492,7 +492,6 @@ CRITICAL GUIDELINES:
             { role: 'user', content: [{ text: input.message }] }
           ],
           tools: activeTools,
-          config: googleSearchConfig,
           output: { schema: ChatOutputSchema },
         });
 
