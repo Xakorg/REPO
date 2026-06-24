@@ -8,17 +8,19 @@ import { Footer } from "./Footer";
 export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // Game routes include xaksports, xakarena, retro, neural_defense, and play pages
-  const isGameRoute = pathname?.startsWith("/xaksports") || 
-                      pathname?.startsWith("/xakarena") || 
-                      pathname?.startsWith("/games/play/") ||
-                      pathname?.startsWith("/games/retro") ||
-                      pathname?.startsWith("/games/neural_defense");
+  // App routes include chat, code, and game pages where we want a full-screen experience
+  const isAppRoute = pathname?.startsWith("/chat") ||
+                     pathname?.startsWith("/xakcode") ||
+                     pathname?.startsWith("/xaksports") || 
+                     pathname?.startsWith("/xakarena") || 
+                     pathname?.startsWith("/games/play/") ||
+                     pathname?.startsWith("/games/retro") ||
+                     pathname?.startsWith("/games/neural_defense");
 
   const [showOverlay, setShowOverlay] = useState(false);
 
   useEffect(() => {
-    if (!isGameRoute) {
+    if (!isAppRoute) {
       setShowOverlay(false);
       return;
     }
@@ -35,11 +37,11 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
 
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [isGameRoute]);
+  }, [isAppRoute]);
 
   return (
     <>
-      {isGameRoute && (
+      {isAppRoute && (
         /* Subtle tap/hover trigger tab at top center of screen */
         <div 
           onClick={() => setShowOverlay(prev => !prev)}
@@ -51,25 +53,25 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
       )}
       
       <div 
-        className={isGameRoute ? `fixed top-0 left-0 right-0 z-[500] transition-all duration-300 transform ${
+        className={isAppRoute ? `fixed top-0 left-0 right-0 z-[500] transition-all duration-300 transform ${
           showOverlay ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
         }` : ""}
-        onMouseEnter={isGameRoute ? () => setShowOverlay(true) : undefined}
-        onMouseLeave={isGameRoute ? () => setShowOverlay(false) : undefined}
+        onMouseEnter={isAppRoute ? () => setShowOverlay(true) : undefined}
+        onMouseLeave={isAppRoute ? () => setShowOverlay(false) : undefined}
       >
         <Header />
       </div>
 
-      <main className={`relative z-10 ${isGameRoute ? "w-full h-screen overflow-hidden" : ""}`}>
+      <main className={`relative z-10 ${isAppRoute ? "w-full h-screen overflow-hidden" : ""}`}>
         {children}
       </main>
 
       <div 
-        className={isGameRoute ? `fixed bottom-0 left-0 right-0 z-[500] transition-all duration-300 transform ${
+        className={isAppRoute ? `fixed bottom-0 left-0 right-0 z-[500] transition-all duration-300 transform ${
           showOverlay ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
         }` : ""}
-        onMouseEnter={isGameRoute ? () => setShowOverlay(true) : undefined}
-        onMouseLeave={isGameRoute ? () => setShowOverlay(false) : undefined}
+        onMouseEnter={isAppRoute ? () => setShowOverlay(true) : undefined}
+        onMouseLeave={isAppRoute ? () => setShowOverlay(false) : undefined}
       >
         <Footer />
       </div>

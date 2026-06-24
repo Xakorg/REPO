@@ -1264,7 +1264,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                   <header className="h-16 border-b border-white/5 px-4 flex items-center justify-between shadow-xl shrink-0">
                      <h2 className="text-xs font-black uppercase italic tracking-tighter text-white">DMs</h2>
                   </header>
-                  <ScrollArea className="flex-1">
+                  <ScrollArea className="flex-1 min-h-0">
                     <div className="p-2 space-y-4">
                       <div className="space-y-1">
                          {activeDms?.map(chat => (
@@ -1279,7 +1279,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                   <header className="h-16 border-b border-white/5 px-4 flex items-center justify-between shadow-xl shrink-0">
                      <h2 className="text-xs font-black uppercase italic tracking-tighter text-white truncate">{serverHeaderTitle}</h2>
                   </header>
-                  <ScrollArea className="flex-1">
+                  <ScrollArea className="flex-1 min-h-0">
                     <div className="p-2 space-y-4">
                         {channelCategories.map(cat => {
                           const catChannels = serverChannelsList.filter(c => c.category === cat);
@@ -1358,7 +1358,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* Channels / DMs */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="p-4 space-y-4">
             {activeServer === 'home' ? (
               <div className="space-y-2">
@@ -1861,7 +1861,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             </TabsContent>
 
             <TabsContent value="roles" className="flex-1 flex flex-col overflow-hidden">
-              <ScrollArea className="flex-1 pr-2">
+              <ScrollArea className="flex-1 min-h-0 pr-2">
                 <div className="space-y-6 text-left">
                   {/* Create / Edit Role form */}
                   <div className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-4">
