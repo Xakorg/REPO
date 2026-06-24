@@ -485,7 +485,7 @@ CRITICAL GUIDELINES:
     while (retries > 0) {
       try {
         const {output} = await ai.generate({
-          model: 'googleai/gemini-1.5-flash',
+          model: 'googleai/gemini-1.5-flash-latest',
           system: systemPrompt,
           messages: [
             ...(input.history || []),
