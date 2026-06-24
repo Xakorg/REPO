@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { GAMES_DB, GameMeta } from "@/lib/games-db";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Sparkles, Download, Check, Play } from "lucide-react";
+import { ArrowLeft, Sparkles, Download, Check, Play, Globe } from "lucide-react";
+import { useFirestore, useCollection } from "@/firebase";
+import { collection } from "firebase/firestore";
 
 export default function GamesStorePage() {
   const router = useRouter();
@@ -23,8 +25,25 @@ export default function GamesStorePage() {
     localStorage.setItem("xakteir_game_library", JSON.stringify(newLibrary));
   };
 
+  const firestore = useFirestore();
+  const { data: publishedGamesRaw } = useCollection(firestore ? collection(firestore, "publishedProjects") : null);
+
+  const customGames = publishedGamesRaw?.map(g => ({
+    id: g.id,
+    title: g.name,
+    description: g.description,
+    developer: "Community",
+    genre: ["Web", "Custom"],
+    type: "App",
+    price: "Free",
+    route: `/projects/${g.id}`,
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80",
+    iconUrl: "",
+    videoUrl: ""
+  })) || [];
+
   const featuredGame = GAMES_DB[0]; // XakSports
-  const otherGames = GAMES_DB.slice(1);
+  const otherGames = [...GAMES_DB.slice(1), ...customGames];
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500/30 overflow-x-hidden">

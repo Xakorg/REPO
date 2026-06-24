@@ -150,9 +150,7 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
         </div>
         <h2 className="text-6xl font-black uppercase italic tracking-tighter text-white">Developer Entry</h2>
         <p className="text-muted-foreground font-bold uppercase tracking-widest max-w-sm">Sign in to initialize your AI code library and hosting suite.</p>
-        <Link href="/auth">
-          <Button className="bg-sky-500 hover:bg-sky-400 text-black h-16 px-16 rounded-[2rem] font-black uppercase text-xs">Sign In</Button>
-        </Link>
+        <Button onClick={() => router.push('/auth')} className="bg-sky-500 hover:bg-sky-400 text-black h-16 px-16 rounded-[2rem] font-black uppercase text-xs">Sign In</Button>
       </div>
     );
   }
@@ -219,38 +217,37 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
             ].map(item => {
               const isActive = pathname === item.path;
               return (
-                <Link key={item.path} href={item.path}>
-                  <button
-                    title={item.label}
-                    className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center transition-all group relative mx-auto",
-                      isActive 
-                        ? "bg-sky-500/20 text-sky-400 border border-sky-500/30" 
-                        : "text-muted-foreground hover:text-white hover:bg-white/5"
-                    )}
-                  >
-                    <item.icon className="w-4.5 h-4.5" />
-                    {isActive && <span className="absolute left-0 top-3 bottom-3 w-1 bg-sky-400 rounded-r-md" />}
-                  </button>
-                </Link>
+                <button
+                  key={item.path}
+                  onClick={() => router.push(item.path)}
+                  title={item.label}
+                  className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all group relative mx-auto",
+                    isActive 
+                      ? "bg-sky-500/20 text-sky-400 border border-sky-500/30" 
+                      : "text-muted-foreground hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <item.icon className="w-4.5 h-4.5" />
+                  {isActive && <span className="absolute left-0 top-3 bottom-3 w-1 bg-sky-400 rounded-r-md" />}
+                </button>
               );
             })}
           </div>
 
           <div className="w-full px-2">
-            <Link href="/xakcode/settings">
-              <button
-                title="Settings"
-                className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center transition-all mx-auto",
-                  pathname === "/xakcode/settings"
-                    ? "bg-sky-500/20 text-sky-400 border border-sky-500/30"
-                    : "text-muted-foreground hover:text-white hover:bg-white/5"
-                )}
-              >
-                <Settings className="w-4.5 h-4.5" />
-              </button>
-            </Link>
+            <button
+              onClick={() => router.push('/xakcode/settings')}
+              title="Settings"
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center transition-all mx-auto",
+                pathname === "/xakcode/settings"
+                  ? "bg-sky-500/20 text-sky-400 border border-sky-500/30"
+                  : "text-muted-foreground hover:text-white hover:bg-white/5"
+              )}
+            >
+              <Settings className="w-4.5 h-4.5" />
+            </button>
           </div>
         </nav>
 
