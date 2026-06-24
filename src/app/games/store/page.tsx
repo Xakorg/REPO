@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { GAMES_DB, GameMeta } from "@/lib/games-db";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Sparkles, Download, Check, Play, Globe } from "lucide-react";
-import { useFirestore, useCollection } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 
 export default function GamesStorePage() {
@@ -26,7 +26,10 @@ export default function GamesStorePage() {
   };
 
   const firestore = useFirestore();
-  const { data: publishedGamesRaw } = useCollection(firestore ? collection(firestore, "publishedProjects") : null);
+  const publishedProjectsQuery = useMemoFirebase(() => {
+    return firestore ? collection(firestore, "publishedProjects") : null;
+  }, [firestore]);
+  const { data: publishedGamesRaw } = useCollection(publishedProjectsQuery);
 
   const customGames = publishedGamesRaw?.map(g => ({
     id: g.id,

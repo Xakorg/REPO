@@ -6,7 +6,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {googleAI, gemini15Flash} from '@genkit-ai/google-genai';
+import {googleAI, gemini25Flash} from '@genkit-ai/google-genai';
 import { getAdminDb } from '@/lib/firebase-admin';
 
 const MessageSchema = z.object({
@@ -483,7 +483,7 @@ CRITICAL GUIDELINES:
     while (retries > 0) {
       try {
         const {output} = await ai.generate({
-          model: gemini15Flash,
+          model: gemini25Flash,
           system: systemPrompt,
           messages: [
             ...(input.history || []),
