@@ -120,7 +120,7 @@ const APPS = [
   { name: "Tasks Tracker", icon: CheckSquare, href: "/tasks", color: "text-emerald-400", bg: "bg-emerald-400/10" },
   { name: "Weather", icon: Sun, href: "/weather", color: "text-amber-400", bg: "bg-amber-400/10" },
   { name: "Support", icon: HelpCircle, href: "/contact", color: "text-zinc-400", bg: "bg-zinc-400/10" },
-  { name: "Profile", icon: UserIcon, href: "/profile", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "Profile", icon: UserIcon, href: "https://account.xakteir.com", color: "text-indigo-400", bg: "bg-indigo-400/10" },
   { name: "About", icon: Info, href: "/about", color: "text-zinc-400", bg: "bg-zinc-400/10" }
 ];
 
@@ -454,7 +454,7 @@ export function Header() {
                 <div className="h-0.5 bg-white/5 my-3 mx-1.5" />
 
                 <div className="space-y-1 p-1.5 text-white">
-                   <button onClick={() => navigateTo('/profile', router)} className="w-full flex items-center gap-4 p-3.5 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all text-left">
+                   <button onClick={() => navigateTo('https://account.xakteir.com', router)} className="w-full flex items-center gap-4 p-3.5 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all text-left">
                       <UserIcon className="w-4 h-4 text-primary" /> Profile
                    </button>
                    <button onClick={() => { auth && signOut(auth); localStorage.removeItem("xakteir_accounts"); localStorage.removeItem("xakteir_active_account_id"); window.dispatchEvent(new Event("xakteir-accounts-changed")); navigateTo('/', router); }} className="w-full flex items-center gap-4 p-3.5 rounded-2xl hover:bg-rose-500/10 text-[10px] font-black uppercase tracking-widest text-rose-500 transition-all text-left">

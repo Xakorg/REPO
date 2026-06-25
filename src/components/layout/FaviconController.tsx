@@ -63,12 +63,12 @@ export function FaviconController() {
     const isGames = pathname?.startsWith("/games");
     const isSuite = pathname?.startsWith("/suite") || pathname?.startsWith("/write") || pathname?.startsWith("/slides") || pathname?.startsWith("/sheets") || pathname?.startsWith("/forms");
     const isAIChat = pathname?.startsWith("/ai-chat");
-    const isDrive = pathname?.startsWith("/drive");
+    const isDrive = hostname.startsWith("drive.") || pathname?.startsWith("/drive");
     const isCalculator = pathname?.startsWith("/calculator");
     const isNotes = pathname?.startsWith("/notes");
     const isSocial = pathname?.startsWith("/social");
     const isShop = pathname?.startsWith("/shop");
-    const isDevCentre = pathname?.startsWith("/dev-centre");
+    const isDevCentre = hostname.startsWith("dev.") || pathname?.startsWith("/dev-centre");
     const isArt = pathname?.startsWith("/art");
     const isApps = pathname?.startsWith("/apps");
     const isArchive = pathname?.startsWith("/archive");
@@ -82,11 +82,11 @@ export function FaviconController() {
     const isTasks = pathname?.startsWith("/tasks");
     const isWeather = pathname?.startsWith("/weather");
     const isSupport = pathname?.startsWith("/contact") || pathname?.startsWith("/support");
-    const isProfile = pathname?.startsWith("/profile");
+    const isProfile = hostname.startsWith("account.") || hostname.startsWith("accounts.") || pathname?.startsWith("/profile");
     const isAbout = pathname?.startsWith("/about");
     const isSearch = pathname?.startsWith("/search");
     const isClassroom = pathname?.startsWith("/classroom");
-    const isMeet = pathname?.startsWith("/meet");
+    const isMeet = hostname.startsWith("meet.") || pathname?.startsWith("/meet");
     const isWhiteboard = pathname?.startsWith("/whiteboard");
     const isSettings = pathname?.startsWith("/settings");
 

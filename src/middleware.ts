@@ -177,7 +177,32 @@ export function middleware(req: NextRequest) {
     return NextResponse.rewrite(new URL(`/meet${path}`, req.url));
   }
 
-  // 8. Enforce Subdomain Isolation (Prevent direct path access from other domains)
+  // 10. Handle Account standalone deployment via account.xakteir.com
+  if (hostname === 'accounts.xakteir.com' || hostname === 'www.accounts.xakteir.com') {
+    return NextResponse.redirect(`https://account.xakteir.com${path}`);
+  }
+
+  if (hostname === 'account.xakteir.com' || hostname === 'www.account.xakteir.com') {
+    if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+    
+    if (!req.cookies.has('xak_session')) {
+      return NextResponse.redirect(new URL('/auth', req.url));
+    }
+
+    if (path === '/') return NextResponse.rewrite(new URL('/profile', req.url));
+    if (path.startsWith('/profile')) return NextResponse.next();
+    
+    // Redirect Profile sub-routes
+    const profileRoutes = ['/security'];
+    const rootSegment = '/' + path.split('/')[1]; 
+    if (profileRoutes.includes(rootSegment)) {
+      return NextResponse.rewrite(new URL(`/profile${path}`, req.url));
+    }
+    // Redirect other paths to main domain
+    return NextResponse.redirect(`https://www.xakteir.com${path}`);
+  }
+
+  // 11. Enforce Subdomain Isolation (Prevent direct path access from other domains)
   if (
     hostname !== 'xakarena.xakteir.com' && hostname !== 'www.xakarena.xakteir.com' &&
     hostname !== 'creator.xakarena.xakteir.com' && hostname !== 'www.creator.xakarena.xakteir.com'
@@ -198,7 +223,9 @@ export function middleware(req: NextRequest) {
     hostname !== 'maps.xakteir.com' && hostname !== 'www.maps.xakteir.com' &&
     hostname !== 'dev.xakteir.com' && hostname !== 'www.dev.xakteir.com' &&
     hostname !== 'drive.xakteir.com' && hostname !== 'www.drive.xakteir.com' &&
-    hostname !== 'meet.xakteir.com' && hostname !== 'www.meet.xakteir.com'
+    hostname !== 'meet.xakteir.com' && hostname !== 'www.meet.xakteir.com' &&
+    hostname !== 'account.xakteir.com' && hostname !== 'www.account.xakteir.com' &&
+    hostname !== 'accounts.xakteir.com' && hostname !== 'www.accounts.xakteir.com'
   ) {
     if (path === '/xakcode') return NextResponse.redirect('https://code.xakteir.com/xakcode');
     if (path.startsWith('/xakcode/')) return NextResponse.redirect(`https://code.xakteir.com${path}`);
@@ -217,6 +244,9 @@ export function middleware(req: NextRequest) {
 
     if (path === '/meet') return NextResponse.redirect('https://meet.xakteir.com');
     if (path.startsWith('/meet/')) return NextResponse.redirect(`https://meet.xakteir.com${path.replace('/meet', '')}`);
+
+    if (path === '/profile') return NextResponse.redirect('https://account.xakteir.com');
+    if (path.startsWith('/profile/')) return NextResponse.redirect(`https://account.xakteir.com${path.replace('/profile', '')}`);
   }
 
   // Default behavior for xakteir.com (allow everything)
