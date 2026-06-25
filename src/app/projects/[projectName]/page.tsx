@@ -171,7 +171,7 @@ export default function PublishedProjectPage() {
           <div className="flex items-center gap-4">
             <Badge className="bg-primary text-white font-black uppercase text-[10px] tracking-widest px-4 py-1 border-none">Published</Badge>
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-              <Calendar className="w-3 h-3" /> {project.publishedAt?.seconds ? new Date(project.publishedAt.seconds * 1000).toLocaleDateString() : 'Active Node'}
+              <Calendar className="w-3 h-3" /> {project.publishedAt?.seconds ? new Date(project.publishedAt.seconds * 1000).toLocaleDateString() : 'Active Project'}
             </span>
           </div>
           <h1 className="text-6xl font-black text-foreground tracking-tighter uppercase italic leading-none">{project.name}</h1>
@@ -184,7 +184,7 @@ export default function PublishedProjectPage() {
         </div>
         <div className="flex gap-4">
           <Button onClick={() => { setIframeKey(k => k + 1); setIsRunning(true); }} className="h-14 px-10 rounded-2xl bg-primary hover:bg-primary/90 font-black uppercase text-xs tracking-widest shadow-xl text-white border-none">
-            <RefreshCw className="w-4 h-4 mr-2" /> Restart Node
+            <RefreshCw className="w-4 h-4 mr-2" /> Restart Project
           </Button>
           <Button variant="outline" className="h-14 w-14 rounded-2xl border-white/10 hover:bg-secondary">
             <Share2 className="w-5 h-5 text-foreground" />

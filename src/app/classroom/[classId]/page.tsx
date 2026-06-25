@@ -93,7 +93,7 @@ export default function ClassHomePage({
               />
               <div className="flex justify-end">
                 <Button type="submit" className="h-10 px-6 bg-primary text-white rounded-xl font-black uppercase text-[10px] tracking-widest border-none">
-                  <Send className="w-4 h-4 mr-2" /> Share Node
+                  <Send className="w-4 h-4 mr-2" /> Share Class
                 </Button>
               </div>
             </form>
@@ -135,7 +135,7 @@ export default function ClassHomePage({
           <h3 className="text-xl font-black uppercase italic tracking-tighter text-white">Class Information</h3>
           <div className="space-y-4 pt-2">
             <div>
-              <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Target Node ID</span>
+              <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Target Class ID</span>
               <p className="text-xs font-mono text-zinc-300 truncate mt-1">{classId}</p>
             </div>
             <div>

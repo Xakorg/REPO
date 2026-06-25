@@ -61,7 +61,7 @@ export default function ClassroomLayout({
 
   // Fallback if class not found in Firestore (so defaults work)
   const isDemo = classId.startsWith("demo-") || !classroom;
-  const className = classroom?.name || (classId.startsWith("demo-") ? "Physics Node 4" : "Virtual Classroom");
+  const className = classroom?.name || (classId.startsWith("demo-") ? "Physics Class 4" : "Virtual Classroom");
   const schoolName = classroom?.school || "Xakteir Academy";
   const teacherName = classroom?.teacherName || "Instructor Alpha";
   const joinCode = classroom?.joinCode || "984320";

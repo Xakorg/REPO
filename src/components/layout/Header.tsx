@@ -107,7 +107,7 @@ const APPS = [
   { name: "Notes", icon: Code2, href: "/notes", color: "text-indigo-400", bg: "bg-indigo-400/10" },
   { name: "Social", icon: Users, href: "/social", color: "text-pink-500", bg: "bg-pink-500/10" },
   { name: "Shop", icon: ShoppingBag, href: "/shop", color: "text-emerald-500", bg: "bg-emerald-500/10" },
-  { name: "Dev Centre", icon: Code2, href: "/dev-centre", color: "text-blue-500", bg: "bg-blue-500/10" },
+  { name: "Dev Centre", icon: Code2, href: "https://dev.xakteir.com", color: "text-blue-500", bg: "bg-blue-500/10" },
   { name: "Art Studio", icon: Palette, href: "/art", color: "text-pink-400", bg: "bg-pink-400/10" },
   { name: "Archive", icon: Archive, href: "/archive", color: "text-amber-500", bg: "bg-amber-500/10" },
   { name: "Authenticator", icon: ShieldCheck, href: "/authenticator", color: "text-teal-400", bg: "bg-teal-400/10" },

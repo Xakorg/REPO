@@ -125,7 +125,7 @@ export default function XakWeatherPage() {
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full lg:w-auto">
                 {[
-                  { label: "Wind Node", val: `${weather?.current?.wind_speed_10m || 0} km/h`, icon: Wind },
+                  { label: "Wind Speed", val: `${weather?.current?.wind_speed_10m || 0} km/h`, icon: Wind },
                   { label: "Atmosphere", val: "Stable", icon: Thermometer },
                 ].map(stat => (
                   <div key={stat.label} className="p-8 rounded-[2.5rem] bg-black/40 border-2 border-white/5 space-y-4 shadow-xl">
@@ -189,7 +189,7 @@ export default function XakWeatherPage() {
             <div className="space-y-4 relative z-10">
               <Badge className="bg-amber-600 text-white font-black uppercase tracking-widest px-3 py-1 text-[8px] border-none">Advisory</Badge>
               <h4 className="text-2xl font-black uppercase italic text-amber-400 tracking-tight leading-tight">Solar Flares</h4>
-              <p className="text-xs font-semibold text-zinc-300 leading-relaxed">Mild geomagnetic storm may disrupt wireless node sync. Shielding is advised for high-frequency neural relays.</p>
+              <p className="text-xs font-semibold text-zinc-300 leading-relaxed">Mild geomagnetic storm may disrupt wireless sync. Shielding is advised for high-frequency equipment.</p>
             </div>
             <div className="mt-6 text-[8px] font-black uppercase text-amber-500 tracking-wider">Severity: Minor // Info Yellow</div>
           </Card>

@@ -158,7 +158,7 @@ export default function VMsBlade() {
         {/* VMs List & Terminal Viewer */}
         <div className="space-y-6">
           <Card className="p-6 bg-zinc-950/40 border border-white/5 rounded-2xl">
-            <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400 mb-6">Active Compute Nodes</h3>
+            <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400 mb-6">Active Servers</h3>
             
             <div className="space-y-4">
               {vms?.map((vm: any) => (

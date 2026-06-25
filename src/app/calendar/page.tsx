@@ -247,7 +247,7 @@ export default function XakteirPlanPage() {
                 />
               </div>
               <Button onClick={handleCreateGoal} className="w-full h-14 bg-amber-600 hover:bg-amber-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest border-none mt-2">
-                Deploy Goal Node
+                Deploy Goal
               </Button>
             </div>
           </DialogContent>
@@ -323,7 +323,7 @@ export default function XakteirPlanPage() {
             <h3 className="text-xl font-black uppercase italic tracking-tighter flex items-center gap-3 text-white">
               <ListTodo className="w-5 h-5 text-amber-500" /> Active Goals
             </h3>
-            <span className="text-[9px] font-black uppercase text-zinc-500 tracking-widest">{goals.length} node(s)</span>
+            <span className="text-[9px] font-black uppercase text-zinc-500 tracking-widest">{goals.length} goal(s)</span>
           </header>
 
           <div className="h-[750px] overflow-y-auto pr-2">
@@ -332,7 +332,7 @@ export default function XakteirPlanPage() {
                 <div className="py-20 text-center opacity-25 space-y-4">
                   <CalendarIcon className="w-16 h-16 mx-auto text-amber-500 animate-pulse" />
                   <p className="text-sm font-black uppercase tracking-widest text-zinc-400">No active goals set</p>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase">Click "Set Goal" above to register a milestone node.</p>
+                  <p className="text-[10px] font-bold text-zinc-500 uppercase">Click "Set Goal" above to register a milestone.</p>
                 </div>
               ) : (
                 goals.map((g) => {

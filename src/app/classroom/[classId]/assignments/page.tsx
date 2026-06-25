@@ -188,7 +188,7 @@ export default function ClassAssignmentsPage({
         {assignments.length === 0 && (
           <div className="py-20 text-center opacity-20 space-y-6">
             <BookOpen className="w-16 h-16 mx-auto text-zinc-500" />
-            <p className="text-sm font-black uppercase tracking-widest text-zinc-500">No active assignment nodes found.</p>
+            <p className="text-sm font-black uppercase tracking-widest text-zinc-500">No active assignments found.</p>
           </div>
         )}
       </div>
@@ -204,7 +204,7 @@ export default function ClassAssignmentsPage({
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Title</label>
-                <Input value={asgTitle} onChange={(e) => setAsgTitle(e.target.value)} placeholder="Homework Node 2" className="bg-zinc-900 border-white/5 h-12 rounded-xl text-xs font-bold text-white" />
+                <Input value={asgTitle} onChange={(e) => setAsgTitle(e.target.value)} placeholder="Homework 2" className="bg-zinc-900 border-white/5 h-12 rounded-xl text-xs font-bold text-white" />
               </div>
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">Instructions</label>
@@ -221,7 +221,7 @@ export default function ClassAssignmentsPage({
                 </div>
               </div>
               <Button onClick={handlePublishAssignment} disabled={isProcessing || !asgTitle.trim()} className="w-full h-14 bg-primary text-white hover:bg-primary/90 rounded-2xl font-black uppercase text-xs tracking-widest border-none mt-2">
-                Publish Node
+                Publish Assignment
               </Button>
             </div>
           </Card>

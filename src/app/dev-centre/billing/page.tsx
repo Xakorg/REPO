@@ -115,7 +115,7 @@ export default function BillingBlade() {
           </div>
           <div className="space-y-4 flex-1">
             <FeatureItem text="10,000+ Concurrent Connections" />
-            <FeatureItem text="Dedicated Compute Nodes" />
+            <FeatureItem text="Dedicated Servers" />
             <FeatureItem text="Multi-region Active-Active DBs" />
             <FeatureItem text="24/7 Phone Support & SLA" />
             <FeatureItem text="SSO / SAML Integrations" />

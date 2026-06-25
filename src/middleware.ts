@@ -114,7 +114,21 @@ export function middleware(req: NextRequest) {
     return NextResponse.rewrite(new URL(`/xakarena-creator${path}`, req.url));
   }
 
-  // 7. Enforce Subdomain Isolation (Prevent direct path access from other domains)
+  // 7. Handle Dev Centre standalone deployment via dev.xakteir.com
+  if (hostname === 'dev.xakteir.com' || hostname === 'www.dev.xakteir.com') {
+    if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+    
+    if (!req.cookies.has('xak_session')) {
+      return NextResponse.redirect(new URL('/auth', req.url));
+    }
+
+    if (path === '/') return NextResponse.rewrite(new URL('/dev-centre', req.url));
+    if (path.startsWith('/dev-centre')) return NextResponse.next(); // Already rewritten
+    
+    return NextResponse.rewrite(new URL(`/dev-centre${path}`, req.url));
+  }
+
+  // 8. Enforce Subdomain Isolation (Prevent direct path access from other domains)
   if (
     hostname !== 'xakarena.xakteir.com' && hostname !== 'www.xakarena.xakteir.com' &&
     hostname !== 'creator.xakarena.xakteir.com' && hostname !== 'www.creator.xakarena.xakteir.com'
@@ -132,7 +146,8 @@ export function middleware(req: NextRequest) {
     !isLocalhost &&
     hostname !== 'code.xakteir.com' && hostname !== 'www.code.xakteir.com' &&
     hostname !== 'chat.xakteir.com' && hostname !== 'www.chat.xakteir.com' &&
-    hostname !== 'maps.xakteir.com' && hostname !== 'www.maps.xakteir.com'
+    hostname !== 'maps.xakteir.com' && hostname !== 'www.maps.xakteir.com' &&
+    hostname !== 'dev.xakteir.com' && hostname !== 'www.dev.xakteir.com'
   ) {
     if (path === '/xakcode') return NextResponse.redirect('https://code.xakteir.com/xakcode');
     if (path.startsWith('/xakcode/')) return NextResponse.redirect(`https://code.xakteir.com${path}`);
@@ -142,6 +157,9 @@ export function middleware(req: NextRequest) {
     
     if (path === '/map') return NextResponse.redirect('https://maps.xakteir.com/map');
     if (path.startsWith('/map/')) return NextResponse.redirect(`https://maps.xakteir.com${path}`);
+
+    if (path === '/dev-centre') return NextResponse.redirect('https://dev.xakteir.com');
+    if (path.startsWith('/dev-centre/')) return NextResponse.redirect(`https://dev.xakteir.com${path.replace('/dev-centre', '')}`);
   }
 
   // Default behavior for xakteir.com (allow everything)

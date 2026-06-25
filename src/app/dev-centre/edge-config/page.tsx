@@ -60,7 +60,7 @@ export default function EdgeConfigBlade() {
         createdAt: new Date().toISOString()
       });
 
-      toast({ title: "Store Provisioned", description: `Edge Config store created across all 42 edge nodes.` });
+      toast({ title: "Store Provisioned", description: `Edge Config store created across all 42 edge locations.` });
       setStoreName("");
     } catch (e: any) {
       toast({ variant: "destructive", title: "Creation Failed", description: e.message });

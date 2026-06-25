@@ -179,7 +179,7 @@ export default function ClassroomPage() {
         <div className="lg:col-span-7 space-y-8">
           <header className="space-y-2">
             <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">My Active Classes</h2>
-            <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Select a class node to open its workspace</p>
+            <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Select a class to open its workspace</p>
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -224,7 +224,7 @@ export default function ClassroomPage() {
             {((role === 'teacher' && !teacherClasses?.length) || (role === 'student' && !studentClasses?.length)) && (
               <div className="col-span-2 py-20 text-center opacity-20 space-y-6">
                 <BookOpen className="w-16 h-16 mx-auto text-zinc-500" />
-                <p className="text-sm font-black uppercase tracking-widest text-zinc-500">No active classroom nodes initialized.</p>
+                <p className="text-sm font-black uppercase tracking-widest text-zinc-500">No active classrooms initialized.</p>
               </div>
             )}
           </div>
@@ -245,7 +245,7 @@ export default function ClassroomPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[9px] font-black uppercase text-zinc-500 tracking-wider ml-1">Class / Subject Name</label>
-                  <Input value={newClassData.name} onChange={(e) => setNewClassData({...newClassData, name: e.target.value})} placeholder="Physics Node 4" className="bg-zinc-900 border-white/5 h-12 rounded-xl text-xs font-bold text-white" />
+                  <Input value={newClassData.name} onChange={(e) => setNewClassData({...newClassData, name: e.target.value})} placeholder="Physics Class 4" className="bg-zinc-900 border-white/5 h-12 rounded-xl text-xs font-bold text-white" />
                 </div>
                 <Button onClick={handleCreateClass} disabled={isProcessing || !newClassData.name} className="w-full h-14 bg-primary text-white hover:bg-primary/90 rounded-2xl font-black uppercase text-xs tracking-widest border-none mt-2">
                   {isProcessing ? <Loader2 className="animate-spin w-5 h-5 text-white" /> : "Deploy Class Zone"}

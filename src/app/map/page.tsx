@@ -2642,7 +2642,7 @@ export default function XakteirMapsPage() {
             )}
 
             <div className="space-y-4">
-              <h3 className="text-xs font-black uppercase italic tracking-tighter text-white flex items-center gap-2"><UserPlus className="w-4 h-4 text-blue-500" /> Link Friend Node</h3>
+              <h3 className="text-xs font-black uppercase italic tracking-tighter text-white flex items-center gap-2"><UserPlus className="w-4 h-4 text-blue-500" /> Link Friend</h3>
               <div className="flex gap-2">
                 <Input value={friendSearch} onChange={(e) => setFriendSearch(e.target.value)} placeholder="Friend's email..."
                   className="bg-black/60 border-white/5 h-10 rounded-xl text-xs font-bold text-white" />
@@ -2695,7 +2695,7 @@ export default function XakteirMapsPage() {
                 {activeFriends.length === 0 && (
                   <div className="py-16 text-center opacity-25 space-y-3">
                     <UsersIcon className="w-12 h-12 mx-auto text-zinc-500" />
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">No Friend Nodes Linked</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">No Friends Linked</p>
                   </div>
                 )}
               </div>

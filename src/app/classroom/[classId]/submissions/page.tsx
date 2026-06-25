@@ -96,7 +96,7 @@ export default function ClassSubmissionsPage({
     <div className="space-y-6 animate-in fade-in duration-300">
       <header className="space-y-1">
         <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">Submitted Student Work</h2>
-        <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Evaluate and register scores for class nodes</p>
+        <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Evaluate and register scores for classes</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
