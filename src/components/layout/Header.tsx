@@ -83,7 +83,7 @@ const APPS = [
   { name: "Mail", icon: Mail, href: "/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
   { name: "Chat", icon: MessageCircle, href: "/chat", color: "text-emerald-400", bg: "bg-emerald-400/10" },
   { name: "Xak AI", icon: Bot, href: "/ai-chat", color: "text-primary", bg: "bg-primary/10" },
-  { name: "Drive", icon: HardDrive, href: "/drive", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "Drive", icon: HardDrive, href: "https://drive.xakteir.com", color: "text-amber-500", bg: "bg-amber-500/10" },
   { name: "Games", icon: Gamepad2, href: "/games", color: "text-purple-400", bg: "bg-purple-400/10" },
   { name: "Maps", icon: Map, href: "/map", color: "text-emerald-400", bg: "bg-emerald-400/10" },
   { name: "Apps", icon: LayoutGrid, href: "/apps", color: "text-indigo-400", bg: "bg-indigo-400/10" },

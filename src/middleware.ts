@@ -128,6 +128,20 @@ export function middleware(req: NextRequest) {
     return NextResponse.rewrite(new URL(`/dev-centre${path}`, req.url));
   }
 
+  // 8. Handle Drive standalone deployment via drive.xakteir.com
+  if (hostname === 'drive.xakteir.com' || hostname === 'www.drive.xakteir.com') {
+    if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+    
+    if (!req.cookies.has('xak_session')) {
+      return NextResponse.redirect(new URL('/auth', req.url));
+    }
+
+    if (path === '/') return NextResponse.rewrite(new URL('/drive', req.url));
+    if (path.startsWith('/drive')) return NextResponse.next(); // Already rewritten
+    
+    return NextResponse.rewrite(new URL(`/drive${path}`, req.url));
+  }
+
   // 8. Enforce Subdomain Isolation (Prevent direct path access from other domains)
   if (
     hostname !== 'xakarena.xakteir.com' && hostname !== 'www.xakarena.xakteir.com' &&
@@ -147,7 +161,8 @@ export function middleware(req: NextRequest) {
     hostname !== 'code.xakteir.com' && hostname !== 'www.code.xakteir.com' &&
     hostname !== 'chat.xakteir.com' && hostname !== 'www.chat.xakteir.com' &&
     hostname !== 'maps.xakteir.com' && hostname !== 'www.maps.xakteir.com' &&
-    hostname !== 'dev.xakteir.com' && hostname !== 'www.dev.xakteir.com'
+    hostname !== 'dev.xakteir.com' && hostname !== 'www.dev.xakteir.com' &&
+    hostname !== 'drive.xakteir.com' && hostname !== 'www.drive.xakteir.com'
   ) {
     if (path === '/xakcode') return NextResponse.redirect('https://code.xakteir.com/xakcode');
     if (path.startsWith('/xakcode/')) return NextResponse.redirect(`https://code.xakteir.com${path}`);
@@ -160,6 +175,9 @@ export function middleware(req: NextRequest) {
 
     if (path === '/dev-centre') return NextResponse.redirect('https://dev.xakteir.com');
     if (path.startsWith('/dev-centre/')) return NextResponse.redirect(`https://dev.xakteir.com${path.replace('/dev-centre', '')}`);
+
+    if (path === '/drive') return NextResponse.redirect('https://drive.xakteir.com');
+    if (path.startsWith('/drive/')) return NextResponse.redirect(`https://drive.xakteir.com${path.replace('/drive', '')}`);
   }
 
   // Default behavior for xakteir.com (allow everything)
