@@ -91,6 +91,40 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(`https://xakteir.com${path}`);
   }
 
+  // 5. Handle Xakarena Game Client via xakarena.xakteir.com
+  if (hostname === 'xakarena.xakteir.com' || hostname === 'www.xakarena.xakteir.com') {
+    // Note: Public homepage allowed without session. Specific protected routes can be added here later.
+    if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+    
+    // Internal Rewrite
+    if (path === '/') return NextResponse.rewrite(new URL('/xakarena', req.url));
+    if (path.startsWith('/xakarena')) return NextResponse.next(); // Already rewritten
+    
+    return NextResponse.rewrite(new URL(`/xakarena${path}`, req.url));
+  }
+
+  // 6. Handle Xakarena Creator Platform via creator.xakarena.xakteir.com
+  if (hostname === 'creator.xakarena.xakteir.com' || hostname === 'www.creator.xakarena.xakteir.com') {
+    if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+    
+    // Internal Rewrite
+    if (path === '/') return NextResponse.rewrite(new URL('/xakarena-creator', req.url));
+    if (path.startsWith('/xakarena-creator')) return NextResponse.next(); // Already rewritten
+    
+    return NextResponse.rewrite(new URL(`/xakarena-creator${path}`, req.url));
+  }
+
+  // 7. Enforce Subdomain Isolation (Prevent direct path access from other domains)
+  if (
+    hostname !== 'xakarena.xakteir.com' && hostname !== 'www.xakarena.xakteir.com' &&
+    hostname !== 'creator.xakarena.xakteir.com' && hostname !== 'www.creator.xakarena.xakteir.com'
+  ) {
+    if (path === '/xakarena' || path.startsWith('/xakarena/') || path === '/xakarena-creator' || path.startsWith('/xakarena-creator/')) {
+      // Rewrite to a non-existent route to trigger Next.js 404
+      return NextResponse.rewrite(new URL('/404', req.url));
+    }
+  }
+
   // Redirect paths on xakteir.com to their respective subdomains (only in production)
   const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.startsWith('192.168.');
   
