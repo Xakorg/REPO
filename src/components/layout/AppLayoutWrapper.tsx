@@ -12,12 +12,20 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const isAppRoute = pathname?.startsWith("/chat") ||
                      pathname?.startsWith("/xakcode") ||
                      pathname?.startsWith("/xaksports") || 
-                     pathname?.startsWith("/xakarena") || 
                      pathname?.startsWith("/games/play/") ||
                      pathname?.startsWith("/games/retro") ||
                      pathname?.startsWith("/games/neural_defense");
 
+  // Standalone routes completely hide the global header/footer mechanics
+  const isStandaloneRoute = pathname?.startsWith("/xakarena") || 
+                            pathname?.startsWith("/xakarena-creator");
+
   const [showOverlay, setShowOverlay] = useState(false);
+
+  // If it's a standalone route, render nothing but the children in a full screen container
+  if (isStandaloneRoute) {
+    return <main className="relative z-10 w-full h-screen overflow-hidden">{children}</main>;
+  }
 
   useEffect(() => {
     if (!isAppRoute) {
