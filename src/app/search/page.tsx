@@ -21,6 +21,7 @@ import {
   History,
   Trash2,
   ExternalLink,
+  FileText,
   MessageCircle,
   UserPlus,
   UserCheck,
@@ -51,11 +52,11 @@ import {
 import defaultSites from '@/lib/defaultSites';
 import { useSearchParams, useRouter } from "next/navigation";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
-import { collection, query, limit, doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, limit, doc, setDoc, deleteDoc, serverTimestamp, getDocs, where, orderBy } from "firebase/firestore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { performWebSearch, performImageSearch } from "./actions";
+import { performWebSearch, performImageSearch, getWikipediaSummary } from "./actions";
 
 type SearchCategory = "all" | "sites" | "images" | "people";
 
@@ -248,6 +249,7 @@ function SearchContent() {
   const [queryInput, setQueryInput] = useState(initialQuery);
   const [images, setImages] = useState<Array<{title:string, thumb?:string, page?:string}>>([]);
   const [activeCategory, setActiveCategory] = useState<SearchCategory>("all");
+  const [internalResults, setInternalResults] = useState<Array<{id: string, title: string, type: string, url: string, description: string, icon: any}>>([]);
   const [externalSites, setExternalSites] = useState<any[]>([]);
   const [wikiDefinition, setWikiDefinition] = useState<any>(null);
   const [isWebSearching, setIsWebSearching] = useState(false);
@@ -535,37 +537,114 @@ function SearchContent() {
     router.push(`/search?q=${encodeURIComponent(target.trim())}`, { scroll: false });
 
     const queryLowerTarget = target.toLowerCase().trim();
-    if (queryLowerTarget.split(' ').length <= 2 && queryLowerTarget.match(/^[a-z]+$/)) {
-      try {
-        const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(queryLowerTarget)}`);
-        if (dictRes.ok) {
-          const dictData = await dictRes.json();
-          if (dictData && dictData.length > 0) {
-            const entry = dictData[0];
-            const meaning = entry.meanings[0];
-            const def = meaning.definitions[0];
-            setWikiDefinition({
-              title: entry.word.toUpperCase() + " Definition & Meaning",
-              type: meaning.partOfSpeech,
-              definition: def.definition,
-              facts: {
-                "Phonetic": entry.phonetic || entry.phonetics?.[0]?.text || "",
-                "Example": def.example || ""
-              }
-            });
+    if (queryLowerTarget in LOCAL_DEFINITIONS) {
+      setWikiDefinition(LOCAL_DEFINITIONS[queryLowerTarget as keyof typeof LOCAL_DEFINITIONS]);
+    } else {
+      let foundDef = false;
+      if (queryLowerTarget.split(' ').length <= 2 && queryLowerTarget.match(/^[a-z]+$/)) {
+        try {
+          const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(queryLowerTarget)}`);
+          if (dictRes.ok) {
+            const dictData = await dictRes.json();
+            if (dictData && dictData.length > 0) {
+              const entry = dictData[0];
+              const meaning = entry.meanings[0];
+              const def = meaning.definitions[0];
+              setWikiDefinition({
+                title: entry.word.toUpperCase() + " Definition & Meaning",
+                type: meaning.partOfSpeech,
+                definition: def.definition,
+                facts: {
+                  "Phonetic": entry.phonetic || entry.phonetics?.[0]?.text || "",
+                  "Example": def.example || ""
+                }
+              });
+              foundDef = true;
+            }
           }
+        } catch (e) {
+          console.error("Dictionary API Error:", e);
+        }
+      }
+      
+      if (!foundDef) {
+        const wikiRes = await getWikipediaSummary(target);
+        if (wikiRes) {
+          setWikiDefinition({
+            title: wikiRes.title,
+            type: "Wikipedia Article",
+            definition: wikiRes.extract,
+            image: wikiRes.thumbnail,
+            url: wikiRes.url,
+            facts: {}
+          });
         } else {
           setWikiDefinition(null);
         }
-      } catch (e) {
-        console.error("Dictionary API Error:", e);
-        setWikiDefinition(null);
       }
-    } else {
-      setWikiDefinition(null);
     }
 
     try {
+      // Internal Xakteir Searches
+      const internal: any[] = [];
+      if (user && firestore) {
+        try {
+          const qEmails = query(collection(firestore, "users", user.uid, "emails"), orderBy("timestamp", "desc"), limit(20));
+          const snap = await getDocs(qEmails);
+          snap.forEach(doc => {
+            const d = doc.data();
+            if ((d.subject && d.subject.toLowerCase().includes(queryLowerTarget)) || 
+                (d.senderName && d.senderName.toLowerCase().includes(queryLowerTarget))) {
+              internal.push({
+                id: doc.id,
+                title: d.subject || "No Subject",
+                type: "Mail",
+                url: "/mail",
+                description: `From: ${d.senderName} (${d.sender})`,
+                icon: 'mail'
+              });
+            }
+          });
+        } catch(e) {}
+        
+        try {
+          const qDocs = query(collection(firestore, "users", user.uid, "suite_documents"), orderBy("updatedAt", "desc"), limit(20));
+          const snap = await getDocs(qDocs);
+          snap.forEach(doc => {
+            const d = doc.data();
+            if (d.title && d.title.toLowerCase().includes(queryLowerTarget)) {
+              internal.push({
+                id: doc.id,
+                title: d.title,
+                type: "Suite Document",
+                url: `/suite`,
+                description: `Last edited: ${new Date(d.updatedAt?.toMillis() || Date.now()).toLocaleDateString()}`,
+                icon: 'file'
+              });
+            }
+          });
+        } catch(e) {}
+
+        try {
+          const qProj = query(collection(firestore, "users", user.uid, "studio_projects"), orderBy("updatedAt", "desc"), limit(20));
+          const snap = await getDocs(qProj);
+          snap.forEach(doc => {
+            const d = doc.data();
+            if (d.name && d.name.toLowerCase().includes(queryLowerTarget)) {
+              internal.push({
+                id: doc.id,
+                title: d.name,
+                type: "Studio Project",
+                url: `/games/studio`,
+                description: `Created: ${new Date(d.createdAt?.toMillis() || Date.now()).toLocaleDateString()}`,
+                icon: 'gamepad'
+              });
+            }
+          });
+        } catch(e) {}
+      }
+      setInternalResults(internal.slice(0, 5));
+
       // Real Web search Engine fetch via SearxNG action
       const results = await performWebSearch(target);
       if (results && results.length > 0) {
@@ -597,7 +676,7 @@ function SearchContent() {
     } finally {
       setIsWebSearching(false);
     }
-  }, [queryInput, router, saveToHistory, safeSearchActive]);
+  }, [queryInput, router, saveToHistory, safeSearchActive, user, firestore]);
 
   const initialSearchDone = useRef(false);
 
@@ -2409,6 +2488,25 @@ console.log(solve("hello"));`}
             {/* Category: SITES / ALL website listings */}
             {(activeCategory === "all" || activeCategory === "sites") && !safeSearchWarning && (
               <div className="space-y-8">
+                {/* Internal Xakteir Results */}
+                {internalResults.length > 0 && !isIndexLoading && (
+                  <div className="space-y-4 mb-4">
+                    {internalResults.map((res) => (
+                      <Card key={res.id} onClick={() => router.push(res.url)} className="p-4 border border-zinc-800 bg-zinc-900/40 hover:border-primary/50 cursor-pointer rounded-2xl transition-all group">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            {res.type === 'Mail' ? <MessageCircle className="w-5 h-5" /> : res.type === 'Suite Document' ? <FileText className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-white group-hover:text-primary transition-colors">{res.title}</h4>
+                            <p className="text-xs text-zinc-400 mt-1">{res.type} &bull; {res.description}</p>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
                 {isWebSearching && (
                   <div className={cn("flex items-center gap-3 italic text-xs font-bold py-2 animate-pulse", tc.text)}>
                     <Loader2 className="w-4 h-4 animate-spin" /> Searching the live web...
