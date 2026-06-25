@@ -125,7 +125,14 @@ export function middleware(req: NextRequest) {
     if (path === '/') return NextResponse.rewrite(new URL('/dev-centre', req.url));
     if (path.startsWith('/dev-centre')) return NextResponse.next(); // Already rewritten
     
-    return NextResponse.rewrite(new URL(`/dev-centre${path}`, req.url));
+    // Redirect dev-centre sub-routes
+    const devRoutes = ['/billing', '/compute', '/crashlytics', '/credentials', '/database', '/edge-config', '/emails', '/functions', '/git', '/monitoring', '/preview', '/sockets', '/storage', '/teams', '/webhooks'];
+    const rootSegment = '/' + path.split('/')[1]; 
+    if (devRoutes.includes(rootSegment)) {
+      return NextResponse.rewrite(new URL(`/dev-centre${path}`, req.url));
+    }
+    // Redirect other paths to main domain
+    return NextResponse.redirect(`https://www.xakteir.com${path}`);
   }
 
   // 8. Handle Drive standalone deployment via drive.xakteir.com
@@ -139,7 +146,14 @@ export function middleware(req: NextRequest) {
     if (path === '/') return NextResponse.rewrite(new URL('/drive', req.url));
     if (path.startsWith('/drive')) return NextResponse.next(); // Already rewritten
     
-    return NextResponse.rewrite(new URL(`/drive${path}`, req.url));
+    // Redirect Drive sub-routes
+    const driveRoutes = ['/settings'];
+    const rootSegment = '/' + path.split('/')[1]; 
+    if (driveRoutes.includes(rootSegment)) {
+      return NextResponse.rewrite(new URL(`/drive${path}`, req.url));
+    }
+    // Redirect other paths to main domain
+    return NextResponse.redirect(`https://www.xakteir.com${path}`);
   }
 
   // 9. Handle Meet standalone deployment via meet.xakteir.com
@@ -153,6 +167,13 @@ export function middleware(req: NextRequest) {
     if (path === '/') return NextResponse.rewrite(new URL('/meet', req.url));
     if (path.startsWith('/meet')) return NextResponse.next(); // Already rewritten
     
+    // Check if the path belongs to a known global app, if so redirect
+    const globalApps = ['/about', '/admin', '/ai-chat', '/apps', '/archive', '/art', '/authenticator', '/buddy', '/calculator', '/calendar', '/challenge', '/chat', '/classroom', '/code', '/contact', '/desktop', '/dev-centre', '/download-desktop', '/drive', '/forms', '/games', '/installer', '/learn-pro', '/mail', '/map', '/meet', '/mini-player', '/news', '/notes', '/notifications', '/oauth', '/overlay', '/pics', '/privacy', '/profile', '/projects', '/quick-reply', '/rietkax', '/search', '/search-console', '/sheets', '/shop', '/sign', '/sites', '/slides', '/social', '/stream', '/suite', '/tasks', '/terms', '/translate', '/upgrade', '/weather', '/whiteboard', '/write', '/xakarena', '/xakarena-creator', '/xakcode', '/xaksports', '/xakview'];
+    const rootSegment = '/' + path.split('/')[1]; 
+    if (globalApps.includes(rootSegment)) {
+      return NextResponse.redirect(`https://www.xakteir.com${path}`);
+    }
+    // Otherwise, treat it as a room ID
     return NextResponse.rewrite(new URL(`/meet${path}`, req.url));
   }
 
