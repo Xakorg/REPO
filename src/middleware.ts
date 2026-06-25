@@ -142,6 +142,20 @@ export function middleware(req: NextRequest) {
     return NextResponse.rewrite(new URL(`/drive${path}`, req.url));
   }
 
+  // 9. Handle Meet standalone deployment via meet.xakteir.com
+  if (hostname === 'meet.xakteir.com' || hostname === 'www.meet.xakteir.com') {
+    if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+    
+    if (!req.cookies.has('xak_session')) {
+      return NextResponse.redirect(new URL('/auth', req.url));
+    }
+
+    if (path === '/') return NextResponse.rewrite(new URL('/meet', req.url));
+    if (path.startsWith('/meet')) return NextResponse.next(); // Already rewritten
+    
+    return NextResponse.rewrite(new URL(`/meet${path}`, req.url));
+  }
+
   // 8. Enforce Subdomain Isolation (Prevent direct path access from other domains)
   if (
     hostname !== 'xakarena.xakteir.com' && hostname !== 'www.xakarena.xakteir.com' &&
@@ -162,7 +176,8 @@ export function middleware(req: NextRequest) {
     hostname !== 'chat.xakteir.com' && hostname !== 'www.chat.xakteir.com' &&
     hostname !== 'maps.xakteir.com' && hostname !== 'www.maps.xakteir.com' &&
     hostname !== 'dev.xakteir.com' && hostname !== 'www.dev.xakteir.com' &&
-    hostname !== 'drive.xakteir.com' && hostname !== 'www.drive.xakteir.com'
+    hostname !== 'drive.xakteir.com' && hostname !== 'www.drive.xakteir.com' &&
+    hostname !== 'meet.xakteir.com' && hostname !== 'www.meet.xakteir.com'
   ) {
     if (path === '/xakcode') return NextResponse.redirect('https://code.xakteir.com/xakcode');
     if (path.startsWith('/xakcode/')) return NextResponse.redirect(`https://code.xakteir.com${path}`);
@@ -178,6 +193,9 @@ export function middleware(req: NextRequest) {
 
     if (path === '/drive') return NextResponse.redirect('https://drive.xakteir.com');
     if (path.startsWith('/drive/')) return NextResponse.redirect(`https://drive.xakteir.com${path.replace('/drive', '')}`);
+
+    if (path === '/meet') return NextResponse.redirect('https://meet.xakteir.com');
+    if (path.startsWith('/meet/')) return NextResponse.redirect(`https://meet.xakteir.com${path.replace('/meet', '')}`);
   }
 
   // Default behavior for xakteir.com (allow everything)
