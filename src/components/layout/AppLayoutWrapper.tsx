@@ -8,13 +8,14 @@ import { Footer } from "./Footer";
 export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // App routes include chat, code, and game pages where we want a full-screen experience
-  const isAppRoute = pathname?.startsWith("/chat") ||
-                     pathname?.startsWith("/xakcode") ||
+  // App routes include code, and game pages where we want a full-screen experience with an auto-hide header
+  const isAppRoute = pathname?.startsWith("/xakcode") ||
                      pathname?.startsWith("/xaksports") || 
                      pathname?.startsWith("/games/play/") ||
                      pathname?.startsWith("/games/retro") ||
                      pathname?.startsWith("/games/neural_defense");
+                     
+  const isChatRoute = pathname?.startsWith("/chat");
 
   // Standalone routes completely hide the global header/footer mechanics
   const isStandaloneRoute = pathname?.startsWith("/xakarena") || 
@@ -77,7 +78,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
       <div 
         className={isAppRoute ? `fixed bottom-0 left-0 right-0 z-[500] transition-all duration-300 transform ${
           showOverlay ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
-        }` : ""}
+        }` : (isChatRoute ? "hidden" : "")}
         onMouseEnter={isAppRoute ? () => setShowOverlay(true) : undefined}
         onMouseLeave={isAppRoute ? () => setShowOverlay(false) : undefined}
       >
