@@ -1219,6 +1219,51 @@ export default function MailPage() {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="h-screen bg-black text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-black to-blue-500/20 opacity-50" />
+        <div className="absolute inset-0 arcade-grid opacity-20" />
+        
+        <div className="relative z-10 max-w-2xl w-full text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="inline-flex items-center justify-center p-4 bg-primary/10 rounded-3xl border border-primary/20 mb-4">
+            <MailIcon className="w-16 h-16 text-primary" />
+          </div>
+          
+          <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">
+            Send. From anywhere<br/>To anywhere.
+          </h1>
+          
+          <div className="space-y-4 py-8">
+            <h2 className="text-2xl font-bold italic text-white/80">Xakteir Mail. Do it All.</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-left mt-8">
+              {[
+                { icon: Shield, text: "End-to-End Encryption" },
+                { icon: Bot, text: "AI Smart Replies" },
+                { icon: Zap, text: "Lightning Fast" },
+                { icon: Clock, text: "Snooze & Schedule" },
+                { icon: Layers, text: "Smart Organization" },
+                { icon: MailCheck, text: "Read Receipts" }
+              ].map((f, i) => (
+                <div key={i} className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <f.icon className="w-5 h-5 text-primary shrink-0" />
+                  <span className="text-xs font-bold text-white/90">{f.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <Button 
+            onClick={() => window.location.href = "/auth?source=mail"}
+            className="h-16 px-12 bg-primary hover:bg-primary/90 text-black rounded-[2rem] font-black uppercase tracking-widest text-lg shadow-[0_0_40px_rgba(16,185,129,0.3)] transition-all hover:scale-105"
+          >
+            Get In
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // ─── Attachment viewer modal ──────────────────────────────────────────────
   const AttachmentChip = ({ att }: { att: { name: string; url: string; type?: string } }) => {
     const isImage = att.type?.startsWith("image/") || /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(att.name);

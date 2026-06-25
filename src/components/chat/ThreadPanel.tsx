@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Message } from "@/lib/types"; // adjust based on where Message type is
 import { X, Send, Paperclip } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useUser, useFirestore, useCollection } from "@/firebase";

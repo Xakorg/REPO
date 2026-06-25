@@ -26,8 +26,8 @@ export default function XakSports() {
           </RigidBody>
 
           {/* Sports Ball */}
-          <RigidBody colliders="ball" position={[0, 5, 0]} restitution={0.8} onClick={() => setScore(s => s + 1)}>
-            <mesh castShadow>
+          <RigidBody colliders="ball" position={[0, 5, 0]} restitution={0.8}>
+            <mesh castShadow onClick={() => setScore(s => s + 1)}>
               <sphereGeometry args={[1, 32, 32]} />
               <meshStandardMaterial color="#FF5722" />
             </mesh>

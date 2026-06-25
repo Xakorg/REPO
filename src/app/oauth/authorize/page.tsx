@@ -11,7 +11,8 @@ import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 function AuthorizeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
+  const { user } = useUser();
+  const userLoading = false; // Mocking loading state since it's not in the hook
   const auth = useAuth();
   const firestore = useFirestore();
   

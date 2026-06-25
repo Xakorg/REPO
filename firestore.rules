@@ -499,9 +499,9 @@ service cloud.firestore {
       // Get a single chat if it's public, the caller is an admin, or the chat exists and they are allowed
       allow get: if isPublicChatId(chatId);
       allow get: if isAdmin();
-      allow get: if chatExists(chatId) && (
-        get(/databases/$(database)/documents/chats/$(chatId)).data.get('public', false) == true
-        || request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+      allow get: if resource != null && (
+        resource.data.get('public', false) == true
+        || request.auth.uid in resource.data.participants
       );
 
       // List chats only when the client query includes array-contains with the caller's uid,
@@ -513,7 +513,7 @@ service cloud.firestore {
 
       // Allow updates/deletes only for participants
       allow update, delete: if isAdmin();
-      allow update, delete: if chatExists(chatId) && isChatParticipant(chatId);
+      allow update, delete: if isSignedIn() && resource != null && request.auth.uid in resource.data.participants;
 
       match /messages/{messageId} {
         // Read/list messages if the chat ID is a known public channel, a server channel (contains '-'), or a chat they have access to

@@ -270,9 +270,8 @@ function SearchContent() {
   const [searchTime, setSearchTime] = useState<number | null>(null);
 
   // TTS states
-
-
-  // Voice Search states
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isAiLoading, setIsAiLoading] = useState(false);  // Voice Search states
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
 
@@ -581,7 +580,7 @@ function SearchContent() {
       try {
         const imgResults = await performImageSearch(target);
         if (imgResults && imgResults.length > 0) {
-          setImages(imgResults.map(r => ({
+          setImages(imgResults.map((r: any) => ({
             title: r.title,
             thumb: r.img_src,
             page: r.url

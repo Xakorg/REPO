@@ -146,7 +146,7 @@ export default function XakteirAuthPage() {
         masterPin: setupPin,
         hasPasskey: false,
         timestamp: serverTimestamp()
-      });
+      }, { merge: true });
       toast({ title: "Setup Complete", description: "Your vault is now secure." });
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: "Failed to save configuration." });
@@ -565,7 +565,7 @@ export default function XakteirAuthPage() {
                         <div className="space-y-4 bg-white/5 p-6 rounded-[2rem] border border-white/10">
                            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Backup Codes</span>
                            <div className="grid grid-cols-2 gap-2">
-                              {(Array.isArray(activeAccount.backupCodes) ? activeAccount.backupCodes : String(activeAccount.backupCodes || '').split(/[,\n]+/)).map((code, idx) => {
+                              {(Array.isArray(activeAccount.backupCodes) ? activeAccount.backupCodes : String(activeAccount.backupCodes || '').split(/[,\n]+/)).map((code: any, idx: number) => {
                                  const trimmed = typeof code === 'string' ? code.trim() : String(code);
                                  if (!trimmed) return null;
                                  return <div key={idx} className="bg-black/40 px-3 py-2 rounded-lg font-mono text-xs text-muted-foreground cursor-pointer hover:text-white" onClick={() => handleCopy(trimmed)}>{trimmed}</div>

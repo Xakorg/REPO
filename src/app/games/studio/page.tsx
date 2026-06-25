@@ -55,7 +55,15 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import dynamic from "next/dynamic";
 
-const BlocklyWorkspace = dynamic(() => import("react-blockly").then(mod => mod.BlocklyWorkspace), { ssr: false });
+import { setupXakteirBlocks, xakteirToolboxConfig } from "@/lib/blocks/xakteir-blocks";
+import { setupXakteirGenerator } from "@/lib/blocks/xakteir-generator";
+
+const BlocklyWorkspace = dynamic(() => import("react-blockly").then(mod => {
+  setupXakteirBlocks();
+  setupXakteirGenerator();
+  return mod.BlocklyWorkspace;
+}), { ssr: false });
+
 let javascriptGenerator: any;
 if (typeof window !== "undefined") {
   import("blockly/javascript").then(mod => {
@@ -201,14 +209,111 @@ ${indexFile.content.replace(/</g, '\\x3C')}
       htmlContent = `
 <!DOCTYPE html>
 <html>
-<body style="background: #000; color: #fff; font-family: monospace; white-space: pre-wrap; padding: 20px;">
-  <div id="output"></div>
+<body style="background: #000; color: #fff; font-family: monospace; margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh;">
+  <canvas id="gameCanvas" width="800" height="600" style="background: #111; max-width: 100%; max-height: 100%; object-fit: contain;"></canvas>
+  <div id="output" style="padding: 10px; font-size: 12px; opacity: 0.7; overflow-y: auto; max-height: 150px;"></div>
   <script>
     const oldLog = console.log;
     console.log = function(...args) {
-      document.getElementById('output').innerText += args.join(" ") + "\\n";
+      document.getElementById('output').innerText = args.join(" ") + "\\n" + document.getElementById('output').innerText;
       oldLog.apply(console, args);
     };
+
+    // Simple Xakteir Engine API
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    window.Xakteir = {
+      objects: [],
+      gravity: 0,
+      
+      onStart: function(callback) {
+        setTimeout(callback, 100); // give time to load
+      },
+      onKeyPress: function(key, callback) {
+        window.addEventListener('keydown', (e) => {
+          if(e.key.toLowerCase() === key.toLowerCase() || e.code === key) callback();
+        });
+      },
+      spawn: function(type, x, y) {
+        console.log("Spawned " + type + " at " + x + ", " + y);
+        this.objects.push({ type, x, y, size: 40, color: '#' + Math.floor(Math.random()*16777215).toString(16) });
+        this.render();
+      },
+      moveForward: function(steps) {
+        console.log("Moved forward " + steps);
+        if(this.objects.length > 0) this.objects[0].x += steps;
+        this.render();
+      },
+      goTo: function(x, y) {
+        if(this.objects.length > 0) {
+          this.objects[0].x = x;
+          this.objects[0].y = y;
+        }
+        this.render();
+      },
+      setGravity: function(g) {
+        this.gravity = g;
+        console.log("Gravity set to " + g);
+      },
+      say: function(text, time) {
+        console.log("Saying: " + text);
+        if(this.objects.length > 0) {
+           this.objects[0].text = text;
+           this.objects[0].textTimer = time * 60; // rough frames
+        }
+        this.render();
+      },
+      hide: function() {
+        if(this.objects.length > 0) this.objects[0].hidden = true;
+        this.render();
+      },
+      show: function() {
+        if(this.objects.length > 0) this.objects[0].hidden = false;
+        this.render();
+      },
+      speak: function(text) {
+        console.log("Speaking: " + text);
+        if('speechSynthesis' in window) {
+           const utter = new SpeechSynthesisUtterance(text);
+           window.speechSynthesis.speak(utter);
+        }
+      },
+      vibrate: function(time) {
+        console.log("Vibrating for " + time + "s");
+        if('navigator' in window && navigator.vibrate) navigator.vibrate(time * 1000);
+      },
+      destroy: function() {
+        if(this.objects.length > 0) this.objects.pop();
+        this.render();
+      },
+      render: function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        this.objects.forEach(obj => {
+          if(obj.hidden) return;
+          ctx.fillStyle = obj.color;
+          ctx.fillRect(obj.x, obj.y, obj.size, obj.size);
+          if(obj.text && obj.textTimer > 0) {
+            ctx.fillStyle = '#fff';
+            ctx.font = '16px monospace';
+            ctx.fillText(obj.text, obj.x, obj.y - 10);
+            obj.textTimer--;
+          }
+        });
+      }
+    };
+
+    // Engine Loop
+    setInterval(() => {
+       if(window.Xakteir.gravity > 0) {
+          window.Xakteir.objects.forEach(o => {
+            o.y += window.Xakteir.gravity;
+            if(o.y > canvas.height - o.size) o.y = canvas.height - o.size;
+          });
+          window.Xakteir.render();
+       }
+    }, 1000/60);
+
     try {
       ${jsCode}
     } catch(e) {
@@ -939,15 +1044,8 @@ ${indexFile.content.replace(/</g, '\\x3C')}
                      <div className="w-full h-full bg-white relative">
                        <BlocklyWorkspace
                           className="w-full h-full"
-                          toolboxConfiguration={{
-                             kind: 'categoryToolbox',
-                             contents: [
-                               { kind: 'category', name: 'Logic', categorystyle: 'logic_category', contents: [ { kind: 'block', type: 'controls_if' }, { kind: 'block', type: 'logic_compare' }, { kind: 'block', type: 'logic_operation' }, { kind: 'block', type: 'logic_boolean' } ] },
-                               { kind: 'category', name: 'Loops', categorystyle: 'loop_category', contents: [ { kind: 'block', type: 'controls_repeat_ext' }, { kind: 'block', type: 'controls_whileUntil' } ] },
-                               { kind: 'category', name: 'Math', categorystyle: 'math_category', contents: [ { kind: 'block', type: 'math_number' }, { kind: 'block', type: 'math_arithmetic' } ] },
-                               { kind: 'category', name: 'Text', categorystyle: 'text_category', contents: [ { kind: 'block', type: 'text' }, { kind: 'block', type: 'text_print' } ] },
-                             ]
-                          }}
+                          toolboxConfiguration={xakteirToolboxConfig}
+                          workspaceConfiguration={{}}
                           initialXml={activeProject.files.find(f => f.name === 'blockly.xml')?.content || '<xml xmlns="https://developers.google.com/blockly/xml"></xml>'}
                           onXmlChange={(xml) => {
                             const newFiles = [...activeProject.files];
@@ -957,7 +1055,7 @@ ${indexFile.content.replace(/</g, '\\x3C')}
                             } else {
                               newFiles.push({ name: 'blockly.xml', content: xml });
                             }
-                            updateDocumentNonBlocking(doc(firestore, "users", user.uid, "studio_projects", activeProjectId!), {
+                            updateDocumentNonBlocking(doc(firestore, "users", user!.uid, "studio_projects", activeProjectId!), {
                               files: newFiles,
                               updatedAt: serverTimestamp()
                             });
@@ -972,7 +1070,7 @@ ${indexFile.content.replace(/</g, '\\x3C')}
                                } else {
                                  newFiles.push({ name: 'generated.js', content: code });
                                }
-                               updateDocumentNonBlocking(doc(firestore, "users", user.uid, "studio_projects", activeProjectId!), {
+                               updateDocumentNonBlocking(doc(firestore, "users", user!.uid, "studio_projects", activeProjectId!), {
                                  files: newFiles,
                                  updatedAt: serverTimestamp()
                                });

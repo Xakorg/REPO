@@ -473,7 +473,7 @@ export default function XakteirSuitePage() {
         break;
       case "Find & Replace":
         const find = prompt("Find:");
-        if (find) window.find(find);
+        if (find) (window as any).find(find);
         break;
       case "Word Count":
         const text = contentEditableRef.current?.innerText || "";

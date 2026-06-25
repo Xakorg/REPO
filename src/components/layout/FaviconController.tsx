@@ -602,6 +602,7 @@ export function FaviconController() {
         const x1 = 12 + Math.cos(angle) * 7.5;
         const y1 = 12 + Math.sin(angle) * 7.5;
         const x2 = 12 + Math.cos(angle) * 9.5;
+        const y2 = 12 + Math.sin(angle) * 9.5;
       c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
       }
     };

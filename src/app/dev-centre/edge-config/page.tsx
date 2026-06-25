@@ -6,7 +6,7 @@ import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Network, Plus, Trash2, Code2, Globe2, Activity } from "lucide-react";
+import { Network, Plus, Trash2, Code2, Globe2, Activity, Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 

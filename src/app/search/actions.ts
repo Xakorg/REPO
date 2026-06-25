@@ -43,12 +43,12 @@ export async function performWebSearch(query: string) {
     if (res.ok) {
       const html = await res.text();
       const results = [];
-      const blockRegex = /<div class="result__body">.*?<\/div>\s*<\/div>/gs;
+      const blockRegex = /<div class="result__body">[\s\S]*?<\/div>\s*<\/div>/g;
       let blockMatch;
       while ((blockMatch = blockRegex.exec(html)) !== null) {
         const block = blockMatch[0];
-        const titleMatch = block.match(/<h2 class="result__title">\s*<a[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/s);
-        const snippetMatch = block.match(/<a class="result__snippet[^>]*>(.*?)<\/a>/s);
+        const titleMatch = block.match(/<h2 class="result__title">\s*<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
+        const snippetMatch = block.match(/<a class="result__snippet[^>]*>([\s\S]*?)<\/a>/);
         if (titleMatch && snippetMatch) {
           let url = titleMatch[1];
           if (url.startsWith('//duckduckgo.com/l/?uddg=')) {

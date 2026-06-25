@@ -10,6 +10,7 @@ export function Player({ position = [0, 1, 5], playerIndex = 1, innerRef, onUpda
   const defaultRef = useRef<any>(null);
   const ref = innerRef || defaultRef;
   const input = useControllerInput(playerIndex as any);
+  const meshRef = useRef<any>(null);
   
   // A simple cooldown so the user can't spam kick
   const [lastKick, setLastKick] = useState(0);
@@ -65,7 +66,7 @@ export function Player({ position = [0, 1, 5], playerIndex = 1, innerRef, onUpda
     >
       <CapsuleCollider args={[0.5, 0.5]} position={[0, 1, 0]} />
       {/* Player Visuals */}
-      <group position={[0, 0.5, 0]}>
+      <group ref={meshRef} position={[0, 0.5, 0]}>
         {/* Body */}
         <mesh position={[0, 0.5, 0]} castShadow>
           <capsuleGeometry args={[0.5, 1, 4, 16]} />

@@ -39,7 +39,7 @@ import {
   MonitorUp,
   Flame
 } from "lucide-react";
-import { AnimatedGridPattern } from "@/components/magicui/animated-grid-pattern";
+
 import { ThreadPanel } from "@/components/chat/ThreadPanel";
 import { ReactionPicker } from "@/components/chat/ReactionPicker";
 import { BookmarksPanel } from "@/components/chat/BookmarksPanel";
@@ -56,7 +56,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@
 import { collection, serverTimestamp, query, orderBy, limit, doc, addDoc, updateDoc, deleteDoc, where, getDocs, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { RenderHat } from "@/components/RenderHat";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { isOffensive } from "@/lib/username";
 import Link from "next/link";
 import Room3D from "./Room3D";
@@ -2561,7 +2561,7 @@ export default function ServerChatPage() {
         <ThreadPanel 
           message={activeThreadMessage} 
           onClose={() => setActiveThreadMessage(null)} 
-          channelId={channel?.id} 
+          channelId={channelId} 
         />
       )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { RigidBody, SphereCollider } from "@react-three/rapier";
+import { RigidBody } from "@react-three/rapier";
 import { useRef } from "react";
 import * as THREE from "three";
 

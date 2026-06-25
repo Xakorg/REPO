@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState } from "react";
 
 const INITIAL = [
@@ -27,10 +27,10 @@ const SOLUTION = [
 
 export default function Sudoku() {
   const [board, setBoard] = useState(INITIAL.map(row => [...row]));
-  const [selected, setSelected] = useState(null);
-  const [errors, setErrors] = useState(new Set());
+  const [selected, setSelected] = useState<[number, number] | null>(null);
+  const [errors, setErrors] = useState(new Set<string>());
 
-  const setCell = (r, c, val) => {
+  const setCell = (r: number, c: number, val: number) => {
     if (INITIAL[r][c] !== 0) return;
     const nb = board.map(row => [...row]);
     nb[r][c] = val;
@@ -42,7 +42,7 @@ export default function Sudoku() {
     setErrors(err);
   };
 
-  const handleKey = (e) => {
+  const handleKey = (e: any) => {
     if (!selected) return;
     const [r, c] = selected;
     const n = parseInt(e.key);

@@ -38,7 +38,7 @@ import {
   Maximize2
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1471,7 +1471,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         </footer>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0" key={pathname}>
+      <div className="flex-1 flex flex-col min-w-0">
         {children}
       </div>
 

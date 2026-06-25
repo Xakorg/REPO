@@ -36,6 +36,7 @@ export default function AuthPage() {
   const [askLinkGmail, setAskLinkGmail] = useState(false);
 
   const [usernameInput, setUsernameInput] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [otpCode, setOtpCode] = useState("");
@@ -69,9 +70,10 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (existingUser && !showAnimation && !isAddAccount) {
-      router.push("/");
+      const source = searchParams?.get("source");
+      router.push(source ? `/${source}` : "/");
     }
-  }, [existingUser, router, showAnimation, isAddAccount]);
+  }, [existingUser, router, showAnimation, isAddAccount, searchParams]);
 
   useEffect(() => {
     let isMounted = true;
@@ -82,14 +84,20 @@ export default function AuthPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken })
         }).then(() => {
-          if (isMounted) router.replace("/");
+          if (isMounted) {
+            const source = searchParams?.get("source");
+            router.replace(source ? `/${source}` : "/");
+          }
         }).catch(() => {
-          if (isMounted) router.replace("/");
+          if (isMounted) {
+            const source = searchParams?.get("source");
+            router.replace(source ? `/${source}` : "/");
+          }
         });
       });
     }
     return () => { isMounted = false; };
-  }, [existingUser, router, step, showAnimation]);
+  }, [existingUser, router, step, showAnimation, searchParams]);
 
   const handleGoogleAuth = () => {
     if (!auth || !firestore) return;
@@ -162,7 +170,8 @@ export default function AuthPage() {
     setTimeout(() => {
       setShowAnimation(false);
       sessionStorage.setItem("start_onboarding", "true");
-      router.push("/");
+      const source = searchParams?.get("source");
+      router.push(source ? `/${source}` : "/");
     }, 3000);
   };
 
@@ -380,13 +389,13 @@ export default function AuthPage() {
     <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center p-6 relative">
       <div className="mb-8 z-10 flex bg-black/40 p-2 rounded-full border border-white/5 shadow-xl backdrop-blur-sm">
         <button 
-          className={cn("px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all", activeTab === 'signin' ? "bg-primary text-black shadow-[0_0_15px_rgba(var(--primary),0.5)]" : "text-white/50 hover:text-white")}
+          className="px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all bg-primary text-black shadow-[0_0_15px_rgba(var(--primary),0.5)]"
           onClick={() => setActiveTab('signin')}
         >
           Sign In
         </button>
         <button 
-          className={cn("px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all", activeTab === 'signup' ? "bg-primary text-black shadow-[0_0_15px_rgba(var(--primary),0.5)]" : "text-white/50 hover:text-white")}
+          className="px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all text-white/50 hover:text-white"
           onClick={() => { setActiveTab('signup'); setWizardStep(0); }}
         >
           Sign Up
