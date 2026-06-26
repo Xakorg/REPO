@@ -35,7 +35,12 @@ import {
   Monitor,
   Sparkles,
   Minimize2,
-  Maximize2
+  Maximize2,
+  Star,
+  Award,
+  Heart,
+  Flame,
+  X
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -49,7 +54,7 @@ import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, query, where, doc, addDoc, serverTimestamp, getDocs, limit, orderBy, updateDoc, deleteDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { RenderHat, RenderAura, RenderDecor, getNameplateClass } from "@/components/RenderHat";
+import { RenderHat, RenderAura, RenderDecor, RenderPet, RenderBanner, getNameplateClass } from "@/components/RenderHat";
 import { Card } from "@/components/ui/card";
 import { getIceServers } from "@/lib/webrtc/config";
 import { IceCandidateBuffer } from "@/lib/webrtc/ice-buffer";
@@ -2098,65 +2103,107 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       {/* Interactive User Profile Card Dialog */}
       <Dialog open={selectedProfileUser !== null} onOpenChange={() => setSelectedProfileUser(null)}>
         {selectedProfileUser && (() => {
-          const isCurrentUser = selectedProfileUser.id === user.uid;
+          const isCurrentUser = selectedProfileUser.id === user?.uid;
           const name = selectedProfileUser.displayName?.replace(/^@+/, "") || "Member";
           const username = selectedProfileUser.username || selectedProfileUser.id;
           
           return (
-            <DialogContent className="glass-card border-white/10 rounded-[3rem] max-w-md text-white p-8 bg-zinc-950/95 backdrop-blur-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-black uppercase italic text-white flex items-center gap-2">
-                  <Avatar className="w-5 h-5 rounded-full inline-block shrink-0">
-                    <AvatarImage src={selectedProfileUser.photoURL} />
-                    <AvatarFallback>{name[0]}</AvatarFallback>
-                  </Avatar>
-                  User Profile Card
-                </DialogTitle>
+            <DialogContent className="w-full max-w-2xl p-0 overflow-hidden bg-[#0c0c16]/95 border border-white/10 rounded-[2.5rem] shadow-2xl backdrop-blur-2xl text-foreground">
+              <DialogHeader className="sr-only">
+                 <DialogTitle>Member Profile: {name}</DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-6 pt-4 text-left">
-                {/* Profile Header Card */}
-                <div className="relative p-6 rounded-2xl bg-white/5 border border-white/5 flex flex-col items-center text-center space-y-3 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
-                  
-                  <div className="relative w-24 h-24 mb-4 mt-2">
-                    <RenderAura auraKey={selectedProfileUser.aura} />
+              <div className="relative">
+                {/* Banner Area */}
+                <div className="h-32 w-full relative overflow-hidden z-10">
+                  <RenderBanner bannerKey={selectedProfileUser.banner} className="absolute inset-0 w-full h-full object-cover" />
+                  {!selectedProfileUser.banner && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-900 to-purple-900" />
+                  )}
+                  {/* Banner overlay gradient for premium feel */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <Button variant="ghost" size="icon" onClick={() => setSelectedProfileUser(null)} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-black/40 text-white hover:bg-rose-600 transition-all z-50">
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {/* User Avatar + Decoration + Badges section */}
+                <div className="px-6 relative z-20 flex justify-between items-end -mt-16 mb-4">
+                  <div className="relative p-1 rounded-[3rem] bg-[#0c0c16] z-20">
                     <RenderDecor decorKey={selectedProfileUser.decor} />
+                    <RenderAura auraKey={selectedProfileUser.aura} />
                     <RenderHat hatKey={selectedProfileUser.hat} />
-                    <Avatar className="w-full h-full border-4 border-white/10 rounded-2xl bg-zinc-900">
-                      <AvatarImage src={selectedProfileUser.photoURL} className="object-cover" />
-                      <AvatarFallback className="text-3xl font-black bg-primary">{selectedProfileUser.displayName?.[0] || '?'}</AvatarFallback>
+                    <RenderPet petKey={selectedProfileUser.pet} />
+                    
+                    <Avatar className="w-28 h-28 border-[6px] border-[#0c0c16] rounded-[2.2rem] shadow-2xl overflow-hidden bg-secondary relative z-20">
+                      <AvatarImage src={selectedProfileUser.photoURL || ""} className="object-cover" />
+                      <AvatarFallback className="bg-primary text-3xl font-black text-white">{selectedProfileUser.displayName?.[0] || 'U'}</AvatarFallback>
                     </Avatar>
+                    
+                    {/* Discord-style Online Indicator dot */}
                     <div className={cn(
-                      "absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-black",
-                      selectedProfileUser.status === 'offline' ? "bg-zinc-500" : "bg-green-500"
+                      "absolute bottom-1 right-1 w-6 h-6 border-4 border-[#0c0c16] rounded-full z-30",
+                      selectedProfileUser.status === 'offline' ? "bg-zinc-500" : "bg-emerald-500"
                     )} />
                   </div>
 
-                  <div>
-                    <h4 className="text-lg font-black uppercase italic tracking-tighter text-white">{name}</h4>
-                    <p className="text-[10px] text-zinc-400 font-medium">@{username}</p>
-                    {selectedProfileUser.statusText && (
-                      <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest mt-1 bg-emerald-500/10 px-2 py-0.5 rounded-full inline-block">
-                        {selectedProfileUser.statusEmoji} {selectedProfileUser.statusText}
-                      </p>
-                    )}
+                  {/* Discord-style Profile Badges */}
+                  <div className="flex gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/5 shadow-md mb-2">
+                    <div className="w-5 h-5 flex items-center justify-center text-yellow-400 hover:scale-110 transition-transform cursor-pointer" title="Early Supporter">
+                      <Star className="w-4 h-4 fill-yellow-400" />
+                    </div>
+                    <div className="w-5 h-5 flex items-center justify-center text-purple-400 hover:scale-110 transition-transform cursor-pointer" title="HypeSquad Bravery">
+                      <Flame className="w-4 h-4 fill-purple-400" />
+                    </div>
+                    <div className="w-5 h-5 flex items-center justify-center text-emerald-400 hover:scale-110 transition-transform cursor-pointer" title="Active Developer">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div className="w-5 h-5 flex items-center justify-center text-pink-400 hover:scale-110 transition-transform cursor-pointer" title="Xakteir Premium">
+                      <Award className="w-4 h-4 fill-pink-400" />
+                    </div>
                   </div>
                 </div>
+
+                {/* Username + Tag */}
+                <div className="px-8 pb-4">
+                  <h4 className={cn(
+                    "text-3xl font-black tracking-tighter italic uppercase leading-none break-words relative z-20",
+                    getNameplateClass(selectedProfileUser.nameplate)
+                  )}>
+                    {name}
+                  </h4>
+                  <p className="text-[10px] text-muted-foreground font-black tracking-widest mt-1 flex items-center gap-2">
+                    @{username.toLowerCase()}
+                    {selectedProfileUser.statusText && (
+                      <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-full inline-block">
+                        {selectedProfileUser.statusEmoji} {selectedProfileUser.statusText}
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                <div className="px-8 py-2"><hr className="border-white/5" /></div>
 
                 {/* Level and Credits Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white/5 border border-white/5 p-3.5 rounded-2xl text-center">
-                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Xak Credits</p>
-                    <p className="text-base font-black italic mt-0.5 text-amber-500">{(selectedProfileUser.currencyBalance || 0).toLocaleString()}</p>
+                <div className="px-8 py-4 grid grid-cols-2 gap-4">
+                  <div className="bg-[#1e1f22] p-4 rounded-xl border border-white/5 space-y-1">
+                    <div className="flex items-center gap-2 text-amber-500">
+                      <Zap className="w-3.5 h-3.5" />
+                      <span className="text-[9px] font-black uppercase">Xak Credits</span>
+                    </div>
+                    <p className="text-xl font-black italic text-white">{(selectedProfileUser.currencyBalance || 0).toLocaleString()}</p>
                   </div>
-                  <div className="bg-white/5 border border-white/5 p-3.5 rounded-2xl text-center">
-                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">User Level</p>
-                    <p className="text-base font-black italic mt-0.5 text-primary">LVL {selectedProfileUser.level || 1}</p>
+                  <div className="bg-[#1e1f22] p-4 rounded-xl border border-white/5 space-y-1">
+                    <div className="flex items-center gap-2 text-primary">
+                      <Heart className="w-3.5 h-3.5" />
+                      <span className="text-[9px] font-black uppercase">User Level</span>
+                    </div>
+                    <p className="text-xl font-black italic text-white">LVL {selectedProfileUser.level || 1}</p>
                   </div>
                 </div>
 
-                {isCurrentUser ? (
+                <div className="px-8 pb-6 text-left">
+                  {isCurrentUser ? (
                   /* Edit Section for Current User */
                   <div className="space-y-4 bg-white/5 border border-white/10 p-5 rounded-2xl">
                     <h5 className="text-[9px] font-black uppercase text-primary tracking-widest">Update Your Status & Bio</h5>
@@ -2200,12 +2247,14 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                 ) : (
                   /* Display Section for Other Users */
                   <div className="space-y-4">
-                    <div className="bg-white/5 border border-white/5 p-4 rounded-2xl">
-                      <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">User Biography</p>
-                      <p className="text-xs italic font-medium leading-relaxed opacity-85">{selectedProfileUser.description || "No bio description set by this user."}</p>
+                    <div>
+                      <h5 className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-1">About Me</h5>
+                      <p className="text-xs text-white/80 font-bold leading-relaxed italic">
+                        {selectedProfileUser.aboutMe || "Multiverse voyager & code explorer. Exploring the outer edges of the Xakteir ecosystem."}
+                      </p>
                     </div>
 
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 border-t border-white/5 pt-4">
                       <Button 
                         onClick={() => {
                           setSelectedProfileUser(null);
@@ -2260,8 +2309,6 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                           <Video className="w-3 h-3" /> Video Call
                         </Button>
                       </div>
-
-
                     </div>
                   </div>
                 )}

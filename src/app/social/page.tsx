@@ -39,6 +39,8 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from "@/components/ui/dialog";
+import { RenderHat, RenderBanner, RenderDecor, RenderAura, RenderPet, getNameplateClass } from "@/components/RenderHat";
+import { Award, Star, Sparkles as SparklesIcon, Flame as FlameIcon } from "lucide-react";
 
 export default function XakSocialPage() {
   const { user } = useUser();
@@ -345,54 +347,92 @@ export default function XakSocialPage() {
       </Tabs>
 
       <Dialog open={!!selectedMember} onOpenChange={() => setSelectedMember(null)}>
-        <DialogContent className="w-96 p-0 overflow-hidden bg-[#111214] border-none rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.8)] text-foreground">
+        <DialogContent className="w-full max-w-2xl p-0 overflow-hidden bg-[#0c0c16]/95 border border-white/10 rounded-[2.5rem] shadow-2xl backdrop-blur-2xl text-foreground">
           <DialogHeader className="sr-only">
              <DialogTitle>Member Profile: {selectedMember?.displayName || 'Profile'}</DialogTitle>
           </DialogHeader>
-          {/* Banner Section */}
-          <div className="h-20 bg-[#2b2d31] relative">
-            <div className="absolute -bottom-10 left-6 p-2 bg-[#111214] rounded-full shadow-2xl">
-              <div className="relative">
-                <Avatar className="w-24 h-24 border-none rounded-full">
-                  <AvatarImage src={selectedMember?.photoURL || ""} />
-                  <AvatarFallback className="bg-primary text-white font-black text-2xl">{selectedMember?.displayName?.[0]}</AvatarFallback>
+          
+          <div className="relative">
+            {/* Banner Area */}
+            <div className="h-32 w-full relative overflow-hidden z-10">
+              <RenderBanner bannerKey={selectedMember?.banner} className="absolute inset-0 w-full h-full object-cover" />
+              {!selectedMember?.banner && (
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-900 to-purple-900" />
+              )}
+              {/* Banner overlay gradient for premium feel */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              <Button variant="ghost" size="icon" onClick={() => setSelectedMember(null)} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-black/40 text-white hover:bg-rose-600 transition-all z-50">
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* User Avatar + Decoration + Badges section */}
+            <div className="px-6 relative z-20 flex justify-between items-end -mt-16 mb-4">
+              <div className="relative p-1 rounded-[3rem] bg-[#0c0c16] z-20">
+                <RenderDecor decorKey={selectedMember?.decor} />
+                <RenderAura auraKey={selectedMember?.aura} />
+                <RenderHat hatKey={selectedMember?.hat} />
+                <RenderPet petKey={selectedMember?.pet} />
+                
+                <Avatar className="w-28 h-28 border-[6px] border-[#0c0c16] rounded-[2.2rem] shadow-2xl overflow-hidden bg-secondary relative z-20">
+                  <AvatarImage src={selectedMember?.photoURL || ""} className="object-cover" />
+                  <AvatarFallback className="bg-primary text-3xl font-black text-white">{selectedMember?.displayName?.[0] || 'U'}</AvatarFallback>
                 </Avatar>
-                {/* Status Indicator */}
-                <div className="absolute bottom-1 right-1 w-7 h-7 bg-[#111214] rounded-full flex items-center justify-center">
-                  <div className="w-5 h-5 bg-[#f04747] rounded-full flex items-center justify-center shadow-lg">
-                    <div className="w-3 h-0.5 bg-white rounded-full" />
-                  </div>
+                
+                {/* Discord-style Online Indicator dot */}
+                <div className="absolute bottom-1 right-1 w-6 h-6 bg-emerald-500 border-4 border-[#0c0c16] rounded-full z-30" />
+              </div>
+
+              {/* Discord-style Profile Badges */}
+              <div className="flex gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/5 shadow-md mb-2">
+                {/* Early Supporter Badge */}
+                <div className="w-5 h-5 flex items-center justify-center text-yellow-400 hover:scale-110 transition-transform cursor-pointer" title="Early Supporter">
+                  <Star className="w-4 h-4 fill-yellow-400" />
+                </div>
+                {/* HypeSquad Bravery Badge */}
+                <div className="w-5 h-5 flex items-center justify-center text-purple-400 hover:scale-110 transition-transform cursor-pointer" title="HypeSquad Bravery">
+                  <FlameIcon className="w-4 h-4 fill-purple-400" />
+                </div>
+                {/* Active Developer Badge */}
+                <div className="w-5 h-5 flex items-center justify-center text-emerald-400 hover:scale-110 transition-transform cursor-pointer" title="Active Developer">
+                  <SparklesIcon className="w-4 h-4" />
+                </div>
+                {/* Nitro / Premium Member Badge */}
+                <div className="w-5 h-5 flex items-center justify-center text-pink-400 hover:scale-110 transition-transform cursor-pointer" title="Xakteir Premium">
+                  <Award className="w-4 h-4 fill-pink-400" />
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setSelectedMember(null)} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-black/40 text-white hover:bg-rose-600 transition-all">
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
 
-          {/* Body Section */}
-          <div className="pt-14 pb-6 px-6 space-y-6">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h3 className="text-2xl font-bold text-white leading-tight">
-                  {selectedMember?.displayName?.replace(/^@+/, "") || "Member"}
-                  <span className="text-[#b5bac1] font-medium ml-1">#0000</span>
-                </h3>
-                <BadgeCheck className="w-5 h-5 text-[#5865f2] fill-current" />
-              </div>
-              <p className="text-xs font-bold text-[#b5bac1] uppercase tracking-wider">Xakteir Hub Resident</p>
+            {/* Username + Tag */}
+            <div className="px-8 pb-4">
+              <h4 className={cn(
+                "text-3xl font-black tracking-tighter italic uppercase leading-none break-words relative z-20",
+                getNameplateClass(selectedMember?.nameplate)
+              )}>
+                {selectedMember?.displayName?.replace(/^@+/, "") || "Member"}
+              </h4>
+              <p className="text-[10px] text-muted-foreground font-black tracking-widest mt-1">@{(selectedMember?.displayName || "member").replace(/^@+/, "").toLowerCase()}</p>
             </div>
 
-            <div className="h-px bg-[#1f2124]" />
+            <div className="px-8 py-2"><hr className="border-white/5" /></div>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-[10px] font-black uppercase text-[#b5bac1] tracking-widest">About Member</p>
-                <p className="text-sm font-medium text-[#dbdee1] leading-relaxed italic">
-                  {selectedMember?.description || "This member has not yet synchronized their profile bio with the Hub registry."}
+            {/* About Me / Bio Section */}
+            <div className="px-8 py-4 space-y-4">
+              <div>
+                <h5 className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-1">About Me</h5>
+                <p className="text-xs text-white/80 font-bold leading-relaxed italic">
+                  {selectedMember?.aboutMe || "Multiverse voyager & code explorer. Exploring the outer edges of the Xakteir ecosystem."}
                 </p>
               </div>
 
+              <div>
+                <h5 className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-1">Xakteir Member Since</h5>
+                <p className="text-xs text-white/60 font-bold">Jun 2024</p>
+              </div>
+            </div>
+
+            <div className="p-8 pt-2 flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-[#1e1f22] p-4 rounded-xl border border-white/5 space-y-1">
                   <div className="flex items-center gap-2 text-amber-500">
@@ -409,26 +449,24 @@ export default function XakSocialPage() {
                   <p className="text-xl font-black italic text-white">{selectedMember?.followerCount || 0}</p>
                 </div>
               </div>
-            </div>
 
-            <div className="h-px bg-[#1f2124]" />
-
-            <div className="space-y-2">
-              <Button onClick={() => handleFollow(selectedMember)} className="w-full h-12 bg-[#5865f2] hover:bg-[#4752c4] text-white rounded-md font-bold text-sm shadow-xl">
-                {followingIds.has(selectedMember?.id) ? "Unfollow Identity" : "Follow Identity"}
-              </Button>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="ghost" className="h-12 text-[#dbdee1] hover:bg-[#35373c] rounded-md font-bold text-sm flex items-center justify-center gap-2">
-                  <Mail className="w-4 h-4" /> Message
+              <div className="flex flex-col gap-2 pt-2 border-t border-white/5 mt-2">
+                <Button onClick={() => handleFollow(selectedMember)} className="w-full h-12 bg-[#5865f2] hover:bg-[#4752c4] text-white rounded-md font-bold text-sm shadow-xl">
+                  {followingIds.has(selectedMember?.id) ? "Unfollow Identity" : "Follow Identity"}
                 </Button>
-                <Button 
-                  onClick={() => handleReport(selectedMember)}
-                  disabled={isReporting}
-                  variant="ghost" 
-                  className="h-12 text-rose-500 hover:bg-rose-500/10 rounded-md font-bold text-sm flex items-center justify-center gap-2"
-                >
-                  {isReporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Flag className="w-4 h-4" /> Report</>}
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="ghost" className="h-12 text-[#dbdee1] hover:bg-[#35373c] rounded-md font-bold text-sm flex items-center justify-center gap-2">
+                    <Mail className="w-4 h-4" /> Message
+                  </Button>
+                  <Button 
+                    onClick={() => handleReport(selectedMember)}
+                    disabled={isReporting}
+                    variant="ghost" 
+                    className="h-12 text-rose-500 hover:bg-rose-500/10 rounded-md font-bold text-sm flex items-center justify-center gap-2"
+                  >
+                    {isReporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Flag className="w-4 h-4" /> Report</>}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

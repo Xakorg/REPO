@@ -111,6 +111,34 @@ const ALL_SHOP_ITEMS = [
   { id: 70, name: "Matrix Rain", category: "Banners", type: 'banner', key: 'matrix', price: 2000, color: "text-green-500", bg: "bg-green-500/10", rarity: "Legendary", description: "Falling green code background." },
   { id: 71, name: "Retrowave Sunset", category: "Banners", type: 'banner', key: 'retrowave', price: 2500, color: "text-pink-500", bg: "bg-pink-500/10", rarity: "Mythic", description: "A retro 80s synthwave sunset." },
   { id: 72, name: "Galactic Void", category: "Banners", type: 'banner', key: 'galactic', price: 3500, color: "text-indigo-400", bg: "bg-indigo-500/10", rarity: "Exotic", description: "Stare into the endless galaxy." },
+
+  // NEW COSMETICS FOR THE 5 NEW SETS
+  // Hats
+  { id: 73, name: "Golden Crown", category: "Hats", type: 'hat', key: 'golden_crown', price: 10000, color: "text-yellow-400", bg: "bg-yellow-500/10", rarity: "Exotic", description: "An animated crown dripping in gold and sparkles." },
+  { id: 74, name: "Admin Hacker Crown", category: "Hats", type: 'hat', key: 'admin_crown', price: 999999, color: "text-green-500", bg: "bg-green-500/10", rarity: "Exotic", description: "A glitching black and green crown for system administrators." },
+  { id: 75, name: "Rainbow Crown", category: "Hats", type: 'hat', key: 'rainbow_crown', price: 8500, color: "text-pink-500", bg: "bg-pink-500/10", rarity: "Exotic", description: "A crown that cycles through every color in the spectrum." },
+  { id: 76, name: "Magic Hat", category: "Hats", type: 'hat', key: 'magic_hat', price: 7000, color: "text-fuchsia-500", bg: "bg-fuchsia-500/10", rarity: "Mythic", description: "A mystical witch hat that pulses with arcane energy." },
+  
+  // Decors & Pets
+  { id: 77, name: "Golden Sparkles", category: "Decorations", type: 'decor', key: 'golden_sparkles', price: 5000, color: "text-yellow-300", bg: "bg-yellow-300/10", rarity: "Mythic", description: "Golden sparkles floating around your profile." },
+  { id: 78, name: "Admin Glitch", category: "Decorations", type: 'decor', key: 'admin_glitch', price: 999999, color: "text-green-500", bg: "bg-green-500/10", rarity: "Exotic", description: "Matrix code cascading over your entire profile card." },
+  { id: 79, name: "Sports Stickmen", category: "Decorations", type: 'decor', key: 'stickmen', price: 4000, color: "text-orange-500", bg: "bg-orange-500/10", rarity: "Epic", description: "Stickmen playing sports around your avatar." },
+  { id: 80, name: "Flying Magic Cat", category: "Decorations", type: 'decor', key: 'flying_cat', price: 6500, color: "text-fuchsia-500", bg: "bg-fuchsia-500/10", rarity: "Mythic", description: "A magical black cat flying on a broomstick." },
+  { id: 81, name: "Uni Kitty", category: "Pets", type: 'pet', key: 'uni_kitty', price: 9500, color: "text-pink-400", bg: "bg-pink-400/10", rarity: "Exotic", description: "A magical unicorn kitty flying with a rainbow trail." },
+
+  // Banners
+  { id: 82, name: "Golden Background", category: "Banners", type: 'banner', key: 'golden', price: 6000, color: "text-yellow-600", bg: "bg-yellow-600/10", rarity: "Mythic", description: "A pure golden gradient background with sparkles." },
+  { id: 83, name: "Hacker Matrix", category: "Banners", type: 'banner', key: 'hacker', price: 999999, color: "text-green-500", bg: "bg-green-500/10", rarity: "Exotic", description: "Intense binary code falling in the background." },
+  { id: 84, name: "Rainbow Flow", category: "Banners", type: 'banner', key: 'rainbow', price: 7500, color: "text-red-500", bg: "bg-red-500/10", rarity: "Exotic", description: "A beautiful moving rainbow gradient." },
+  { id: 85, name: "Sports Stadium", category: "Banners", type: 'banner', key: 'sports', price: 3500, color: "text-green-700", bg: "bg-green-700/10", rarity: "Epic", description: "A sports field background." },
+  { id: 86, name: "Magic Night", category: "Banners", type: 'banner', key: 'magic', price: 5500, color: "text-fuchsia-900", bg: "bg-fuchsia-900/10", rarity: "Mythic", description: "A mystical purple starry night." },
+
+  // Nameplates
+  { id: 87, name: "Golden Plate", category: "Name Plates", type: 'nameplate', key: 'golden', price: 3500, color: "text-yellow-400", bg: "bg-yellow-400/10", rarity: "Mythic", description: "A shining golden nameplate." },
+  { id: 88, name: "Hacker Plate", category: "Name Plates", type: 'nameplate', key: 'hacker', price: 999999, color: "text-green-500", bg: "bg-green-500/10", rarity: "Exotic", description: "Animated binary around your name." },
+  { id: 89, name: "Rainbow Plate", category: "Name Plates", type: 'nameplate', key: 'rainbow', price: 4500, color: "text-pink-500", bg: "bg-pink-500/10", rarity: "Exotic", description: "A smoothly color-shifting nameplate." },
+  { id: 90, name: "Sports Plate", category: "Name Plates", type: 'nameplate', key: 'sports', price: 2000, color: "text-orange-500", bg: "bg-orange-500/10", rarity: "Epic", description: "A nameplate featuring sports balls." },
+  { id: 91, name: "Magic Plate", category: "Name Plates", type: 'nameplate', key: 'magic', price: 3000, color: "text-fuchsia-400", bg: "bg-fuchsia-400/10", rarity: "Mythic", description: "A glowing purple magic nameplate." },
 ];
 
 export default function ShopPage() {
@@ -181,59 +209,90 @@ export default function ShopPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const SHOP_SETS = [
+  const ALL_SHOP_SETS = [
     {
-      id: "cyberpunk",
-      name: "Cyberpunk Pack",
-      description: "Equip your avatar with glowing devil horns, digital glitches, a wiggling holographic Cyber Wolf companion, and the synthwave sunset.",
-      price: 9000,
+      id: "golden",
+      name: "Golden Set",
+      description: "Drape yourself in royal heritage. Includes the golden crown, sparkles, and a pure golden gradient background.",
+      price: 24500,
       items: [
-        { type: 'hat', key: 'horns' },
-        { type: 'aura', key: 'glitch' },
-        { type: 'nameplate', key: 'pro' },
-        { type: 'pet', key: 'cyberwolf' },
-        { type: 'banner', key: 'retrowave' }
+        { type: 'hat', key: 'golden_crown' },
+        { type: 'decor', key: 'golden_sparkles' },
+        { type: 'nameplate', key: 'golden' },
+        { type: 'banner', key: 'golden' }
       ],
-      itemsList: ["Devil Horns", "Cyber Glitch Aura", "Pro Nameplate", "Cyber Wolf Pet", "Retrowave Sunset Banner"],
-      bg: "bg-gradient-to-br from-[#0c0a09] to-[#450a0a]",
-      accentColor: "#f43f5e",
-      rarity: "Exotic"
-    },
-    {
-      id: "cosmic",
-      name: "Cosmic Odyssey",
-      description: "Traverse the final frontier with the Galactic Crown, shifting phantom mist, an orbiting Void Entity, and an endless stellar backdrop.",
-      price: 11000,
-      items: [
-        { type: 'hat', key: 'crown' },
-        { type: 'aura', key: 'glitch' },
-        { type: 'nameplate', key: 'pro' },
-        { type: 'pet', key: 'voidentity' },
-        { type: 'banner', key: 'galactic' }
-      ],
-      itemsList: ["Galactic Crown", "Cosmic Void Aura", "Pro Nameplate", "Void Entity Pet", "Galactic Void Banner"],
-      bg: "bg-gradient-to-br from-[#0a0a15] to-[#1e1b4b]",
-      accentColor: "#a855f7",
-      rarity: "Exotic"
-    },
-    {
-      id: "royal",
-      name: "Royal Golden Elite",
-      description: "Drape yourself in royal heritage. Includes the golden crown, holy golden glow aura, and a cute Mini Dragon companion.",
-      price: 8000,
-      items: [
-        { type: 'hat', key: 'crown' },
-        { type: 'aura', key: 'gold' },
-        { type: 'nameplate', key: 'gold' },
-        { type: 'pet', key: 'minidragon' },
-        { type: 'banner', key: 'matrix' }
-      ],
-      itemsList: ["Royal Crown", "Divine Shine Aura", "Gold Elite Tag", "Mini Dragon Pet", "Matrix Rain Banner"],
-      bg: "bg-gradient-to-br from-[#1c1917] to-[#2d1a00]",
+      itemsList: ["Golden Crown", "Golden Sparkles", "Golden Plate", "Golden Background"],
+      bg: "bg-gradient-to-br from-[#2d1a00] to-[#1c1917]",
       accentColor: "#f59e0b",
       rarity: "Mythic"
+    },
+    {
+      id: "rainbow",
+      name: "Rainbow Set",
+      description: "A spectacularly colorful set featuring a color-changing crown and the magical flying Uni Kitty.",
+      price: 30000,
+      items: [
+        { type: 'hat', key: 'rainbow_crown' },
+        { type: 'nameplate', key: 'rainbow' },
+        { type: 'pet', key: 'uni_kitty' },
+        { type: 'banner', key: 'rainbow' }
+      ],
+      itemsList: ["Rainbow Crown", "Rainbow Plate", "Uni Kitty Pet", "Rainbow Flow Banner"],
+      bg: "bg-gradient-to-br from-[#1a0a1a] to-[#2d001a]",
+      accentColor: "#ec4899",
+      rarity: "Exotic"
+    },
+    {
+      id: "sports",
+      name: "Sports Set",
+      description: "Show your athletic side with this stadium background, sports nameplate, and animated stickmen.",
+      price: 9500,
+      items: [
+        { type: 'decor', key: 'stickmen' },
+        { type: 'nameplate', key: 'sports' },
+        { type: 'banner', key: 'sports' }
+      ],
+      itemsList: ["Sports Stickmen", "Sports Plate", "Sports Stadium"],
+      bg: "bg-gradient-to-br from-[#022c22] to-[#064e3b]",
+      accentColor: "#ea580c",
+      rarity: "Epic"
+    },
+    {
+      id: "magic",
+      name: "Magic Set",
+      description: "A mystical set featuring a witch hat, mysterious purple starry night, and a flying black cat.",
+      price: 22000,
+      items: [
+        { type: 'hat', key: 'magic_hat' },
+        { type: 'decor', key: 'flying_cat' },
+        { type: 'nameplate', key: 'magic' },
+        { type: 'banner', key: 'magic' }
+      ],
+      itemsList: ["Magic Hat", "Flying Magic Cat", "Magic Plate", "Magic Night"],
+      bg: "bg-gradient-to-br from-[#2e1065] to-[#17052e]",
+      accentColor: "#c084fc",
+      rarity: "Mythic"
+    },
+    {
+      id: "admin",
+      name: "Admin Set",
+      description: "For system administrators only. Intense binary code, glitching crown, and green matrix overflow.",
+      price: 999999,
+      items: [
+        { type: 'hat', key: 'admin_crown' },
+        { type: 'decor', key: 'admin_glitch' },
+        { type: 'nameplate', key: 'hacker' },
+        { type: 'banner', key: 'hacker' }
+      ],
+      itemsList: ["Admin Hacker Crown", "Admin Glitch", "Hacker Plate", "Hacker Matrix"],
+      bg: "bg-gradient-to-br from-[#052e16] to-[#022c22]",
+      accentColor: "#22c55e",
+      rarity: "Exotic",
+      isAdmin: true
     }
   ];
+
+  const SHOP_SETS = ALL_SHOP_SETS.filter(set => !set.isAdmin || user?.email === 'admin@xakteir.com' || user?.email === 'ridwan123456789100@gmail.com');
 
   const displayedItems = activeCategory === "Weekly" 
     ? weekItems 
@@ -668,7 +727,7 @@ export default function ShopPage() {
                 <div>
                   <h5 className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-1">About Me</h5>
                   <p className="text-xs text-white/80 font-bold leading-relaxed italic">
-                    Multiverse voyager & code explorer. Exploring the outer edges of the Xakteir ecosystem.
+                    {userData?.aboutMe || "Multiverse voyager & code explorer. Exploring the outer edges of the Xakteir ecosystem."}
                   </p>
                 </div>
 

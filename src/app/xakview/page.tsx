@@ -33,6 +33,8 @@ import {
   Sliders,
   Settings,
   AlertTriangle,
+  Target,
+  Trophy,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -250,6 +252,57 @@ export default function XakViewPage() {
     return following?.some((f) => f.id === creatorId);
   };
 
+  const handleSeedContent = async () => {
+    if (!firestore) return;
+    const dummyVideos = [
+      {
+        title: "Welcome to XakView! 🚀",
+        description: "Your new home for developer content. Start uploading today to secure your Founding Creator badge and earn XakCoins for every video!",
+        authorId: "xakteir_admin",
+        author: "Xakteir Official",
+        url: "https://www.w3schools.com/html/mov_bbb.mp4",
+        category: "Announcements",
+        type: "video/mp4",
+        views: 120500,
+        likes: 5400,
+        timestamp: serverTimestamp(),
+      },
+      {
+        title: "Top 5 Features of Xakteir Suite 2026",
+        description: "A deep dive into the latest innovations in Xakteir Suite, including AI integration, real-time collaboration, and the new UI engine.",
+        authorId: "xakteir_admin",
+        author: "Xakteir Official",
+        url: "https://www.w3schools.com/html/mov_bbb.mp4",
+        category: "Tech",
+        type: "video/mp4",
+        views: 89000,
+        likes: 3200,
+        timestamp: serverTimestamp(),
+      },
+      {
+        title: "How to Build a Gamified App in 10 Minutes",
+        description: "Watch how we built a gamified video platform using React, Firebase, and Tailwind CSS. Don't forget to like and subscribe!",
+        authorId: "xakteir_admin",
+        author: "Xakteir Official",
+        url: "https://www.w3schools.com/html/mov_bbb.mp4",
+        category: "Education",
+        type: "video/mp4",
+        views: 45000,
+        likes: 2100,
+        timestamp: serverTimestamp(),
+      }
+    ];
+
+    try {
+      for (const video of dummyVideos) {
+        await addDocumentNonBlocking(collection(firestore, "videos"), video);
+      }
+      toast({ title: "Seeding Complete", description: "Official Xakteir Content has been injected." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Seeding Failed" });
+    }
+  };
+
   const handlePostComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !firestore || !commentInput.trim() || !activeVideo) return;
@@ -392,6 +445,27 @@ export default function XakViewPage() {
   return (
     <div className="space-y-10 animate-fade-in py-6 max-w-[1600px] mx-auto text-foreground px-6 pb-20">
 
+      {/* Weekly Challenge Banner */}
+      <div className="bg-gradient-to-r from-rose-600 to-orange-500 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between border-4 border-white/20 gap-6">
+         <div className="absolute top-0 right-0 p-4 opacity-20 pointer-events-none">
+            <Trophy className="w-48 h-48 -rotate-12 text-white" />
+         </div>
+         <div className="relative z-10 flex items-center gap-6">
+            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md border-2 border-white/30 shrink-0">
+               <Target className="w-8 h-8 text-white" />
+            </div>
+            <div>
+               <h3 className="text-white text-2xl font-black uppercase italic tracking-tighter">Weekly Challenge</h3>
+               <p className="text-white/90 font-bold text-sm">Show us your coolest coding project! Upload your video to earn 100 bonus coins.</p>
+            </div>
+         </div>
+         <Link href="/xakview/studio" className="relative z-10">
+            <Button className="bg-white text-rose-600 hover:bg-zinc-100 rounded-2xl h-12 px-8 font-black uppercase tracking-widest text-xs shadow-xl">
+               Join Challenge
+            </Button>
+         </Link>
+      </div>
+
       {/* Header Panel */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 glass-card p-10 rounded-[3rem] border-white/10 shadow-2xl relative overflow-hidden bg-black/40">
         <div className="absolute top-0 right-0 p-10 opacity-5">
@@ -410,6 +484,12 @@ export default function XakViewPage() {
               Multiverse
             </p>
           </div>
+          
+          {process.env.NODE_ENV === "development" && (
+             <Button variant="outline" size="sm" onClick={handleSeedContent} className="ml-4 border-rose-500/30 text-rose-400 bg-rose-500/10 text-xs font-black uppercase tracking-widest">
+                [DEV] Seed DB
+             </Button>
+          )}
         </div>
 
         {/* App Tabs Navigator */}
@@ -526,14 +606,22 @@ export default function XakViewPage() {
                   </p>
                 </div>
               ) : filteredVideos.length === 0 ? (
-                <div className="w-full h-full flex flex-col items-center justify-center space-y-6 bg-zinc-950/80 p-10 text-center">
-                  <VideoIcon className="w-16 h-16 text-rose-500/20 animate-pulse" />
-                  <h3 className="text-xl font-black uppercase tracking-widest text-zinc-400">
-                    No videos matching query
-                  </h3>
-                  <p className="text-xs font-bold text-zinc-500 uppercase">
-                    Publish your first video in XakStudio!
-                  </p>
+                <div className="w-full h-full flex flex-col items-center justify-center space-y-6 bg-zinc-950/80 p-10 text-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-rose-600/20 to-orange-500/10 opacity-50"></div>
+                  <Target className="w-20 h-20 text-rose-500 animate-pulse relative z-10" />
+                  <div className="relative z-10 max-w-lg">
+                     <h3 className="text-3xl font-black uppercase tracking-tighter text-white italic mb-2">
+                       Feed Empty? Be the First!
+                     </h3>
+                     <p className="text-sm font-bold text-rose-200/80 uppercase">
+                       Upload the first video and your content is GUARANTEED to be seen by every single person on the platform. The Early Adopter advantage is yours!
+                     </p>
+                  </div>
+                  <Link href="/xakview/studio" className="relative z-10 mt-4">
+                     <Button className="bg-rose-600 hover:bg-rose-500 text-white rounded-full px-8 h-12 font-black uppercase tracking-widest text-xs shadow-[0_0_40px_rgba(225,29,72,0.6)]">
+                       Claim the Spotlight
+                     </Button>
+                  </Link>
                 </div>
               ) : activeVideo?.url ? (
                 <video
@@ -824,6 +912,9 @@ export default function XakViewPage() {
                       <h4 className="text-2xl font-black text-white uppercase italic tracking-tight flex items-center gap-2">
                         {activeVideo.author || "Member"}
                         <CheckCircle2 className="w-4 h-4 text-rose-500 fill-current" />
+                        <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 px-2 py-0 font-black uppercase tracking-widest text-[9px] animate-pulse ml-2 shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                          Founding Creator 🌟
+                        </Badge>
                       </h4>
                       <div className="flex items-center gap-4 mt-1">
                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
@@ -966,6 +1057,37 @@ export default function XakViewPage() {
           {/* Recommended Side Rail */}
           {!theaterMode && (
             <aside className="lg:col-span-4 space-y-10">
+              
+              {/* Top Creators Leaderboard */}
+              <div className="bg-black/40 rounded-[3rem] p-8 border-4 border-white/5 space-y-6 shadow-2xl">
+                 <h3 className="text-xl font-black text-rose-500 uppercase tracking-tighter italic flex items-center gap-3">
+                   <Trophy className="w-6 h-6" /> Top Creators This Week
+                 </h3>
+                 <div className="space-y-4">
+                    {filteredVideos.length > 0 ? (
+                       Object.entries(filteredVideos.reduce((acc, v) => {
+                          if (v.author) acc[v.author] = (acc[v.author] || 0) + (v.views || 0);
+                          return acc;
+                       }, {} as Record<string, number>))
+                       .sort((a, b) => b[1] - a[1])
+                       .slice(0, 5)
+                       .map(([author, views], idx) => (
+                          <div key={author} className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-rose-500/30 transition-colors">
+                             <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-rose-600 flex items-center justify-center font-black text-[10px] text-white">{idx + 1}</div>
+                                <p className="text-xs font-black uppercase italic text-white">{author}</p>
+                             </div>
+                             <Badge className="bg-rose-500/20 text-rose-400 border-none text-[9px] font-black">{views.toLocaleString()} Views</Badge>
+                          </div>
+                       ))
+                    ) : (
+                       <div className="py-6 text-center">
+                          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Be the first to claim the #1 spot!</p>
+                       </div>
+                    )}
+                 </div>
+              </div>
+
               <h3 className="text-2xl font-black text-foreground uppercase tracking-tighter italic flex items-center gap-4 px-4">
                 <TrendingUp className="w-6 h-6 text-rose-500" /> Recommended
               </h3>

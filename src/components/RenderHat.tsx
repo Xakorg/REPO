@@ -163,6 +163,35 @@ export function RenderDecor({ decorKey }: { decorKey?: string }) {
            </div>
         </div>
       );
+    case 'golden_sparkles':
+      return (
+        <div className="absolute -inset-6 pointer-events-none z-40">
+           <div className="absolute top-0 left-0 text-yellow-300 text-xs animate-bounce" style={{ animationDelay: '0.1s' }}>✨</div>
+           <div className="absolute top-1/2 right-[-10px] text-yellow-400 text-xs animate-pulse" style={{ animationDelay: '0.5s' }}>✨</div>
+           <div className="absolute bottom-[-10px] left-1/4 text-yellow-200 text-xs animate-bounce" style={{ animationDelay: '0.8s' }}>✨</div>
+        </div>
+      );
+    case 'admin_glitch':
+      return (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[2.2rem] z-40 mix-blend-overlay opacity-50">
+           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiMwMTAiLz48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSIjMGYwIi8+PC9zdmc+')] animate-[matrix_10s_linear_infinite]" />
+        </div>
+      );
+    case 'stickmen':
+      return (
+        <div className="absolute -inset-10 pointer-events-none z-40 animate-spin-slow">
+           <div className="absolute top-0 left-1/2 -translate-x-1/2 text-xl">🏃‍♂️</div>
+           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-xl rotate-180">⚽</div>
+           <div className="absolute top-1/2 right-0 -translate-y-1/2 text-xl rotate-90">🏃</div>
+           <div className="absolute top-1/2 left-0 -translate-y-1/2 text-xl -rotate-90">🏀</div>
+        </div>
+      );
+    case 'flying_cat':
+      return (
+        <div className="absolute -inset-12 pointer-events-none z-50">
+           <div className="flying-cat">🐈‍⬛🧹</div>
+        </div>
+      );
     case 'lightning':
       return (
         <div className="absolute -inset-6 pointer-events-none drop-shadow-[0_0_10px_rgba(250,204,21,0.8)] z-40">
@@ -193,6 +222,54 @@ export function RenderDecor({ decorKey }: { decorKey?: string }) {
            </div>
         </div>
       );
+    case 'golden_crown':
+      return (
+        <div className="absolute scale-75 origin-bottom -top-10 left-1/2 -translate-x-1/2 w-16 h-12 pointer-events-none drop-shadow-[0_0_20px_rgba(251,191,36,0.9)] animate-bounce z-30 flex items-end justify-center" style={{ transform: 'translateX(-50%)', animationDuration: '2s' }}>
+          <svg viewBox="0 0 100 80" className="w-full h-full fill-yellow-300 drop-shadow-2xl">
+            <path d="M10,80 L90,80 L100,20 L70,40 L50,5 L30,40 L0,20 Z" />
+            <circle cx="50" cy="5" r="5" className="fill-white animate-pulse" />
+            <circle cx="20" cy="40" r="4" className="fill-amber-100" />
+            <circle cx="80" cy="40" r="4" className="fill-amber-100" />
+            <circle cx="50" cy="65" r="4" className="fill-yellow-100" />
+          </svg>
+          <div className="absolute -top-4 w-full h-full animate-pulse">
+            <span className="absolute top-0 left-0 text-[10px] text-yellow-300">✨</span>
+            <span className="absolute top-4 right-0 text-[10px] text-yellow-300" style={{ animationDelay: '0.5s' }}>✨</span>
+          </div>
+        </div>
+      );
+    case 'admin_crown':
+      return (
+        <div className="absolute scale-75 origin-bottom -top-10 left-1/2 -translate-x-1/2 w-16 h-12 pointer-events-none drop-shadow-[0_0_20px_rgba(34,197,94,0.9)] global-glitch-active z-30 flex items-end justify-center" style={{ transform: 'translateX(-50%)' }}>
+          <svg viewBox="0 0 100 80" className="w-full h-full fill-black border border-green-500 drop-shadow-2xl stroke-green-500 stroke-2">
+            <path d="M10,80 L90,80 L100,20 L70,40 L50,10 L30,40 L0,20 Z" />
+            <text x="50" y="60" className="fill-green-500 font-mono text-[18px] animate-pulse" textAnchor="middle">01</text>
+          </svg>
+        </div>
+      );
+    case 'rainbow_crown':
+      return (
+        <div className="absolute scale-75 origin-bottom -top-10 left-1/2 -translate-x-1/2 w-16 h-12 pointer-events-none z-30 flex items-end justify-center" style={{ transform: 'translateX(-50%)', animationDuration: '2s' }}>
+          <svg viewBox="0 0 100 80" className="w-full h-full drop-shadow-xl animate-hue-rotate">
+            <path d="M10,80 L90,80 L100,20 L70,40 L50,10 L30,40 L0,20 Z" className="fill-red-500" style={{ animation: 'hue-cycle 3s infinite linear' }} />
+            <circle cx="50" cy="10" r="5" className="fill-white" />
+            <circle cx="20" cy="40" r="4" className="fill-white" />
+            <circle cx="80" cy="40" r="4" className="fill-white" />
+            <circle cx="50" cy="65" r="4" className="fill-white" />
+          </svg>
+        </div>
+      );
+    case 'magic_hat':
+      return (
+        <div className="absolute scale-75 origin-bottom -top-12 left-1/2 -translate-x-1/2 w-16 h-16 pointer-events-none drop-shadow-[0_0_15px_rgba(168,85,247,0.7)] z-30" style={{ transform: 'translateX(-50%)' }}>
+          <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl">
+            <path d="M50 0 Q60 40 80 80 L20 80 Q40 40 50 0 Z" className="fill-fuchsia-900" />
+            <ellipse cx="50" cy="80" rx="45" ry="10" className="fill-fuchsia-950" />
+            <path d="M20 70 Q50 60 80 70" className="stroke-fuchsia-400 stroke-4 fill-none" />
+            <text x="50" y="50" className="fill-white text-[24px] animate-pulse" textAnchor="middle">✨</text>
+          </svg>
+        </div>
+      );
     default:
       return null;
   }
@@ -204,6 +281,11 @@ export function getNameplateClass(nameplateKey?: string, defaultClass: string = 
     case 'gold': return "text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)] font-black";
     case 'blue': return "text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)] font-black";
     case 'pro': return "text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 font-black drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]";
+    case 'golden': return "nameplate-golden";
+    case 'hacker': return "nameplate-hacker";
+    case 'rainbow': return "nameplate-rainbow";
+    case 'sports': return "nameplate-sports";
+    case 'magic': return "nameplate-magic";
     default: return defaultClass;
   }
 }
@@ -301,6 +383,25 @@ export function RenderPet({ petKey }: { petKey?: string }) {
           </div>
         </div>
       );
+    case 'uni_kitty':
+      return (
+        <div 
+          className="absolute top-1/2 left-1/2 w-16 h-16 pointer-events-none animate-pet-orbit"
+          style={{ margin: '-32px 0 0 -32px' }}
+        >
+          <div className="w-full h-full flex items-center justify-center relative">
+            <div className="absolute right-8 top-1/2 -translate-y-1/2 flex h-2 w-16 opacity-70">
+              <div className="h-full w-1/6 bg-red-500 rounded-l-full"></div>
+              <div className="h-full w-1/6 bg-orange-500"></div>
+              <div className="h-full w-1/6 bg-yellow-500"></div>
+              <div className="h-full w-1/6 bg-green-500"></div>
+              <div className="h-full w-1/6 bg-blue-500"></div>
+              <div className="h-full w-1/6 bg-purple-500"></div>
+            </div>
+            <div className="text-2xl animate-bounce z-10 relative">🦄</div>
+          </div>
+        </div>
+      );
     default:
       return null;
   }
@@ -340,6 +441,44 @@ export function RenderBanner({ bannerKey, className }: { bannerKey?: string, cla
                 }} />
              ))}
            </div>
+        </div>
+      );
+    case 'golden':
+      return (
+        <div className={cn("absolute inset-0 bg-gradient-to-br from-yellow-700 via-yellow-500 to-yellow-900 pointer-events-none overflow-hidden", className)}>
+           <div className="absolute inset-0 opacity-50 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9InRyYW5zcGFyZW50Ii8+PGNpcmNsZSBjeD0iNCIgY3k9IjQiIHI9IjEiIGZpbGw9IiNmZmYiIG9wYWNpdHk9IjAuNSIvPjwvc3ZnPg==')] animate-pulse" />
+           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        </div>
+      );
+    case 'hacker':
+      return (
+        <div className={cn("absolute inset-0 bg-black overflow-hidden pointer-events-none", className)}>
+           <div className="absolute inset-0 opacity-40 bg-[linear-gradient(180deg,transparent,rgba(34,197,94,0.8),transparent)] bg-[length:100%_200%] animate-[matrix_2s_linear_infinite]" />
+           <div className="w-full h-full opacity-30 text-green-500 font-mono text-[10px] tracking-[0.2em] whitespace-pre-wrap break-all leading-none">
+              {"01 10 00 11 01 01 10 01 00 10 11 01 10 01 00 ".repeat(30)}
+           </div>
+        </div>
+      );
+    case 'rainbow':
+      return (
+        <div className={cn("absolute inset-0 bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500 pointer-events-none overflow-hidden", className)} style={{ backgroundSize: '400% 400%', animation: 'hue-cycle 10s linear infinite' }}>
+           <div className="absolute inset-0 bg-white/20 mix-blend-overlay" />
+        </div>
+      );
+    case 'sports':
+      return (
+        <div className={cn("absolute inset-0 bg-green-700 pointer-events-none overflow-hidden", className)}>
+           {/* Stadium lines */}
+           <div className="absolute bottom-0 w-full h-full bg-[linear-gradient(transparent_95%,rgba(255,255,255,0.4)_95%)] bg-[size:100%_20px] [transform:perspective(500px)_rotateX(60deg)] origin-bottom" />
+           <div className="absolute top-0 w-full h-full bg-[linear-gradient(90deg,transparent_95%,rgba(255,255,255,0.4)_95%)] bg-[size:40px_100%] [transform:perspective(500px)_rotateX(60deg)] origin-bottom" />
+           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        </div>
+      );
+    case 'magic':
+      return (
+        <div className={cn("absolute inset-0 bg-gradient-to-br from-fuchsia-950 via-purple-900 to-indigo-950 pointer-events-none overflow-hidden", className)}>
+           <div className="absolute inset-0 opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9InRyYW5zcGFyZW50Ii8+PGNpcmNsZSBjeD0iNCIgY3k9IjQiIHI9IjEiIGZpbGw9IiNmZmYiIG9wYWNpdHk9IjAuNSIvPjwvc3ZnPg==')] animate-pulse" style={{ animationDuration: '3s' }} />
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl opacity-10 animate-spin-slow text-fuchsia-300">✨</div>
         </div>
       );
     default:
