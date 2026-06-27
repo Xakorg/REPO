@@ -1065,7 +1065,7 @@ export default function XakViewPage() {
                  </h3>
                  <div className="space-y-4">
                     {filteredVideos.length > 0 ? (
-                       Object.entries(filteredVideos.reduce((acc, v) => {
+                       Object.entries<number>(filteredVideos.reduce((acc, v) => {
                           if (v.author) acc[v.author] = (acc[v.author] || 0) + (v.views || 0);
                           return acc;
                        }, {} as Record<string, number>))
