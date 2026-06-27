@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { notFound } from "next/navigation";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, query, where, addDoc, deleteDoc, doc, serverTimestamp, orderBy } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,17 @@ export default function DNSDashboard() {
   const firestore = useFirestore();
   const { toast } = useToast();
   
+  const userRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+  
+  const { data: userData } = useDoc(userRef);
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const isAdmin = user?.email === 'admin@xakteir.com' || user?.email === 'ridwan123456789100@gmail.com';
+  const isAdmin = user?.email === 'admin@xakteir.com' || user?.email === 'ridwan123456789100@gmail.com' || userData?.isAdmin === true || userData?.role === 'admin';
 
   // Domain states
   const [newDomainName, setNewDomainName] = useState("");

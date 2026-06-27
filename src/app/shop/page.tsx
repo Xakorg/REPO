@@ -292,7 +292,8 @@ export default function ShopPage() {
     }
   ];
 
-  const SHOP_SETS = ALL_SHOP_SETS.filter(set => !set.isAdmin || user?.email === 'admin@xakteir.com' || user?.email === 'ridwan123456789100@gmail.com');
+  const isAdmin = user?.email === 'admin@xakteir.com' || user?.email === 'ridwan123456789100@gmail.com' || userData?.isAdmin === true || userData?.role === 'admin';
+  const SHOP_SETS = ALL_SHOP_SETS.filter(set => !set.isAdmin || isAdmin);
 
   const displayedItems = activeCategory === "Weekly" 
     ? weekItems 
