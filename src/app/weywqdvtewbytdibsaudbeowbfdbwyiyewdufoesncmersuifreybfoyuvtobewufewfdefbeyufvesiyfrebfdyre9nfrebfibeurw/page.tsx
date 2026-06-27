@@ -100,8 +100,18 @@ export default function VoltraPlayHardware() {
         title="Xak Key"
       />
 
-      {/* 📺 Screen Area Mask (Adjusted to be smaller and centered) */}
-      <div className="absolute z-20 w-[38%] h-[32%] top-[34%] left-[31%] bg-black overflow-hidden rounded-xl flex items-center justify-center border-4 border-black/50">
+      {/* 📺 Screen Area Mask (Perspective mapped to the physical device in the photo) */}
+      <div 
+        className="absolute z-20 bg-black overflow-hidden flex items-center justify-center rounded-sm"
+        style={{
+          width: '46%', 
+          height: '24%', 
+          top: '28.5%', 
+          left: '25%',
+          transform: 'perspective(1000px) rotateY(12deg) rotateZ(1deg)',
+          transformOrigin: 'center center'
+        }}
+      >
         
         <AnimatePresence mode="wait">
           {screen === 'OFF' && (
