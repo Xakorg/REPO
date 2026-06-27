@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { playTickSound, playSelectSound } from '../audio';
+import { playTickSound, playSelectSound } from './audio';
 
 type ScreenState = 'OFF' | 'BOOT' | 'WELCOME' | 'HOME' | 'STORE' | 'SETTINGS' | 'PROFILE' | 'QUICK_MENU';
 
