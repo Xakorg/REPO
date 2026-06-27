@@ -100,9 +100,8 @@ export default function VoltraPlayHardware() {
         title="Xak Key"
       />
 
-      {/* 📺 Screen Area Mask (Perfectly aligned over the console screen in the photo) */}
-      {/* Adjust these percentages to perfectly align with the screen inside the bezel in the image */}
-      <div className="absolute z-20 w-[55.5%] h-[55.5%] top-[22.2%] left-[22.2%] bg-black overflow-hidden rounded-[4px] flex items-center justify-center">
+      {/* 📺 Screen Area Mask (Adjusted to be smaller and centered) */}
+      <div className="absolute z-20 w-[38%] h-[32%] top-[34%] left-[31%] bg-black overflow-hidden rounded-xl flex items-center justify-center border-4 border-black/50">
         
         <AnimatePresence mode="wait">
           {screen === 'OFF' && (
