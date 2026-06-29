@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=VoltraOS
+Description=A theme that features a black screen followed by the glitch rainbow X logo and VoltraOS text.
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/voltraos
+ScriptFile=/usr/share/plymouth/themes/voltraos/voltra.script

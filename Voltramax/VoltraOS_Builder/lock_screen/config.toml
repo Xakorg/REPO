@@ -1,0 +1,8 @@
+[terminal]
+# The virtual terminal to run on
+vt = 1
+
+[default_session]
+# This command runs the VoltraOS Lock Screen QML file natively
+command = "qmlscene /usr/share/voltra/lock_screen/LockScreen.qml"
+user = "greeter"

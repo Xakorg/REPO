@@ -3,11 +3,21 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { playTickSound, playSelectSound } from './audio';
 
+// Import our new Interactive UI Components
+import HomeScreen from './HomeScreen';
+import StoreScreen from './StoreScreen';
+import QuickMenu from './QuickMenu';
+
 type ScreenState = 'OFF' | 'BOOT' | 'WELCOME' | 'HOME' | 'STORE' | 'SETTINGS' | 'PROFILE' | 'QUICK_MENU';
 
 export default function VoltraPlayHardware() {
   const [screen, setScreen] = useState<ScreenState>('OFF');
   const [previousScreen, setPreviousScreen] = useState<ScreenState>('HOME');
+  
+  // Navigation Indices
+  const [homeIndex, setHomeIndex] = useState(0);
+  const [storeIndex, setStoreIndex] = useState(-1);
+  const [quickMenuIndex, setQuickMenuIndex] = useState(0);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -16,7 +26,6 @@ export default function VoltraPlayHardware() {
       playTickSound();
       
       if (e.key.toLowerCase() === 'x') {
-        // Toggle Quick Menu
         if (screen === 'QUICK_MENU') {
           setScreen(previousScreen);
         } else {
@@ -32,14 +41,25 @@ export default function VoltraPlayHardware() {
         return;
       }
 
-      // Simple navigation simulation mapping
+      // Interactive Navigation Logic
       if (screen === 'HOME') {
-        if (e.key === 'ArrowRight') setScreen('STORE');
-        if (e.key === 'ArrowDown') setScreen('SETTINGS');
+        if (e.key === 'ArrowRight') setHomeIndex(p => Math.min(p + 1, 3));
+        if (e.key === 'ArrowLeft') setHomeIndex(p => Math.max(p - 1, 0));
+        if (e.key === 'Enter') {
+          playSelectSound();
+          if (homeIndex === 2) setScreen('STORE');
+          if (homeIndex === 3) setScreen('SETTINGS');
+        }
       } else if (screen === 'STORE') {
-        if (e.key === 'ArrowLeft') setScreen('HOME');
-        if (e.key === 'ArrowRight') setScreen('PROFILE');
+        if (e.key === 'ArrowDown') setStoreIndex(0);
+        if (e.key === 'ArrowUp') setStoreIndex(-1);
+        if (e.key === 'ArrowRight' && storeIndex >= 0) setStoreIndex(p => Math.min(p + 1, 3));
+        if (e.key === 'ArrowLeft' && storeIndex >= 0) setStoreIndex(p => Math.max(p - 1, 0));
+      } else if (screen === 'QUICK_MENU') {
+        if (e.key === 'ArrowDown') setQuickMenuIndex(p => Math.min(p + 1, 4));
+        if (e.key === 'ArrowUp') setQuickMenuIndex(p => Math.max(p - 1, 0));
       } else if (screen === 'PROFILE') {
+        // Just for demo
         if (e.key === 'ArrowLeft') setScreen('STORE');
       } else if (screen === 'SETTINGS') {
         if (e.key === 'ArrowUp') setScreen('HOME');
@@ -48,12 +68,12 @@ export default function VoltraPlayHardware() {
       if (e.key === 'Escape') {
         playSelectSound();
         if (screen === 'QUICK_MENU') setScreen(previousScreen);
-        else setScreen('HOME');
+        else if (screen === 'STORE' || screen === 'SETTINGS' || screen === 'PROFILE') setScreen('HOME');
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [screen, previousScreen]);
+  }, [screen, previousScreen, homeIndex, storeIndex, quickMenuIndex]);
 
   const handlePower = () => {
     if (screen === 'OFF') {
@@ -86,21 +106,19 @@ export default function VoltraPlayHardware() {
         className="absolute inset-0 w-full h-full object-contain drop-shadow-2xl z-10 pointer-events-none"
       />
 
-      {/* 🔴 Invisible Power Button Overlay (Top Leftish area) */}
       <button 
         onClick={handlePower}
         className="absolute top-[28%] left-[16%] w-[60px] h-[40px] z-50 cursor-pointer outline-none bg-red-500/0 hover:bg-white/20 rounded-full transition-colors"
         title="Power Button"
       />
 
-      {/* 🔵 Invisible Xak Key Overlay (Bottom Left area under D-PAD) */}
       <button 
         onClick={handleXakKey}
         className="absolute bottom-[35%] left-[24%] w-[50px] h-[50px] z-50 cursor-pointer outline-none bg-blue-500/0 hover:bg-white/20 rounded-full transition-colors"
         title="Xak Key"
       />
 
-      {/* 📺 Screen Area Mask (Perspective mapped to the physical device in the photo) */}
+      {/* 📺 Screen Area Mask */}
       <div 
         className="absolute z-20 bg-black overflow-hidden flex items-center justify-center rounded-sm"
         style={{
@@ -112,7 +130,6 @@ export default function VoltraPlayHardware() {
           transformOrigin: 'center center'
         }}
       >
-        
         <AnimatePresence mode="wait">
           {screen === 'OFF' && (
             <motion.div key="off" className="absolute inset-0 bg-black" />
@@ -138,29 +155,15 @@ export default function VoltraPlayHardware() {
               <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-purple-500 to-teal-400 mb-6 shadow-[0_0_30px_rgba(0,229,255,0.5)]"></div>
               <h1 className="text-3xl font-light mb-2 tracking-widest">Welcome to Xakteir</h1>
               <p className="text-teal-300/80 mb-12">The Ultimate Handheld OS</p>
-              <p className="text-white/60 animate-pulse text-sm">Press [ENTER] on Keyboard or click Screen to begin</p>
-              
-              {/* Fallback click just in case */}
+              <p className="text-white/60 animate-pulse text-sm">Press [ENTER] on Keyboard to begin</p>
               <button onClick={() => setScreen('HOME')} className="absolute inset-0 w-full h-full cursor-pointer bg-transparent"></button>
             </motion.div>
           )}
 
-          {screen === 'HOME' && (
-            <motion.img 
-              key="home" src="/voltraplay/voltraplay_home_mockup_1782563938672.png" 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          )}
-
-          {screen === 'STORE' && (
-            <motion.img 
-              key="store" src="/voltraplay/xakteir_store_mockup_1782566232803.png" 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          )}
-
+          {/* Interactive React Components instead of Images! */}
+          {screen === 'HOME' && <HomeScreen key="home" selectedIndex={homeIndex} />}
+          {screen === 'STORE' && <StoreScreen key="store" selectedIndex={storeIndex} />}
+          
           {screen === 'SETTINGS' && (
             <motion.img 
               key="settings" src="/voltraplay/voltraplay_settings_ui_1782566766027.png" 
@@ -179,15 +182,14 @@ export default function VoltraPlayHardware() {
 
           {screen === 'QUICK_MENU' && (
             <motion.div key="quickmenu" className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                {/* Background Context */}
-                <img src="/voltraplay/voltraplay_home_mockup_1782563938672.png" className="absolute inset-0 w-full h-full object-cover blur-sm brightness-50" />
+                {previousScreen === 'HOME' ? <HomeScreen selectedIndex={homeIndex} /> : 
+                 previousScreen === 'STORE' ? <StoreScreen selectedIndex={storeIndex} /> : 
+                 <div className="absolute inset-0 bg-black"></div>}
                 
-                {/* Quick Menu Overlay Image */}
-                <motion.img 
-                    initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                    src="/voltraplay/voltraplay_quick_menu_mockup_1782564985698.png" 
-                    className="absolute right-0 top-0 h-full w-full object-cover shadow-2xl"
-                />
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-40"></div>
+                
+                {/* Interactive Quick Menu Component */}
+                <QuickMenu selectedIndex={quickMenuIndex} />
             </motion.div>
           )}
 
@@ -195,7 +197,7 @@ export default function VoltraPlayHardware() {
       </div>
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/30 text-xs font-mono tracking-widest pointer-events-none text-center">
-        CLICK TOP-LEFT EDGE TO POWER ON | PRESS 'X' FOR QUICK MENU | ARROW KEYS TO NAVIGATE SCREENS
+        CLICK TOP-LEFT EDGE TO POWER ON | PRESS 'X' FOR QUICK MENU | ARROW KEYS TO NAVIGATE
       </div>
     </div>
   );
