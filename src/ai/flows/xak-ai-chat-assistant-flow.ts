@@ -367,6 +367,47 @@ const queryMemory = ai.defineTool(
 );
 
 export async function chatWithXakAI(input: ChatInput): Promise<ChatOutput> {
+  const eveEndpoint = process.env.NEXT_PUBLIC_EVE_URL || 'https://xktreveai.xakteir.com';
+  
+  try {
+    const formattedHistory = input.history?.map(m => ({ 
+      role: m.role, 
+      content: m.content.map((c: any) => c.text).join('\n') 
+    })) || [];
+    
+    formattedHistory.push({ role: 'user', content: input.message });
+
+    // Attempt to use Eve Agent
+    const res = await fetch(`${eveEndpoint}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: formattedHistory,
+        userId: input.userId,
+      }),
+    });
+
+    if (res.ok) {
+      // Parse AI SDK standard response
+      const text = await res.text();
+      try {
+        const data = JSON.parse(text);
+        if (data.messages && data.messages.length > 0) {
+          const lastMsg = data.messages[data.messages.length - 1];
+          return { response: lastMsg.content, suggestedAction: undefined };
+        }
+      } catch (err) {
+        // Might be a raw text stream or similar
+        if (text && text.trim().length > 0) {
+          return { response: text, suggestedAction: undefined };
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[EVE] Failed to connect to Eve agent, falling back to Genkit flow.", e);
+  }
+
+  // Fallback to Genkit
   return chatFlow(input);
 }
 

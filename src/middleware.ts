@@ -126,7 +126,7 @@ export function middleware(req: NextRequest) {
     if (path.startsWith('/dev-centre')) return NextResponse.next(); // Already rewritten
     
     // Redirect dev-centre sub-routes
-    const devRoutes = ['/billing', '/compute', '/crashlytics', '/credentials', '/database', '/edge-config', '/emails', '/functions', '/git', '/monitoring', '/preview', '/sockets', '/storage', '/teams', '/webhooks'];
+    const devRoutes = ['/billing', '/compute', '/crashlytics', '/credentials', '/database', '/edge-config', '/emails', '/functions', '/git', '/monitoring', '/preview', '/sockets', '/storage', '/teams', '/webhooks', '/voltra-apps'];
     const rootSegment = '/' + path.split('/')[1]; 
     if (devRoutes.includes(rootSegment)) {
       return NextResponse.rewrite(new URL(`/dev-centre${path}`, req.url));
@@ -203,33 +203,39 @@ export function middleware(req: NextRequest) {
   }
 
   // 11. Handle Voltra standalone deployment via voltra.xakteir.com
-  if (hostname === 'voltra.xakteir.com' || hostname === 'www.voltra.xakteir.com') {
+  if (hostname === 'voltra.xakteir.com' || hostname === 'www.voltra.xakteir.com' || hostname.startsWith('voltra.localhost')) {
     if (path === '/') return NextResponse.rewrite(new URL('/voltra', req.url));
-    if (path.startsWith('/voltra')) return NextResponse.next();
-    return NextResponse.rewrite(new URL(`/voltra${path}`, req.url));
+    if (path.startsWith('/voltra')) return NextResponse.next(); // Let internal routed assets pass
+    
+    // If you go to a random path on the subdomain (e.g. voltra.xakteir.com/about), kick to main site
+    return NextResponse.redirect(`https://www.xakteir.com${path}`);
   }
 
   // 12. Handle VoltraPlay standalone deployment via play.voltra.xakteir.com
-  if (hostname === 'play.voltra.xakteir.com' || hostname === 'www.play.voltra.xakteir.com') {
+  if (hostname === 'play.voltra.xakteir.com' || hostname === 'www.play.voltra.xakteir.com' || hostname.startsWith('play.voltra.localhost')) {
     if (path === '/') return NextResponse.rewrite(new URL('/voltraplay', req.url));
     if (path.startsWith('/voltraplay')) return NextResponse.next();
-    return NextResponse.rewrite(new URL(`/voltraplay${path}`, req.url));
+    
+    // If you go to a random path on the subdomain, kick to main site
+    return NextResponse.redirect(`https://www.xakteir.com${path}`);
   }
 
   // 13. Handle VoltraMax standalone deployment via voltramax.xakteir.com
-  if (hostname === 'voltramax.xakteir.com' || hostname === 'www.voltramax.xakteir.com') {
+  if (hostname === 'voltramax.xakteir.com' || hostname === 'www.voltramax.xakteir.com' || hostname.startsWith('voltramax.localhost')) {
     if (path === '/') return NextResponse.rewrite(new URL('/voltramax', req.url));
     if (path.startsWith('/voltramax')) return NextResponse.next();
-    return NextResponse.rewrite(new URL(`/voltramax${path}`, req.url));
+    
+    // If you go to a random path on the subdomain, kick to main site
+    return NextResponse.redirect(`https://www.xakteir.com${path}`);
   }
 
   // 14. Enforce Subdomain Isolation (Prevent direct path access from other domains)
   if (
     hostname !== 'xakarena.xakteir.com' && hostname !== 'www.xakarena.xakteir.com' &&
     hostname !== 'creator.xakarena.xakteir.com' && hostname !== 'www.creator.xakarena.xakteir.com' &&
-    hostname !== 'voltra.xakteir.com' && hostname !== 'www.voltra.xakteir.com' &&
-    hostname !== 'play.voltra.xakteir.com' && hostname !== 'www.play.voltra.xakteir.com' &&
-    hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com'
+    hostname !== 'voltra.xakteir.com' && hostname !== 'www.voltra.xakteir.com' && !hostname.startsWith('voltra.localhost') &&
+    hostname !== 'play.voltra.xakteir.com' && hostname !== 'www.play.voltra.xakteir.com' && !hostname.startsWith('play.voltra.localhost') &&
+    hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com' && !hostname.startsWith('voltramax.localhost')
   ) {
     if (
       path === '/xakarena' || path.startsWith('/xakarena/') || 
@@ -238,7 +244,7 @@ export function middleware(req: NextRequest) {
       path === '/voltraplay' || path.startsWith('/voltraplay/') ||
       path === '/voltramax' || path.startsWith('/voltramax/')
     ) {
-      // Rewrite to a non-existent route to trigger Next.js 404
+      // Rewrite to a non-existent route to trigger Next.js 404 (Hidden from users)
       return NextResponse.rewrite(new URL('/404', req.url));
     }
   }
