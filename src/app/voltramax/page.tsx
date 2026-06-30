@@ -130,6 +130,47 @@ export default function VoltraMaxHomepage() {
         </div>
       </section>
 
+      {/* The Engineering Feat */}
+      <section className="py-32 px-12 bg-black border-t border-white/5 relative z-10">
+        <div className="max-w-6xl mx-auto text-center space-y-16">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <h2 className="text-5xl font-black uppercase tracking-widest text-zinc-300">Uncompromising Specs</h2>
+          </motion.div>
+          <div className="grid md:grid-cols-3 gap-8 text-left">
+            <div className="p-8 border border-white/5 rounded-3xl bg-zinc-950">
+              <h3 className="text-2xl font-bold mb-4 uppercase text-blue-500">Thermal Management</h3>
+              <p className="text-zinc-400">Cooling an Intel Core Ultra 7 in a device made entirely of glass is no easy feat. A bespoke dual heat pipe and dual asymmetric fan system silently dissipates heat without throttling, even when all 3 displays are blasting 1440p content.</p>
+            </div>
+            <div className="p-8 border border-white/5 rounded-3xl bg-zinc-950">
+              <h3 className="text-2xl font-bold mb-4 uppercase text-blue-500">100Wh Powerhouse</h3>
+              <p className="text-zinc-400">Three screens require immense power. We packed a massive 100Wh Lithium-Polymer battery into the chassis—the absolute legal maximum allowed on commercial flights. Fast-charges via 65W USB-PD.</p>
+            </div>
+            <div className="p-8 border border-white/5 rounded-3xl bg-zinc-950">
+              <h3 className="text-2xl font-bold mb-4 uppercase text-blue-500">I/O Connectivity</h3>
+              <p className="text-zinc-400">Dongles are dead. The VoltraMax features two full-speed USB-C ports with DisplayPort Alt Mode, three USB-A ports for legacy peripherals, and a full-size HDMI 2.0 port built directly into the ultra-thin base.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Audio & Security */}
+      <section className="py-32 px-12 bg-zinc-950 border-t border-white/5 relative z-10">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="space-y-6">
+            <h3 className="text-4xl font-black uppercase text-white">The Soundstage</h3>
+            <p className="text-xl text-zinc-400 leading-relaxed">
+              Three screens demand cinematic audio. VoltraMax features side-firing stereo speakers driven by smart amplifiers to prevent over-excursion at maximum volume. A dual MEMS microphone array continuously listens for <span className="text-blue-400 font-bold">"Hey Xak"</span>, filtering out background noise perfectly.
+            </p>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="space-y-6">
+            <h3 className="text-4xl font-black uppercase text-white">Absolute Security</h3>
+            <p className="text-xl text-zinc-400 leading-relaxed">
+              An IR flood emitter and 940nm infrared camera handle instant biometric face unlocking in any lighting condition. But we didn't stop there. VoltraMax includes a physical, mechanical sliding privacy shutter over the camera, and a hardware-level LED indicator that software cannot override.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       <section className="py-32 text-center bg-black border-t border-white/5 relative overflow-hidden">
         <div className="absolute inset-0 bg-blue-500/5 blur-3xl pointer-events-none" />
         <motion.h2 initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} className="text-6xl md:text-8xl font-black uppercase tracking-tighter italic text-white relative z-10 drop-shadow-2xl">

@@ -70,6 +70,57 @@ export default function VoltraPlayHomepage() {
         </div>
       </section>
 
+      {/* The Comparison */}
+      <section className="py-40 px-12 bg-[#050505] border-y border-white/5 relative z-10">
+        <div className="max-w-5xl mx-auto text-center space-y-16">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <span className="text-rose-500 font-bold tracking-[0.3em] uppercase text-sm border border-rose-500/30 px-4 py-1 rounded-full mb-8 inline-block">The Switch Killer</span>
+            <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tight mt-6">
+              Don't Settle. <span className="text-rose-500 italic">Evolve.</span>
+            </h2>
+          </motion.div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse border border-white/10 rounded-2xl overflow-hidden bg-black shadow-2xl">
+              <thead>
+                <tr className="border-b border-white/10 bg-zinc-950">
+                  <th className="p-6 text-xl font-black uppercase text-zinc-500">Feature</th>
+                  <th className="p-6 text-xl font-black uppercase text-zinc-500">The "Switch"</th>
+                  <th className="p-6 text-2xl font-black uppercase text-purple-400 bg-purple-900/10">VoltraPlay</th>
+                </tr>
+              </thead>
+              <tbody className="text-lg font-medium">
+                <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="p-6 text-zinc-300">Joysticks</td>
+                  <td className="p-6 text-zinc-500">Standard (Prone to drift)</td>
+                  <td className="p-6 text-white bg-purple-900/10">Hall-Effect (Zero wear, zero drift)</td>
+                </tr>
+                <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="p-6 text-zinc-300">Display</td>
+                  <td className="p-6 text-zinc-500">720p LCD</td>
+                  <td className="p-6 text-white bg-purple-900/10">7-Inch True Black OLED</td>
+                </tr>
+                <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="p-6 text-zinc-300">OS Architecture</td>
+                  <td className="p-6 text-zinc-500">Closed, locked ecosystem</td>
+                  <td className="p-6 text-white bg-purple-900/10">VoltraOS (Open, zero-latency Wayland)</td>
+                </tr>
+                <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="p-6 text-zinc-300">Voice Integration</td>
+                  <td className="p-6 text-zinc-500">None</td>
+                  <td className="p-6 text-white bg-purple-900/10">Voltra Voice AI (In-game Voice Combat)</td>
+                </tr>
+                <tr className="hover:bg-white/5 transition-colors">
+                  <td className="p-6 text-zinc-300">Expandability</td>
+                  <td className="p-6 text-zinc-500">microSD only</td>
+                  <td className="p-6 text-white bg-purple-900/10">Internal NVMe M.2 2230 + UHS-II SD</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       {/* Voltra Stick Arena Section */}
       <section className="py-40 px-12 bg-black relative overflow-hidden">
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1/3 h-full bg-rose-900/10 blur-[150px] rounded-full pointer-events-none" />
@@ -99,6 +150,29 @@ export default function VoltraPlayHomepage() {
               </p>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* The Unfair Advantage */}
+      <section className="py-32 px-12 bg-zinc-950 border-t border-white/5 relative z-10">
+        <div className="max-w-6xl mx-auto text-center space-y-16">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <h2 className="text-5xl font-black uppercase tracking-widest text-zinc-300">The Unfair Advantage</h2>
+          </motion.div>
+          <div className="grid md:grid-cols-3 gap-8 text-left">
+            <div className="p-8 border border-white/5 rounded-3xl bg-black">
+              <h3 className="text-2xl font-bold mb-4 uppercase text-purple-500">Precision Haptics</h3>
+              <p className="text-zinc-400">Dual heavy-duty linear resonant actuators (LRAs) deliver pinpoint vibration. Feel the exact direction of an explosion, or the subtle tension of a bowstring snapping back.</p>
+            </div>
+            <div className="p-8 border border-white/5 rounded-3xl bg-black">
+              <h3 className="text-2xl font-bold mb-4 uppercase text-purple-500">Perfect Ergonomics</h3>
+              <p className="text-zinc-400">Sculpted to fit natural hand contours. The weight is aggressively distributed towards the palms, making the 7-inch device feel weightless even during 8-hour marathon sessions.</p>
+            </div>
+            <div className="p-8 border border-white/5 rounded-3xl bg-black">
+              <h3 className="text-2xl font-bold mb-4 uppercase text-purple-500">Infinite Storage</h3>
+              <p className="text-zinc-400">Games are massive. VoltraPlay comes with an ultra-fast internal 1TB NVMe SSD, plus a tool-less expandable M.2 2230 slot and a UHS-II microSD card reader for infinite libraries.</p>
+            </div>
+          </div>
         </div>
       </section>
 

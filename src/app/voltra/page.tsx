@@ -128,6 +128,42 @@ export default function VoltraCompanyHomepage() {
         </div>
       </section>
       
+      {/* The Foundry */}
+      <section className="py-32 px-12 bg-zinc-950 border-t border-white/5 relative z-10">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20 items-center">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="h-full min-h-[400px] border border-white/10 rounded-[3rem] bg-gradient-to-br from-zinc-900 to-black p-12 flex flex-col justify-end relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-zinc-700/20 via-black to-black" />
+            <div className="relative z-10">
+              <h3 className="text-4xl font-black uppercase text-white mb-4">Zero Human Error</h3>
+              <p className="text-lg text-zinc-400">Our automated assembly lines operate in Class 1 cleanrooms. Every chassis is CNC-milled to micron-level tolerances.</p>
+            </div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="space-y-8">
+            <h2 className="text-5xl font-black uppercase tracking-tight italic">
+              The <span className="text-zinc-600">Foundry</span>
+            </h2>
+            <p className="text-xl text-zinc-400 leading-relaxed font-medium">
+              We don't outsource our vision. Voltra operates its own highly classified manufacturing facilities. We oversee every single stage of production—from smelting the magnesium alloys to calibrating the Hall effect sensors.
+            </p>
+            <p className="text-xl text-zinc-400 leading-relaxed font-medium">
+              Every single VoltraMax and VoltraPlay unit undergoes a grueling 48-hour burn-in stress test before it is ever placed in a box. If a hinge deviates by 0.1 degrees, the unit is destroyed.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* The Philosophy */}
+      <section className="py-32 px-12 bg-black border-t border-white/5 relative z-10">
+        <div className="max-w-5xl mx-auto text-center space-y-12">
+          <motion.h2 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-5xl font-black uppercase tracking-widest text-zinc-300">The Hardware Philosophy</motion.h2>
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-2xl text-zinc-400 font-medium leading-relaxed space-y-8">
+            <p>At Voltra, we believe that software is only as good as the glass, metal, and silicon it runs on. A brilliant operating system feels broken if the touch latency is 50 milliseconds. A beautiful game feels cheap if the joysticks drift.</p>
+            <p>Our mandate is absolute perfection in physical engineering. We forge military-grade magnesium alloys, we tune the tension of every hinge to the exact gram, and we source OLED panels with sub-millisecond response times.</p>
+            <p className="text-white font-black italic text-3xl">We build the vessels for the Xakteir ecosystem.</p>
+          </motion.div>
+        </div>
+      </section>
+
       <footer className="py-12 text-center text-zinc-600 border-t border-white/5 bg-black">
         <p className="uppercase tracking-[0.3em] text-sm font-bold">Voltra — A Xakteir Company © 2026</p>
       </footer>
