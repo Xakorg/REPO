@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "code_arena",
+    title: "Code Arena",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Coding", "Multiplayer", "Competitive"],
+    description: "Race against other developers to solve algorithmic challenges in real-time. The first to pass all test cases wins the battle.",
+    bannerUrl: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=codearena",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/games/code-arena"
+  },
+  {
     id: "xaksports",
     title: "XakSports",
     developer: "Xakteir Studios",
