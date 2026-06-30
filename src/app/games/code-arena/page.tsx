@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "@/firebase/provider";
-import { db } from "@/firebase/config";
+import { useFirestore } from "@/firebase";
 import { collection, doc, onSnapshot, setDoc, updateDoc, getDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
 import Editor from "@monaco-editor/react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Play, Users, Trophy, Loader2, Code2, CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 // --- CHALLENGE DEFINITIONS ---
 const CHALLENGES = {
@@ -70,6 +71,7 @@ type PlayerInfo = { id: string; email: string; name: string; ready: boolean; pro
 
 export default function CodeArenaPage() {
   const { user } = useUser();
+  const firestore = useFirestore();
   const { toast } = useToast();
   
   // App State
@@ -91,8 +93,9 @@ export default function CodeArenaPage() {
   const handleJoinRoom = async () => {
     if (!user) return toast({ title: "Must be signed in", variant: "destructive" });
     if (!roomId.trim()) return toast({ title: "Enter a room ID", variant: "destructive" });
+    if (!firestore) return toast({ title: "Database loading...", variant: "destructive" });
 
-    const roomRef = doc(db, "arena_rooms", roomId.toUpperCase());
+    const roomRef = doc(firestore!, "arena_rooms", roomId.toUpperCase());
     const roomSnap = await getDoc(roomRef);
 
     const playerObj = {
@@ -132,8 +135,8 @@ export default function CodeArenaPage() {
 
   // Listen to Room Changes
   useEffect(() => {
-    if (!inRoom || !roomId) return;
-    const roomRef = doc(db, "arena_rooms", roomId.toUpperCase());
+    if (!inRoom || !roomId || !firestore) return;
+    const roomRef = doc(firestore!, "arena_rooms", roomId.toUpperCase());
     const unsub = onSnapshot(roomRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -154,8 +157,8 @@ export default function CodeArenaPage() {
 
   // Toggle Ready
   const toggleReady = async () => {
-    if (!user) return;
-    const roomRef = doc(db, "arena_rooms", roomId.toUpperCase());
+    if (!user || !firestore) return;
+    const roomRef = doc(firestore!, "arena_rooms", roomId.toUpperCase());
     const updatedPlayers = players.map(p => p.id === user.uid ? { ...p, ready: !p.ready } : p);
     await updateDoc(roomRef, { players: updatedPlayers });
 
@@ -182,7 +185,8 @@ export default function CodeArenaPage() {
 
       // Update progress
       const progressPercent = Math.floor((passed / total) * 100);
-      const roomRef = doc(db, "arena_rooms", roomId.toUpperCase());
+      if (!firestore) return;
+      const roomRef = doc(firestore!, "arena_rooms", roomId.toUpperCase());
       const updatedPlayers = players.map(p => {
         if (p.id === user.uid) {
           return { ...p, progress: progressPercent, finished: passed === total, winner: passed === total && !players.find(x => x.winner) };
