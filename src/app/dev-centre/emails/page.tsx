@@ -6,7 +6,7 @@ import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, Globe2, Send, CheckCircle2, Copy, Trash2, AlertCircle } from "lucide-react";
+import { Mail, Globe2, Send, CheckCircle2, Copy, Trash2, AlertCircle, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
@@ -101,184 +101,211 @@ export default function EmailsBlade() {
     }
   };
 
-  const handleRemoveDomain = async (domainId: string) => {
-    if (!user || !firestore) return;
-    await deleteDoc(doc(firestore, `dev_accounts/${user.uid}/email_domains`, domainId));
-    toast({ title: "Removed", description: "Domain has been removed." });
-  };
-
   const handleSendEmail = async () => {
     if (!user || !sendTo || !sendSubject || !sendBody || !selectedDomain) {
-      toast({ variant: "destructive", title: "Missing Fields", description: "Please fill out all fields and select a verified domain." });
+      toast({ variant: "destructive", title: "Missing Fields", description: "Fill out all fields and select a verified domain." });
       return;
     }
 
     setIsSending(true);
     try {
-      const res = await fetch("/api/email/send", {
+      const res = await fetch("/api/emails/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           uid: user.uid,
           to: sendTo,
+          fromDomain: selectedDomain,
           subject: sendSubject,
-          body: sendBody,
-          senderName: "Xakteir Dev",
-          senderDomain: selectedDomain
+          body: sendBody
         })
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send");
 
-      toast({ title: "Email Sent!", description: "Message delivered successfully." });
-      setSendTo("");
-      setSendSubject("");
-      setSendBody("");
+      if (data.success) {
+        toast({ title: "Email Sent", description: `Successfully dispatched to ${sendTo}` });
+        setSendTo("");
+        setSendSubject("");
+        setSendBody("");
+      } else {
+        throw new Error(data.error || "Failed to send email");
+      }
+
     } catch (e: any) {
-      toast({ variant: "destructive", title: "Send Failed", description: e.message });
+      toast({ variant: "destructive", title: "Dispatch Failed", description: e.message });
     } finally {
       setIsSending(false);
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: "Copied to clipboard" });
+  const handleDeleteDomain = async (domainId: string) => {
+    if (!user || !firestore) return;
+    try {
+      await deleteDoc(doc(firestore, `dev_accounts/${user.uid}/email_domains`, domainId));
+      if (selectedDomain === domainId) setSelectedDomain("");
+      toast({ title: "Domain Removed", description: "Domain disconnected successfully." });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Error", description: e.message });
+    }
   };
 
   const verifiedDomains = domains?.filter((d: any) => d.status === "Verified") || [];
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-        <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-          <Mail className="w-5 h-5 text-orange-400" />
+    <div className="space-y-12 pb-32">
+      <header className="space-y-4">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-teal-500/10 border-2 border-teal-500/20 flex items-center justify-center shadow-[0_0_20px_rgba(20,184,166,0.3)]">
+            <Mail className="w-8 h-8 text-teal-500" />
+          </div>
+          <div>
+            <h1 className="text-5xl font-black uppercase italic tracking-tighter text-white">Xakteir Dev Custom Domains</h1>
+            <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs mt-1">DNS Routing & Transactional Emails</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-black uppercase italic tracking-tighter text-white">Xakteir Dev Emails</h1>
-          <p className="text-xs text-zinc-400">Verify domains and send transactional emails instantly.</p>
-        </div>
-      </div>
+      </header>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-start">
         
-        {/* DOMAINS SECTION */}
-        <div className="space-y-6">
-          <Card className="p-6 bg-zinc-950/40 border border-white/5 rounded-2xl h-fit space-y-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400">Add Sender Domain</h3>
+        {/* Left Column: Domains & Settings */}
+        <div className="space-y-8">
+          
+          <Card className="glass-card rounded-[2rem] p-10 border-2 border-white/5 bg-black/40 space-y-8 shadow-2xl">
+            <div className="flex items-end justify-between">
+              <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white flex items-center gap-3">
+                <Globe2 className="w-6 h-6 text-teal-400" /> Register Domain
+              </h3>
+            </div>
             
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Domain Name</label>
-                <div className="relative">
-                  <Globe2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                  <Input 
-                    value={domainInput}
-                    onChange={e => setDomainInput(e.target.value)}
-                    placeholder="example.com" 
-                    className="bg-black/50 border-white/10 h-12 rounded-xl pl-10 text-white font-bold"
-                  />
-                </div>
-              </div>
-              
+            <div className="flex gap-4">
+              <Input 
+                value={domainInput}
+                onChange={e => setDomainInput(e.target.value)}
+                placeholder="e.g. acmecorp.com" 
+                className="flex-1 bg-black/50 border-white/10 h-14 rounded-2xl text-white font-bold italic px-5"
+              />
               <Button 
                 onClick={handleAddDomain} 
                 disabled={isAdding}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-xs tracking-widest h-12 rounded-xl mt-2"
+                className="h-14 px-8 bg-teal-500 hover:bg-teal-600 text-black font-black uppercase text-xs tracking-widest rounded-2xl shadow-[0_0_20px_rgba(20,184,166,0.3)] transition-all hover:scale-[1.02]"
               >
                 {isAdding ? "Adding..." : "Add Domain"}
               </Button>
             </div>
           </Card>
 
-          <div className="space-y-4">
-            {domains?.map((domain: any) => (
-              <Card key={domain.id} className="p-5 bg-black/40 border border-white/5 rounded-xl">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h4 className="font-bold text-white text-base">{domain.domain}</h4>
-                    <Badge className={domain.status === "Verified" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 mt-1" : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20 mt-1"}>
-                      {domain.status}
-                    </Badge>
-                  </div>
-                  <Button onClick={() => handleRemoveDomain(domain.id)} variant="ghost" size="icon" className="w-8 h-8 text-zinc-500 hover:text-rose-500 hover:bg-rose-500/10">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                {domain.status === "Pending" && (
-                  <div className="space-y-4 pt-4 border-t border-white/5">
-                    <div className="p-4 bg-orange-500/5 border border-orange-500/10 rounded-xl space-y-3">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                        <p className="text-xs text-orange-200">Add this TXT record to your DNS provider (Cloudflare, GoDaddy, etc.) to verify ownership.</p>
+          <Card className="glass-card rounded-[2rem] p-10 border-2 border-white/5 bg-black/40 shadow-2xl min-h-[400px]">
+            <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white mb-8">Connected Domains</h3>
+            
+            <div className="space-y-6">
+              {domains?.map((d: any) => (
+                <div key={d.id} className="p-6 bg-zinc-950/60 border-2 border-white/5 rounded-2xl hover:border-teal-500/50 hover:bg-teal-500/5 transition-all group flex flex-col gap-6 shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      {d.status === "Verified" ? (
+                        <CheckCircle2 className="w-8 h-8 text-emerald-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                      ) : (
+                        <AlertCircle className="w-8 h-8 text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
+                      )}
+                      <div>
+                        <h4 className="font-black text-white text-xl tracking-tight">{d.domain}</h4>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-1">Status: <span className={d.status === "Verified" ? "text-emerald-400" : "text-amber-400"}>{d.status}</span></p>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <div>
-                          <label className="text-[9px] uppercase tracking-widest text-zinc-500">Type</label>
-                          <div className="text-xs font-mono text-white bg-black/50 p-2 rounded-lg border border-white/5">TXT</div>
-                        </div>
-                        <div>
-                          <label className="text-[9px] uppercase tracking-widest text-zinc-500">Name</label>
-                          <div className="text-xs font-mono text-white bg-black/50 p-2 rounded-lg border border-white/5">@</div>
-                        </div>
-                        <div>
-                          <label className="text-[9px] uppercase tracking-widest text-zinc-500 flex items-center justify-between">
-                            Value <button onClick={() => copyToClipboard(domain.verifyRecord)} className="hover:text-white"><Copy className="w-3 h-3"/></button>
-                          </label>
-                          <div className="text-xs font-mono text-white bg-black/50 p-2 rounded-lg border border-white/5 break-all">
-                            {domain.verifyRecord}
-                          </div>
-                        </div>
-                      </div>
-
-                      <Button 
-                        onClick={() => handleVerify(domain)}
-                        disabled={verifyingId === domain.id}
-                        className="w-full bg-white/5 hover:bg-white/10 text-white text-xs h-10 mt-2"
-                      >
-                        {verifyingId === domain.id ? "Querying Global DNS..." : "Verify Record"}
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      {d.status !== "Verified" && (
+                        <Button 
+                          onClick={() => handleVerify(d)}
+                          disabled={verifyingId === d.id}
+                          className="h-10 px-6 font-black uppercase tracking-widest text-xs rounded-xl bg-amber-500 hover:bg-amber-600 text-black"
+                        >
+                          {verifyingId === d.id ? "Verifying..." : "Verify DNS"}
+                        </Button>
+                      )}
+                      <Button onClick={() => handleDeleteDomain(d.id)} variant="ghost" size="icon" className="h-10 w-10 text-zinc-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl">
+                        <Trash2 className="w-5 h-5" />
                       </Button>
                     </div>
                   </div>
-                )}
-              </Card>
-            ))}
-          </div>
+
+                  {d.status !== "Verified" && (
+                    <div className="bg-black/80 rounded-xl border border-white/10 p-5 space-y-4">
+                      <p className="text-xs font-bold text-zinc-400">Add this TXT record to your DNS provider to verify ownership:</p>
+                      <div className="grid grid-cols-[1fr_3fr] gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-600">Type / Host</label>
+                          <div className="h-10 bg-zinc-900 border border-white/5 rounded-lg flex items-center px-4 text-xs font-mono text-zinc-300">TXT &nbsp;&nbsp; @</div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-600">Value</label>
+                          <div className="h-10 bg-zinc-900 border border-white/5 rounded-lg flex items-center justify-between px-4">
+                            <span className="text-xs font-mono text-amber-400 truncate">{d.verifyRecord}</span>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="w-6 h-6 hover:bg-white/10"
+                              onClick={() => {
+                                navigator.clipboard.writeText(d.verifyRecord);
+                                toast({ description: "Copied to clipboard" });
+                              }}
+                            >
+                              <Copy className="w-3 h-3 text-zinc-400" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {(!domains || domains.length === 0) && (
+                <div className="h-48 flex flex-col items-center justify-center space-y-4 text-zinc-500 bg-white/[0.02] rounded-2xl border border-white/5 border-dashed">
+                  <Globe2 className="w-12 h-12 opacity-50" />
+                  <p className="text-sm font-bold uppercase tracking-widest">No domains connected.</p>
+                </div>
+              )}
+            </div>
+          </Card>
         </div>
 
-        {/* SEND EMAIL SECTION */}
-        <div className="space-y-6">
-          <Card className="p-6 bg-zinc-950/40 border border-white/5 rounded-2xl">
-            <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400 mb-6">Test Email API</h3>
+        {/* Right Column: Send Email API Simulator */}
+        <div className="space-y-8 sticky top-8">
+          <Card className="glass-card rounded-[2rem] p-10 border-2 border-teal-500/30 bg-[#050505] shadow-[0_0_50px_rgba(20,184,166,0.1)] relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-[80px] pointer-events-none"></div>
             
-            <div className="space-y-4">
+            <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white mb-2 relative z-10">Transactional API</h3>
+            <p className="text-xs font-bold uppercase tracking-widest text-teal-400 mb-8 relative z-10 flex items-center gap-2">
+              <Sparkles className="w-4 h-4" /> Dispatch Test Email
+            </p>
+
+            <div className="space-y-6 relative z-10">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">From Domain</label>
                 <select 
-                  className="w-full bg-black/50 border border-white/10 h-12 rounded-xl px-4 text-white text-sm focus:outline-none focus:border-orange-500/50 appearance-none"
                   value={selectedDomain}
                   onChange={e => setSelectedDomain(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 h-14 rounded-2xl px-5 text-white font-bold outline-none focus:border-teal-500/50 transition-colors"
                 >
-                  <option value="" disabled>Select a verified domain</option>
+                  <option value="" disabled>Select a verified domain...</option>
                   {verifiedDomains.map((d: any) => (
                     <option key={d.id} value={d.domain}>{d.domain}</option>
                   ))}
                 </select>
                 {verifiedDomains.length === 0 && (
-                  <p className="text-[10px] text-rose-400 mt-1">You must verify a domain first.</p>
+                  <p className="text-[10px] text-amber-500 mt-1 font-bold">You must verify a domain first.</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">To Address</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">To Email</label>
                 <Input 
                   value={sendTo}
                   onChange={e => setSendTo(e.target.value)}
                   placeholder="user@example.com" 
-                  className="bg-black/50 border-white/10 h-12 rounded-xl text-white"
+                  className="bg-black/50 border-white/10 h-14 rounded-2xl text-white font-bold px-5"
                 />
               </div>
 
@@ -287,32 +314,31 @@ export default function EmailsBlade() {
                 <Input 
                   value={sendSubject}
                   onChange={e => setSendSubject(e.target.value)}
-                  placeholder="Hello from Xakteir!" 
-                  className="bg-black/50 border-white/10 h-12 rounded-xl text-white"
+                  placeholder="Welcome to our app!" 
+                  className="bg-black/50 border-white/10 h-14 rounded-2xl text-white font-bold px-5"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Body (HTML)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">HTML Body</label>
                 <textarea 
                   value={sendBody}
                   onChange={e => setSendBody(e.target.value)}
-                  placeholder="<h1>It works!</h1>" 
-                  className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white h-32 resize-none focus:outline-none focus:border-orange-500/50"
+                  placeholder="<h1>Hello World</h1>"
+                  className="w-full h-32 bg-black/50 border border-white/10 rounded-2xl p-5 text-white font-mono text-xs resize-none focus:outline-none focus:border-teal-500/50 transition-colors"
                 />
               </div>
 
               <Button 
-                onClick={handleSendEmail}
+                onClick={handleSendEmail} 
                 disabled={isSending || verifiedDomains.length === 0}
-                className="w-full bg-white text-black hover:bg-zinc-200 font-black uppercase text-xs tracking-widest h-12 rounded-xl mt-4"
+                className="w-full bg-teal-500 hover:bg-teal-600 text-black font-black uppercase text-xs tracking-widest h-14 rounded-2xl shadow-[0_0_20px_rgba(20,184,166,0.3)] transition-all hover:scale-[1.02]"
               >
-                <Send className="w-4 h-4 mr-2" />
-                {isSending ? "Sending..." : "Send Request"}
+                <Send className="w-5 h-5 mr-3" /> {isSending ? "Dispatching..." : "Send via Xakteir"}
               </Button>
             </div>
           </Card>
-
+          
           {/* OUTBOX */}
           <Card className="p-6 bg-zinc-950/40 border border-white/5 rounded-2xl">
             <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400 mb-6">Outbox Logs</h3>
