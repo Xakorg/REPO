@@ -25,7 +25,7 @@ export default function VoltraMaxHomepage() {
 
         <motion.div initial={{ opacity: 0, y: 100 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.5, delay: 0.5 }} className="mt-20 relative w-full max-w-5xl aspect-video rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_100px_rgba(59,130,246,0.2)]">
           <Image 
-            src="/voltramax_3screen_1782838972680.png" 
+            src="/voltramax_option_5_1782839681925.png" 
             alt="The VoltraMax 3-Screen Device" 
             fill 
             className="object-cover"
