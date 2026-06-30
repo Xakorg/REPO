@@ -80,7 +80,7 @@ export function FaviconController() {
     const isSign = pathname?.startsWith("/sign");
     const isStream = pathname?.startsWith("/stream");
     const isTasks = pathname?.startsWith("/tasks");
-    const isWeather = pathname?.startsWith("/weather");
+    const isWeather = hostname.startsWith("weather.") || pathname?.startsWith("/weather");
     const isSupport = pathname?.startsWith("/contact") || pathname?.startsWith("/support");
     const isProfile = hostname.startsWith("account.") || hostname.startsWith("accounts.") || pathname?.startsWith("/profile");
     const isAbout = pathname?.startsWith("/about");

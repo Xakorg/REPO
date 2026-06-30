@@ -26,9 +26,7 @@ export function middleware(req: NextRequest) {
       return NextResponse.next(); 
     }
 
-    if (!req.cookies.has('xak_session')) {
-      return NextResponse.redirect(new URL('/auth', req.url));
-    }
+
 
     // Redirect Root to the IDE prefixed route
     if (path === '/') {
@@ -75,10 +73,6 @@ export function middleware(req: NextRequest) {
   if (hostname === 'maps.xakteir.com' || hostname === 'www.maps.xakteir.com') {
     if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
 
-    if (!req.cookies.has('xak_session')) {
-      return NextResponse.redirect(new URL('/auth', req.url));
-    }
-
     if (path === '/') return NextResponse.redirect(new URL('/map', req.url));
     if (path.startsWith('/map')) return NextResponse.next();
     
@@ -87,6 +81,22 @@ export function middleware(req: NextRequest) {
     const rootSegment = '/' + path.split('/')[1]; 
     if (mapRoutes.includes(rootSegment)) {
       return NextResponse.redirect(new URL(`/map${path}`, req.url));
+    }
+    return NextResponse.redirect(`https://xakteir.com${path}`);
+  }
+
+  // 4.5 Handle Weather standalone deployment via weather.xakteir.com
+  if (hostname === 'weather.xakteir.com' || hostname === 'www.weather.xakteir.com') {
+    if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+
+    if (path === '/') return NextResponse.redirect(new URL('/weather', req.url));
+    if (path.startsWith('/weather')) return NextResponse.next();
+    
+    // Redirect Weather sub-routes
+    const weatherRoutes = ['/settings'];
+    const rootSegment = '/' + path.split('/')[1]; 
+    if (weatherRoutes.includes(rootSegment)) {
+      return NextResponse.redirect(new URL(`/weather${path}`, req.url));
     }
     return NextResponse.redirect(`https://xakteir.com${path}`);
   }

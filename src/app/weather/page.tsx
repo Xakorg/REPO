@@ -27,6 +27,20 @@ export default function XakWeatherPage() {
   const [sectorName, setSectorName] = useState("Local Grid");
   const { toast } = useToast();
 
+  const getFunnyComment = (code?: number, wind?: number) => {
+    if (code === undefined) return "Calibrating sensors...";
+    if (wind && wind > 40) return "It's super windy! Hold onto your hats!";
+    if (code === 0) return "Not a cloud in sight. Go get some vitamin D!";
+    if (code === 1 || code === 2 || code === 3) return "A bit cloudy, but nothing to cry about.";
+    if (code === 45 || code === 48) return "Foggy outside. Silent Hill vibes.";
+    if (code >= 51 && code <= 55) return "It's drizzling! Not too rainy! Ok to cycle!";
+    if (code >= 61 && code <= 65) return "It's properly raining. Umbrellas at the ready.";
+    if (code >= 71 && code <= 77) return "Snow! Time to build a slightly misshapen snowman.";
+    if (code >= 80 && code <= 82) return "Don't go outside! It's really dangerous! Flooding possible!";
+    if (code >= 95) return "Thunderstorms! Zeus is having a bad day.";
+    return "Weather is weather. You'll survive.";
+  };
+
   const fetchWeather = async (lat: number, lon: number) => {
     setLoading(true);
     try {
@@ -89,7 +103,7 @@ export default function XakWeatherPage() {
     <div className="max-w-[1600px] mx-auto py-12 animate-fade-in px-8 text-foreground space-y-12 pb-20">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="space-y-4">
-           <h1 className="text-7xl font-black uppercase italic tracking-tighter leading-none text-white">XakWeather</h1>
+           <h1 className="text-7xl font-black uppercase italic tracking-tighter leading-none text-white">Xakteir Weather</h1>
            <form onSubmit={handleSearch} className="flex gap-4">
               <Input 
                 value={search} 
@@ -121,7 +135,9 @@ export default function XakWeatherPage() {
                   <MapPin className="w-3.5 h-3.5 text-blue-500" /> {sectorName}
                 </p>
                 <h2 className="text-[10rem] md:text-[14rem] font-black italic text-white tracking-tighter leading-none">{Math.round(weather?.current?.temperature_2m || 0)}°</h2>
-                <p className="text-3xl font-black uppercase text-blue-400 italic">Sector Normalized</p>
+                <p className="text-xl md:text-3xl font-black uppercase text-blue-400 italic">
+                  {getFunnyComment(weather?.current?.weather_code, weather?.current?.wind_speed_10m)}
+                </p>
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full lg:w-auto">
                 {[
