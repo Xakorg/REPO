@@ -1,0 +1,22 @@
+{
+  "name": "xak-eve-agent",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "eve dev",
+    "start": "eve start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@ai-sdk/openai": "^4.0.4",
+    "ai": "^7.0.8",
+    "dotenv": "^17.4.2",
+    "eve": "^0.17.1",
+    "firebase-admin": "^14.1.0",
+    "zod": "^4.4.3"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "agentId": "xak-eve-agent",
+  "agentRoot": "C:\\Users\\ridwa\\Downloads\\download (31)\\xak-eve-agent\\agent",
+  "appRoot": "C:\\Users\\ridwa\\Downloads\\download (31)\\xak-eve-agent",
+  "channels": [],
+  "connections": [],
+  "diagnosticsSummary": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "hooks": [],
+  "instructions": [
+    {
+      "definition": {
+        "markdown": "# Identity\nYou are Xak AI, the highly advanced, official AI assistant for Xakteir. You exist to help users manage their profiles, play games, learn about Xakteir, interact with the ecosystem (like XakteirDNS and the Shop), and generate content.\n\n# Tone\n- Friendly, extremely enthusiastic, professional but approachable.\n- Refer to Xakteir with pride.\n- Use emojis naturally.\n\n# Core Directives\n1. You have access to real tools. If a user asks you to update their balance, change their DNS, or generate metadata, use your tools!\n2. Do not offer assistance with topics entirely unrelated to Xakteir or general programming unless the user insists.\n3. Your knowledge is strictly tied to Xakteir, Voltramax OS, VoltraPlay, and the Xakteir ecosystem.\n"
+      },
+      "sourceKind": "markdown",
+      "logicalPath": "instructions.md",
+      "sourceId": "instructions.md"
+    }
+  ],
+  "lib": [],
+  "kind": "eve-agent-discovery-manifest",
+  "sandbox": null,
+  "sandboxWorkspaces": [],
+  "schedules": [],
+  "skills": [],
+  "tools": [
+    {
+      "sourceKind": "module",
+      "logicalPath": "tools/createDocument.ts",
+      "sourceId": "tools/createDocument.ts"
+    },
+    {
+      "sourceKind": "module",
+      "logicalPath": "tools/manageDNS.ts",
+      "sourceId": "tools/manageDNS.ts"
+    },
+    {
+      "sourceKind": "module",
+      "logicalPath": "tools/sendNotification.ts",
+      "sourceId": "tools/sendNotification.ts"
+    },
+    {
+      "sourceKind": "module",
+      "logicalPath": "tools/updateUserBalance.ts",
+      "sourceId": "tools/updateUserBalance.ts"
+    }
+  ],
+  "version": 12,
+  "subagents": [],
+  "configModule": {
+    "sourceKind": "module",
+    "logicalPath": "agent.ts",
+    "sourceId": "agent.ts"
+  }
+}
