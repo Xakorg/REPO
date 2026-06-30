@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import DOMPurify from 'dompurify';
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -1824,7 +1825,7 @@ export default function MailPage() {
                               <Button onClick={() => toast({ title: "Decrypted", description: selectedEmail.body })} variant="outline" className="border-green-500/50 text-green-400 hover:bg-green-500/20">Decrypt Now</Button>
                             </div>
                           ) : (
-                            <div dangerouslySetInnerHTML={{ __html: selectedEmail.body || "" }} />
+                            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedEmail.body || "") }} />
                           )}
                         </div>
                       )}

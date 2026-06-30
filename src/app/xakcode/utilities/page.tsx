@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useXakCode } from "../context";
+import DOMPurify from 'dompurify';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -505,7 +506,7 @@ export default function UtilitiesPage() {
 
               {/* SVG visual display */}
               <div className="border border-white/10 rounded-xl bg-black/60 flex items-center justify-center h-20 p-2 relative overflow-hidden">
-                <div dangerouslySetInnerHTML={{ __html: svgCode }} />
+                <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(svgCode) }} />
                 <span className="absolute bottom-1 right-2 text-[7px] text-white/30 font-black uppercase tracking-wider font-mono">Canvas</span>
               </div>
             </div>

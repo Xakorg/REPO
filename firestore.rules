@@ -66,7 +66,9 @@ service cloud.firestore {
 
       // Owners or admins may write user documents; any signed-in user can read profiles
       allow get, list: if isSignedIn();
-      allow write: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) || isAdmin();
+      allow update: if isAdmin() || (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['currencyBalance', 'role', 'isAdmin', 'xakteirEmail', 'id', 'email']));
+      allow delete: if isAdmin();
 
       // ─────────────────────────────────────────
       // NOTIFICATIONS
@@ -248,18 +250,26 @@ service cloud.firestore {
     // ─────────────────────────────────────────────
 
     match /meetings/{meetingId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (resource.data.hostId == request.auth.uid || isAdmin());
 
       match /signals/{signalId} {
-        allow read, write: if true;
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+        allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
       }
 
       match /chat/{messageId} {
-        allow read, write: if true;
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+        allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
       }
 
       match /chat_messages/{messageId} {
-        allow read, write: if true;
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+        allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
       }
     }
 
@@ -425,13 +435,17 @@ service cloud.firestore {
     // ─────────────────────────────────────────────
     match /servers/{serverId} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      
       match /channels/{channelId} {
         allow read: if true;
-        allow write: if isSignedIn();
+        allow create, update, delete: if isSignedIn() && (get(/databases/$(database)/documents/servers/$(serverId)).data.ownerId == request.auth.uid || isAdmin());
+        
         match /messages/{messageId} {
           allow read: if true;
-          allow write: if isSignedIn();
+          allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+          allow update, delete: if isSignedIn() && (resource.data.uid == request.auth.uid || get(/databases/$(database)/documents/servers/$(serverId)).data.ownerId == request.auth.uid || isAdmin());
         }
       }
     }

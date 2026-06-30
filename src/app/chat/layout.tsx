@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { navigateTo } from "@/lib/navigation";
 import Link from "next/link";
+import DOMPurify from 'dompurify';
 import { 
   Hash, 
   Home, 
@@ -1222,7 +1223,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="h-[calc(100vh-80px)] flex overflow-hidden bg-zinc-950 text-white relative">
-      {userData?.customCss && <style dangerouslySetInnerHTML={{ __html: userData.customCss }} />}
+      {userData?.customCss && <style dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userData.customCss, { ALLOWED_TAGS: [] }) }} />}
       <div className="absolute inset-0 arcade-grid opacity-[0.02] pointer-events-none" />
 
       {/* Mobile Drawer Trigger */}
