@@ -616,6 +616,18 @@ export default function XakteirMapsPage() {
 
     if (!mapRef.current) {
       mapRef.current = L.map("leaflet-map-holder", { zoomControl: false }).setView([location.lat, location.lon], 13);
+      
+      // FIX GLITCH: invalidate size after map is mounted to fix white/grey map bug
+      setTimeout(() => {
+        mapRef.current?.invalidateSize();
+      }, 500);
+
+      // Also observe container resize
+      const resizeObserver = new ResizeObserver(() => {
+        mapRef.current?.invalidateSize();
+      });
+      const container = document.getElementById("leaflet-map-holder");
+      if (container) resizeObserver.observe(container);
 
       // Map click handler (multi-purpose)
       mapRef.current.on("click", (e: any) => {
