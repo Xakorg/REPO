@@ -202,12 +202,42 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(`https://www.xakteir.com${path}`);
   }
 
-  // 11. Enforce Subdomain Isolation (Prevent direct path access from other domains)
+  // 11. Handle Voltra standalone deployment via voltra.xakteir.com
+  if (hostname === 'voltra.xakteir.com' || hostname === 'www.voltra.xakteir.com') {
+    if (path === '/') return NextResponse.rewrite(new URL('/voltra', req.url));
+    if (path.startsWith('/voltra')) return NextResponse.next();
+    return NextResponse.rewrite(new URL(`/voltra${path}`, req.url));
+  }
+
+  // 12. Handle VoltraPlay standalone deployment via play.voltra.xakteir.com
+  if (hostname === 'play.voltra.xakteir.com' || hostname === 'www.play.voltra.xakteir.com') {
+    if (path === '/') return NextResponse.rewrite(new URL('/voltraplay', req.url));
+    if (path.startsWith('/voltraplay')) return NextResponse.next();
+    return NextResponse.rewrite(new URL(`/voltraplay${path}`, req.url));
+  }
+
+  // 13. Handle VoltraMax standalone deployment via voltramax.xakteir.com
+  if (hostname === 'voltramax.xakteir.com' || hostname === 'www.voltramax.xakteir.com') {
+    if (path === '/') return NextResponse.rewrite(new URL('/voltramax', req.url));
+    if (path.startsWith('/voltramax')) return NextResponse.next();
+    return NextResponse.rewrite(new URL(`/voltramax${path}`, req.url));
+  }
+
+  // 14. Enforce Subdomain Isolation (Prevent direct path access from other domains)
   if (
     hostname !== 'xakarena.xakteir.com' && hostname !== 'www.xakarena.xakteir.com' &&
-    hostname !== 'creator.xakarena.xakteir.com' && hostname !== 'www.creator.xakarena.xakteir.com'
+    hostname !== 'creator.xakarena.xakteir.com' && hostname !== 'www.creator.xakarena.xakteir.com' &&
+    hostname !== 'voltra.xakteir.com' && hostname !== 'www.voltra.xakteir.com' &&
+    hostname !== 'play.voltra.xakteir.com' && hostname !== 'www.play.voltra.xakteir.com' &&
+    hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com'
   ) {
-    if (path === '/xakarena' || path.startsWith('/xakarena/') || path === '/xakarena-creator' || path.startsWith('/xakarena-creator/')) {
+    if (
+      path === '/xakarena' || path.startsWith('/xakarena/') || 
+      path === '/xakarena-creator' || path.startsWith('/xakarena-creator/') ||
+      path === '/voltra' || path.startsWith('/voltra/') ||
+      path === '/voltraplay' || path.startsWith('/voltraplay/') ||
+      path === '/voltramax' || path.startsWith('/voltramax/')
+    ) {
       // Rewrite to a non-existent route to trigger Next.js 404
       return NextResponse.rewrite(new URL('/404', req.url));
     }
@@ -225,7 +255,10 @@ export function middleware(req: NextRequest) {
     hostname !== 'drive.xakteir.com' && hostname !== 'www.drive.xakteir.com' &&
     hostname !== 'meet.xakteir.com' && hostname !== 'www.meet.xakteir.com' &&
     hostname !== 'account.xakteir.com' && hostname !== 'www.account.xakteir.com' &&
-    hostname !== 'accounts.xakteir.com' && hostname !== 'www.accounts.xakteir.com'
+    hostname !== 'accounts.xakteir.com' && hostname !== 'www.accounts.xakteir.com' &&
+    hostname !== 'voltra.xakteir.com' && hostname !== 'www.voltra.xakteir.com' &&
+    hostname !== 'play.voltra.xakteir.com' && hostname !== 'www.play.voltra.xakteir.com' &&
+    hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com'
   ) {
     if (path === '/xakcode') return NextResponse.redirect('https://code.xakteir.com/xakcode');
     if (path.startsWith('/xakcode/')) return NextResponse.redirect(`https://code.xakteir.com${path}`);

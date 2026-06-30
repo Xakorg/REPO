@@ -65,7 +65,8 @@ import {
   SlidersHorizontal,
   Info,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
+  Menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,6 +74,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useUser, useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, query, where, doc, updateDoc, serverTimestamp, setDoc, getDocs, limit, addDoc, onSnapshot, orderBy } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
@@ -2059,39 +2061,52 @@ export default function XakteirMapsPage() {
           </div>
         )}
 
-        {/* ---- LEFT SIDEBAR PANEL TOGGLE ---- */}
+        {/* ---- LEFT SIDEBAR (Hamburger Menu + Features) ---- */}
         {!loading && !isSimulating && !isNavigatingLive && (
-          <div className="absolute top-6 left-6 z-[400] flex flex-col gap-2 pointer-events-auto">
-            {/* Panel selector icons */}
-            {[
-              { key: "route", icon: <Navigation className="w-4 h-4" />, label: "Route", color: "text-blue-400" },
-              { key: "saved", icon: <Star className="w-4 h-4" />, label: "Saved", color: "text-yellow-400" },
-              { key: "poi", icon: <MapPin className="w-4 h-4" />, label: "POI", color: "text-orange-400" },
-              { key: "explore", icon: <Globe className="w-4 h-4" />, label: "Explore", color: "text-green-400" },
-              { key: "layers", icon: <Layers className="w-4 h-4" />, label: "Layers & Styles", color: "text-cyan-400" },
-              { key: "events", icon: <Calendar className="w-4 h-4" />, label: "Events", color: "text-purple-400" },
-              { key: "photos", icon: <Camera className="w-4 h-4" />, label: "Photos", color: "text-pink-400" },
-              { key: "measure", icon: <Ruler className="w-4 h-4" />, label: "Measure", color: "text-amber-400" },
-            ].map(panel => (
-              <Button
-                key={panel.key}
-                onClick={() => setLeftPanel(leftPanel === panel.key as any ? null : panel.key as any)}
-                className={cn(
-                  "glass-card border-white/10 rounded-2xl h-10 w-10 flex items-center justify-center transition-all",
-                  leftPanel === panel.key ? "bg-blue-600/80 text-white" : `bg-black/75 hover:bg-black/90 ${panel.color}`
-                )}
-                title={panel.label}
-              >
-                {panel.icon}
-              </Button>
-            ))}
-          </div>
-        )}
+          <div className="absolute top-6 left-6 z-[400] pointer-events-auto">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button className="glass-card border-white/10 rounded-2xl h-12 w-12 flex items-center justify-center bg-black/75 hover:bg-black/90">
+                  <Menu className="w-6 h-6 text-white" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="bg-zinc-950/95 backdrop-blur-xl border-r border-white/10 p-0 w-[420px] max-w-[90vw] flex flex-row shadow-2xl z-[500]">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Map Features</SheetTitle>
+                </SheetHeader>
+                
+                {/* Panel selector icons (Left Rail) */}
+                <div className="w-16 bg-black/50 border-r border-white/5 flex flex-col items-center py-6 gap-3 shrink-0 h-full overflow-y-auto">
+                  {[
+                    { key: "route", icon: <Navigation className="w-4 h-4" />, label: "Route", color: "text-blue-400" },
+                    { key: "saved", icon: <Star className="w-4 h-4" />, label: "Saved", color: "text-yellow-400" },
+                    { key: "poi", icon: <MapPin className="w-4 h-4" />, label: "POI", color: "text-orange-400" },
+                    { key: "explore", icon: <Globe className="w-4 h-4" />, label: "Explore", color: "text-green-400" },
+                    { key: "layers", icon: <Layers className="w-4 h-4" />, label: "Layers & Styles", color: "text-cyan-400" },
+                    { key: "events", icon: <Calendar className="w-4 h-4" />, label: "Events", color: "text-purple-400" },
+                    { key: "photos", icon: <Camera className="w-4 h-4" />, label: "Photos", color: "text-pink-400" },
+                    { key: "measure", icon: <Ruler className="w-4 h-4" />, label: "Measure", color: "text-amber-400" },
+                  ].map(panel => (
+                    <Button
+                      key={panel.key}
+                      variant="ghost"
+                      onClick={() => setLeftPanel(panel.key as any)}
+                      className={cn(
+                        "rounded-xl h-10 w-10 flex items-center justify-center transition-all relative shrink-0",
+                        leftPanel === panel.key ? "bg-white/10 text-white" : `text-zinc-500 hover:bg-white/5 ${panel.color}`
+                      )}
+                      title={panel.label}
+                    >
+                      <div className={cn("absolute left-0 w-1 bg-white rounded-r-full transition-all duration-300", leftPanel === panel.key ? "h-6 opacity-100" : "h-0 opacity-0")} />
+                      {panel.icon}
+                    </Button>
+                  ))}
+                </div>
 
-        {/* ---- LEFT PANEL CONTENT ---- */}
-        {!loading && !isSimulating && !isNavigatingLive && leftPanel && (
-          <div className="absolute top-6 left-16 z-[400] w-[360px] max-w-[calc(100vw-100px)] pointer-events-auto max-h-[calc(100vh-160px)] overflow-y-auto">
-            <Card className="glass-card p-5 rounded-[2rem] bg-black/80 border-white/10 shadow-2xl flex flex-col gap-4">
+                {/* Content Area */}
+                <div className="flex-1 h-full overflow-y-auto">
+                  {leftPanel ? (
+                    <div className="p-5 flex flex-col gap-4">
 
               {/* ---- Route Panel ---- */}
               {leftPanel === "route" && (
@@ -2610,7 +2625,17 @@ export default function XakteirMapsPage() {
                 </>
               )}
 
-            </Card>
+                    </div>
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-zinc-500 p-6 text-center">
+                      <MapIcon className="w-12 h-12 mb-4 opacity-20" />
+                      <p className="text-sm font-black uppercase tracking-widest">Select a feature</p>
+                      <p className="text-xs mt-2 opacity-70">Use the icons on the left to explore map tools.</p>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         )}
 
