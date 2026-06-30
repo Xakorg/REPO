@@ -238,12 +238,12 @@ const POI_CATEGORIES = [
 
 // Map style definitions
 const MAP_STYLES = [
-  { key: "dark", label: "Dark", url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", attr: "© OpenStreetMap © CARTO" },
-  { key: "light", label: "Light", url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", attr: "© OpenStreetMap © CARTO" },
-  { key: "osm", label: "Street", url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attr: "© OpenStreetMap contributors" },
-  { key: "satellite", label: "Satellite", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attr: "© Esri" },
-  { key: "terrain", label: "Terrain", url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", attr: "© OpenStreetMap © OpenTopoMap" },
-  { key: "retro", label: "Retro", url: "https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", attr: "© OpenStreetMap © HOT" },
+  { key: "dark", label: "Dark", url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", attr: "© OpenStreetMap © CARTO", thumb: "https://images.unsplash.com/photo-1518558997970-4ddd2bb37171?q=80&w=200&auto=format&fit=crop" },
+  { key: "light", label: "Light", url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", attr: "© OpenStreetMap © CARTO", thumb: "https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=200&auto=format&fit=crop" },
+  { key: "osm", label: "Street", url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attr: "© OpenStreetMap contributors", thumb: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=200&auto=format&fit=crop" },
+  { key: "satellite", label: "Satellite", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attr: "© Esri", thumb: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=200&auto=format&fit=crop" },
+  { key: "terrain", label: "Terrain", url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", attr: "© OpenStreetMap © OpenTopoMap", thumb: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=200&auto=format&fit=crop" },
+  { key: "retro", label: "Retro", url: "https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", attr: "© OpenStreetMap © HOT", thumb: "https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?q=80&w=200&auto=format&fit=crop" },
 ] as const;
 
 type MapStyleKey = typeof MAP_STYLES[number]["key"];
@@ -2351,18 +2351,27 @@ export default function XakteirMapsPage() {
                     <p className="text-[10px] font-black uppercase text-zinc-500 tracking-wider">Map Style</p>
                     <div className="grid grid-cols-2 gap-2">
                       {MAP_STYLES.map(style => (
-                        <Button
+                        <button
                           key={style.key}
                           onClick={() => { setMapLayer(style.key); setHistoryMode(false); }}
                           className={cn(
-                            "h-9 rounded-xl text-[10px] font-black uppercase tracking-wider text-left justify-start px-3 transition-all",
+                            "relative h-16 rounded-xl overflow-hidden border-2 text-left transition-all group",
                             mapLayer === style.key && !historyMode 
-                              ? "bg-blue-600 text-white" 
-                              : "bg-white/5 border border-white/5 text-zinc-400 hover:bg-white/8 hover:text-white"
+                              ? "border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]" 
+                              : "border-transparent hover:border-white/20"
                           )}
                         >
-                          {style.label}
-                        </Button>
+                          <img src={style.thumb} alt={style.label} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/10" />
+                          <div className="absolute bottom-1.5 left-2">
+                            <p className="text-[10px] font-black uppercase text-white tracking-wider drop-shadow-md">{style.label}</p>
+                          </div>
+                          {mapLayer === style.key && !historyMode && (
+                            <div className="absolute top-1 right-1 w-3.5 h-3.5 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                              <Check className="w-2.5 h-2.5 text-white" />
+                            </div>
+                          )}
+                        </button>
                       ))}
                     </div>
                   </div>
