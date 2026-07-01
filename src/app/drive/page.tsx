@@ -240,7 +240,10 @@ export default function XakDrivePage() {
 
     return new Promise<void>((resolve, reject) => {
       uploadTask.on('state_changed', 
-        (snapshot) => { setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100); }, 
+        (snapshot) => { 
+          const progress = snapshot.totalBytes > 0 ? (snapshot.bytesTransferred / snapshot.totalBytes) * 100 : 100;
+          setUploadProgress(progress); 
+        }, 
         (error) => { setIsUploading(false); toast({ variant: "destructive", title: "Upload failed" }); reject(error); }, 
         async () => {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
@@ -374,7 +377,8 @@ export default function XakDrivePage() {
   };
 
   const handleCreateBlankFile = async (name: string, type: string) => {
-    const blob = new Blob([''], { type });
+    if (!storage || !firestore || !user) return;
+    const blob = new Blob([' '], { type }); // 1 byte to prevent 0-byte errors
     await uploadToCloud(blob, name);
   };
 
@@ -618,18 +622,18 @@ export default function XakDrivePage() {
               New Item in {currentPath[currentPath.length-1].name}
             </div>
             
-            <button onClick={() => { setShowNewFolderDialog(true); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+            <button onClick={(e) => { e.stopPropagation(); setShowNewFolderDialog(true); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
               <FolderPlus className="w-4 h-4 mr-2" /> New Folder
             </button>
-            <button onClick={() => { handleCreateBlankFile("Untitled.txt", "text/plain"); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+            <button onClick={(e) => { e.stopPropagation(); handleCreateBlankFile("Untitled.txt", "text/plain"); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
               <FileText className="w-4 h-4 mr-2" /> New Text File
             </button>
-            <button onClick={() => { handleCreateBlankFile("Archive.zip", "application/zip"); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+            <button onClick={(e) => { e.stopPropagation(); handleCreateBlankFile("Archive.zip", "application/zip"); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
               <FileArchive className="w-4 h-4 mr-2" /> New Zip File
             </button>
             
             <div className="h-px bg-white/10 my-1 mx-2" />
-            <button onClick={() => { fileInputRef.current?.click(); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+            <button onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
               <Upload className="w-4 h-4 mr-2" /> Upload File
             </button>
           </motion.div>
