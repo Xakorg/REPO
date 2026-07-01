@@ -390,7 +390,7 @@ export default function XakDrivePage() {
   const handleCreateBlankFile = async (name: string, type: string) => {
     if (!storage || !firestore || !user) return;
     try {
-      const file = new File([' '], name, { type }); 
+      const file = new window.File([' '], name, { type }); 
       await uploadToCloud(file, name);
     } catch (e: any) {
       toast({ variant: "destructive", title: "Error creating file", description: e.message || "Unknown error" });
