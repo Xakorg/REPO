@@ -10,7 +10,7 @@ import {
   Activity, Mail, CalendarClock, LockKeyhole, Scissors, 
   SlidersHorizontal, Code, Link as LinkIcon, Grid, List, 
   SearchCode, FileArchive, PlaySquare, WifiOff, FileSignature, FileEdit,
-  Video, Music, FileText, FileCode2, ChevronRight, FolderPlus, Palette
+  Video, Music, FileText, FileCode2, ChevronRight, FolderPlus, Palette, PenLine
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -66,6 +66,7 @@ async function loadDirectoryHandle(): Promise<FileSystemDirectoryHandle | null> 
 
 type DriveMode = 'cloud' | 'local' | 'starred' | 'trash' | 'vault';
 type ContextMenuState = { x: number; y: number; file: any } | null;
+type EmptyContextMenuState = { x: number; y: number } | null;
 type FolderPath = { id: string; name: string };
 
 const FOLDER_COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#6b7280"];
@@ -87,6 +88,11 @@ export default function XakDrivePage() {
   const [currentPath, setCurrentPath] = useState<FolderPath[]>([{ id: 'root', name: 'My Cloud' }]);
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  
+  // Rename State
+  const [renameFile, setRenameFile] = useState<any>(null);
+  const [newFileName, setNewFileName] = useState("");
+
   const currentFolderId = currentPath[currentPath.length - 1].id;
 
   // Local File System
@@ -106,6 +112,7 @@ export default function XakDrivePage() {
 
   // Context Menu & Preview
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
+  const [emptyContextMenu, setEmptyContextMenu] = useState<EmptyContextMenuState>(null);
   const [previewFile, setPreviewFile] = useState<any>(null);
   const [previewContent, setPreviewContent] = useState<string>("");
 
@@ -113,8 +120,11 @@ export default function XakDrivePage() {
     setMounted(true); 
     loadSavedFolder();
     
-    // Close context menu on global click
-    const handleGlobalClick = () => setContextMenu(null);
+    // Close context menus on global click
+    const handleGlobalClick = () => {
+      setContextMenu(null);
+      setEmptyContextMenu(null);
+    };
     window.addEventListener("click", handleGlobalClick);
     return () => window.removeEventListener("click", handleGlobalClick);
   }, []);
@@ -151,11 +161,11 @@ export default function XakDrivePage() {
     return !f.isVaulted && (f.parentId || 'root') === currentFolderId;
   });
 
-  // Local Folder Logic
-  const loadSavedFolder = async () => { /* unchanged for brevity, see original */ };
-  const requestFolderPermission = async () => { /* unchanged */ };
-  const pickLocalFolder = async () => { /* unchanged */ };
-  const scanLocalFolder = async (handle: FileSystemDirectoryHandle) => { /* unchanged */ };
+  // Local Folder Logic (omitted bodies for brevity as unchanged)
+  const loadSavedFolder = async () => {};
+  const requestFolderPermission = async () => {};
+  const pickLocalFolder = async () => {};
+  const scanLocalFolder = async (handle: FileSystemDirectoryHandle) => {};
 
   // Upload Logic
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,11 +184,12 @@ export default function XakDrivePage() {
     }
   };
 
-  const uploadToCloud = async (file: File) => {
+  const uploadToCloud = async (file: File | Blob, customName?: string) => {
     setIsUploading(true);
     setUploadProgress(0);
-    const storageRef = ref(storage!, `users/${user!.uid}/drive/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    const fileName = customName || (file as File).name || "Untitled";
+    const storageRef = ref(storage!, `users/${user!.uid}/drive/${Date.now()}_${fileName}`);
+    const uploadTask = uploadBytesResumable(storageRef, file as Blob);
 
     uploadTask.on('state_changed', 
       (snapshot) => { setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100); }, 
@@ -186,7 +197,7 @@ export default function XakDrivePage() {
       async () => {
         const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
         await addDocumentNonBlocking(`users/${user!.uid}/drive_files`, {
-          name: file.name,
+          name: fileName,
           url: downloadURL,
           size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
           type: file.type,
@@ -196,7 +207,7 @@ export default function XakDrivePage() {
           isFolder: false
         });
         setIsUploading(false);
-        toast({ title: "Upload Complete" });
+        toast({ title: "File created" });
       }
     );
   };
@@ -226,11 +237,33 @@ export default function XakDrivePage() {
     setCurrentPath(prev => prev.slice(0, index + 1));
   };
 
+  // Create Blank Files
+  const handleCreateBlankFile = async (name: string, type: string) => {
+    const blob = new Blob([''], { type });
+    await uploadToCloud(blob, name);
+  };
+
+  // Rename Actions
+  const handleRenameSubmit = async () => {
+    if (!firestore || !user || !renameFile || !newFileName.trim()) return;
+    await updateDoc(doc(firestore, `users/${user.uid}/drive_files`, renameFile.id), { name: newFileName.trim() });
+    setRenameFile(null);
+    setNewFileName("");
+    toast({ title: "Renamed successfully" });
+  };
+
   // Context Menu Actions
-  const handleContextMenu = (e: React.MouseEvent, file: any) => {
+  const handleItemContextMenu = (e: React.MouseEvent, file: any) => {
     e.preventDefault();
     e.stopPropagation();
+    setEmptyContextMenu(null);
     setContextMenu({ x: e.clientX, y: e.clientY, file });
+  };
+
+  const handleEmptySpaceContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu(null);
+    setEmptyContextMenu({ x: e.clientX, y: e.clientY });
   };
 
   const handlePreview = async (file: any) => {
@@ -283,6 +316,7 @@ export default function XakDrivePage() {
     if (type.includes("image")) return <ImageIcon className="w-8 h-8 text-blue-500" />;
     if (type.includes("video")) return <Video className="w-8 h-8 text-pink-500" />;
     if (type.includes("audio")) return <Music className="w-8 h-8 text-yellow-500" />;
+    if (type.includes("zip") || name.match(/\.(zip|tar|gz|rar)$/)) return <FileArchive className="w-8 h-8 text-red-500" />;
     if (name.match(/\.(js|ts|jsx|tsx|py|go|html|css)$/)) return <FileCode2 className="w-8 h-8 text-green-500" />;
     if (type.includes("pdf") || name.match(/\.(pdf|txt|md|docx)$/)) return <FileText className="w-8 h-8 text-orange-500" />;
     return <File className="w-8 h-8 text-zinc-500" />;
@@ -311,7 +345,7 @@ export default function XakDrivePage() {
         )}
       </AnimatePresence>
 
-      {/* CONTEXT MENU */}
+      {/* FILE/FOLDER CONTEXT MENU */}
       <AnimatePresence>
         {contextMenu && (
           <motion.div
@@ -335,6 +369,10 @@ export default function XakDrivePage() {
             <button onClick={() => handleToggleStar(contextMenu.file)} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-yellow-600 hover:text-white flex items-center">
               {contextMenu.file.isStarred ? <StarOff className="w-4 h-4 mr-2" /> : <Star className="w-4 h-4 mr-2" />}
               {contextMenu.file.isStarred ? "Remove Star" : "Add to Starred"}
+            </button>
+
+            <button onClick={() => { setRenameFile(contextMenu.file); setNewFileName(contextMenu.file.name); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+              <PenLine className="w-4 h-4 mr-2" /> Rename
             </button>
             
             {!contextMenu.file.isFolder && (
@@ -371,6 +409,62 @@ export default function XakDrivePage() {
         )}
       </AnimatePresence>
 
+      {/* EMPTY SPACE CONTEXT MENU */}
+      <AnimatePresence>
+        {emptyContextMenu && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.1 }}
+            className="fixed z-50 w-56 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-1 overflow-hidden"
+            style={{ top: emptyContextMenu.y, left: emptyContextMenu.x }}
+          >
+            <div className="px-3 py-2 border-b border-white/5 mb-1 truncate flex items-center text-xs font-medium text-zinc-400">
+              New Item
+            </div>
+            
+            <button onClick={() => { setShowNewFolderDialog(true); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+              <FolderPlus className="w-4 h-4 mr-2" /> New Folder
+            </button>
+            <button onClick={() => { handleCreateBlankFile("Untitled.txt", "text/plain"); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+              <FileText className="w-4 h-4 mr-2" /> New Text File
+            </button>
+            <button onClick={() => { handleCreateBlankFile("Archive.zip", "application/zip"); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+              <FileArchive className="w-4 h-4 mr-2" /> New Zip File
+            </button>
+            
+            <div className="h-px bg-white/10 my-1 mx-2" />
+            <button onClick={() => { fileInputRef.current?.click(); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+              <Upload className="w-4 h-4 mr-2" /> Upload File
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* RENAME DIALOG */}
+      <Dialog open={!!renameFile} onOpenChange={(open) => !open && setRenameFile(null)}>
+        <DialogContent className="bg-zinc-950 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Rename Item</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input 
+              value={newFileName} 
+              onChange={e => setNewFileName(e.target.value)} 
+              placeholder="e.g. Script.py" 
+              className="bg-black/50 border-white/10"
+              autoFocus
+              onKeyDown={e => e.key === "Enter" && handleRenameSubmit()}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameFile(null)}>Cancel</Button>
+            <Button onClick={handleRenameSubmit} className="bg-blue-600 hover:bg-blue-500">Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* NEW FOLDER DIALOG */}
       <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
         <DialogContent className="bg-zinc-950 border-white/10 text-white">
@@ -396,6 +490,7 @@ export default function XakDrivePage() {
 
       {/* SIDEBAR */}
       <div className="w-64 bg-zinc-900/50 border-r border-white/5 flex flex-col pt-6 pb-4">
+        {/* Same sidebar content... */}
         <div className="px-6 mb-8 flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
             <Cloud className="w-5 h-5 text-white" />
@@ -533,82 +628,86 @@ export default function XakDrivePage() {
           </div>
         ) : (
           /* FILE BROWSER */
-          <ScrollArea className="flex-1 p-6">
-            {/* Grid View */}
-            {viewMode === 'grid' ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {driveFiles.map(file => (
-                  <motion.div 
-                    layoutId={file.id}
-                    key={file.id}
-                    onContextMenu={(e) => handleContextMenu(e, file)}
-                    onDoubleClick={() => handlePreview(file)}
-                    className="group relative flex flex-col items-center p-4 rounded-xl hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-white/10"
-                  >
-                    {file.isStarred && (
-                      <div className="absolute top-2 right-2 z-10"><Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /></div>
-                    )}
-                    <div className={cn(
-                      "w-20 h-20 mb-4 bg-zinc-900 flex items-center justify-center border shadow-sm group-hover:shadow-md transition-all group-hover:scale-105",
-                      file.isFolder ? "border-transparent bg-transparent shadow-none" : "rounded-2xl border-white/5"
-                    )}>
-                      {/* Thumbnail Preview for Images */}
-                      {file.type?.includes("image") && file.url ? (
-                        <img src={file.url} alt="" className="w-full h-full object-cover rounded-2xl" />
-                      ) : (
-                        getFileIcon(file.type || "", file.name, file.isFolder, file.color)
+          <ScrollArea className="flex-1">
+            <div 
+              className="min-h-full p-6" 
+              onContextMenu={handleEmptySpaceContextMenu}
+            >
+              {/* Grid View */}
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  {driveFiles.map(file => (
+                    <motion.div 
+                      layoutId={file.id}
+                      key={file.id}
+                      onContextMenu={(e) => handleItemContextMenu(e, file)}
+                      onDoubleClick={() => handlePreview(file)}
+                      className="group relative flex flex-col items-center p-4 rounded-xl hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-white/10"
+                    >
+                      {file.isStarred && (
+                        <div className="absolute top-2 right-2 z-10"><Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /></div>
                       )}
-                    </div>
-                    <span className="text-xs font-medium text-center w-full truncate px-1 text-zinc-300 group-hover:text-white">{file.name}</span>
-                    <span className="text-[10px] text-zinc-500 mt-1">{file.isFolder ? "Folder" : (file.size || "Unknown")}</span>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              /* List View */
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center px-4 py-2 text-xs font-bold uppercase tracking-wider text-zinc-500 border-b border-white/5 mb-2">
-                  <div className="w-10"></div>
-                  <div className="flex-1">Name</div>
-                  <div className="w-32">Date Modified</div>
-                  <div className="w-24 text-right">Size</div>
+                      <div className={cn(
+                        "w-20 h-20 mb-4 bg-zinc-900 flex items-center justify-center border shadow-sm group-hover:shadow-md transition-all group-hover:scale-105",
+                        file.isFolder ? "border-transparent bg-transparent shadow-none" : "rounded-2xl border-white/5"
+                      )}>
+                        {/* Thumbnail Preview for Images */}
+                        {file.type?.includes("image") && file.url ? (
+                          <img src={file.url} alt="" className="w-full h-full object-cover rounded-2xl" />
+                        ) : (
+                          getFileIcon(file.type || "", file.name, file.isFolder, file.color)
+                        )}
+                      </div>
+                      <span className="text-xs font-medium text-center w-full truncate px-1 text-zinc-300 group-hover:text-white">{file.name}</span>
+                      <span className="text-[10px] text-zinc-500 mt-1">{file.isFolder ? "Folder" : (file.size || "Unknown")}</span>
+                    </motion.div>
+                  ))}
                 </div>
-                {driveFiles.map(file => (
-                  <div 
-                    key={file.id}
-                    onContextMenu={(e) => handleContextMenu(e, file)}
-                    onDoubleClick={() => handlePreview(file)}
-                    className="flex items-center px-4 py-3 hover:bg-white/5 rounded-lg cursor-pointer transition-colors group relative"
-                  >
-                    <div className="w-10 flex justify-center relative">
-                      {getFileIcon(file.type || "", file.name, file.isFolder, file.color)}
-                      {file.isStarred && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 absolute -bottom-1 -right-1" />}
-                    </div>
-                    <div className="flex-1 font-medium text-sm text-zinc-300 group-hover:text-white truncate pr-4 ml-4">{file.name}</div>
-                    <div className="w-32 text-xs text-zinc-500">
-                      {file.timestamp?.toDate ? file.timestamp.toDate().toLocaleDateString() : "Just now"}
-                    </div>
-                    <div className="w-24 text-right text-xs text-zinc-500">{file.isFolder ? "--" : file.size}</div>
+              ) : (
+                /* List View */
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center px-4 py-2 text-xs font-bold uppercase tracking-wider text-zinc-500 border-b border-white/5 mb-2">
+                    <div className="w-10"></div>
+                    <div className="flex-1">Name</div>
+                    <div className="w-32">Date Modified</div>
+                    <div className="w-24 text-right">Size</div>
                   </div>
-                ))}
-              </div>
-            )}
-            
-            {/* Empty States */}
-            {driveFiles.length === 0 && !isLoading && (
-              <div className="h-full flex flex-col items-center justify-center text-zinc-500 pt-32">
-                <FolderOpen className="w-16 h-16 mb-4 opacity-20" />
-                <p className="text-lg">This folder is empty</p>
-                <p className="text-sm mt-2">Drag and drop files to upload, or create a new folder.</p>
-              </div>
-            )}
+                  {driveFiles.map(file => (
+                    <div 
+                      key={file.id}
+                      onContextMenu={(e) => handleItemContextMenu(e, file)}
+                      onDoubleClick={() => handlePreview(file)}
+                      className="flex items-center px-4 py-3 hover:bg-white/5 rounded-lg cursor-pointer transition-colors group relative"
+                    >
+                      <div className="w-10 flex justify-center relative">
+                        {getFileIcon(file.type || "", file.name, file.isFolder, file.color)}
+                        {file.isStarred && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 absolute -bottom-1 -right-1" />}
+                      </div>
+                      <div className="flex-1 font-medium text-sm text-zinc-300 group-hover:text-white truncate pr-4 ml-4">{file.name}</div>
+                      <div className="w-32 text-xs text-zinc-500">
+                        {file.timestamp?.toDate ? file.timestamp.toDate().toLocaleDateString() : "Just now"}
+                      </div>
+                      <div className="w-24 text-right text-xs text-zinc-500">{file.isFolder ? "--" : file.size}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Empty States */}
+              {driveFiles.length === 0 && !isLoading && (
+                <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-zinc-500 pt-32">
+                  <FolderOpen className="w-16 h-16 mb-4 opacity-20" />
+                  <p className="text-lg">This folder is empty</p>
+                  <p className="text-sm mt-2">Right-click anywhere to create a new file or folder.</p>
+                </div>
+              )}
+            </div>
           </ScrollArea>
         )}
       </div>
 
       {/* ADVANCED FILE PREVIEWER */}
       <Dialog open={!!previewFile && !previewFile.isFolder} onOpenChange={(open) => !open && setPreviewFile(null)}>
-        {/* Unchanged previewer contents from before... */}
         <DialogContent className="max-w-6xl w-[90vw] h-[85vh] p-0 bg-zinc-950 border-white/10 flex flex-col overflow-hidden gap-0 rounded-2xl shadow-2xl">
           <DialogHeader className="px-4 py-3 border-b border-white/10 bg-zinc-900/50 flex flex-row items-center justify-between shrink-0">
             <DialogTitle className="flex items-center gap-3 text-sm font-medium">
