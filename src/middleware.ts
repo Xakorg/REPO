@@ -274,7 +274,8 @@ export function middleware(req: NextRequest) {
     hostname !== 'accounts.xakteir.com' && hostname !== 'www.accounts.xakteir.com' &&
     hostname !== 'voltra.xakteir.com' && hostname !== 'www.voltra.xakteir.com' &&
     hostname !== 'play.voltra.xakteir.com' && hostname !== 'www.play.voltra.xakteir.com' &&
-    hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com'
+    hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com' &&
+    hostname !== 'weather.xakteir.com' && hostname !== 'www.weather.xakteir.com'
   ) {
     if (path === '/xakcode') return NextResponse.redirect('https://code.xakteir.com/xakcode');
     if (path.startsWith('/xakcode/')) return NextResponse.redirect(`https://code.xakteir.com${path}`);
@@ -284,6 +285,9 @@ export function middleware(req: NextRequest) {
     
     if (path === '/map') return NextResponse.redirect('https://maps.xakteir.com/map');
     if (path.startsWith('/map/')) return NextResponse.redirect(`https://maps.xakteir.com${path}`);
+
+    if (path === '/weather') return NextResponse.redirect('https://weather.xakteir.com/weather');
+    if (path.startsWith('/weather/')) return NextResponse.redirect(`https://weather.xakteir.com${path}`);
 
     if (path === '/dev-centre') return NextResponse.redirect('https://dev.xakteir.com');
     if (path.startsWith('/dev-centre/')) return NextResponse.redirect(`https://dev.xakteir.com${path.replace('/dev-centre', '')}`);
