@@ -232,38 +232,49 @@ export default function XakDrivePage() {
   };
 
   const uploadToCloud = async (file: File | Blob, customName?: string, bypassFolderId?: string) => {
-    setIsUploading(true);
-    setUploadProgress(0);
-    const fileName = customName || (file as File).name || "Untitled";
-    const storageRef = ref(storage!, `users/${user!.uid}/drive/${Date.now()}_${fileName}`);
-    const uploadTask = uploadBytesResumable(storageRef, file as Blob);
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      const fileName = customName || (file as File).name || "Untitled";
+      const storageRef = ref(storage!, `users/${user!.uid}/drive/${Date.now()}_${fileName}`);
+      const uploadTask = uploadBytesResumable(storageRef, file as Blob);
 
-    return new Promise<void>((resolve, reject) => {
-      uploadTask.on('state_changed', 
-        (snapshot) => { 
-          const progress = snapshot.totalBytes > 0 ? (snapshot.bytesTransferred / snapshot.totalBytes) * 100 : 100;
-          setUploadProgress(progress); 
-        }, 
-        (error) => { setIsUploading(false); toast({ variant: "destructive", title: "Upload failed" }); reject(error); }, 
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          await addDocumentNonBlocking(collection(firestore!, 'users', user!.uid, 'drive_files'), {
-            name: fileName,
-            url: downloadURL,
-            size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-            type: file.type || "application/octet-stream",
-            timestamp: serverTimestamp(),
-            isVaulted: driveMode === 'vault',
-            isTrashed: false,
-            parentId: bypassFolderId || currentFolderId,
-            isFolder: false
-          });
-          setIsUploading(false);
-          toast({ title: "File created" });
-          resolve();
-        }
-      );
-    });
+      return new Promise<void>((resolve, reject) => {
+        uploadTask.on('state_changed', 
+          (snapshot) => { 
+            const progress = snapshot.totalBytes > 0 ? (snapshot.bytesTransferred / snapshot.totalBytes) * 100 : 100;
+            setUploadProgress(progress); 
+          }, 
+          (error) => { setIsUploading(false); toast({ variant: "destructive", title: "Storage Upload Failed", description: error.message }); reject(error); }, 
+          async () => {
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              await addDocumentNonBlocking(collection(firestore!, 'users', user!.uid, 'drive_files'), {
+                name: fileName,
+                url: downloadURL,
+                size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+                type: file.type || "application/octet-stream",
+                timestamp: serverTimestamp(),
+                isVaulted: driveMode === 'vault',
+                isTrashed: false,
+                parentId: bypassFolderId || currentFolderId,
+                isFolder: false
+              });
+              setIsUploading(false);
+              toast({ title: "File created" });
+              resolve();
+            } catch (err: any) {
+              setIsUploading(false);
+              toast({ variant: "destructive", title: "Database Error", description: err.message || "Could not save to database" });
+              reject(err);
+            }
+          }
+        );
+      });
+    } catch (err: any) {
+      setIsUploading(false);
+      toast({ variant: "destructive", title: "Upload Error", description: err.message || "Failed to start upload" });
+    }
   };
 
   // Sync Engine Logic
@@ -378,8 +389,12 @@ export default function XakDrivePage() {
 
   const handleCreateBlankFile = async (name: string, type: string) => {
     if (!storage || !firestore || !user) return;
-    const blob = new Blob([' '], { type }); // 1 byte to prevent 0-byte errors
-    await uploadToCloud(blob, name);
+    try {
+      const file = new File([' '], name, { type }); 
+      await uploadToCloud(file, name);
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Error creating file", description: e.message || "Unknown error" });
+    }
   };
 
   // Rename Actions
