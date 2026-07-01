@@ -10,7 +10,7 @@ import {
   Activity, Mail, CalendarClock, LockKeyhole, Scissors, 
   SlidersHorizontal, Code, Link as LinkIcon, Grid, List, 
   SearchCode, FileArchive, PlaySquare, WifiOff, FileSignature, FileEdit,
-  Video, Music, FileText, FileCode2, ChevronRight, FolderPlus, Palette, PenLine
+  Video, Music, FileText, FileCode2, ChevronRight, FolderPlus, Palette, PenLine, RotateCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,6 +27,7 @@ import Link from "next/link";
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import Editor from "@monaco-editor/react";
 import { motion, AnimatePresence } from "framer-motion";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 // --- IndexedDB Local File Handling ---
 const DB_NAME = 'xakteir-drive';
@@ -42,17 +43,6 @@ function getDB(): Promise<IDBDatabase> {
   });
 }
 
-async function saveDirectoryHandle(handle: FileSystemDirectoryHandle): Promise<void> {
-  const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.put(handle, KEY_NAME);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
-}
-
 async function loadDirectoryHandle(): Promise<FileSystemDirectoryHandle | null> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
@@ -64,10 +54,12 @@ async function loadDirectoryHandle(): Promise<FileSystemDirectoryHandle | null> 
   });
 }
 
-type DriveMode = 'cloud' | 'local' | 'starred' | 'trash' | 'vault';
+type DriveMode = 'cloud' | 'local' | 'starred' | 'trash' | 'vault' | 'recent';
 type ContextMenuState = { x: number; y: number; file: any } | null;
 type EmptyContextMenuState = { x: number; y: number } | null;
 type FolderPath = { id: string; name: string };
+type SortBy = 'name' | 'date' | 'size';
+type SortOrder = 'asc' | 'desc';
 
 const FOLDER_COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#6b7280"];
 
@@ -84,23 +76,23 @@ export default function XakDrivePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
   
+  // Advanced States
+  const [sortBy, setSortBy] = useState<SortBy>('date');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  
   // Folder Navigation State
   const [currentPath, setCurrentPath] = useState<FolderPath[]>([{ id: 'root', name: 'My Cloud' }]);
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   
-  // Rename State
+  // Rename & Share State
   const [renameFile, setRenameFile] = useState<any>(null);
   const [newFileName, setNewFileName] = useState("");
+  const [shareFile, setShareFile] = useState<any>(null);
 
   const currentFolderId = currentPath[currentPath.length - 1].id;
 
-  // Local File System
-  const [folderHandle, setFolderHandle] = useState<FileSystemDirectoryHandle | null>(null);
-  const [hasFolderPermission, setHasFolderPermission] = useState(false);
-  const [localFiles, setLocalFiles] = useState<any[]>([]);
-  const [isScanning, setIsScanning] = useState(false);
-  
   // Drag and Drop
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -118,7 +110,6 @@ export default function XakDrivePage() {
 
   useEffect(() => { 
     setMounted(true); 
-    loadSavedFolder();
     
     // Close context menus on global click
     const handleGlobalClick = () => {
@@ -134,38 +125,46 @@ export default function XakDrivePage() {
     return query(
       collection(firestore, "users", user.uid, "drive_files"),
       orderBy("timestamp", "desc"),
-      limit(500)
+      limit(1000)
     );
   }, [firestore, user]);
 
   const { data: driveFilesRaw, isLoading } = useCollection(filesQuery);
 
-  // Filter files based on Mode, Vault status, and Folder Hierarchy (Client-side to avoid composite indexing)
+  // Filter and Sort
   const driveFiles = (driveFilesRaw || []).filter(f => {
     const matchesSearch = f.name.toLowerCase().includes(searchQuery.toLowerCase());
     if (!matchesSearch) return false;
 
-    if (driveMode === 'vault') {
-      return f.isVaulted;
-    }
+    if (driveMode === 'trash') return f.isTrashed;
+    if (f.isTrashed) return false;
+
+    if (driveMode === 'vault') return f.isVaulted;
+    if (driveMode === 'starred') return f.isStarred && !f.isVaulted;
     
-    if (driveMode === 'starred') {
-      return f.isStarred && !f.isVaulted;
+    if (driveMode === 'recent') {
+      // Show all files globally modified recently, limit to root/all without folders acting as containers
+      return !f.isVaulted && !f.isFolder;
     }
 
-    if (driveMode === 'trash') {
-      return false; // Trash not implemented yet
-    }
-
-    // Default 'cloud' mode: must match current folder level and not be vaulted
+    // Default 'cloud' mode: must match current folder level
     return !f.isVaulted && (f.parentId || 'root') === currentFolderId;
+  }).sort((a, b) => {
+    if (sortBy === 'name') {
+      return sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+    }
+    if (sortBy === 'date') {
+      const timeA = a.timestamp?.seconds || 0;
+      const timeB = b.timestamp?.seconds || 0;
+      return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
+    }
+    if (sortBy === 'size') {
+      const sizeA = parseFloat(a.size) || 0;
+      const sizeB = parseFloat(b.size) || 0;
+      return sortOrder === 'asc' ? sizeA - sizeB : sizeB - sizeA;
+    }
+    return 0;
   });
-
-  // Local Folder Logic (omitted bodies for brevity as unchanged)
-  const loadSavedFolder = async () => {};
-  const requestFolderPermission = async () => {};
-  const pickLocalFolder = async () => {};
-  const scanLocalFolder = async (handle: FileSystemDirectoryHandle) => {};
 
   // Upload Logic
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,13 +195,15 @@ export default function XakDrivePage() {
       (error) => { setIsUploading(false); toast({ variant: "destructive", title: "Upload failed" }); }, 
       async () => {
         const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        await addDocumentNonBlocking(`users/${user!.uid}/drive_files`, {
+        // FIX: Pass actual CollectionReference instead of string path
+        await addDocumentNonBlocking(collection(firestore!, 'users', user!.uid, 'drive_files'), {
           name: fileName,
           url: downloadURL,
           size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-          type: file.type,
+          type: file.type || "application/octet-stream",
           timestamp: serverTimestamp(),
           isVaulted: driveMode === 'vault',
+          isTrashed: false,
           parentId: currentFolderId,
           isFolder: false
         });
@@ -214,12 +215,13 @@ export default function XakDrivePage() {
 
   // Folder Actions
   const handleCreateFolder = async () => {
-    if (!newFolderName.trim() || !user) return;
-    await addDocumentNonBlocking(`users/${user.uid}/drive_files`, {
+    if (!newFolderName.trim() || !user || !firestore) return;
+    await addDocumentNonBlocking(collection(firestore, 'users', user.uid, 'drive_files'), {
       name: newFolderName.trim(),
       isFolder: true,
       timestamp: serverTimestamp(),
       isVaulted: driveMode === 'vault',
+      isTrashed: false,
       parentId: currentFolderId,
       color: "#3b82f6" // default blue
     });
@@ -231,13 +233,14 @@ export default function XakDrivePage() {
   const navigateToFolder = (folderId: string, folderName: string) => {
     setCurrentPath(prev => [...prev, { id: folderId, name: folderName }]);
     setSearchQuery("");
+    setSelectedFiles(new Set());
   };
 
   const navigateToBreadcrumb = (index: number) => {
     setCurrentPath(prev => prev.slice(0, index + 1));
+    setSelectedFiles(new Set());
   };
 
-  // Create Blank Files
   const handleCreateBlankFile = async (name: string, type: string) => {
     const blob = new Blob([''], { type });
     await uploadToCloud(blob, name);
@@ -246,7 +249,7 @@ export default function XakDrivePage() {
   // Rename Actions
   const handleRenameSubmit = async () => {
     if (!firestore || !user || !renameFile || !newFileName.trim()) return;
-    await updateDoc(doc(firestore, `users/${user.uid}/drive_files`, renameFile.id), { name: newFileName.trim() });
+    await updateDoc(doc(firestore, 'users', user.uid, 'drive_files', renameFile.id), { name: newFileName.trim() });
     setRenameFile(null);
     setNewFileName("");
     toast({ title: "Renamed successfully" });
@@ -257,6 +260,12 @@ export default function XakDrivePage() {
     e.preventDefault();
     e.stopPropagation();
     setEmptyContextMenu(null);
+    
+    // If we right click an unselected file, select only it. If it's already selected, keep selection for batch actions.
+    if (!selectedFiles.has(file.id)) {
+      setSelectedFiles(new Set([file.id]));
+    }
+    
     setContextMenu({ x: e.clientX, y: e.clientY, file });
   };
 
@@ -264,6 +273,27 @@ export default function XakDrivePage() {
     e.preventDefault();
     setContextMenu(null);
     setEmptyContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const toggleSelection = (e: React.MouseEvent, fileId: string) => {
+    e.stopPropagation();
+    const newSelection = new Set(selectedFiles);
+    if (e.ctrlKey || e.metaKey) {
+      if (newSelection.has(fileId)) newSelection.delete(fileId);
+      else newSelection.add(fileId);
+    } else {
+      newSelection.clear();
+      newSelection.add(fileId);
+    }
+    setSelectedFiles(newSelection);
+  };
+
+  // Batch Operations
+  const executeBatch = async (action: (f: any) => Promise<void>) => {
+    if (!firestore || !user) return;
+    const filesToProcess = driveFilesRaw?.filter(f => selectedFiles.has(f.id)) || [];
+    await Promise.all(filesToProcess.map(action));
+    setSelectedFiles(new Set());
   };
 
   const handlePreview = async (file: any) => {
@@ -287,27 +317,44 @@ export default function XakDrivePage() {
     }
   };
 
-  const handleToggleVault = async (file: any) => {
-    if (!firestore || !user || !file.url && !file.isFolder) return; 
-    await updateDoc(doc(firestore, `users/${user.uid}/drive_files`, file.id), { isVaulted: !file.isVaulted });
-    toast({ title: file.isVaulted ? "Removed from Vault" : "Moved to Vault" });
+  const handleBatchToggleVault = async () => {
+    await executeBatch(async (f) => {
+      await updateDoc(doc(firestore!, 'users', user!.uid, 'drive_files', f.id), { isVaulted: !f.isVaulted });
+    });
+    toast({ title: `Updated ${selectedFiles.size} items in Vault` });
   };
 
-  const handleToggleStar = async (file: any) => {
-    if (!firestore || !user) return; 
-    await updateDoc(doc(firestore, `users/${user.uid}/drive_files`, file.id), { isStarred: !file.isStarred });
-    toast({ title: file.isStarred ? "Unstarred" : "Starred" });
+  const handleBatchToggleStar = async () => {
+    await executeBatch(async (f) => {
+      await updateDoc(doc(firestore!, 'users', user!.uid, 'drive_files', f.id), { isStarred: !f.isStarred });
+    });
+    toast({ title: `Starred/Unstarred ${selectedFiles.size} items` });
   };
 
   const handleSetColor = async (file: any, color: string) => {
     if (!firestore || !user) return; 
-    await updateDoc(doc(firestore, `users/${user.uid}/drive_files`, file.id), { color });
+    await updateDoc(doc(firestore, 'users', user.uid, 'drive_files', file.id), { color });
   };
 
-  const handleDelete = async (file: any) => {
-    if (!firestore || !user) return;
-    await deleteDocumentNonBlocking(`users/${user.uid}/drive_files`, file.id);
-    toast({ title: file.isFolder ? "Folder deleted" : "File deleted" });
+  const handleBatchTrash = async () => {
+    await executeBatch(async (f) => {
+      await updateDoc(doc(firestore!, 'users', user!.uid, 'drive_files', f.id), { isTrashed: true });
+    });
+    toast({ title: `Moved ${selectedFiles.size} items to Trash` });
+  };
+
+  const handleBatchRestore = async () => {
+    await executeBatch(async (f) => {
+      await updateDoc(doc(firestore!, 'users', user!.uid, 'drive_files', f.id), { isTrashed: false });
+    });
+    toast({ title: `Restored ${selectedFiles.size} items` });
+  };
+
+  const handleBatchPermanentDelete = async () => {
+    await executeBatch(async (f) => {
+      await deleteDocumentNonBlocking(doc(firestore!, 'users', user!.uid, 'drive_files', f.id));
+    });
+    toast({ title: `Permanently deleted ${selectedFiles.size} items` });
   };
 
   // Helpers
@@ -324,19 +371,22 @@ export default function XakDrivePage() {
 
   if (!mounted || !user) return <div className="h-screen bg-zinc-950 flex flex-col items-center justify-center text-white"><Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" /><h1>Loading Drive...</h1></div>;
 
+  const isBatchMode = selectedFiles.size > 1;
+
   return (
     <div 
       className="h-screen bg-zinc-950 text-white flex overflow-hidden font-sans select-none"
       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
       onDragLeave={(e) => { e.preventDefault(); if (e.clientX === 0) setIsDragging(false); }}
       onDrop={handleDrop}
+      onClick={() => setSelectedFiles(new Set())}
     >
       {/* DRAG OVERLAY */}
       <AnimatePresence>
         {isDragging && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-blue-600/20 backdrop-blur-xl border-4 border-blue-500 border-dashed flex flex-col items-center justify-center rounded-3xl m-4"
+            className="fixed inset-0 z-[100] bg-blue-600/20 backdrop-blur-xl border-4 border-blue-500 border-dashed flex flex-col items-center justify-center rounded-3xl m-4 pointer-events-none"
           >
             <Upload className="w-24 h-24 text-blue-400 mb-6 animate-bounce" />
             <h2 className="text-4xl font-black text-white tracking-tight">Drop files to upload</h2>
@@ -357,61 +407,86 @@ export default function XakDrivePage() {
             style={{ top: contextMenu.y, left: contextMenu.x }}
           >
             <div className="px-3 py-2 border-b border-white/5 mb-1 truncate flex items-center justify-between">
-              <span className="text-xs font-medium text-zinc-400 truncate pr-2">{contextMenu.file.name}</span>
-              {contextMenu.file.isStarred && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 shrink-0" />}
+              <span className="text-xs font-medium text-zinc-400 truncate pr-2">
+                {isBatchMode ? `${selectedFiles.size} items selected` : contextMenu.file.name}
+              </span>
+              {!isBatchMode && contextMenu.file.isStarred && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 shrink-0" />}
             </div>
             
-            <button onClick={() => handlePreview(contextMenu.file)} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
-              {contextMenu.file.isFolder ? <FolderOpen className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-              {contextMenu.file.isFolder ? "Open Folder" : "Preview"}
-            </button>
-            
-            <button onClick={() => handleToggleStar(contextMenu.file)} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-yellow-600 hover:text-white flex items-center">
-              {contextMenu.file.isStarred ? <StarOff className="w-4 h-4 mr-2" /> : <Star className="w-4 h-4 mr-2" />}
-              {contextMenu.file.isStarred ? "Remove Star" : "Add to Starred"}
-            </button>
-
-            <button onClick={() => { setRenameFile(contextMenu.file); setNewFileName(contextMenu.file.name); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
-              <PenLine className="w-4 h-4 mr-2" /> Rename
-            </button>
-            
-            {!contextMenu.file.isFolder && (
-              <button className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center" onClick={() => window.open(contextMenu.file.url, "_blank")}>
-                <Download className="w-4 h-4 mr-2" /> Download
+            {!isBatchMode && (
+              <button onClick={() => handlePreview(contextMenu.file)} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+                {contextMenu.file.isFolder ? <FolderOpen className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+                {contextMenu.file.isFolder ? "Open Folder" : "Preview"}
               </button>
             )}
 
-            {contextMenu.file.isFolder && (
-              <div className="px-3 py-2 border-t border-white/5 mt-1">
-                <span className="text-xs text-zinc-500 mb-2 flex items-center"><Palette className="w-3 h-3 mr-1"/> Folder Color</span>
-                <div className="flex gap-2">
-                  {FOLDER_COLORS.map(color => (
-                    <button 
-                      key={color} 
-                      onClick={() => handleSetColor(contextMenu.file, color)}
-                      className="w-5 h-5 rounded-full border border-white/20 transition-transform hover:scale-125"
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+            {driveMode === 'trash' ? (
+              <>
+                <button onClick={handleBatchRestore} className="w-full text-left px-3 py-2 text-sm text-green-400 hover:bg-green-600 hover:text-white flex items-center">
+                  <RotateCcw className="w-4 h-4 mr-2" /> Restore
+                </button>
+                <div className="h-px bg-white/10 my-1 mx-2" />
+                <button onClick={handleBatchPermanentDelete} className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-600 hover:text-white flex items-center">
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete Permanently
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={handleBatchToggleStar} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-yellow-600 hover:text-white flex items-center">
+                  <Star className="w-4 h-4 mr-2" /> Toggle Star
+                </button>
+                
+                {!isBatchMode && (
+                  <>
+                    <button onClick={() => { setRenameFile(contextMenu.file); setNewFileName(contextMenu.file.name); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+                      <PenLine className="w-4 h-4 mr-2" /> Rename
+                    </button>
+                    {!contextMenu.file.isFolder && (
+                      <button onClick={() => setShareFile(contextMenu.file)} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+                        <Share2 className="w-4 h-4 mr-2" /> Share Link
+                      </button>
+                    )}
+                    {!contextMenu.file.isFolder && (
+                      <button className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center" onClick={() => window.open(contextMenu.file.url, "_blank")}>
+                        <Download className="w-4 h-4 mr-2" /> Download
+                      </button>
+                    )}
+                  </>
+                )}
 
-            <div className="h-px bg-white/10 my-1 mx-2" />
-            <button onClick={() => handleToggleVault(contextMenu.file)} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-purple-600 hover:text-white flex items-center">
-              <ShieldCheck className="w-4 h-4 mr-2" /> {contextMenu.file.isVaulted ? "Remove from Vault" : "Move to Vault"}
-            </button>
-            <div className="h-px bg-white/10 my-1 mx-2" />
-            <button onClick={() => handleDelete(contextMenu.file)} className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-600 hover:text-white flex items-center">
-              <Trash2 className="w-4 h-4 mr-2" /> Delete
-            </button>
+                {!isBatchMode && contextMenu.file.isFolder && (
+                  <div className="px-3 py-2 border-t border-white/5 mt-1">
+                    <span className="text-xs text-zinc-500 mb-2 flex items-center"><Palette className="w-3 h-3 mr-1"/> Folder Color</span>
+                    <div className="flex gap-2">
+                      {FOLDER_COLORS.map(color => (
+                        <button 
+                          key={color} 
+                          onClick={() => handleSetColor(contextMenu.file, color)}
+                          className="w-5 h-5 rounded-full border border-white/20 transition-transform hover:scale-125"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="h-px bg-white/10 my-1 mx-2" />
+                <button onClick={handleBatchToggleVault} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-purple-600 hover:text-white flex items-center">
+                  <ShieldCheck className="w-4 h-4 mr-2" /> Toggle Vault
+                </button>
+                <div className="h-px bg-white/10 my-1 mx-2" />
+                <button onClick={handleBatchTrash} className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-600 hover:text-white flex items-center">
+                  <Trash2 className="w-4 h-4 mr-2" /> Move to Trash
+                </button>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* EMPTY SPACE CONTEXT MENU */}
       <AnimatePresence>
-        {emptyContextMenu && (
+        {emptyContextMenu && driveMode !== 'trash' && driveMode !== 'recent' && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -421,7 +496,7 @@ export default function XakDrivePage() {
             style={{ top: emptyContextMenu.y, left: emptyContextMenu.x }}
           >
             <div className="px-3 py-2 border-b border-white/5 mb-1 truncate flex items-center text-xs font-medium text-zinc-400">
-              New Item
+              New Item in {currentPath[currentPath.length-1].name}
             </div>
             
             <button onClick={() => { setShowNewFolderDialog(true); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
@@ -441,6 +516,29 @@ export default function XakDrivePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* SHARE DIALOG */}
+      <Dialog open={!!shareFile} onOpenChange={(open) => !open && setShareFile(null)}>
+        <DialogContent className="bg-zinc-950 border-white/10 text-white max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Share {shareFile?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="py-6 flex flex-col items-center">
+            {shareFile && (
+              <div className="bg-white p-4 rounded-xl shadow-xl mb-6">
+                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareFile.url)}`} alt="QR Code" className="w-48 h-48" />
+              </div>
+            )}
+            <p className="text-sm text-zinc-400 text-center mb-4">Anyone with this link or QR code can download this file directly.</p>
+            <div className="flex w-full gap-2">
+              <Input value={shareFile?.url || ""} readOnly className="bg-black border-white/10 text-xs" />
+              <Button onClick={() => { navigator.clipboard.writeText(shareFile?.url || ""); toast({ title: "Link copied!" }); }} className="bg-blue-600 hover:bg-blue-500">
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* RENAME DIALOG */}
       <Dialog open={!!renameFile} onOpenChange={(open) => !open && setRenameFile(null)}>
@@ -490,7 +588,6 @@ export default function XakDrivePage() {
 
       {/* SIDEBAR */}
       <div className="w-64 bg-zinc-900/50 border-r border-white/5 flex flex-col pt-6 pb-4">
-        {/* Same sidebar content... */}
         <div className="px-6 mb-8 flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
             <Cloud className="w-5 h-5 text-white" />
@@ -509,10 +606,22 @@ export default function XakDrivePage() {
           
           <p className="px-3 text-xs font-black uppercase tracking-wider text-zinc-500 mb-2 mt-6">Quick Access</p>
           <button 
+            onClick={() => setDriveMode('recent')} 
+            className={cn("w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors", driveMode === 'recent' ? "bg-blue-500/20 text-blue-400" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200")}
+          >
+            <Clock className="w-4 h-4 mr-3" /> Recent Activity
+          </button>
+          <button 
             onClick={() => setDriveMode('starred')} 
             className={cn("w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors", driveMode === 'starred' ? "bg-yellow-500/20 text-yellow-500" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200")}
           >
             <Star className="w-4 h-4 mr-3" /> Starred
+          </button>
+          <button 
+            onClick={() => setDriveMode('trash')} 
+            className={cn("w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors", driveMode === 'trash' ? "bg-red-500/20 text-red-500" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200")}
+          >
+            <Trash className="w-4 h-4 mr-3" /> Trash
           </button>
           
           <p className="px-3 text-xs font-black uppercase tracking-wider text-zinc-500 mb-2 mt-6">Security</p>
@@ -565,14 +674,16 @@ export default function XakDrivePage() {
             ) : (
               <h2 className="text-lg font-medium capitalize flex items-center gap-2">
                 {driveMode === 'starred' && <Star className="w-5 h-5 text-yellow-400" />}
+                {driveMode === 'trash' && <Trash className="w-5 h-5 text-red-400" />}
+                {driveMode === 'recent' && <Clock className="w-5 h-5 text-blue-400" />}
                 {driveMode}
               </h2>
             )}
             
-            <div className="relative w-72 ml-auto hidden md:block shrink-0">
+            <div className="relative w-64 ml-auto hidden md:block shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
               <Input 
-                placeholder="Search this folder..." 
+                placeholder="Search..." 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full bg-zinc-900 border-none pl-9 h-9 rounded-full focus-visible:ring-1 focus-visible:ring-blue-500"
@@ -581,15 +692,36 @@ export default function XakDrivePage() {
           </div>
 
           <div className="flex items-center gap-3 ml-4">
+            
+            {/* Sort Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 border-white/10 bg-zinc-900">
+                  <SlidersHorizontal className="w-4 h-4 mr-2" /> Sort
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-zinc-900 border-white/10 text-white">
+                <DropdownMenuItem onClick={() => { setSortBy('name'); setSortOrder('asc'); }}>Name (A-Z)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortBy('name'); setSortOrder('desc'); }}>Name (Z-A)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortBy('date'); setSortOrder('desc'); }}>Newest First</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortBy('date'); setSortOrder('asc'); }}>Oldest First</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortBy('size'); setSortOrder('desc'); }}>Largest Size</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <div className="flex bg-zinc-900 rounded-lg p-1">
               <button onClick={() => setViewMode('grid')} className={cn("p-1.5 rounded-md transition-colors", viewMode === 'grid' ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-white")}><Grid className="w-4 h-4" /></button>
               <button onClick={() => setViewMode('list')} className={cn("p-1.5 rounded-md transition-colors", viewMode === 'list' ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-white")}><List className="w-4 h-4" /></button>
             </div>
             
-            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-            <Button onClick={() => fileInputRef.current?.click()} className="h-9 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20">
-              <Plus className="w-4 h-4 mr-1.5" /> Upload
-            </Button>
+            {driveMode !== 'trash' && (
+              <>
+                <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+                <Button onClick={() => fileInputRef.current?.click()} className="h-9 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20">
+                  <Plus className="w-4 h-4 mr-1.5" /> Upload
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -640,9 +772,13 @@ export default function XakDrivePage() {
                     <motion.div 
                       layoutId={file.id}
                       key={file.id}
+                      onClick={(e) => toggleSelection(e, file.id)}
                       onContextMenu={(e) => handleItemContextMenu(e, file)}
                       onDoubleClick={() => handlePreview(file)}
-                      className="group relative flex flex-col items-center p-4 rounded-xl hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-white/10"
+                      className={cn(
+                        "group relative flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer border",
+                        selectedFiles.has(file.id) ? "bg-blue-600/20 border-blue-500/50" : "border-transparent hover:border-white/10 hover:bg-white/5"
+                      )}
                     >
                       {file.isStarred && (
                         <div className="absolute top-2 right-2 z-10"><Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /></div>
@@ -675,9 +811,13 @@ export default function XakDrivePage() {
                   {driveFiles.map(file => (
                     <div 
                       key={file.id}
+                      onClick={(e) => toggleSelection(e, file.id)}
                       onContextMenu={(e) => handleItemContextMenu(e, file)}
                       onDoubleClick={() => handlePreview(file)}
-                      className="flex items-center px-4 py-3 hover:bg-white/5 rounded-lg cursor-pointer transition-colors group relative"
+                      className={cn(
+                        "flex items-center px-4 py-3 rounded-lg cursor-pointer transition-colors group relative",
+                        selectedFiles.has(file.id) ? "bg-blue-600/20" : "hover:bg-white/5"
+                      )}
                     >
                       <div className="w-10 flex justify-center relative">
                         {getFileIcon(file.type || "", file.name, file.isFolder, file.color)}
