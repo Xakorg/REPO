@@ -129,6 +129,14 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────
+    // VOLTRA APP STORE
+    // ─────────────────────────────────────────────
+    match /voltra_app_store/{id} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // ─────────────────────────────────────────────
     // SYSTEM STATS
     // ─────────────────────────────────────────────
 
