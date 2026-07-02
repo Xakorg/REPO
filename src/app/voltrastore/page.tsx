@@ -257,7 +257,6 @@ export default function VoltraStorePage() {
                   flathubApps.map(app => (
                     <Link href={`/Flathub/${app.app_id || app.id}`} key={app.app_id || app.id}>
                       <motion.div 
-                        layout
                         whileHover={{ y: -5 }}
                         className="bg-zinc-950 border border-white/5 rounded-[2rem] p-6 hover:border-blue-500/30 transition-colors cursor-pointer group flex flex-col relative h-full"
                       >
