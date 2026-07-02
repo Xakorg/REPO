@@ -19,6 +19,11 @@ export default function VoltraOSAppStorePublisher() {
   const [appName, setAppName] = useState("");
   const [appDescription, setAppDescription] = useState("");
   const [version, setVersion] = useState("1.0.0");
+  const [compatibility, setCompatibility] = useState({
+    VoltraMax: true,
+    VoltraPlay: true,
+    VoltraTab: true,
+  });
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isConverting, setIsConverting] = useState(false);
@@ -72,6 +77,7 @@ export default function VoltraOSAppStorePublisher() {
           appName,
           description: appDescription,
           version,
+          compatibility: Object.keys(compatibility).filter(k => compatibility[k as keyof typeof compatibility]),
           status: "published",
           downloads: 0,
           rating: 0,
@@ -169,6 +175,25 @@ export default function VoltraOSAppStorePublisher() {
                 className="w-full h-32 bg-white/5 border border-white/10 rounded-3xl p-5 text-white font-medium text-sm resize-none focus:outline-none focus:border-green-500/50 transition-colors"
                 placeholder="Describe your app features..."
               />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[9px] uppercase font-black tracking-[0.2em] text-zinc-500 ml-2">Hardware Target</label>
+              <div className="flex flex-wrap gap-3">
+                {['VoltraMax', 'VoltraPlay', 'VoltraTab'].map((device) => (
+                  <button
+                    key={device}
+                    onClick={() => setCompatibility(prev => ({ ...prev, [device]: !prev[device as keyof typeof prev] }))}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+                      compatibility[device as keyof typeof compatibility]
+                        ? "bg-green-500/20 border-green-500/50 text-green-400"
+                        : "bg-white/5 border-white/10 text-zinc-500 hover:text-zinc-300"
+                    }`}
+                  >
+                    {device}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="pt-6">

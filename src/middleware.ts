@@ -221,6 +221,15 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(`https://www.xakteir.com${path}`);
   }
 
+  // 11.5 Handle Voltra Store standalone deployment via store.voltra.xakteir.com
+  if (hostname === 'store.voltra.xakteir.com' || hostname === 'www.store.voltra.xakteir.com' || hostname.startsWith('store.voltra.localhost')) {
+    if (path === '/') return NextResponse.rewrite(new URL('/voltrastore', req.url));
+    if (path.startsWith('/voltrastore')) return NextResponse.next();
+    
+    // Kick unknown paths to main site
+    return NextResponse.redirect(`https://www.xakteir.com${path}`);
+  }
+
   // 12. Handle VoltraPlay standalone deployment via play.voltra.xakteir.com
   if (hostname === 'play.voltra.xakteir.com' || hostname === 'www.play.voltra.xakteir.com' || hostname.startsWith('play.voltra.localhost')) {
     if (path === '/') return NextResponse.rewrite(new URL('/voltraplay', req.url));
@@ -244,6 +253,7 @@ export function middleware(req: NextRequest) {
     hostname !== 'xakarena.xakteir.com' && hostname !== 'www.xakarena.xakteir.com' &&
     hostname !== 'creator.xakarena.xakteir.com' && hostname !== 'www.creator.xakarena.xakteir.com' &&
     hostname !== 'voltra.xakteir.com' && hostname !== 'www.voltra.xakteir.com' && !hostname.startsWith('voltra.localhost') &&
+    hostname !== 'store.voltra.xakteir.com' && hostname !== 'www.store.voltra.xakteir.com' && !hostname.startsWith('store.voltra.localhost') &&
     hostname !== 'play.voltra.xakteir.com' && hostname !== 'www.play.voltra.xakteir.com' && !hostname.startsWith('play.voltra.localhost') &&
     hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com' && !hostname.startsWith('voltramax.localhost')
   ) {
@@ -251,6 +261,7 @@ export function middleware(req: NextRequest) {
       path === '/xakarena' || path.startsWith('/xakarena/') || 
       path === '/xakarena-creator' || path.startsWith('/xakarena-creator/') ||
       path === '/voltra' || path.startsWith('/voltra/') ||
+      path === '/voltrastore' || path.startsWith('/voltrastore/') ||
       path === '/voltraplay' || path.startsWith('/voltraplay/') ||
       path === '/voltramax' || path.startsWith('/voltramax/')
     ) {
@@ -273,6 +284,7 @@ export function middleware(req: NextRequest) {
     hostname !== 'account.xakteir.com' && hostname !== 'www.account.xakteir.com' &&
     hostname !== 'accounts.xakteir.com' && hostname !== 'www.accounts.xakteir.com' &&
     hostname !== 'voltra.xakteir.com' && hostname !== 'www.voltra.xakteir.com' &&
+    hostname !== 'store.voltra.xakteir.com' && hostname !== 'www.store.voltra.xakteir.com' &&
     hostname !== 'play.voltra.xakteir.com' && hostname !== 'www.play.voltra.xakteir.com' &&
     hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com' &&
     hostname !== 'weather.xakteir.com' && hostname !== 'www.weather.xakteir.com'
