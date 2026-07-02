@@ -109,6 +109,7 @@ export default function XakDrivePage() {
   // Drag and Drop
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
   // Vault
   const [vaultUnlocked, setVaultUnlocked] = useState(false);
@@ -206,7 +207,7 @@ export default function XakDrivePage() {
 
   // Upload Logic
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0 || !storage || !firestore || !user) return;
+    if (!e.target.files || e.target.files.length === 0 || !firestore || !user) return;
     
     if (usedStorageGB >= MAX_STORAGE_GB) {
       toast({ variant: "destructive", title: "Storage Full", description: "Please delete some files to upload more." });
@@ -215,6 +216,52 @@ export default function XakDrivePage() {
 
     const file = e.target.files[0];
     await uploadToCloud(file);
+  };
+
+  const handleFolderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !firestore || !user) return;
+    
+    if (usedStorageGB >= MAX_STORAGE_GB) {
+      toast({ variant: "destructive", title: "Storage Full", description: "Please delete some files to upload more." });
+      return;
+    }
+
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const rootFolderName = files[0].webkitRelativePath.split('/')[0];
+      const { addDoc } = await import('firebase/firestore');
+      
+      const folderRef = await addDoc(collection(firestore, 'users', user.uid, 'drive_files'), {
+        name: rootFolderName,
+        isFolder: true,
+        timestamp: serverTimestamp(),
+        isVaulted: driveMode === 'vault',
+        isTrashed: false,
+        parentId: currentFolderId,
+        color: "#3b82f6"
+      });
+
+      const rootId = folderRef.id;
+      
+      for (let i = 0; i < files.length; i++) {
+        // Only upload files, skip directories if they somehow appear
+        if (files[i].size > 0 || files[i].name) {
+          await uploadToCloud(files[i], files[i].webkitRelativePath.replace(rootFolderName + '/', '').replace(/\\//g, '-'), rootId);
+        }
+      }
+      
+      toast({ title: "Folder uploaded successfully" });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error uploading folder", description: err.message });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   const handleDrop = async (e: React.DragEvent) => {
@@ -638,6 +685,9 @@ export default function XakDrivePage() {
             <button onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
               <Upload className="w-4 h-4 mr-2" /> Upload File
             </button>
+            <button onClick={(e) => { e.stopPropagation(); folderInputRef.current?.click(); setEmptyContextMenu(null); }} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+              <FolderOpen className="w-4 h-4 mr-2" /> Upload Folder
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -853,9 +903,22 @@ export default function XakDrivePage() {
               {driveMode !== 'trash' && (
                 <>
                   <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-                  <Button onClick={() => fileInputRef.current?.click()} className="h-9 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20">
-                    <Plus className="w-4 h-4 mr-1.5" /> Upload
-                  </Button>
+                  <input type="file" ref={folderInputRef} className="hidden" onChange={handleFolderUpload} {...{ webkitdirectory: "", directory: "", multiple: true } as any} />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="h-9 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20">
+                        <Plus className="w-4 h-4 mr-1.5" /> Upload <ChevronDown className="w-3 h-3 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-zinc-900 border-white/10 text-white">
+                      <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="cursor-pointer">
+                        <File className="w-4 h-4 mr-2" /> Upload File
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => folderInputRef.current?.click()} className="cursor-pointer">
+                        <FolderOpen className="w-4 h-4 mr-2" /> Upload Folder
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </>
               )}
             </div>
