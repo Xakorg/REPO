@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Monitor, Gamepad2, TabletSmartphone, Star, ArrowRight, Search, LayoutGrid, Loader2 } from "lucide-react";
+import { Download, Monitor, Gamepad2, TabletSmartphone, Star, ArrowRight, Search, LayoutGrid, Loader2, X, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 export default function VoltraStorePage() {
@@ -20,7 +20,11 @@ export default function VoltraStorePage() {
   const [flathubApps, setFlathubApps] = useState<any[]>([]);
   const [isLoadingFlathub, setIsLoadingFlathub] = useState(false);
 
-  // Debounce search query to prevent API spam
+  // Fullscreen Modal State
+  const [selectedApp, setSelectedApp] = useState<any>(null);
+  const [appDetails, setAppDetails] = useState<any>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -28,14 +32,13 @@ export default function VoltraStorePage() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Fetch from Real Flathub API
   useEffect(() => {
     setIsLoadingFlathub(true);
     
     let apiQuery = debouncedSearchQuery;
     if (!apiQuery) {
       if (activeCategory === "Discover") {
-        apiQuery = "linux"; // Gets a solid base list of popular apps
+        apiQuery = "linux";
       } else {
         apiQuery = activeCategory;
       }
@@ -70,6 +73,35 @@ export default function VoltraStorePage() {
     return () => unsub();
   }, [firestore]);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (selectedApp) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [selectedApp]);
+
+  const openAppDetails = (app: any, isNative: boolean) => {
+    setSelectedApp({ ...app, isNative });
+    setAppDetails(null);
+    
+    if (isNative) {
+      // Native apps already have all info we need right now.
+      setAppDetails(app);
+    } else {
+      // Fetch rich Flathub data
+      setIsLoadingDetails(true);
+      fetch(`/api/flathub/${app.app_id || app.id}`)
+        .then(r => r.json())
+        .then(data => {
+          setAppDetails(data);
+          setIsLoadingDetails(false);
+        })
+        .catch(() => setIsLoadingDetails(false));
+    }
+  };
+
   const handleInstall = (e: React.MouseEvent) => {
     e.stopPropagation();
     alert("Voltra OS devices are not yet globally available. Installation will be supported upon physical release of VoltraMax, VoltraPlay, and VoltraTab.");
@@ -99,6 +131,151 @@ export default function VoltraStorePage() {
 
   return (
     <div className="pb-32 bg-black min-h-screen text-white font-sans selection:bg-purple-500/30">
+      
+      {/* Fullscreen App Modal */}
+      <AnimatePresence>
+        {selectedApp && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50, scale: 0.95 }} 
+            animate={{ opacity: 1, y: 0, scale: 1 }} 
+            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl overflow-y-auto"
+          >
+            <div className="max-w-5xl mx-auto px-8 py-16 relative min-h-screen flex flex-col">
+              <button 
+                onClick={() => setSelectedApp(null)} 
+                className="fixed top-8 right-8 z-[110] w-12 h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <div className="flex flex-col md:flex-row gap-12 items-start mt-8">
+                {/* App Icon */}
+                <div className="w-48 h-48 rounded-[3rem] bg-gradient-to-br from-purple-500/10 to-black border border-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden p-6 shadow-2xl">
+                  {selectedApp.isNative ? (
+                    <span className="text-7xl font-black text-purple-400">{selectedApp.appName.charAt(0)}</span>
+                  ) : (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img 
+                      src={selectedApp.icon || `https://ui-avatars.com/api/?name=${selectedApp.name}&background=random`} 
+                      alt={selectedApp.name} 
+                      className="w-full h-full object-contain"
+                    />
+                  )}
+                </div>
+                
+                {/* App Info Header */}
+                <div className="flex-1 space-y-6 pt-4">
+                  <div className="space-y-2">
+                    <h1 className="text-6xl font-black tracking-tighter leading-none">
+                      {selectedApp.isNative ? selectedApp.appName : selectedApp.name}
+                    </h1>
+                    <div className="flex items-center gap-3 text-lg font-bold text-zinc-400">
+                      <span>{selectedApp.isNative ? selectedApp.developerName : (selectedApp.developer_name || selectedApp.dev)}</span>
+                      {(!selectedApp.isNative && appDetails && appDetails.branding) && (
+                        <ShieldCheck className="w-5 h-5 text-blue-500" />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-6">
+                    <button onClick={handleInstall} className="bg-white text-black font-black uppercase tracking-widest px-10 py-4 rounded-full hover:bg-zinc-200 transition-colors text-sm flex items-center gap-3 shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(255,255,255,0.5)]">
+                      <Download className="w-5 h-5" /> Install
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
+                      <span className="font-bold text-xl">4.8</span>
+                    </div>
+                    {selectedApp.isNative && (
+                      <div className="flex gap-2">
+                        {selectedApp.compatibility?.map((device: string) => (
+                          <span key={device} className="text-xs font-bold uppercase tracking-wider text-zinc-300 bg-white/5 px-3 py-2 rounded-lg flex items-center gap-2">
+                            {getDeviceIcon(device)} {device}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Loader for Details */}
+              {isLoadingDetails && (
+                <div className="flex items-center justify-center py-32 text-purple-500">
+                  <Loader2 className="w-12 h-12 animate-spin" />
+                </div>
+              )}
+
+              {/* Rich Details Content */}
+              {appDetails && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-16 space-y-16"
+                >
+                  {/* Screenshots */}
+                  {!selectedApp.isNative && appDetails.screenshots && appDetails.screenshots.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="text-2xl font-black uppercase tracking-tight">Screenshots</h3>
+                      <div className="flex gap-6 overflow-x-auto pb-8 snap-x">
+                        {appDetails.screenshots.map((shot: any, i: number) => {
+                          // Get the first size (usually the largest or original)
+                          const size = shot.sizes && shot.sizes.length > 0 ? shot.sizes[0] : null;
+                          if (!size) return null;
+                          return (
+                            <div key={i} className="flex-shrink-0 w-[600px] h-[350px] bg-white/5 rounded-3xl overflow-hidden snap-center border border-white/10">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={size.src} alt="Screenshot" className="w-full h-full object-cover" />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+                    <div className="lg:col-span-2 space-y-6">
+                      <h3 className="text-2xl font-black uppercase tracking-tight">About this Application</h3>
+                      <div 
+                        className="prose prose-invert prose-purple max-w-none text-zinc-300 font-medium leading-relaxed
+                                   prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight
+                                   prose-a:text-purple-400 prose-img:rounded-2xl"
+                        dangerouslySetInnerHTML={{ __html: selectedApp.isNative ? appDetails.description : (appDetails.description || selectedApp.summary) }}
+                      />
+                    </div>
+                    
+                    {/* Sidebar Details */}
+                    <div className="space-y-8 border-l border-white/5 pl-8">
+                      {!selectedApp.isNative && (
+                        <>
+                          <div className="space-y-2">
+                            <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">License</p>
+                            <p className="font-bold">{appDetails.project_license || "Unknown"}</p>
+                          </div>
+                          {appDetails.urls?.homepage && (
+                            <div className="space-y-2">
+                              <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">Website</p>
+                              <a href={appDetails.urls.homepage} target="_blank" rel="noreferrer" className="font-bold text-purple-400 hover:underline break-all">
+                                {appDetails.urls.homepage.replace(/^https?:\/\//, '')}
+                              </a>
+                            </div>
+                          )}
+                          <div className="space-y-2">
+                            <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">Bundle</p>
+                            <p className="font-bold font-mono text-xs text-zinc-400 break-all">{appDetails.bundle || selectedApp.app_id || selectedApp.id}</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Top Navigation */}
       <nav className="sticky top-0 z-50 bg-black/50 backdrop-blur-3xl border-b border-white/5 h-20 flex items-center px-8 justify-between">
@@ -135,7 +312,7 @@ export default function VoltraStorePage() {
         </div>
       </nav>
 
-      {/* Hero Header (Only show on Discover and no search) */}
+      {/* Hero Header */}
       <AnimatePresence>
         {activeCategory === "Discover" && !debouncedSearchQuery && (
           <motion.div 
@@ -196,6 +373,7 @@ export default function VoltraStorePage() {
                 filteredNative.map(app => (
                   <motion.div 
                     key={app.id}
+                    onClick={() => openAppDetails(app, true)}
                     whileHover={{ y: -5 }}
                     className="bg-zinc-950 border border-white/5 rounded-[2rem] p-6 hover:border-purple-500/30 transition-colors cursor-pointer group"
                   >
@@ -258,6 +436,7 @@ export default function VoltraStorePage() {
                     <motion.div 
                       key={app.app_id || app.id}
                       layout
+                      onClick={() => openAppDetails(app, false)}
                       whileHover={{ y: -5 }}
                       className="bg-zinc-950 border border-white/5 rounded-[2rem] p-6 hover:border-blue-500/30 transition-colors cursor-pointer group flex flex-col relative"
                     >
