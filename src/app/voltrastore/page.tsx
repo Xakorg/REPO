@@ -217,7 +217,7 @@ export default function VoltraStorePage() {
                       <p className="mt-6 text-sm text-zinc-400 line-clamp-2">{app.description}</p>
                       <div className="mt-6 flex items-center justify-between">
                         <span className="text-xs font-black uppercase text-purple-400 tracking-widest bg-purple-500/10 px-3 py-1 rounded-full">Free</span>
-                        <button onClick={(e) => { e.preventDefault(); handleInstall(); }} className="bg-white text-black font-black uppercase tracking-widest text-xs px-5 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-zinc-200">
+                        <button onClick={handleInstall} className="bg-white text-black font-black uppercase tracking-widest text-xs px-5 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-zinc-200">
                           Install
                         </button>
                       </div>
@@ -280,7 +280,7 @@ export default function VoltraStorePage() {
                             <Star className="w-3 h-3 fill-yellow-500" />
                             <span className="text-xs font-bold">4.8</span>
                           </div>
-                          <button onClick={(e) => { e.preventDefault(); handleInstall(); }} className="bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-full transition-colors">
+                          <button onClick={handleInstall} className="bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-full transition-colors">
                             Get
                           </button>
                         </div>
