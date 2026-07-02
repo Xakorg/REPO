@@ -226,8 +226,8 @@ export function middleware(req: NextRequest) {
     if (path === '/') return NextResponse.rewrite(new URL('/voltrastore', req.url));
     if (path.startsWith('/voltrastore')) return NextResponse.next();
     
-    // Kick unknown paths to main site
-    return NextResponse.redirect(`https://www.xakteir.com${path}`);
+    // Rewrite all other paths to the internal /voltrastore routing directory
+    return NextResponse.rewrite(new URL(`/voltrastore${path}`, req.url));
   }
 
   // 12. Handle VoltraPlay standalone deployment via play.voltra.xakteir.com

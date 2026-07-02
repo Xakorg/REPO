@@ -20,11 +20,6 @@ export default function VoltraStorePage() {
   const [flathubApps, setFlathubApps] = useState<any[]>([]);
   const [isLoadingFlathub, setIsLoadingFlathub] = useState(false);
 
-  // Fullscreen Modal State
-  const [selectedApp, setSelectedApp] = useState<any>(null);
-  const [appDetails, setAppDetails] = useState<any>(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -73,36 +68,8 @@ export default function VoltraStorePage() {
     return () => unsub();
   }, [firestore]);
 
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (selectedApp) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-  }, [selectedApp]);
-
-  const openAppDetails = (app: any, isNative: boolean) => {
-    setSelectedApp({ ...app, isNative });
-    setAppDetails(null);
-    
-    if (isNative) {
-      // Native apps already have all info we need right now.
-      setAppDetails(app);
-    } else {
-      // Fetch rich Flathub data
-      setIsLoadingDetails(true);
-      fetch(`/api/flathub/${app.app_id || app.id}`)
-        .then(r => r.json())
-        .then(data => {
-          setAppDetails(data);
-          setIsLoadingDetails(false);
-        })
-        .catch(() => setIsLoadingDetails(false));
-    }
-  };
-
   const handleInstall = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     alert("Voltra OS devices are not yet globally available. Installation will be supported upon physical release of VoltraMax, VoltraPlay, and VoltraTab.");
   };
@@ -131,152 +98,7 @@ export default function VoltraStorePage() {
 
   return (
     <div className="pb-32 bg-black min-h-screen text-white font-sans selection:bg-purple-500/30">
-      
-      {/* Fullscreen App Modal */}
-      <AnimatePresence>
-        {selectedApp && (
-          <motion.div 
-            initial={{ opacity: 0, y: 50, scale: 0.95 }} 
-            animate={{ opacity: 1, y: 0, scale: 1 }} 
-            exit={{ opacity: 0, y: 50, scale: 0.95 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl overflow-y-auto"
-          >
-            <div className="max-w-5xl mx-auto px-8 py-16 relative min-h-screen flex flex-col">
-              <button 
-                onClick={() => setSelectedApp(null)} 
-                className="fixed top-8 right-8 z-[110] w-12 h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
 
-              <div className="flex flex-col md:flex-row gap-12 items-start mt-8">
-                {/* App Icon */}
-                <div className="w-48 h-48 rounded-[3rem] bg-gradient-to-br from-purple-500/10 to-black border border-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden p-6 shadow-2xl">
-                  {selectedApp.isNative ? (
-                    <span className="text-7xl font-black text-purple-400">{selectedApp.appName.charAt(0)}</span>
-                  ) : (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img 
-                      src={selectedApp.icon || `https://ui-avatars.com/api/?name=${selectedApp.name}&background=random`} 
-                      alt={selectedApp.name} 
-                      className="w-full h-full object-contain"
-                    />
-                  )}
-                </div>
-                
-                {/* App Info Header */}
-                <div className="flex-1 space-y-6 pt-4">
-                  <div className="space-y-2">
-                    <h1 className="text-6xl font-black tracking-tighter leading-none">
-                      {selectedApp.isNative ? selectedApp.appName : selectedApp.name}
-                    </h1>
-                    <div className="flex items-center gap-3 text-lg font-bold text-zinc-400">
-                      <span>{selectedApp.isNative ? selectedApp.developerName : (selectedApp.developer_name || selectedApp.dev)}</span>
-                      {(!selectedApp.isNative && appDetails && appDetails.branding) && (
-                        <ShieldCheck className="w-5 h-5 text-blue-500" />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-6">
-                    <button onClick={handleInstall} className="bg-white text-black font-black uppercase tracking-widest px-10 py-4 rounded-full hover:bg-zinc-200 transition-colors text-sm flex items-center gap-3 shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(255,255,255,0.5)]">
-                      <Download className="w-5 h-5" /> Install
-                    </button>
-                    <div className="flex items-center gap-2">
-                      <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
-                      <span className="font-bold text-xl">4.8</span>
-                    </div>
-                    {selectedApp.isNative && (
-                      <div className="flex gap-2">
-                        {selectedApp.compatibility?.map((device: string) => (
-                          <span key={device} className="text-xs font-bold uppercase tracking-wider text-zinc-300 bg-white/5 px-3 py-2 rounded-lg flex items-center gap-2">
-                            {getDeviceIcon(device)} {device}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Loader for Details */}
-              {isLoadingDetails && (
-                <div className="flex items-center justify-center py-32 text-purple-500">
-                  <Loader2 className="w-12 h-12 animate-spin" />
-                </div>
-              )}
-
-              {/* Rich Details Content */}
-              {appDetails && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-16 space-y-16"
-                >
-                  {/* Screenshots */}
-                  {!selectedApp.isNative && appDetails.screenshots && appDetails.screenshots.length > 0 && (
-                    <div className="space-y-4">
-                      <h3 className="text-2xl font-black uppercase tracking-tight">Screenshots</h3>
-                      <div className="flex gap-6 overflow-x-auto pb-8 snap-x">
-                        {appDetails.screenshots.map((shot: any, i: number) => {
-                          // Get the first size (usually the largest or original)
-                          const size = shot.sizes && shot.sizes.length > 0 ? shot.sizes[0] : null;
-                          if (!size) return null;
-                          return (
-                            <div key={i} className="flex-shrink-0 w-[600px] h-[350px] bg-white/5 rounded-3xl overflow-hidden snap-center border border-white/10">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={size.src} alt="Screenshot" className="w-full h-full object-cover" />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Description */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-                    <div className="lg:col-span-2 space-y-6">
-                      <h3 className="text-2xl font-black uppercase tracking-tight">About this Application</h3>
-                      <div 
-                        className="prose prose-invert prose-purple max-w-none text-zinc-300 font-medium leading-relaxed
-                                   prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight
-                                   prose-a:text-purple-400 prose-img:rounded-2xl"
-                        dangerouslySetInnerHTML={{ __html: selectedApp.isNative ? appDetails.description : (appDetails.description || selectedApp.summary) }}
-                      />
-                    </div>
-                    
-                    {/* Sidebar Details */}
-                    <div className="space-y-8 border-l border-white/5 pl-8">
-                      {!selectedApp.isNative && (
-                        <>
-                          <div className="space-y-2">
-                            <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">License</p>
-                            <p className="font-bold">{appDetails.project_license || "Unknown"}</p>
-                          </div>
-                          {appDetails.urls?.homepage && (
-                            <div className="space-y-2">
-                              <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">Website</p>
-                              <a href={appDetails.urls.homepage} target="_blank" rel="noreferrer" className="font-bold text-purple-400 hover:underline break-all">
-                                {appDetails.urls.homepage.replace(/^https?:\/\//, '')}
-                              </a>
-                            </div>
-                          )}
-                          <div className="space-y-2">
-                            <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">Bundle</p>
-                            <p className="font-bold font-mono text-xs text-zinc-400 break-all">{appDetails.bundle || selectedApp.app_id || selectedApp.id}</p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
       {/* Top Navigation */}
       <nav className="sticky top-0 z-50 bg-black/50 backdrop-blur-3xl border-b border-white/5 h-20 flex items-center px-8 justify-between">
         <div className="flex items-center gap-12">
@@ -371,36 +193,36 @@ export default function VoltraStorePage() {
                 </div>
               ) : (
                 filteredNative.map(app => (
-                  <motion.div 
-                    key={app.id}
-                    onClick={() => openAppDetails(app, true)}
-                    whileHover={{ y: -5 }}
-                    className="bg-zinc-950 border border-white/5 rounded-[2rem] p-6 hover:border-purple-500/30 transition-colors cursor-pointer group"
-                  >
-                    <div className="flex gap-5">
-                      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500/20 to-black border border-purple-500/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-3xl font-black text-purple-400">{app.appName.charAt(0)}</span>
-                      </div>
-                      <div className="space-y-2 flex-1 min-w-0">
-                        <h3 className="font-black text-xl truncate pr-4">{app.appName}</h3>
-                        <p className="text-zinc-500 text-xs font-bold truncate">{app.developerName}</p>
-                        <div className="flex gap-2 flex-wrap">
-                          {app.compatibility?.map((device: string) => (
-                            <span key={device} className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 bg-white/5 px-2 py-1 rounded-md flex items-center gap-1" title={device}>
-                              {getDeviceIcon(device)} <span className="hidden sm:inline">{device.replace('Voltra', '')}</span>
-                            </span>
-                          ))}
+                  <Link href={`/Voltra/${app.id}`} key={app.id}>
+                    <motion.div 
+                      whileHover={{ y: -5 }}
+                      className="bg-zinc-950 border border-white/5 rounded-[2rem] p-6 hover:border-purple-500/30 transition-colors cursor-pointer group h-full"
+                    >
+                      <div className="flex gap-5">
+                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500/20 to-black border border-purple-500/20 flex items-center justify-center flex-shrink-0">
+                          <span className="text-3xl font-black text-purple-400">{app.appName.charAt(0)}</span>
+                        </div>
+                        <div className="space-y-2 flex-1 min-w-0">
+                          <h3 className="font-black text-xl truncate pr-4">{app.appName}</h3>
+                          <p className="text-zinc-500 text-xs font-bold truncate">{app.developerName}</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {app.compatibility?.map((device: string) => (
+                              <span key={device} className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 bg-white/5 px-2 py-1 rounded-md flex items-center gap-1" title={device}>
+                                {getDeviceIcon(device)} <span className="hidden sm:inline">{device.replace('Voltra', '')}</span>
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <p className="mt-6 text-sm text-zinc-400 line-clamp-2">{app.description}</p>
-                    <div className="mt-6 flex items-center justify-between">
-                      <span className="text-xs font-black uppercase text-purple-400 tracking-widest bg-purple-500/10 px-3 py-1 rounded-full">Free</span>
-                      <button onClick={handleInstall} className="bg-white text-black font-black uppercase tracking-widest text-xs px-5 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-zinc-200">
-                        Install
-                      </button>
-                    </div>
-                  </motion.div>
+                      <p className="mt-6 text-sm text-zinc-400 line-clamp-2">{app.description}</p>
+                      <div className="mt-6 flex items-center justify-between">
+                        <span className="text-xs font-black uppercase text-purple-400 tracking-widest bg-purple-500/10 px-3 py-1 rounded-full">Free</span>
+                        <button onClick={(e) => { e.preventDefault(); handleInstall(); }} className="bg-white text-black font-black uppercase tracking-widest text-xs px-5 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-zinc-200">
+                          Install
+                        </button>
+                      </div>
+                    </motion.div>
+                  </Link>
                 ))
               )}
             </div>
@@ -433,37 +255,37 @@ export default function VoltraStorePage() {
                   </div>
                 ) : (
                   flathubApps.map(app => (
-                    <motion.div 
-                      key={app.app_id || app.id}
-                      layout
-                      onClick={() => openAppDetails(app, false)}
-                      whileHover={{ y: -5 }}
-                      className="bg-zinc-950 border border-white/5 rounded-[2rem] p-6 hover:border-blue-500/30 transition-colors cursor-pointer group flex flex-col relative"
-                    >
-                      <div className="w-24 h-24 mx-auto mb-6 mt-4 rounded-3xl overflow-hidden bg-white/5 flex items-center justify-center p-4">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                          src={app.icon || `https://ui-avatars.com/api/?name=${app.name}&background=random`} 
-                          alt={app.name} 
-                          className="w-full h-full object-contain drop-shadow-2xl" 
-                          onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=' + app.name + '&background=random' }} 
-                        />
-                      </div>
-                      <div className="text-center space-y-1 mb-4 flex-1">
-                        <h3 className="font-black text-lg leading-tight line-clamp-1">{app.name}</h3>
-                        <p className="text-zinc-500 text-xs font-bold line-clamp-1">{app.developer_name || app.dev}</p>
-                        <p className="text-zinc-400 text-xs pt-2 line-clamp-2">{app.summary || app.description}</p>
-                      </div>
-                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
-                        <div className="flex items-center gap-1 text-yellow-500">
-                          <Star className="w-3 h-3 fill-yellow-500" />
-                          <span className="text-xs font-bold">4.8</span>
+                    <Link href={`/Flathub/${app.app_id || app.id}`} key={app.app_id || app.id}>
+                      <motion.div 
+                        layout
+                        whileHover={{ y: -5 }}
+                        className="bg-zinc-950 border border-white/5 rounded-[2rem] p-6 hover:border-blue-500/30 transition-colors cursor-pointer group flex flex-col relative h-full"
+                      >
+                        <div className="w-24 h-24 mx-auto mb-6 mt-4 rounded-3xl overflow-hidden bg-white/5 flex items-center justify-center p-4">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img 
+                            src={app.icon || `https://ui-avatars.com/api/?name=${app.name}&background=random`} 
+                            alt={app.name} 
+                            className="w-full h-full object-contain drop-shadow-2xl" 
+                            onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=' + app.name + '&background=random' }} 
+                          />
                         </div>
-                        <button onClick={handleInstall} className="bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-full transition-colors">
-                          Get
-                        </button>
-                      </div>
-                    </motion.div>
+                        <div className="text-center space-y-1 mb-4 flex-1">
+                          <h3 className="font-black text-lg leading-tight line-clamp-1">{app.name}</h3>
+                          <p className="text-zinc-500 text-xs font-bold line-clamp-1">{app.developer_name || app.dev}</p>
+                          <p className="text-zinc-400 text-xs pt-2 line-clamp-2">{app.summary || app.description}</p>
+                        </div>
+                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+                          <div className="flex items-center gap-1 text-yellow-500">
+                            <Star className="w-3 h-3 fill-yellow-500" />
+                            <span className="text-xs font-bold">4.8</span>
+                          </div>
+                          <button onClick={(e) => { e.preventDefault(); handleInstall(); }} className="bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-full transition-colors">
+                            Get
+                          </button>
+                        </div>
+                      </motion.div>
+                    </Link>
                   ))
                 )}
               </div>
