@@ -4,7 +4,11 @@ export async function GET(req: Request, { params }: { params: { app_id: string }
   try {
     const { app_id } = params;
     
-    const res = await fetch(`https://flathub.org/api/v2/appstream/${app_id}`);
+    const res = await fetch(`https://flathub.org/api/v2/appstream/${app_id}`, {
+      headers: {
+        'User-Agent': 'VoltraStore/1.0'
+      }
+    });
     
     if (!res.ok) {
       return NextResponse.json({ error: "App not found" }, { status: res.status });

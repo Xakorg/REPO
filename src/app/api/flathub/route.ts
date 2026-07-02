@@ -6,7 +6,10 @@ export async function POST(req: Request) {
     
     const res = await fetch('https://flathub.org/api/v2/search', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'User-Agent': 'VoltraStore/1.0'
+      },
       body: JSON.stringify({ query: query || "" })
     });
     
