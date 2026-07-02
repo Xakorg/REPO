@@ -45,7 +45,7 @@ export default function VoltraStorePage() {
       }
     }
 
-    fetch('https://flathub.org/api/v2/search', {
+    fetch('/api/flathub', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: apiQuery })
