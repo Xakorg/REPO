@@ -174,10 +174,6 @@ export function middleware(req: NextRequest) {
   // 9. Handle Meet standalone deployment via meet.xakteir.com
   if (hostname === 'meet.xakteir.com' || hostname === 'www.meet.xakteir.com') {
     if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
-    
-    if (!req.cookies.has('xak_session')) {
-      return NextResponse.redirect(new URL('/auth', req.url));
-    }
 
     if (path === '/') return NextResponse.rewrite(new URL('/meet', req.url));
     if (path.startsWith('/meet')) return NextResponse.next(); // Already rewritten
