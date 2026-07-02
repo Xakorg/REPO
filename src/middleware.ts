@@ -6,8 +6,13 @@ export function middleware(req: NextRequest) {
   const hostname = req.headers.get('host') || '';
   const path = url.pathname;
 
-  // Allow static assets, API routes, and files
-  if (path.startsWith('/_next') || path.startsWith('/api') || path.includes('.')) {
+  // Allow specific system paths (Next.js internals and API routes)
+  if (path.startsWith('/_next') || path.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
+  // Allow common static files that might not be caught by the config matcher
+  if (path.match(/\.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf|eot)$/i)) {
     return NextResponse.next();
   }
 
