@@ -44,23 +44,36 @@ function getDB(): Promise<IDBDatabase> {
   });
 }
 
-async function loadDirectoryHandle(): Promise<FileSystemDirectoryHandle | null> {
+async function loadAllDirectoryHandles(): Promise<Record<string, FileSystemDirectoryHandle>> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readonly');
     const store = tx.objectStore(STORE_NAME);
-    const request = store.get(KEY_NAME);
-    request.onsuccess = () => resolve(request.result || null);
+    const request = store.getAllKeys();
+    request.onsuccess = () => {
+      const keys = request.result;
+      const handles: Record<string, FileSystemDirectoryHandle> = {};
+      let loaded = 0;
+      if (keys.length === 0) resolve({});
+      keys.forEach(key => {
+        const getReq = store.get(key);
+        getReq.onsuccess = () => {
+          handles[key as string] = getReq.result;
+          loaded++;
+          if (loaded === keys.length) resolve(handles);
+        };
+      });
+    };
     request.onerror = () => reject(request.error);
   });
 }
 
-async function saveDirectoryHandle(handle: FileSystemDirectoryHandle) {
+async function saveDirectoryHandle(folderId: string, handle: FileSystemDirectoryHandle) {
   const db = await getDB();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    const request = store.put(handle, KEY_NAME);
+    const request = store.put(handle, folderId);
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
   });
@@ -123,16 +136,16 @@ export default function XakDrivePage() {
   const [previewContent, setPreviewContent] = useState<string>("");
 
   // Sync Engine State
-  const [localDirHandle, setLocalDirHandle] = useState<FileSystemDirectoryHandle | null>(null);
+  const [syncedFolders, setSyncedFolders] = useState<Record<string, FileSystemDirectoryHandle>>({});
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncLogs, setSyncLogs] = useState<string[]>([]);
 
   useEffect(() => { 
     setMounted(true); 
     
-    // Attempt to load saved sync handle on boot
-    loadDirectoryHandle().then(handle => {
-      if (handle) setLocalDirHandle(handle);
+    // Load all synced folders on boot
+    loadAllDirectoryHandles().then(handles => {
+      setSyncedFolders(handles);
     }).catch(console.error);
     
     // Close context menus on global click
@@ -312,11 +325,11 @@ export default function XakDrivePage() {
   };
 
   // Sync Engine Logic
-  const selectSyncFolder = async () => {
+  const setupLocalSync = async () => {
     try {
       const handle = await (window as any).showDirectoryPicker({ mode: 'readwrite' });
-      await saveDirectoryHandle(handle);
-      setLocalDirHandle(handle);
+      await saveDirectoryHandle(currentFolderId, handle);
+      setSyncedFolders(prev => ({ ...prev, [currentFolderId]: handle }));
       toast({ title: "Local Sync Folder Linked!" });
     } catch (e) {
       console.error(e);
@@ -330,9 +343,10 @@ export default function XakDrivePage() {
     return false;
   };
 
-  const runBidirectionalSync = async () => {
-    if (!localDirHandle || !driveFilesRaw) return;
-    const hasPermission = await verifySyncPermission(localDirHandle);
+  const runBidirectionalSync = async (folderId: string) => {
+    const handle = syncedFolders[folderId];
+    if (!handle || !driveFilesRaw) return;
+    const hasPermission = await verifySyncPermission(handle);
     if (!hasPermission) {
       toast({ variant: "destructive", title: "Permission Denied to Local Folder" });
       return;
@@ -341,28 +355,28 @@ export default function XakDrivePage() {
     setIsSyncing(true);
     setSyncLogs([]);
     const log = (msg: string) => setSyncLogs(prev => [...prev, msg]);
-    log(`Starting Sync with ${localDirHandle.name}...`);
+    log(`Starting Sync with ${handle.name}...`);
 
     try {
-      // 1. Read Local Files (Flat level for now to prevent browser crashes)
+      // 1. Read Local Files (Flat level for now)
       const localFiles = new Map<string, FileSystemFileHandle>();
-      for await (const entry of (localDirHandle as any).values()) {
+      for await (const entry of (handle as any).values()) {
         if (entry.kind === 'file') {
           localFiles.set(entry.name, entry);
         }
       }
 
-      // 2. Read Cloud Files (Root level only for flat sync mapping)
-      const cloudFiles = driveFilesRaw.filter(f => !f.isFolder && !f.isTrashed && f.parentId === 'root');
+      // 2. Read Cloud Files in this specific folder
+      const cloudFiles = driveFilesRaw.filter(f => !f.isFolder && !f.isTrashed && f.parentId === folderId);
       const cloudFileNames = new Set(cloudFiles.map(f => f.name));
 
       // 3. Local -> Cloud
       log(`Scanning ${localFiles.size} local files...`);
-      for (const [name, handle] of localFiles.entries()) {
+      for (const [name, fileHandle] of localFiles.entries()) {
         if (!cloudFileNames.has(name)) {
           log(`Uploading ${name} to Cloud...`);
-          const file = await handle.getFile();
-          await uploadToCloud(file, name, 'root');
+          const file = await fileHandle.getFile();
+          await uploadToCloud(file, name, folderId);
         }
       }
 
@@ -374,8 +388,8 @@ export default function XakDrivePage() {
           try {
             const res = await fetch(cloudFile.url);
             const blob = await res.blob();
-            const fileHandle = await (localDirHandle as any).getFileHandle(cloudFile.name, { create: true });
-            const writable = await fileHandle.createWritable();
+            const fh = await (handle as any).getFileHandle(cloudFile.name, { create: true });
+            const writable = await fh.createWritable();
             await writable.write(blob);
             await writable.close();
           } catch (err) {
@@ -782,7 +796,7 @@ export default function XakDrivePage() {
             onClick={() => setDriveMode('sync')} 
             className={cn("w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors", driveMode === 'sync' ? "bg-green-600/20 text-green-400" : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200")}
           >
-            <RefreshCw className="w-4 h-4 mr-3" /> Sync Engine
+            <RefreshCw className="w-4 h-4 mr-3" /> Synced Folders
           </button>
           
           <p className="px-3 text-xs font-black uppercase tracking-wider text-zinc-500 mb-2 mt-6">Quick Access</p>
@@ -902,6 +916,20 @@ export default function XakDrivePage() {
               
               {driveMode !== 'trash' && (
                 <>
+                  {currentFolderId !== 'root' && (
+                    <>
+                      {!syncedFolders[currentFolderId] ? (
+                        <Button onClick={setupLocalSync} variant="outline" className="h-9 mr-2 border-white/10 bg-zinc-900 text-zinc-300 hover:text-white">
+                          <FolderLock className="w-4 h-4 mr-2" /> Setup Sync
+                        </Button>
+                      ) : (
+                        <Button onClick={() => runBidirectionalSync(currentFolderId)} disabled={isSyncing} className="h-9 mr-2 bg-green-600 hover:bg-green-500 text-white">
+                          {isSyncing ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                          Sync Now
+                        </Button>
+                      )}
+                    </>
+                  )}
                   <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
                   <input type="file" ref={folderInputRef} className="hidden" onChange={handleFolderUpload} {...{ webkitdirectory: "", directory: "", multiple: true } as any} />
                   <DropdownMenu>
