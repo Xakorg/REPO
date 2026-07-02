@@ -7,6 +7,17 @@ import { useFirestore } from "@/firebase";
 import { Download, Star, ShieldCheck, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import React from "react";
+
+const SafeHTML = React.memo(({ html }: { html: string }) => (
+  <div 
+    className="prose prose-invert prose-purple max-w-none text-zinc-300 font-medium leading-relaxed
+               prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight
+               prose-a:text-purple-400 prose-img:rounded-2xl"
+    dangerouslySetInnerHTML={{ __html: html }}
+  />
+));
+SafeHTML.displayName = "SafeHTML";
 
 function getDeviceIcon(device: string) {
   switch (device) {
@@ -41,7 +52,10 @@ export default function VoltraStoreAppPage() {
 
       try {
         if (isNative) {
-          if (!firestore) return;
+          if (!firestore) {
+            // Don't hang infinitely if firestore is missing
+            throw new Error("Database not connected yet.");
+          }
           const docRef = doc(firestore, "voltra_app_store", appId);
           const docSnap = await getDoc(docRef);
           
@@ -51,8 +65,13 @@ export default function VoltraStoreAppPage() {
             setError("Native application not found.");
           }
         } else {
-          // Fetch Flathub AppStream data
-          const res = await fetch(`/api/flathub/${appId}`);
+          // Fetch Flathub AppStream data with an AbortController for timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+          
+          const res = await fetch(`/api/flathub/${appId}`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          
           if (!res.ok) throw new Error("Flathub app not found.");
           const data = await res.json();
           if (data.error) throw new Error(data.error);
@@ -66,7 +85,7 @@ export default function VoltraStoreAppPage() {
       }
     };
 
-    if (isNative && !firestore) return; // Wait for firestore
+    if (isNative && !firestore) return; // Wait for firestore to initialize
     fetchDetails();
   }, [source, appId, isNative, firestore]);
 
@@ -193,12 +212,7 @@ export default function VoltraStoreAppPage() {
         <div className="mt-16 grid grid-cols-1 lg:grid-cols-3 gap-16">
           <div className="lg:col-span-2 space-y-6">
             <h3 className="text-2xl font-black uppercase tracking-tight">About this Application</h3>
-            <div 
-              className="prose prose-invert prose-purple max-w-none text-zinc-300 font-medium leading-relaxed
-                         prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight
-                         prose-a:text-purple-400 prose-img:rounded-2xl"
-              dangerouslySetInnerHTML={{ __html: descriptionHtml || "" }}
-            />
+            <SafeHTML html={descriptionHtml || ""} />
           </div>
           
           <div className="space-y-8 border-l border-white/5 pl-8">
