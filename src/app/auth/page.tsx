@@ -22,7 +22,7 @@ import { Loader2, Mail, Lock, AtSign, ArrowRight, Sparkles, ShieldCheck, Chrome,
 import { cn } from "@/lib/utils";
 import { isOffensive } from "@/lib/username";
 
-type AuthStep = 'email' | 'password' | 'verify-2fa' | 'forgot' | 'terms';
+type AuthStep = 'email' | 'password' | 'verify-2fa' | 'forgot' | 'terms' | 'google-username';
 
 export default function AuthPage() {
   const { user: existingUser } = useUser();
@@ -34,6 +34,7 @@ export default function AuthPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showAnimation, setShowAnimation] = useState(false);
   const [askLinkGmail, setAskLinkGmail] = useState(false);
+  const [pendingGoogleUser, setPendingGoogleUser] = useState<any>(null);
 
   const [usernameInput, setUsernameInput] = useState("");
   const [email, setEmail] = useState("");
@@ -109,21 +110,10 @@ export default function AuthPage() {
         const user = result.user;
         const userDoc = await getDoc(doc(firestore, "users", user.uid));
         if (!userDoc.exists()) {
-          const derived = user.email?.split('@')[0] || "user";
-          const finalUsername = isOffensive(derived) ? `user_${user.uid.slice(0,6)}` : derived;
-          await setDoc(doc(firestore, "users", user.uid), {
-            id: user.uid,
-            username: finalUsername,
-            email: user.email?.toLowerCase(),
-            xakteirEmail: `${finalUsername}@mail.xakteir.com`,
-            displayName: user.displayName || finalUsername,
-            registrationDateTime: new Date().toISOString(),
-            role: 'user',
-            currencyBalance: 1000,
-            agreedToTerms: true,
-            twoFactorEnabled: false,
-            photoURL: user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${finalUsername}`
-          });
+          setPendingGoogleUser(user);
+          setStep('google-username');
+          setIsLoading(false);
+          return;
         }
         
         if (activeTab === 'signup') {
@@ -139,6 +129,62 @@ export default function AuthPage() {
         setIsLoading(false);
         toast({ variant: "destructive", title: "Authentication Error", description: error.message });
       });
+  };
+
+  const handleGoogleSignupComplete = async () => {
+    if (!pendingGoogleUser || !firestore) return;
+    setIsLoading(true);
+    
+    const chosen = usernameInput.trim().toLowerCase();
+    
+    if (!chosen || chosen.length < 3) {
+      setIsLoading(false);
+      toast({ variant: "destructive", title: "Invalid", description: "Username must be at least 3 characters." });
+      return;
+    }
+
+    if (isOffensive(chosen)) {
+      setIsLoading(false);
+      toast({ variant: "destructive", title: "Invalid", description: "Username not allowed." });
+      return;
+    }
+
+    try {
+      const q = query(collection(firestore, "users"), where("username", "==", chosen));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        setIsLoading(false);
+        toast({ variant: "destructive", title: "Username Taken", description: "That username is already in use." });
+        return;
+      }
+    } catch (e) {}
+
+    const finalEmail = `${chosen}@mail.xakteir.com`;
+    const finalUsername = chosen;
+
+    try {
+      await updateProfile(pendingGoogleUser, { displayName: finalUsername });
+      await setDoc(doc(firestore, "users", pendingGoogleUser.uid), {
+        id: pendingGoogleUser.uid,
+        username: finalUsername,
+        email: pendingGoogleUser.email?.toLowerCase(),
+        xakteirEmail: finalEmail,
+        displayName: pendingGoogleUser.displayName || finalUsername,
+        registrationDateTime: new Date().toISOString(),
+        role: 'user',
+        currencyBalance: 1000,
+        agreedToTerms: true,
+        twoFactorEnabled: false,
+        isPublic: isPublic,
+        photoURL: pendingGoogleUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${finalUsername}`
+      });
+      
+      saveToVault(pendingGoogleUser.uid, 'google', pendingGoogleUser.email || "");
+      finishWizard();
+    } catch (e: any) {
+      setIsLoading(false);
+      toast({ variant: "destructive", title: "Signup Failed", description: e.message });
+    }
   };
 
   const handleInitialAuth = (e: React.FormEvent) => {
@@ -450,6 +496,47 @@ export default function AuthPage() {
                </Button>
                <button type="button" onClick={() => setStep('email')} className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all">Back to Login</button>
             </form>
+          ) : step === 'google-username' ? (
+             <div className="space-y-6 animate-in slide-in-from-right-8">
+                <div className="text-center space-y-4">
+                  <AtSign className="w-16 h-16 text-primary mx-auto opacity-80" />
+                  <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">Choose Your Username</h2>
+                  <p className="text-xs font-bold text-white/50">This will be your permanent Xakteir identity and email address.</p>
+                </div>
+                
+                <div className="relative flex items-center justify-center">
+                  <div className="flex bg-white/5 border border-white/10 rounded-2xl h-16 w-full overflow-hidden focus-within:border-primary transition-colors pl-4 pr-4">
+                    <input 
+                      type="text" 
+                      value={usernameInput} 
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+                        setUsernameInput(val);
+                      }} 
+                      placeholder="username" 
+                      className="bg-transparent text-xl font-bold text-white text-right outline-none w-1/2" 
+                      autoFocus
+                    />
+                    <div className="flex items-center text-xl font-bold text-white/40 pl-1 pointer-events-none w-1/2 text-left">
+                      @mail.xakteir.com
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-4 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => setIsPublic(!isPublic)}>
+                  <div className="flex-1">
+                    <h4 className="text-white text-xs font-bold">Public Profile</h4>
+                    <p className="text-zinc-400 text-[10px] mt-1">Allow others to find and view your Xakteir profile.</p>
+                  </div>
+                  <div className={cn("w-10 h-5 rounded-full transition-colors flex items-center p-1", isPublic ? "bg-primary" : "bg-white/10")}>
+                    <div className={cn("w-3 h-3 rounded-full bg-black transition-transform", isPublic ? "translate-x-5" : "translate-x-0")} />
+                  </div>
+                </div>
+
+                <Button onClick={handleGoogleSignupComplete} disabled={isLoading || !usernameInput || usernameInput.length < 3} className="w-full bg-primary text-black hover:bg-primary/90 h-16 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">
+                  {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Complete Registration"}
+                </Button>
+             </div>
           ) : (
             <div className="space-y-6">
               <Button type="button" onClick={handleGoogleAuth} disabled={isLoading} variant="outline" className="w-full h-16 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 text-white font-black uppercase text-[10px] tracking-widest gap-4 transition-all">
