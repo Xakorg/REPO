@@ -5,28 +5,60 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Database, Plus, Search, Filter, MoreVertical, FileJson, ShieldCheck } from "lucide-react";
+import { Database, Plus, Search, Filter, MoreVertical, FileJson, ShieldCheck, LayoutGrid } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useDevCentreStore } from "@/lib/dev-centre-store";
 
 export default function DevDatabasePage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"data" | "rules" | "indexes" | "usage">("data");
-  const [selectedCol, setSelectedCol] = useState("users");
-  const [selectedDoc, setSelectedDoc] = useState("U84X9A1");
-
-  const collections = ["users", "dev_accounts", "messages", "products", "settings"];
-  const documents = ["U84X9A1", "U11Z0B2", "U99H9X9", "A1B2C3D"];
   
-  const docData = {
-    displayName: "John Connor",
-    email: "john@example.com",
-    role: "Admin",
-    metadata: {
-      lastLogin: "2026-06-30T10:00:00Z",
-      ipAddress: "192.168.1.1"
-    },
-    flags: ["verified", "premium"]
+  const { activeProjectId, collections, createCollection, addDocument } = useDevCentreStore();
+  
+  const [selectedColId, setSelectedColId] = useState<string | null>(null);
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+
+  const [newColName, setNewColName] = useState("");
+  const [isAddingCol, setIsAddingCol] = useState(false);
+
+  // Filter for active project
+  const projectCols = collections.filter(c => c.projectId === activeProjectId);
+  const activeCol = projectCols.find(c => c.id === selectedColId);
+  const activeDoc = activeCol?.documents.find(d => d.id === selectedDocId);
+
+  const handleAddCollection = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeProjectId || !newColName.trim()) return;
+    createCollection(activeProjectId, newColName.trim());
+    setSelectedColId(newColName.trim());
+    setNewColName("");
+    setIsAddingCol(false);
+    toast({ title: "Collection Created" });
   };
+
+  const handleAddDocument = () => {
+    if (!activeProjectId || !selectedColId) return;
+    // For demo purposes, we generate some dummy data for the new document.
+    // In a real app, you'd have a JSON editor or form to specify initial data.
+    addDocument(activeProjectId, selectedColId, {
+      createdAt: new Date().toISOString(),
+      status: "draft",
+      message: "Hello from Xakteir Database!"
+    });
+    toast({ title: "Document Added" });
+  };
+
+  if (!activeProjectId) {
+    return (
+      <div className="text-center py-20 space-y-6">
+        <div className="w-24 h-24 mx-auto bg-zinc-900/50 rounded-full flex items-center justify-center border border-white/5">
+          <LayoutGrid className="w-10 h-10 text-zinc-600" />
+        </div>
+        <h3 className="text-2xl font-black uppercase tracking-tighter text-zinc-400">No Project Selected</h3>
+        <p className="text-zinc-500 max-w-sm mx-auto">Select or create a project from the top left dropdown to manage your Database.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-12 pb-32 h-[calc(100vh-160px)] flex flex-col">
@@ -37,7 +69,7 @@ export default function DevDatabasePage() {
           </div>
           <div>
             <h1 className="text-5xl font-black uppercase italic tracking-tighter text-white">Xakteir Dev Database</h1>
-            <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs mt-1">Real-time NoSQL Cloud Firestore</p>
+            <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs mt-1">Real-time NoSQL Cloud Database</p>
           </div>
         </div>
       </header>
@@ -71,18 +103,37 @@ export default function DevDatabasePage() {
           <div className="w-1/4 min-w-[200px] border-r border-white/5 flex flex-col bg-white/[0.01]">
             <div className="p-4 border-b border-white/5 flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Collections</span>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-sky-400"><Plus className="w-4 h-4" /></Button>
+              <Button onClick={() => setIsAddingCol(!isAddingCol)} variant="ghost" size="icon" className="h-6 w-6 text-sky-400"><Plus className="w-4 h-4" /></Button>
             </div>
+            
+            {isAddingCol && (
+              <form onSubmit={handleAddCollection} className="p-2 border-b border-white/5">
+                <Input 
+                  value={newColName}
+                  onChange={e => setNewColName(e.target.value)}
+                  placeholder="Collection ID" 
+                  className="h-8 bg-black/50 border-white/10 rounded-lg text-[10px] text-white" 
+                  autoFocus
+                />
+              </form>
+            )}
+
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              {collections.map(c => (
+              {projectCols.length === 0 && !isAddingCol && (
+                <p className="text-center text-zinc-600 text-xs mt-4 italic">No collections</p>
+              )}
+              {projectCols.map(c => (
                 <button 
-                  key={c}
-                  onClick={() => setSelectedCol(c)}
+                  key={c.id}
+                  onClick={() => {
+                    setSelectedColId(c.id);
+                    setSelectedDocId(null);
+                  }}
                   className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all ${
-                    selectedCol === c ? "bg-sky-500/20 text-sky-400" : "text-zinc-400 hover:bg-white/5"
+                    selectedColId === c.id ? "bg-sky-500/20 text-sky-400" : "text-zinc-400 hover:bg-white/5"
                   }`}
                 >
-                  {c}
+                  {c.id}
                 </button>
               ))}
             </div>
@@ -91,27 +142,33 @@ export default function DevDatabasePage() {
           {/* Documents Pane */}
           <div className="w-1/4 min-w-[200px] border-r border-white/5 flex flex-col bg-white/[0.01]">
             <div className="p-4 border-b border-white/5 flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{selectedCol}</span>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-sky-400"><Plus className="w-4 h-4" /></Button>
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{selectedColId || "Select Collection"}</span>
+              <Button onClick={handleAddDocument} disabled={!selectedColId} variant="ghost" size="icon" className="h-6 w-6 text-sky-400 disabled:opacity-30"><Plus className="w-4 h-4" /></Button>
             </div>
             <div className="p-2 border-b border-white/5">
               <div className="relative">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-500" />
-                <Input placeholder="Search doc..." className="h-8 pl-7 bg-black/50 border-white/10 rounded-lg text-[10px]" />
+                <Input placeholder="Search doc..." className="h-8 pl-7 bg-black/50 border-white/10 rounded-lg text-[10px]" disabled={!selectedColId} />
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              {documents.map(d => (
-                <button 
-                  key={d}
-                  onClick={() => setSelectedDoc(d)}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-xs font-mono transition-all ${
-                    selectedDoc === d ? "bg-white/10 text-white" : "text-zinc-500 hover:bg-white/5 hover:text-zinc-300"
-                  }`}
-                >
-                  {d}
-                </button>
-              ))}
+              {!activeCol ? (
+                <p className="text-center text-zinc-600 text-xs mt-4 italic"></p>
+              ) : activeCol.documents.length === 0 ? (
+                <p className="text-center text-zinc-600 text-xs mt-4 italic">No documents</p>
+              ) : (
+                activeCol.documents.map(d => (
+                  <button 
+                    key={d.id}
+                    onClick={() => setSelectedDocId(d.id)}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-mono transition-all ${
+                      selectedDocId === d.id ? "bg-white/10 text-white" : "text-zinc-500 hover:bg-white/5 hover:text-zinc-300"
+                    }`}
+                  >
+                    {d.id}
+                  </button>
+                ))
+              )}
             </div>
           </div>
 
@@ -122,7 +179,7 @@ export default function DevDatabasePage() {
             <div className="p-4 border-b border-white/5 flex items-center justify-between relative z-10">
               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
                 <FileJson className="w-4 h-4 text-sky-500" />
-                {selectedCol} / <span className="text-white">{selectedDoc}</span>
+                {selectedColId || "None"} / <span className="text-white">{selectedDocId || "None"}</span>
               </span>
               <div className="flex gap-2">
                 <Button variant="ghost" size="icon" className="h-6 w-6"><Filter className="w-4 h-4" /></Button>
@@ -130,18 +187,15 @@ export default function DevDatabasePage() {
               </div>
             </div>
             <div className="flex-1 p-6 overflow-y-auto relative z-10">
-              <pre className="text-sm font-mono text-emerald-400 bg-black/50 p-6 rounded-2xl border border-white/5 shadow-inner">
-                <span className="text-zinc-500">{"{"}</span>{"\n"}
-                <span className="text-sky-300">  "displayName"</span><span className="text-white">: </span><span className="text-amber-300">"John Connor"</span><span className="text-white">,</span>{"\n"}
-                <span className="text-sky-300">  "email"</span><span className="text-white">: </span><span className="text-amber-300">"john@example.com"</span><span className="text-white">,</span>{"\n"}
-                <span className="text-sky-300">  "role"</span><span className="text-white">: </span><span className="text-amber-300">"Admin"</span><span className="text-white">,</span>{"\n"}
-                <span className="text-sky-300">  "metadata"</span><span className="text-white">: </span><span className="text-zinc-500">{"{"}</span>{"\n"}
-                <span className="text-sky-300">    "lastLogin"</span><span className="text-white">: </span><span className="text-amber-300">"2026-06-30T10:00:00Z"</span><span className="text-white">,</span>{"\n"}
-                <span className="text-sky-300">    "ipAddress"</span><span className="text-white">: </span><span className="text-amber-300">"192.168.1.1"</span>{"\n"}
-                <span className="text-zinc-500">  {"}"}</span><span className="text-white">,</span>{"\n"}
-                <span className="text-sky-300">  "flags"</span><span className="text-white">: </span><span className="text-zinc-500">{"["}</span><span className="text-amber-300">"verified"</span><span className="text-white">, </span><span className="text-amber-300">"premium"</span><span className="text-zinc-500">{"]"}</span>{"\n"}
-                <span className="text-zinc-500">{"}"}</span>
-              </pre>
+              {!activeDoc ? (
+                <div className="h-full flex items-center justify-center text-zinc-600 italic text-sm">
+                  Select a document to view fields.
+                </div>
+              ) : (
+                <pre className="text-sm font-mono text-emerald-400 bg-black/50 p-6 rounded-2xl border border-white/5 shadow-inner whitespace-pre-wrap">
+                  {JSON.stringify(activeDoc.data, null, 2)}
+                </pre>
+              )}
             </div>
           </div>
 

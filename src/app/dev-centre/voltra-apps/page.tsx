@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Code, ShieldCheck, Box, Rocket, TerminalSquare, RefreshCw, Play, CheckCircle2 } from "lucide-react";
+import { Code, ShieldCheck, Box, Rocket, TerminalSquare, RefreshCw, Play, CheckCircle2, LayoutGrid } from "lucide-react";
 import { useUser, useFirestore, addDocumentNonBlocking } from "@/firebase";
 import { collection, serverTimestamp } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useDevCentreStore } from "@/lib/dev-centre-store";
 
 export default function VoltraOSAppStorePublisher() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { activeProjectId } = useDevCentreStore();
   
   const [appName, setAppName] = useState("");
   const [appDescription, setAppDescription] = useState("");
@@ -54,7 +56,7 @@ export default function VoltraOSAppStorePublisher() {
   };
 
   const handlePublish = async () => {
-    if (!user || !firestore || !appName || !selectedFile || !isConverted) {
+    if (!user || !firestore || !appName || !selectedFile || !isConverted || !activeProjectId) {
       toast({ variant: "destructive", title: "Missing details", description: "Please finish conversion and provide a name." });
       return;
     }
@@ -66,6 +68,7 @@ export default function VoltraOSAppStorePublisher() {
         await addDocumentNonBlocking(collection(firestore, "voltra_app_store"), {
           developerId: user.uid,
           developerName: user.displayName || "Unknown Dev",
+          projectId: activeProjectId,
           appName,
           description: appDescription,
           version,
@@ -85,6 +88,18 @@ export default function VoltraOSAppStorePublisher() {
       setIsPublishing(false);
     }, 3500); 
   };
+
+  if (!activeProjectId) {
+    return (
+      <div className="text-center py-20 space-y-6">
+        <div className="w-24 h-24 mx-auto bg-zinc-900/50 rounded-full flex items-center justify-center border border-white/5">
+          <LayoutGrid className="w-10 h-10 text-zinc-600" />
+        </div>
+        <h3 className="text-2xl font-black uppercase tracking-tighter text-zinc-400">No Project Selected</h3>
+        <p className="text-zinc-500 max-w-sm mx-auto">Select or create a project from the top left dropdown to publish VoltraOS apps.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10 animate-fade-in">

@@ -1,31 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, limit, deleteDoc, doc, writeBatch } from "firebase/firestore";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Webhook, Trash2, Copy, CheckCircle2, Activity, ChevronRight, ChevronDown } from "lucide-react";
+import { Webhook, Trash2, Copy, CheckCircle2, Activity, ChevronRight, ChevronDown, LayoutGrid } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useDevCentreStore } from "@/lib/dev-centre-store";
 
 export default function WebhooksBlade() {
-  const { user } = useUser();
-  const firestore = useFirestore();
   const { toast } = useToast();
+  const { activeProjectId, webhooks, clearWebhooks } = useDevCentreStore();
 
   const [copied, setCopied] = useState(false);
   const [selectedHook, setSelectedHook] = useState<any | null>(null);
 
-  const hookUrl = user ? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/${user.uid}` : "";
-
-  const webhooksRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return query(collection(firestore, `dev_accounts/${user.uid}/webhooks`), orderBy("timestamp", "desc"), limit(50));
-  }, [user, firestore]);
-  const { data: webhooks } = useCollection(webhooksRef);
+  const hookUrl = activeProjectId ? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/${activeProjectId}` : "";
+  const projectWebhooks = webhooks.filter(w => w.projectId === activeProjectId);
 
   const handleCopy = () => {
     if (!hookUrl) return;
@@ -35,20 +28,24 @@ export default function WebhooksBlade() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleClearAll = async () => {
-    if (!user || !firestore || !webhooks || webhooks.length === 0) return;
-    try {
-      const batch = writeBatch(firestore);
-      webhooks.forEach((w: any) => {
-        batch.delete(doc(firestore, `dev_accounts/${user.uid}/webhooks`, w.id));
-      });
-      await batch.commit();
-      setSelectedHook(null);
-      toast({ title: "Cleared", description: "All webhook logs have been cleared." });
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "Error", description: e.message });
-    }
+  const handleClearAll = () => {
+    if (!activeProjectId) return;
+    clearWebhooks(activeProjectId);
+    setSelectedHook(null);
+    toast({ title: "Cleared", description: "All webhook logs have been cleared." });
   };
+
+  if (!activeProjectId) {
+    return (
+      <div className="text-center py-20 space-y-6">
+        <div className="w-24 h-24 mx-auto bg-zinc-900/50 rounded-full flex items-center justify-center border border-white/5">
+          <LayoutGrid className="w-10 h-10 text-zinc-600" />
+        </div>
+        <h3 className="text-2xl font-black uppercase tracking-tighter text-zinc-400">No Project Selected</h3>
+        <p className="text-zinc-500 max-w-sm mx-auto">Select or create a project from the top left dropdown to view Webhook Logs.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 h-[calc(100vh-8rem)] flex flex-col">
@@ -98,7 +95,7 @@ export default function WebhooksBlade() {
           </div>
           
           <div className="flex-1 overflow-y-auto p-2 space-y-2">
-            {webhooks?.map((hook: any) => (
+            {projectWebhooks.map((hook) => (
               <button 
                 key={hook.id} 
                 onClick={() => setSelectedHook(hook)}
@@ -121,7 +118,7 @@ export default function WebhooksBlade() {
               </button>
             ))}
             
-            {(!webhooks || webhooks.length === 0) && (
+            {projectWebhooks.length === 0 && (
               <div className="h-full flex flex-col items-center justify-center text-zinc-500 opacity-50 space-y-3 pt-12">
                 <Webhook className="w-8 h-8" />
                 <p className="text-xs font-bold text-center">No requests received yet.<br/>Send a POST request to your URL.</p>

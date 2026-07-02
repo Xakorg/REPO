@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useStorage, addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, query, orderBy, limit, doc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { upload } from '@vercel/blob/client';
 import Link from "next/link";
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import Editor from "@monaco-editor/react";
@@ -236,41 +236,28 @@ export default function XakDrivePage() {
       setIsUploading(true);
       setUploadProgress(0);
       const fileName = customName || (file as File).name || "Untitled";
-      const storageRef = ref(storage!, `users/${user!.uid}/drive/${Date.now()}_${fileName}`);
-      const uploadTask = uploadBytesResumable(storageRef, file as Blob);
-
-      return new Promise<void>((resolve, reject) => {
-        uploadTask.on('state_changed', 
-          (snapshot) => { 
-            const progress = snapshot.totalBytes > 0 ? (snapshot.bytesTransferred / snapshot.totalBytes) * 100 : 100;
-            setUploadProgress(progress); 
-          }, 
-          (error) => { setIsUploading(false); toast({ variant: "destructive", title: "Storage Upload Failed", description: error.message }); reject(error); }, 
-          async () => {
-            try {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              await addDocumentNonBlocking(collection(firestore!, 'users', user!.uid, 'drive_files'), {
-                name: fileName,
-                url: downloadURL,
-                size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-                type: file.type || "application/octet-stream",
-                timestamp: serverTimestamp(),
-                isVaulted: driveMode === 'vault',
-                isTrashed: false,
-                parentId: bypassFolderId || currentFolderId,
-                isFolder: false
-              });
-              setIsUploading(false);
-              toast({ title: "File created" });
-              resolve();
-            } catch (err: any) {
-              setIsUploading(false);
-              toast({ variant: "destructive", title: "Database Error", description: err.message || "Could not save to database" });
-              reject(err);
-            }
-          }
-        );
+      
+      const blob = await upload(`users/${user!.uid}/drive/${Date.now()}_${fileName}`, file as File, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+        onUploadProgress: (progressEvent) => {
+          setUploadProgress(progressEvent.percentage);
+        }
       });
+
+      await addDocumentNonBlocking(collection(firestore!, 'users', user!.uid, 'drive_files'), {
+        name: fileName,
+        url: blob.url,
+        size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+        type: file.type || "application/octet-stream",
+        timestamp: serverTimestamp(),
+        isVaulted: driveMode === 'vault',
+        isTrashed: false,
+        parentId: bypassFolderId || currentFolderId,
+        isFolder: false
+      });
+      setIsUploading(false);
+      toast({ title: "File uploaded successfully" });
     } catch (err: any) {
       setIsUploading(false);
       toast({ variant: "destructive", title: "Upload Error", description: err.message || "Failed to start upload" });

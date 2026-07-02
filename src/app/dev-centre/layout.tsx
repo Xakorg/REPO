@@ -12,11 +12,13 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/firebase";
+import { useDevCentreStore } from "@/lib/dev-centre-store";
 
 export default function DevCentreLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useUser();
+  const { projects, activeProjectId, setActiveProject } = useDevCentreStore();
 
   const [accounts, setAccounts] = useState<any[]>([]);
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
@@ -56,6 +58,7 @@ export default function DevCentreLayout({ children }: { children: React.ReactNod
         { name: "Xakteir Dev Hosting", path: "/dev-centre/hosting", icon: Cloud },
         { name: "Xakteir Dev Functions", path: "/dev-centre/functions", icon: FileCode2 },
         { name: "Xakteir Dev ML", path: "/dev-centre/ml", icon: PlayCircle },
+        { name: "VoltraOS App Store", path: "/dev-centre/voltra-apps", icon: Rocket },
       ]
     },
     {
@@ -130,11 +133,29 @@ export default function DevCentreLayout({ children }: { children: React.ReactNod
           <select 
             value={activeAccountId || ""} 
             onChange={(e) => handleSwitchAccount(e.target.value)}
-            className="w-full bg-black/60 border border-white/10 rounded-2xl px-4 py-3 text-xs font-black text-white outline-none cursor-pointer hover:border-sky-500/50 transition-colors shadow-inner"
+            className="w-full bg-black/60 border border-white/10 rounded-2xl px-4 py-3 text-xs font-black text-white outline-none cursor-pointer hover:border-sky-500/50 transition-colors shadow-inner mb-4"
           >
             {accounts.map(acc => (
               <option key={acc.uid} value={acc.uid}>{acc.displayName}</option>
             ))}
+          </select>
+
+          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3 block">Active Project</label>
+          <select 
+            value={activeProjectId || ""} 
+            onChange={(e) => {
+              if (e.target.value === 'new') {
+                router.push('/dev-centre');
+              } else {
+                setActiveProject(e.target.value);
+              }
+            }}
+            className="w-full bg-black/60 border border-white/10 rounded-2xl px-4 py-3 text-xs font-black text-sky-400 outline-none cursor-pointer hover:border-sky-500/50 transition-colors shadow-inner"
+          >
+            {projects.map(proj => (
+              <option key={proj.id} value={proj.id}>{proj.name}</option>
+            ))}
+            <option value="new">+ Create New Project</option>
           </select>
         </div>
 

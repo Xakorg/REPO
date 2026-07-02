@@ -1,83 +1,61 @@
 "use client";
 
 import { useState } from "react";
-import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Database, Plus, Trash2, HardDrive, Globe2, ShieldCheck } from "lucide-react";
+import { Database, Plus, Trash2, HardDrive, Globe2, ShieldCheck, LayoutGrid } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useDevCentreStore } from "@/lib/dev-centre-store";
 
 export default function StorageBlade() {
-  const { user } = useUser();
-  const firestore = useFirestore();
   const { toast } = useToast();
+  const { activeProjectId, buckets, addBucket, deleteBucket } = useDevCentreStore();
 
   const [bucketName, setBucketName] = useState("");
   const [region, setRegion] = useState("us-east (Virginia)");
   const [isCreating, setIsCreating] = useState(false);
 
-  // Load existing buckets from Firestore
-  const storageRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return collection(firestore, `dev_accounts/${user.uid}/storage`);
-  }, [user, firestore]);
-  const { data: buckets } = useCollection(storageRef);
+  const projectBuckets = buckets.filter(b => b.projectId === activeProjectId);
 
-  const devAccountRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return doc(firestore, "dev_accounts", user.uid);
-  }, [firestore, user]);
-  const { data: devAccount } = useDoc(devAccountRef);
-
-  const handleCreateBucket = async () => {
-    if (!user || !firestore || !bucketName.trim()) {
+  const handleCreateBucket = () => {
+    if (!activeProjectId || !bucketName.trim()) {
       toast({ variant: "destructive", title: "Error", description: "Bucket name is required." });
-      return;
-    }
-    if (devAccount?.tier === "Standard Developer" && (buckets?.length || 0) >= 1) {
-      toast({ variant: "destructive", title: "Quota Exceeded", description: "Upgrade to Xakteir Dev Pro to provision more than 1 bucket." });
       return;
     }
     
     setIsCreating(true);
     
-    try {
-      const bucketId = bucketName.toLowerCase().replace(/[^a-z0-9]/g, "-");
-      const docRef = doc(firestore, `dev_accounts/${user.uid}/storage`, bucketId);
-      
-      await setDoc(docRef, {
-        id: bucketId,
-        name: bucketName,
-        region: region,
-        status: "Active",
-        storageClass: "Standard",
-        publicUrl: `https://${bucketId}.storage.xakteir.cloud`,
-        createdAt: new Date().toISOString(),
-        sizeBytes: 0,
-        objectCount: 0
-      });
-
-      toast({ title: "Bucket Created", description: `Your global storage bucket ${bucketName} is ready.` });
-      setBucketName("");
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "Creation Failed", description: e.message });
-    } finally {
-      setIsCreating(false);
-    }
+    setTimeout(() => {
+      try {
+        addBucket(activeProjectId, bucketName, region);
+        toast({ title: "Bucket Created", description: `Your global storage bucket ${bucketName} is ready.` });
+        setBucketName("");
+      } catch (e: any) {
+        toast({ variant: "destructive", title: "Creation Failed", description: e.message });
+      } finally {
+        setIsCreating(false);
+      }
+    }, 1000);
   };
 
-  const handleDelete = async (bucketId: string) => {
-    if (!user || !firestore) return;
-    try {
-      await deleteDoc(doc(firestore, `dev_accounts/${user.uid}/storage`, bucketId));
-      toast({ title: "Bucket Deleted", description: "Storage bucket has been destroyed." });
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "Error", description: e.message });
-    }
+  const handleDelete = (bucketId: string) => {
+    deleteBucket(bucketId);
+    toast({ title: "Bucket Deleted", description: "Storage bucket has been destroyed." });
   };
+
+  if (!activeProjectId) {
+    return (
+      <div className="text-center py-20 space-y-6">
+        <div className="w-24 h-24 mx-auto bg-zinc-900/50 rounded-full flex items-center justify-center border border-white/5">
+          <LayoutGrid className="w-10 h-10 text-zinc-600" />
+        </div>
+        <h3 className="text-2xl font-black uppercase tracking-tighter text-zinc-400">No Project Selected</h3>
+        <p className="text-zinc-500 max-w-sm mx-auto">Select or create a project from the top left dropdown to provision Storage Buckets.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -124,7 +102,7 @@ export default function StorageBlade() {
             
             <Button 
               onClick={handleCreateBucket} 
-              disabled={isCreating || (devAccount?.tier === "Standard Developer" && (buckets?.length || 0) >= 1)}
+              disabled={isCreating}
               className="w-full bg-pink-500 hover:bg-pink-600 text-white font-black uppercase text-xs tracking-widest h-12 rounded-xl mt-2"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -138,7 +116,7 @@ export default function StorageBlade() {
           <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400 mb-6">Active Buckets</h3>
           
           <div className="space-y-4">
-            {buckets?.map((bucket: any) => (
+            {projectBuckets.map((bucket) => (
               <div key={bucket.id} className="p-5 bg-black/40 border border-white/5 rounded-xl hover:border-pink-500/30 transition-colors group flex flex-col gap-4">
                 
                 <div className="flex items-center justify-between">
@@ -173,16 +151,16 @@ export default function StorageBlade() {
                 <div className="flex items-center gap-4 border-t border-white/5 pt-4">
                   <div className="flex-1 flex items-center gap-2 bg-zinc-950 px-3 py-2 rounded-lg border border-white/5">
                     <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-                    <span className="text-[10px] font-mono text-zinc-400 truncate">{bucket.publicUrl}</span>
+                    <span className="text-[10px] font-mono text-zinc-400 truncate">https://{bucket.name.replace(/[^a-z0-9]/g, '-')}.storage.xakteir.cloud</span>
                   </div>
                   <Badge className="bg-pink-500/10 text-pink-400 border-pink-500/20 text-[9px] font-black uppercase">
-                    {bucket.storageClass}
+                    Standard
                   </Badge>
                 </div>
               </div>
             ))}
             
-            {(!buckets || buckets.length === 0) && (
+            {projectBuckets.length === 0 && (
               <div className="h-48 flex flex-col items-center justify-center space-y-3 text-zinc-500 opacity-50">
                 <Database className="w-12 h-12" />
                 <p className="text-xs font-bold">No storage buckets provisioned yet.</p>

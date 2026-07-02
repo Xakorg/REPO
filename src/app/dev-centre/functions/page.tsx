@@ -1,80 +1,60 @@
 "use client";
 
 import { useState } from "react";
-import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileCode2, Play, Trash2, CheckCircle2, Terminal } from "lucide-react";
+import { FileCode2, Play, Trash2, CheckCircle2, Terminal, LayoutGrid } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useDevCentreStore } from "@/lib/dev-centre-store";
 
 export default function FunctionsBlade() {
-  const { user } = useUser();
-  const firestore = useFirestore();
   const { toast } = useToast();
+  const { activeProjectId, functions, addFunction, deleteFunction } = useDevCentreStore();
 
   const [funcName, setFuncName] = useState("");
   const [funcCode, setFuncCode] = useState("export default async function(req, res) {\n  res.status(200).json({ message: 'Hello from Xakteir Edge!' });\n}");
   const [isDeploying, setIsDeploying] = useState(false);
 
-  // Load existing functions from Firestore
-  const functionsRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return collection(firestore, `dev_accounts/${user.uid}/functions`);
-  }, [user, firestore]);
-  const { data: deployedFunctions } = useCollection(functionsRef);
+  const projectFunctions = functions.filter(f => f.projectId === activeProjectId);
 
-  const devAccountRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return doc(firestore, "dev_accounts", user.uid);
-  }, [firestore, user]);
-  const { data: devAccount } = useDoc(devAccountRef);
-
-  const handleDeploy = async () => {
-    if (!user || !firestore || !funcName.trim()) {
+  const handleDeploy = () => {
+    if (!activeProjectId || !funcName.trim()) {
       toast({ variant: "destructive", title: "Error", description: "Function name is required." });
-      return;
-    }
-    if (devAccount?.tier === "Standard Developer" && (deployedFunctions?.length || 0) >= 5) {
-      toast({ variant: "destructive", title: "Quota Exceeded", description: "Upgrade to Xakteir Dev Pro to deploy more than 5 functions." });
       return;
     }
     
     setIsDeploying(true);
     
-    try {
-      const funcId = funcName.toLowerCase().replace(/[^a-z0-9]/g, "-");
-      const docRef = doc(firestore, `dev_accounts/${user.uid}/functions`, funcId);
-      
-      await setDoc(docRef, {
-        id: funcId,
-        name: funcName,
-        code: funcCode,
-        runtime: "Node.js 20.x",
-        status: "Active",
-        url: `/api/edge/${funcId}`,
-        deployedAt: new Date().toISOString()
-      });
-
-      toast({ title: "Function Deployed", description: `Your function ${funcName} is now live.` });
-      setFuncName("");
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "Deployment Failed", description: e.message });
-    } finally {
-      setIsDeploying(false);
-    }
+    setTimeout(() => {
+      try {
+        addFunction(activeProjectId, funcName, funcCode);
+        toast({ title: "Function Deployed", description: `Your function ${funcName} is now live.` });
+        setFuncName("");
+      } catch (e: any) {
+        toast({ variant: "destructive", title: "Deployment Failed", description: e.message });
+      } finally {
+        setIsDeploying(false);
+      }
+    }, 1000);
   };
 
-  const handleDelete = async (funcId: string) => {
-    if (!user || !firestore) return;
-    try {
-      await deleteDoc(doc(firestore, `dev_accounts/${user.uid}/functions`, funcId));
-      toast({ title: "Function Deleted", description: "The function has been removed." });
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "Error", description: e.message });
-    }
+  const handleDelete = (funcId: string) => {
+    deleteFunction(funcId);
+    toast({ title: "Function Deleted", description: "The function has been removed." });
   };
+
+  if (!activeProjectId) {
+    return (
+      <div className="text-center py-20 space-y-6">
+        <div className="w-24 h-24 mx-auto bg-zinc-900/50 rounded-full flex items-center justify-center border border-white/5">
+          <LayoutGrid className="w-10 h-10 text-zinc-600" />
+        </div>
+        <h3 className="text-2xl font-black uppercase tracking-tighter text-zinc-400">No Project Selected</h3>
+        <p className="text-zinc-500 max-w-sm mx-auto">Select or create a project from the top left dropdown to deploy Edge Functions.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -120,7 +100,7 @@ export default function FunctionsBlade() {
             
             <Button 
               onClick={handleDeploy} 
-              disabled={isDeploying || (devAccount?.tier === "Standard Developer" && (deployedFunctions?.length || 0) >= 5)}
+              disabled={isDeploying}
               className="w-full bg-sky-500 hover:bg-sky-600 text-black font-black uppercase text-xs tracking-widest h-12 rounded-xl"
             >
               {isDeploying ? (
@@ -137,7 +117,7 @@ export default function FunctionsBlade() {
           <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400 mb-6">Active Deployments</h3>
           
           <div className="space-y-4">
-            {deployedFunctions?.map((func: any) => (
+            {projectFunctions.map((func) => (
               <div key={func.id} className="p-4 bg-black/40 border border-white/5 rounded-xl hover:border-sky-500/30 transition-colors group">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -160,14 +140,14 @@ export default function FunctionsBlade() {
                     <a href={func.url} target="_blank" className="text-sky-400 hover:underline lowercase normal-case tracking-normal">{typeof window !== "undefined" ? window.location.origin : ""}{func.url}</a>
                   </div>
                   <div className="flex justify-between items-center text-[10px] uppercase font-black tracking-widest text-zinc-600">
-                    <span>Runtime: {func.runtime}</span>
-                    <span>{new Date(func.deployedAt).toLocaleDateString()}</span>
+                    <span>Runtime: Node.js 20.x</span>
+                    <span>{new Date(func.updatedAt).toLocaleDateString()}</span>
                   </div>
                 </div>
               </div>
             ))}
             
-            {(!deployedFunctions || deployedFunctions.length === 0) && (
+            {projectFunctions.length === 0 && (
               <div className="h-full flex flex-col items-center justify-center space-y-3 text-zinc-500 opacity-50 pt-20">
                 <Terminal className="w-12 h-12" />
                 <p className="text-xs font-bold">No functions deployed yet.</p>
