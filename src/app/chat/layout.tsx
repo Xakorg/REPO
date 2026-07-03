@@ -589,7 +589,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       setShowCreateChannelModal(false);
       setChannelNameInput("");
       if (channelTypeInput === "text") {
-        navigateTo(`/chat/s/${serverName}?c=${formattedChannelName}`, router);
+        navigateTo(`/chat/s/${serverName}?c=${encodeURIComponent(formattedChannelName)}`, router);
       } else {
         toast({ title: "Voice channel created!" });
       }
@@ -1427,7 +1427,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                           );
                         } else {
                           return (
-                            <button key={ch.id} onClick={() => navigateTo(`/chat/s/${activeServer}?c=${ch.name}`, router)} className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all", isActive ? "bg-primary/20 text-white font-bold" : "text-white/40 hover:bg-white/5 hover:text-white")}>
+                            <button key={ch.id} onClick={() => navigateTo(`/chat/s/${activeServer}?c=${encodeURIComponent(ch.name)}`, router)} className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all", isActive ? "bg-primary/20 text-white font-bold" : "text-white/40 hover:bg-white/5 hover:text-white")}>
                               <HashIcon className="w-4 h-4 shrink-0" />
                               <span className="truncate">{ch.name}</span>
                             </button>

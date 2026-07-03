@@ -542,7 +542,7 @@ export default function ServerChatPage() {
       });
       toast({ title: "Channel updated!" });
       setShowChannelSettingsModal(false);
-      router.push(`/chat/s/${serverName}?c=${updatedName}`);
+      router.push(`/chat/s/${serverName}?c=${encodeURIComponent(updatedName)}`);
     } catch(e) {
       toast({ variant: "destructive", title: "Update failed" });
     } finally {
