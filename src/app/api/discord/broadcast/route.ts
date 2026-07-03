@@ -4,30 +4,21 @@ export async function POST(req: Request) {
   try {
     const { title, content, authorName, avatarUrl } = await req.json();
 
-    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+    const webhookUrl = process.env.DISCORD_WEBHOOK_URL || "https://discord.com/api/webhooks/1522632943888240670/dgcHcGN-cOGjL0EqzliXjOZotfA2V-FkA5s79MUpgG_eNQbUY1yLMAQomooH9EWuZrwp";
     if (!webhookUrl) {
       console.warn("DISCORD_WEBHOOK_URL is not configured.");
       return NextResponse.json({ success: true, warning: "Webhook not configured" });
     }
 
+    const now = new Date();
+    // Format: At HH:mm on D/MM/YY admin said
+    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const date = now.toLocaleDateString('en-GB', { day: 'numeric', month: '2-digit', year: '2-digit' });
+    
+    const formattedMessage = `At ${time} on ${date} ${authorName || "admin"} said\n${content}\n\nfrom xakteir`;
+
     const payload = {
-      username: "Xakteir Broadcast System",
-      avatar_url: "https://github.com/171-netizen.png",
-      embeds: [
-        {
-          title: `📣 GLOBAL BROADCAST: ${title}`,
-          description: content,
-          color: 0x4f46e5, // Indigo primary color
-          author: {
-            name: authorName || "Admin",
-            icon_url: avatarUrl || "https://github.com/171-netizen.png"
-          },
-          footer: {
-            text: "Xakteir Multiverse Authority"
-          },
-          timestamp: new Date().toISOString()
-        }
-      ]
+      content: formattedMessage
     };
 
     const response = await fetch(webhookUrl, {
