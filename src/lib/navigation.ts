@@ -22,7 +22,7 @@ export function navigateTo(path: string, router: any) {
   const currentUrl = window.location.href;
 
   try {
-    const targetObj = new URL(targetUrl, window.location.origin);
+    const targetObj = new URL(targetUrl, window.location.href);
     const currentObj = new URL(currentUrl);
 
     // If origins are different (different subdomains/domains), we MUST do a full page reload
