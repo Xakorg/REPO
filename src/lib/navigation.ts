@@ -34,7 +34,14 @@ export function navigateTo(path: string, router: any) {
     // Otherwise, we are on the same domain/subdomain, so use Next.js client router
     // Strip domain and use pathname + search + hash for router
     const relativePath = targetObj.pathname + targetObj.search + targetObj.hash;
+    
+    // In Next.js App Router, router.push can sometimes fail to trigger a visual update
+    // due to aggressive client-side caching or useSearchParams bugs in Layouts.
+    // Calling router.refresh() forces a re-render from the server, fixing the glitch.
     router.push(relativePath);
+    if (typeof router.refresh === 'function') {
+      router.refresh();
+    }
   } catch (e) {
     window.location.href = targetUrl;
   }
