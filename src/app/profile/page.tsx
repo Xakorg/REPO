@@ -18,7 +18,8 @@ import {
   ShieldCheck,
   Globe,
   Lock,
-  Edit3
+  Upload,
+  Sparkles
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useStorage, useAuth, updateDocumentNonBlocking } from "@/firebase";
@@ -30,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { RenderHat, RenderBanner } from "@/components/RenderHat";
 import confetti from "canvas-confetti";
+import { ALL_SHOP_ITEMS } from "@/lib/shopItems";
 
 const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
 
@@ -53,6 +55,7 @@ export default function ProfilePage() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [inventoryTab, setInventoryTab] = useState("All");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -107,6 +110,32 @@ export default function ProfilePage() {
       updateProfile(auth.currentUser, { photoURL: value });
     }
     toast({ title: "Updated", description: `${key} modified.` });
+  };
+
+  const [isUploadingPicture, setIsUploadingPicture] = useState(false);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !user || !storage) return;
+    const file = e.target.files[0];
+    
+    setIsUploadingPicture(true);
+    toast({ title: "Uploading...", description: "Optimizing your new avatar." });
+    
+    try {
+      const fileRef = ref(storage, `avatars/${user.uid}_${Date.now()}`);
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+      
+      setAvatarUrl(url);
+      updateProperty('photoURL', url);
+      toast({ title: "Success!", description: "Avatar updated successfully." });
+      triggerConfetti();
+    } catch (error) {
+      console.error(error);
+      toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload image." });
+    } finally {
+      setIsUploadingPicture(false);
+    }
   };
 
   const generateRandomAvatar = () => {
@@ -239,6 +268,87 @@ export default function ProfilePage() {
               </p>
             </Card>
           </motion.div>
+
+          {/* Equipment Inventory Bento */}
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+            <Card className="glass-card bg-[#0c0c16]/80 backdrop-blur-2xl border-white/5 p-6 rounded-[2rem] flex flex-col min-h-[300px]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[10px] font-black uppercase text-primary tracking-widest flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" /> Equipment
+                </h3>
+              </div>
+              
+              <div className="flex flex-wrap gap-2 mb-4">
+                {["All", "hat", "aura", "nameplate", "decor", "pet", "banner"].map((tab) => (
+                  <Button
+                    key={tab}
+                    onClick={() => setInventoryTab(tab)}
+                    className={cn(
+                      "h-8 px-3 rounded-full text-[10px] font-black uppercase tracking-wider transition-all",
+                      inventoryTab === tab 
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+                    )}
+                  >
+                    {tab === "All" ? "All" : tab}
+                  </Button>
+                ))}
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+                {userData?.inventory?.length > 0 ? (
+                  ALL_SHOP_ITEMS
+                    .filter(item => userData.inventory.includes(item.key) && (inventoryTab === "All" || item.type === inventoryTab))
+                    .map((item) => {
+                      const isEquipped = userData[item.type] === item.key;
+                      return (
+                        <div key={item.id} className="flex flex-col gap-2 p-3 rounded-xl bg-black/40 border border-white/5 group">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", item.bg, item.color)}>
+                                {item.type === 'hat' && <UserIcon className="w-4 h-4" />}
+                                {item.type === 'aura' && <Zap className="w-4 h-4" />}
+                                {item.type === 'nameplate' && <Edit3 className="w-4 h-4" />}
+                                {item.type === 'decor' && <Sparkles className="w-4 h-4" />}
+                                {item.type === 'pet' && <Heart className="w-4 h-4" />}
+                                {item.type === 'banner' && <Globe className="w-4 h-4" />}
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-white">{item.name}</p>
+                                <p className="text-[9px] font-black uppercase text-white/40 tracking-wider">{item.category}</p>
+                              </div>
+                            </div>
+                            <Button
+                              onClick={() => {
+                                if (isEquipped) {
+                                  updateProperty(item.type, "none");
+                                } else {
+                                  updateProperty(item.type, item.key);
+                                }
+                              }}
+                              className={cn(
+                                "h-7 px-3 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                                isEquipped 
+                                  ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20" 
+                                  : "bg-white/5 text-white hover:bg-white/10 border border-white/5"
+                              )}
+                            >
+                              {isEquipped ? "Unequip" : "Equip"}
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    })
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-white/20 text-center p-6">
+                    <Sparkles className="w-8 h-8 mb-2 opacity-20" />
+                    <p className="text-[10px] font-black uppercase tracking-widest">Inventory Empty</p>
+                    <p className="text-xs mt-1 italic">Visit the shop to acquire items.</p>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </motion.div>
         </div>
 
         {/* Right Column: Settings & Customization (8 cols) */}
@@ -280,9 +390,21 @@ export default function ProfilePage() {
                         className="h-16 rounded-2xl bg-black/40 border-white/5 pl-6 text-sm font-bold text-white focus:border-primary/50 shadow-inner flex-1"
                         placeholder="https://..."
                       />
-                      <Button onClick={generateRandomAvatar} className="h-16 px-6 rounded-2xl bg-primary/20 hover:bg-primary/30 text-primary border border-primary/20 font-black text-[10px] uppercase tracking-widest transition-all">
-                        <RefreshCw className="w-4 h-4 mr-2" /> Gen
+                      <Button onClick={generateRandomAvatar} className="h-16 px-4 rounded-2xl bg-primary/20 hover:bg-primary/30 text-primary border border-primary/20 font-black text-[10px] uppercase tracking-widest transition-all">
+                        <RefreshCw className="w-4 h-4" />
                       </Button>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                          disabled={isUploadingPicture}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                        />
+                        <Button disabled={isUploadingPicture} className="h-16 px-4 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 font-black text-[10px] uppercase tracking-widest transition-all pointer-events-none">
+                          {isUploadingPicture ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

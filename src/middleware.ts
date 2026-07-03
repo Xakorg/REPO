@@ -249,6 +249,15 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(`https://www.xakteir.com${path}`);
   }
 
+  // 13.5 Handle MicroDimension standalone deployment via microdimension.xakteir.com
+  if (hostname === 'microdimension.xakteir.com' || hostname === 'www.microdimension.xakteir.com' || hostname.startsWith('microdimension.localhost')) {
+    if (path === '/') return NextResponse.rewrite(new URL('/microdimension', req.url));
+    if (path.startsWith('/microdimension')) return NextResponse.next();
+    
+    // Rewrite sub-routes to microdimension directory
+    return NextResponse.rewrite(new URL(`/microdimension${path}`, req.url));
+  }
+
   // 14. Enforce Subdomain Isolation (Prevent direct path access from other domains)
   if (
     hostname !== 'xakarena.xakteir.com' && hostname !== 'www.xakarena.xakteir.com' &&
@@ -256,7 +265,8 @@ export function middleware(req: NextRequest) {
     hostname !== 'voltra.xakteir.com' && hostname !== 'www.voltra.xakteir.com' && !hostname.startsWith('voltra.localhost') &&
     hostname !== 'store.voltra.xakteir.com' && hostname !== 'www.store.voltra.xakteir.com' && !hostname.startsWith('store.voltra.localhost') &&
     hostname !== 'play.voltra.xakteir.com' && hostname !== 'www.play.voltra.xakteir.com' && !hostname.startsWith('play.voltra.localhost') &&
-    hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com' && !hostname.startsWith('voltramax.localhost')
+    hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com' && !hostname.startsWith('voltramax.localhost') &&
+    hostname !== 'microdimension.xakteir.com' && hostname !== 'www.microdimension.xakteir.com' && !hostname.startsWith('microdimension.localhost')
   ) {
     if (
       path === '/xakarena' || path.startsWith('/xakarena/') || 
@@ -264,7 +274,8 @@ export function middleware(req: NextRequest) {
       path === '/voltra' || path.startsWith('/voltra/') ||
       path === '/voltrastore' || path.startsWith('/voltrastore/') ||
       path === '/voltraplay' || path.startsWith('/voltraplay/') ||
-      path === '/voltramax' || path.startsWith('/voltramax/')
+      path === '/voltramax' || path.startsWith('/voltramax/') ||
+      path === '/microdimension' || path.startsWith('/microdimension/')
     ) {
       // Rewrite to a non-existent route to trigger Next.js 404 (Hidden from users)
       return NextResponse.rewrite(new URL('/404', req.url));
@@ -288,6 +299,7 @@ export function middleware(req: NextRequest) {
     hostname !== 'store.voltra.xakteir.com' && hostname !== 'www.store.voltra.xakteir.com' &&
     hostname !== 'play.voltra.xakteir.com' && hostname !== 'www.play.voltra.xakteir.com' &&
     hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com' &&
+    hostname !== 'microdimension.xakteir.com' && hostname !== 'www.microdimension.xakteir.com' &&
     hostname !== 'weather.xakteir.com' && hostname !== 'www.weather.xakteir.com'
   ) {
     if (path === '/xakcode') return NextResponse.redirect('https://code.xakteir.com/xakcode');
@@ -313,6 +325,9 @@ export function middleware(req: NextRequest) {
 
     if (path === '/profile') return NextResponse.redirect('https://account.xakteir.com');
     if (path.startsWith('/profile/')) return NextResponse.redirect(`https://account.xakteir.com${path.replace('/profile', '')}`);
+
+    if (path === '/microdimension') return NextResponse.redirect('https://microdimension.xakteir.com');
+    if (path.startsWith('/microdimension/')) return NextResponse.redirect(`https://microdimension.xakteir.com${path.replace('/microdimension', '')}`);
   }
 
   // Default behavior for xakteir.com (allow everything)

@@ -160,6 +160,23 @@ export default function AdminDashboardPage() {
         timestamp: serverTimestamp(),
         type: "broadcast"
       });
+
+      // Call Discord Webhook API
+      try {
+        await fetch("/api/discord/broadcast", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: broadcast.title.trim(),
+            content: broadcast.content.trim(),
+            authorName: user.displayName?.replace(/^@+/, ""),
+            avatarUrl: user.photoURL
+          })
+        });
+      } catch (err) {
+        console.error("Failed to trigger Discord webhook:", err);
+      }
+
       toast({ title: "Broadcast queued" });
       setBroadcast({ title: "", content: "" });
     } catch (e) {
