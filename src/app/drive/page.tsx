@@ -29,7 +29,7 @@ import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogFooter } from "
 import Editor from "@monaco-editor/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
+import KnowledgeGraph3D from "@/components/drive/KnowledgeGraph3D";
 // --- IndexedDB Local File Handling ---
 const DB_NAME = 'xakteir-drive';
 const STORE_NAME = 'handles';
@@ -96,7 +96,7 @@ export default function XakDrivePage() {
   const { toast } = useToast();
 
   const [driveMode, setDriveMode] = useState<DriveMode>('cloud');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | '3d'>('grid');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -912,6 +912,7 @@ export default function XakDrivePage() {
               <div className="flex bg-zinc-900 rounded-lg p-1">
                 <button onClick={() => setViewMode('grid')} className={cn("p-1.5 rounded-md transition-colors", viewMode === 'grid' ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-white")}><Grid className="w-4 h-4" /></button>
                 <button onClick={() => setViewMode('list')} className={cn("p-1.5 rounded-md transition-colors", viewMode === 'list' ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-white")}><List className="w-4 h-4" /></button>
+                <button onClick={() => setViewMode('3d')} className={cn("p-1.5 rounded-md transition-colors", viewMode === '3d' ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]" : "text-zinc-500 hover:text-purple-400")}><Activity className="w-4 h-4" /></button>
               </div>
               
               {driveMode !== 'trash' && (
@@ -1034,7 +1035,12 @@ export default function XakDrivePage() {
               onContextMenu={handleEmptySpaceContextMenu}
             >
               {/* Grid View */}
-              {viewMode === 'grid' ? (
+              {/* 3D Knowledge Web View */}
+              {viewMode === '3d' ? (
+                <div className="w-full h-[75vh] p-4">
+                  <KnowledgeGraph3D files={driveFilesRaw || []} />
+                </div>
+              ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                   {driveFiles.map(file => (
                     <motion.div 

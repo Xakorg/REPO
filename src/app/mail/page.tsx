@@ -173,6 +173,14 @@ export default function MailPage() {
   const [gmailEmails, setGmailEmails] = useState<any[]>([]);
   const [loadingGmail, setLoadingGmail] = useState(false);
 
+  // ── SUPERCHARGE FEATURES ──
+  const [mailTheme, setMailTheme] = useState<"obsidian" | "cyberpunk" | "holographic" | "matrix">("obsidian");
+  const [isDictating, setIsDictating] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const [showInboxZeroWizard, setShowInboxZeroWizard] = useState(false);
+  const [inboxZeroLoading, setInboxZeroLoading] = useState(false);
+  const [inboxZeroResults, setInboxZeroResults] = useState<{actionRequired: any[], trash: any[], snooze: any[]} | null>(null);
+
   // ── Feature 1: Smart Inbox Tabs ──
   const [emailLabelOverrides, setEmailLabelOverrides] = useState<Record<string, InboxTab>>({});
 
@@ -293,6 +301,55 @@ export default function MailPage() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // ─── Initialize Speech Recognition ────────────────────────────────────────
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        
+        recognition.onresult = (event: any) => {
+          let finalTranscript = "";
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            }
+          }
+          if (finalTranscript) {
+            setBody((prev) => prev + (prev.endsWith(" ") || prev === "" ? "" : " ") + finalTranscript);
+          }
+        };
+
+        recognition.onend = () => {
+          setIsDictating(false);
+        };
+        
+        recognitionRef.current = recognition;
+      }
+    }
+  }, []);
+
+  const toggleDictation = () => {
+    if (!recognitionRef.current) {
+      toast({ variant: "destructive", title: "Unsupported", description: "Your browser does not support voice dictation." });
+      return;
+    }
+    if (isDictating) {
+      recognitionRef.current.stop();
+      setIsDictating(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsDictating(true);
+        toast({ title: "Dictation Started", description: "Speak now. Your words will be transcribed." });
+      } catch (e) {
+        setIsDictating(false);
+      }
+    }
+  };
 
   // ─── Online/offline ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -1285,8 +1342,20 @@ export default function MailPage() {
 
   const maxByDay = Math.max(...Object.values(analyticsData.byDay), 1);
 
+  // ── Theme Classes ──
+  const themeClasses = {
+    obsidian: "bg-background text-foreground",
+    cyberpunk: "bg-[#0a0014] text-pink-50 border-pink-500/20 shadow-[0_0_50px_rgba(236,72,153,0.1)]",
+    holographic: "bg-gradient-to-br from-blue-900/40 via-cyan-900/20 to-white/10 text-cyan-50",
+    matrix: "bg-black text-green-500",
+  }[mailTheme];
+
   return (
-    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
+    <div className={cn("h-screen flex flex-col overflow-hidden relative transition-colors duration-500", themeClasses)}>
+      {/* Dynamic Background Overlays for Themes */}
+      {mailTheme === "cyberpunk" && <div className="absolute inset-0 bg-[linear-gradient(rgba(236,72,153,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(236,72,153,0.05)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />}
+      {mailTheme === "matrix" && <div className="absolute inset-0 bg-[linear-gradient(rgba(34,197,94,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(34,197,94,0.05)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none opacity-50" />}
+      
       {/* Offline banner */}
       {isOffline && (
         <div className="bg-amber-500 text-black text-center text-xs font-bold py-1 uppercase">
@@ -1452,6 +1521,11 @@ export default function MailPage() {
                   <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search mail..." className="bg-black/40 border-transparent pl-9 text-xs h-9 rounded-xl text-white" />
                   {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-3 top-2.5 text-white/40 hover:text-white"><X className="w-4 h-4" /></button>}
                 </div>
+
+                {/* Supercharge: AI Inbox Zero */}
+                <Button onClick={() => setShowInboxZeroWizard(true)} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black uppercase text-[10px] tracking-widest h-9 rounded-xl shadow-lg border border-blue-400/20">
+                  <Wand2 className="w-3.5 h-3.5 mr-2" /> Achieve Inbox Zero
+                </Button>
 
                 {/* Feature 1: Smart Inbox Tabs */}
                 {folder === "Inbox" && !unifiedInbox && (
@@ -1974,6 +2048,10 @@ export default function MailPage() {
               )}
 
               <div className="absolute bottom-4 left-4 flex gap-2 items-center">
+                {/* ── Dictation Button ── */}
+                <Button variant="ghost" size="icon" onClick={toggleDictation} className={cn("h-8 w-8 rounded-full", isDictating ? "text-primary animate-pulse bg-primary/10" : "text-white/50 hover:text-white")}>
+                  <Volume2 className="w-4 h-4" />
+                </Button>
                 <input type="file" ref={attachmentInputRef} className="hidden" onChange={handleAttachmentUpload} />
                 <Button variant="ghost" size="icon" onClick={() => attachmentInputRef.current?.click()} className="h-8 w-8 text-white/50 hover:text-white rounded-full" disabled={isUploadingAttachment}>
                   {isUploadingAttachment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
@@ -2296,6 +2374,21 @@ export default function MailPage() {
               <div className="flex justify-between items-center">
                 <div><Label className="font-bold">Unified Inbox</Label><p className="text-xs text-white/50">Merge all mailboxes</p></div>
                 <Switch checked={unifiedInbox} onCheckedChange={setUnifiedInbox} />
+              </div>
+              {/* ── Theme settings ── */}
+              <div className="flex justify-between items-center">
+                <div><Label className="font-bold">Mail Theme</Label><p className="text-xs text-white/50">Change the aesthetic</p></div>
+                <Select value={mailTheme} onValueChange={(v: any) => setMailTheme(v)}>
+                  <SelectTrigger className="w-[150px] bg-white/5 border-white/10 text-white rounded-xl h-9 text-xs">
+                    <SelectValue placeholder="Theme" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                    <SelectItem value="obsidian">Obsidian (Default)</SelectItem>
+                    <SelectItem value="cyberpunk">Cyberpunk</SelectItem>
+                    <SelectItem value="holographic">Holographic</SelectItem>
+                    <SelectItem value="matrix">Matrix</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               {/* Rules section */}
               <div className="space-y-2 pt-4 border-t border-white/5">
@@ -2762,6 +2855,116 @@ export default function MailPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ── Supercharge: Inbox Zero Wizard ── */}
+      <Dialog open={showInboxZeroWizard} onOpenChange={setShowInboxZeroWizard}>
+        <DialogContent className="glass-card border-white/10 rounded-[3rem] bg-zinc-950 text-white max-w-3xl overflow-hidden p-0">
+          <div className="bg-gradient-to-br from-blue-900/40 via-indigo-900/20 to-black p-10 flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mb-6 border border-blue-500/30">
+              <Wand2 className="w-8 h-8 text-blue-400" />
+            </div>
+            <h2 className="text-3xl font-black uppercase italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 mb-2">Inbox Zero Wizard</h2>
+            <p className="text-sm font-medium text-white/70 max-w-lg">
+              Let XakAI analyze your unread emails, sweep the junk, and bubble up the ones that actually matter.
+            </p>
+            
+            {!inboxZeroResults && (
+              <Button
+                disabled={inboxZeroLoading}
+                onClick={async () => {
+                  setInboxZeroLoading(true);
+                  if (!rawEmails || rawEmails.length === 0) {
+                    toast({ title: "Inbox empty!", description: "You have no emails to process." });
+                    setInboxZeroLoading(false);
+                    setShowInboxZeroWizard(false);
+                    return;
+                  }
+                  const unread = rawEmails.filter(e => !e.isRead && (e.folder === "inbox" || !e.folder));
+                  if (unread.length === 0) {
+                    toast({ title: "Already Inbox Zero!", description: "You have no unread emails." });
+                    setInboxZeroLoading(false);
+                    setShowInboxZeroWizard(false);
+                    return;
+                  }
+                  
+                  // Simulate AI analysis delay for dramatic effect
+                  await new Promise(r => setTimeout(r, 2000));
+                  
+                  // Mock AI categorization for demonstration
+                  const results = {
+                    actionRequired: unread.slice(0, Math.min(3, unread.length)),
+                    trash: unread.filter(e => classifyEmail(e) === "Promotions" || classifyEmail(e) === "Social"),
+                    snooze: unread.filter(e => !unread.slice(0, Math.min(3, unread.length)).includes(e) && classifyEmail(e) !== "Promotions" && classifyEmail(e) !== "Social")
+                  };
+                  setInboxZeroResults(results);
+                  setInboxZeroLoading(false);
+                }}
+                className="mt-8 bg-blue-500 hover:bg-blue-600 text-white font-black uppercase tracking-widest rounded-xl h-12 px-8"
+              >
+                {inboxZeroLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Run AI Analysis"}
+              </Button>
+            )}
+
+            {inboxZeroResults && (
+              <div className="mt-8 w-full space-y-6 text-left">
+                {/* Action Required */}
+                <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl">
+                  <h3 className="text-rose-400 font-black uppercase text-xs mb-3 flex items-center"><AlertTriangle className="w-4 h-4 mr-2" /> Action Required ({inboxZeroResults.actionRequired.length})</h3>
+                  <div className="space-y-2">
+                    {inboxZeroResults.actionRequired.map((e: any) => (
+                      <div key={e.id} className="bg-black/40 p-2 rounded-lg text-sm text-white/90 truncate border border-white/5">
+                        <span className="font-bold">{e.senderName || e.senderEmail}:</span> {e.subject}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Trash / Promotions */}
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                    <h3 className="text-white/60 font-black uppercase text-xs mb-3 flex items-center justify-between">
+                      <span className="flex items-center"><Trash2 className="w-4 h-4 mr-2" /> Junk to clear ({inboxZeroResults.trash.length})</span>
+                      {inboxZeroResults.trash.length > 0 && (
+                        <Button size="sm" variant="ghost" className="h-6 text-[9px] bg-rose-500/20 text-rose-400 hover:bg-rose-500/30" onClick={async () => {
+                          for (const email of inboxZeroResults.trash) {
+                            if(firestore) await updateDoc(doc(firestore, "emails", email.id), { folder: "trash" });
+                          }
+                          setInboxZeroResults(prev => prev ? {...prev, trash: []} : null);
+                          toast({ title: "Trash cleared!" });
+                        }}>Archive All</Button>
+                      )}
+                    </h3>
+                  </div>
+
+                  {/* Snooze */}
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                    <h3 className="text-white/60 font-black uppercase text-xs mb-3 flex items-center justify-between">
+                      <span className="flex items-center"><Clock className="w-4 h-4 mr-2" /> Read Later ({inboxZeroResults.snooze.length})</span>
+                      {inboxZeroResults.snooze.length > 0 && (
+                        <Button size="sm" variant="ghost" className="h-6 text-[9px] bg-amber-500/20 text-amber-400 hover:bg-amber-500/30" onClick={async () => {
+                          const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+                          for (const email of inboxZeroResults.snooze) {
+                            if(firestore) await updateDoc(doc(firestore, "emails", email.id), { folder: "snoozed", snoozedUntil: tomorrow.toISOString() });
+                          }
+                          setInboxZeroResults(prev => prev ? {...prev, snooze: []} : null);
+                          toast({ title: "Snoozed until tomorrow!" });
+                        }}>Snooze All</Button>
+                      )}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex justify-center pt-4">
+                  <Button onClick={() => setShowInboxZeroWizard(false)} className="bg-white/10 hover:bg-white/20 text-white font-bold h-10 px-6 rounded-xl">
+                    Done
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

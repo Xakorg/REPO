@@ -1,24 +1,24 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-  User, 
-  Sparkles,
   Settings,
   Zap,
   Heart,
   Trophy,
-  Lock,
   Loader2,
-  Camera,
   RefreshCw,
-  Gamepad2,
   Activity,
-  ShieldCheck
+  User as UserIcon,
+  ShieldCheck,
+  Globe,
+  Lock,
+  Edit3
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useStorage, useAuth, updateDocumentNonBlocking } from "@/firebase";
@@ -28,26 +28,19 @@ import { updateProfile } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { RenderHat } from "@/components/RenderHat";
+import { RenderHat, RenderBanner } from "@/components/RenderHat";
+import confetti from "canvas-confetti";
 
 const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
 
-const MOOD_EMOJIS = ["😀", "😎", "🎮", "🚀", "✨", "🔥", "🎨", "🌈", "👾", "🤖", "⭐", "🎉", "👑", "🦄", "🍦", "🍕", "🎈"];
-
-const AURAS = [
-  { id: 'none', label: 'NONE', class: '' },
-  { id: 'neon', label: 'NEON PULSE', class: 'aura-neon' },
-  { id: 'glitch', label: 'GLITCH', class: 'aura-glitch' },
-  { id: 'gold', label: 'GOLD', class: 'aura-gold' },
-];
-
-const NAMEPLATES = [
-  { id: 'default', label: 'STANDARD', class: '' },
-  { id: 'nameplate-blue', label: 'BLUE', class: 'nameplate-blue' },
-  { id: 'nameplate-gold', label: 'GOLD', class: 'nameplate-gold' },
-  { id: 'nameplate-pro', label: 'PRO', class: 'nameplate-pro' },
-];
+const triggerConfetti = () => {
+  confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ['#4f46e5', '#ec4899', '#f59e0b']
+  });
+};
 
 export default function ProfilePage() {
   const { user, isUserLoading } = useUser();
@@ -57,10 +50,9 @@ export default function ProfilePage() {
   const { toast } = useToast();
 
   const [description, setDescription] = useState("");
-  const [displayName, setDisplayName] = useState<string | null>(user?.displayName || null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -83,59 +75,28 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (userData) {
-      setDescription(userData.description || "");
+      setDescription(userData.aboutMe || userData.description || "");
       setAvatarUrl(userData.photoURL || user?.photoURL || "");
       setDisplayName(userData.displayName || user?.displayName || null);
     }
   }, [userData, user]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user || !storage || !auth?.currentUser) return;
-
-    setIsUploading(true);
-    try {
-      const storageRef = ref(storage, `avatars/${user.uid}`);
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
-      
-      await updateProfile(auth.currentUser, { photoURL: downloadURL });
-      updateDocumentNonBlocking(doc(firestore!, "users", user.uid), {
-        photoURL: downloadURL,
-        updatedAt: serverTimestamp()
-      });
-      setAvatarUrl(downloadURL);
-      toast({ title: "Profile Image Updated" });
-    } catch (error) {
-      toast({ variant: "destructive", title: "Error" });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const generateRandomAvatar = () => {
-    const seed = Math.random().toString();
-    const newUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
-    setAvatarUrl(newUrl);
-    updateProperty('photoURL', newUrl);
-  };
-
   const handleUpdate = () => {
     if (!firestore || !user) return;
     setIsUpdating(true);
     updateDocumentNonBlocking(doc(firestore, "users", user.uid), {
-      description,
+      aboutMe: description,
+      description: description,
       updatedAt: serverTimestamp()
     });
     if (displayName && displayName !== user.displayName) {
       try {
         updateProfile(auth.currentUser!, { displayName });
         updateDocumentNonBlocking(doc(firestore, "users", user.uid), { displayName });
-      } catch (e) {
-        // ignore updateProfile errors here; non-blocking update already queued
-      }
+      } catch (e) {}
     }
-    toast({ title: "Settings Saved" });
+    triggerConfetti();
+    toast({ title: "Profile Synced", description: "Your identity has been updated in the multiverse." });
     setIsUpdating(false);
   };
 
@@ -148,202 +109,233 @@ export default function ProfilePage() {
     toast({ title: "Updated", description: `${key} modified.` });
   };
 
+  const generateRandomAvatar = () => {
+    const seed = Math.random().toString();
+    const newUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
+    setAvatarUrl(newUrl);
+    updateProperty('photoURL', newUrl);
+    triggerConfetti();
+  };
+
   if (!mounted) return null;
   if (isUserLoading || isDataLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin w-12 h-12 text-primary opacity-20" /></div>;
   if (!user) return <div className="p-32 text-center text-4xl font-black uppercase italic text-foreground">Sign in to view your profile.</div>;
 
-  const cleanDisplayName = user.displayName?.replace(/^@+/, "") || "User";
+  const cleanDisplayName = (displayName || user.displayName || "User").replace(/^@+/, "");
+
+  // Helper for nameplate colors
+  const getNameplateClass = (nameplate: string) => {
+    switch (nameplate) {
+      case 'golden': return "bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-600 bg-clip-text text-transparent";
+      case 'rainbow': return "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent animate-gradient";
+      case 'hacker': return "text-green-500 font-mono tracking-tighter drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]";
+      case 'magic': return "text-fuchsia-400 drop-shadow-[0_0_15px_rgba(232,121,249,0.8)]";
+      case 'sports': return "text-orange-500 italic drop-shadow-[0_4px_0_rgba(194,65,12,1)]";
+      case 'pro': return "bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent";
+      case 'blue': return "text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.8)]";
+      default: return "text-white";
+    }
+  };
 
   return (
-    <div className="max-w-[1400px] mx-auto py-12 space-y-12 animate-fade-in px-8 pb-40 text-foreground">
-      <header className="relative h-[300px] rounded-[3.5rem] overflow-hidden border-4 border-white/10 shadow-2xl bg-zinc-950">
-        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        <img src="https://picsum.photos/seed/profile-banner/1200/400" className="absolute inset-0 w-full h-full object-cover opacity-50 grayscale" alt="Banner" />
+    <div className="max-w-[1400px] mx-auto py-12 space-y-8 animate-fade-in px-8 pb-40 text-foreground">
+      
+      {/* Immersive Parallax Header */}
+      <motion.header 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 100 }}
+        className="relative h-[350px] rounded-[3rem] overflow-hidden shadow-2xl bg-[#0c0c16] group"
+      >
+        {/* Banner */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <RenderBanner bannerKey={userData?.banner} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000" />
+          {!userData?.banner && (
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-purple-900/20 to-black" />
+          )}
+        </div>
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#0c0c16] via-[#0c0c16]/50 to-transparent" />
         
-        <div className="absolute bottom-10 left-12 flex items-center gap-10 z-20">
-          <div className={cn(
-            "relative p-1 rounded-[2.5rem] transition-all duration-700 shadow-2xl bg-zinc-900",
-            userData?.aura && userData.aura !== 'none' ? `aura-${userData.aura}` : ""
-          )}>
-            <RenderHat hatKey={userData?.hat} />
-            <div className="w-36 h-36 border-4 border-black/40 rounded-[2.2rem] overflow-hidden relative shadow-2xl">
-              <Avatar className="w-full h-full rounded-none">
-                <AvatarImage src={avatarUrl} className="object-cover" />
-                <AvatarFallback className="bg-zinc-800 text-white text-5xl font-black">{cleanDisplayName[0]}</AvatarFallback>
-              </Avatar>
+        {/* Profile Info Overlay */}
+        <div className="absolute bottom-0 left-0 w-full p-12 flex items-end justify-between z-20">
+          <div className="flex items-end gap-8">
+            <div className="relative group/avatar cursor-pointer">
+              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-110 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-500" />
+              <div className={cn("relative p-2 rounded-[2.5rem] bg-[#0c0c16]/80 backdrop-blur-xl border border-white/10 shadow-2xl transition-transform duration-500 hover:scale-105", userData?.aura && userData.aura !== 'none' ? `aura-${userData.aura}` : "")}>
+                <RenderHat hatKey={userData?.hat} />
+                <Avatar className="w-32 h-32 rounded-[2rem] border-2 border-white/5 bg-zinc-900">
+                  <AvatarImage src={avatarUrl} className="object-cover" />
+                  <AvatarFallback className="text-4xl font-black">{cleanDisplayName[0]}</AvatarFallback>
+                </Avatar>
+                {/* Active Indicator */}
+                <div className="absolute bottom-2 right-2 w-6 h-6 bg-emerald-500 rounded-full border-4 border-[#0c0c16] shadow-[0_0_15px_rgba(16,185,129,0.5)] z-30" />
+              </div>
             </div>
-            <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-black rounded-full border-4 border-white/20 flex items-center justify-center text-2xl shadow-2xl">
-               {userData?.mood || "😀"}
+
+            <div className="mb-2">
+              <div className="flex items-center gap-4 mb-1">
+                <h1 className={cn("text-6xl font-black uppercase italic leading-none tracking-tighter", getNameplateClass(userData?.nameplate))}>
+                  {cleanDisplayName}
+                </h1>
+                {hasAdminAccess && (
+                  <Badge className="bg-primary text-white font-black uppercase px-3 py-1 text-[10px] shadow-[0_0_15px_rgba(var(--primary),0.5)] border-none">Admin</Badge>
+                )}
+                <Badge className="bg-white/10 backdrop-blur-md text-white font-black uppercase px-3 py-1 text-[10px] border border-white/10">Verified</Badge>
+              </div>
+              <p className="text-white/50 font-bold uppercase tracking-[0.2em] text-xs flex items-center gap-2">
+                @{cleanDisplayName.toLowerCase().replace(/\s/g, '')} <span className="opacity-50">•</span> {user.email}
+              </p>
             </div>
           </div>
 
-          <div className="space-y-2 pb-2">
-            <div className="flex items-center gap-4">
-              <h1 className={cn(
-                "text-6xl font-black tracking-tighter uppercase italic leading-none drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]",
-                userData?.nameplate && userData.nameplate !== 'default' ? userData.nameplate : "text-white"
-              )}>
-                {cleanDisplayName}
-              </h1>
-              <Badge className={cn(
-                "backdrop-blur-xl border border-white/20 text-white font-black uppercase text-[8px] px-6 py-1.5 rounded-full",
-                hasAdminAccess ? "bg-primary/40" : "bg-white/10"
-              )}>
-                {hasAdminAccess ? "ADMIN" : "VERIFIED"}
-              </Badge>
-            </div>
-            <p className="text-sm font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
-              <RefreshCw className="w-3 h-3" /> {user.email}
-            </p>
+          <div className="flex gap-4 mb-2">
+             <Button variant="outline" className="rounded-full bg-white/5 backdrop-blur-md border-white/10 hover:bg-white/10 text-white gap-2 font-bold uppercase text-xs tracking-wider">
+               <Globe className="w-4 h-4" /> Public Profile
+             </Button>
           </div>
         </div>
-      </header>
+      </motion.header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <div className="lg:col-span-8 space-y-10">
-          <Card className="glass-card rounded-[3.5rem] border-white/5 bg-zinc-950/40 p-12 space-y-12">
-            <div className="flex items-center justify-between border-b border-white/5 pb-8">
-              <h3 className="text-3xl font-black uppercase italic tracking-tighter text-white">Settings</h3>
-              <Settings className="w-6 h-6 text-white/10" />
-            </div>
-
-            <div className="space-y-10">
-              <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 ml-4">Bio</label>
-                <Textarea 
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="About you..."
-                  className="rounded-3xl bg-zinc-900/50 border-white/5 min-h-[160px] p-8 text-lg font-medium italic text-white"
-                />
+      {/* Bento Box Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        
+        {/* Left Column: Stats & Quick Info (4 cols) */}
+        <div className="md:col-span-4 space-y-8">
+          {/* Stats Bento */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
+            className="grid grid-cols-2 gap-4"
+          >
+            <Card className="glass-card bg-[#0c0c16]/80 backdrop-blur-2xl border-white/5 p-6 rounded-[2rem] hover:bg-white/5 transition-colors group">
+              <Zap className="w-6 h-6 text-amber-500 mb-4 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)] group-hover:scale-110 transition-transform" />
+              <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Credits</p>
+              <p className="text-3xl font-black italic text-white">{userData?.currencyBalance || 0}</p>
+            </Card>
+            
+            <Card className="glass-card bg-[#0c0c16]/80 backdrop-blur-2xl border-white/5 p-6 rounded-[2rem] hover:bg-white/5 transition-colors group">
+              <Trophy className="w-6 h-6 text-purple-500 mb-4 drop-shadow-[0_0_10px_rgba(168,85,247,0.5)] group-hover:scale-110 transition-transform" />
+              <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">XP Level</p>
+              <p className="text-3xl font-black italic text-white">{userData?.xp || 0}</p>
+            </Card>
+            
+            <Card className="glass-card bg-[#0c0c16]/80 backdrop-blur-2xl border-white/5 p-6 rounded-[2rem] hover:bg-white/5 transition-colors group col-span-2 flex justify-between items-center">
+              <div>
+                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Followers</p>
+                <p className="text-3xl font-black italic text-white">{userData?.followerCount || 0}</p>
               </div>
+              <Heart className="w-10 h-10 text-rose-500/20 group-hover:text-rose-500/40 transition-colors" />
+            </Card>
+          </motion.div>
 
-              <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 ml-4">Display Name</label>
-                <div className="flex gap-4">
-                  <Input
-                    value={displayName || ''}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Your display name"
-                    className="h-14 rounded-2xl bg-zinc-900/50 border-white/5 pl-4 text-sm font-bold text-white/80"
-                  />
-                  <Button onClick={() => {
-                    if (!displayName) return;
-                    updateProperty('displayName', displayName);
-                    try { updateProfile(auth.currentUser!, { displayName }); } catch(e) {}
-                    toast({ title: 'Display name updated' });
-                  }} className="h-14 px-6 rounded-2xl bg-primary font-black uppercase text-xs">Change</Button>
+          {/* About Quick View Bento */}
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+            <Card className="glass-card bg-[#0c0c16]/80 backdrop-blur-2xl border-white/5 p-8 rounded-[2rem] relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-5"><UserIcon className="w-32 h-32 -rotate-12" /></div>
+              <h3 className="text-[10px] font-black uppercase text-primary tracking-widest mb-4 flex items-center gap-2">
+                <Activity className="w-4 h-4" /> Current Status
+              </h3>
+              <p className="text-sm font-bold text-white/80 leading-relaxed italic border-l-2 border-primary/50 pl-4 py-1">
+                {description || "No bio set. Editing your profile to let the multiverse know who you are!"}
+              </p>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Right Column: Settings & Customization (8 cols) */}
+        <div className="md:col-span-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <Card className="glass-card bg-[#0c0c16]/80 backdrop-blur-2xl border-white/5 p-10 rounded-[3rem] shadow-2xl relative">
+              
+              <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
+                <div>
+                  <h2 className="text-2xl font-black uppercase italic tracking-widest flex items-center gap-3">
+                    <Settings className="w-6 h-6 text-primary" /> Identity Settings
+                  </h2>
+                  <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Configure how you appear across Xakteir</p>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 ml-4">Account Privacy</label>
+              <div className="space-y-8">
+                {/* Name & Avatar Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2">Display Name</label>
+                    <div className="relative group">
+                      <Edit3 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-primary transition-colors" />
+                      <Input
+                        value={displayName || ''}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder="Your display name"
+                        className="h-16 rounded-2xl bg-black/40 border-white/5 pl-12 text-sm font-bold text-white focus:border-primary/50 transition-colors shadow-inner"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2">Avatar Source URL</label>
+                    <div className="flex gap-2">
+                      <Input 
+                        value={avatarUrl}
+                        onChange={(e) => { setAvatarUrl(e.target.value); updateProperty('photoURL', e.target.value); }}
+                        className="h-16 rounded-2xl bg-black/40 border-white/5 pl-6 text-sm font-bold text-white focus:border-primary/50 shadow-inner flex-1"
+                        placeholder="https://..."
+                      />
+                      <Button onClick={generateRandomAvatar} className="h-16 px-6 rounded-2xl bg-primary/20 hover:bg-primary/30 text-primary border border-primary/20 font-black text-[10px] uppercase tracking-widest transition-all">
+                        <RefreshCw className="w-4 h-4 mr-2" /> Gen
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bio Area */}
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2">Biography</label>
+                  <Textarea 
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Tell the multiverse about yourself..."
+                    className="rounded-[2rem] bg-black/40 border-white/5 min-h-[160px] p-6 text-sm font-bold italic text-white/90 focus:border-primary/50 shadow-inner resize-none"
+                  />
+                </div>
+
+                {/* Privacy Toggle Bento */}
                 <div 
-                  className="flex items-center justify-between bg-zinc-900/50 border border-white/5 rounded-2xl p-4 px-6 cursor-pointer hover:bg-zinc-800/50 transition-colors" 
+                  className="flex items-center justify-between bg-black/40 border border-white/5 rounded-[2rem] p-6 cursor-pointer hover:bg-white/5 transition-all group"
                   onClick={() => updateProperty('isPublic', !(userData?.isPublic ?? true))}
                 >
-                  <div className="flex-1">
-                    <h4 className="text-white font-bold">Public Profile</h4>
-                    <p className="text-zinc-400 text-xs mt-1">Allow others to find and view your Xakteir profile.</p>
-                  </div>
-                  <div className={cn("w-12 h-6 rounded-full transition-colors flex items-center p-1", (userData?.isPublic ?? true) ? "bg-primary" : "bg-white/10")}>
-                    <div className={cn("w-4 h-4 rounded-full bg-black transition-transform", (userData?.isPublic ?? true) ? "translate-x-6" : "translate-x-0")} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 ml-4">Avatar URL</label>
-                <div className="flex gap-4">
-                  <Input 
-                    value={avatarUrl}
-                    onChange={(e) => { setAvatarUrl(e.target.value); updateProperty('photoURL', e.target.value); }}
-                    className="h-16 rounded-2xl bg-zinc-900/50 border-white/5 pl-8 text-sm font-bold text-white/80"
-                  />
-                  <Button onClick={generateRandomAvatar} className="h-16 px-8 rounded-2xl bg-zinc-900 border border-white/10 font-black text-xs uppercase">GEN</Button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-6">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 ml-4">Nameplate</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {NAMEPLATES.map(style => (
-                      <button 
-                        key={style.id}
-                        onClick={() => updateProperty('nameplate', style.id)}
-                        className={cn(
-                          "h-14 rounded-xl border-2 transition-all font-black text-[9px] uppercase tracking-widest",
-                          userData?.nameplate === style.id ? "bg-primary/20 border-primary text-white" : "bg-zinc-900/50 border-white/5 text-muted-foreground hover:bg-white/5"
-                        )}
-                      >
-                        {style.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 ml-4">Aura</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {AURAS.map(aura => (
-                      <button 
-                        key={aura.id}
-                        onClick={() => updateProperty('aura', aura.id)}
-                        className={cn(
-                          "h-14 rounded-xl border-2 transition-all font-black text-[9px] uppercase tracking-widest",
-                          userData?.aura === aura.id ? "bg-primary/20 border-primary text-white" : "bg-zinc-900/50 border-white/5 text-muted-foreground hover:bg-white/5"
-                        )}
-                      >
-                        {aura.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <Button 
-                onClick={handleUpdate} 
-                disabled={isUpdating}
-                className="w-full h-20 bg-primary hover:bg-primary/90 rounded-3xl font-black uppercase text-xl italic tracking-widest shadow-xl transition-all active:scale-95 border-b-8 border-primary/20 active:border-b-0"
-              >
-                {isUpdating ? <Loader2 className="w-8 h-8 animate-spin" /> : "Save Changes"}
-              </Button>
-            </div>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-4 space-y-8">
-          <Card className="glass-card rounded-[3.5rem] border-white/5 bg-zinc-950/40 p-10 space-y-10 shadow-2xl">
-            <h3 className="text-2xl font-black uppercase italic tracking-tighter">Status</h3>
-            
-            <div className="space-y-6">
-              <div className="space-y-4">
-                {[
-                  { label: "Credits", val: userData?.currencyBalance || 0, icon: Zap, color: "text-amber-500" },
-                  { label: "Followers", val: userData?.followerCount || 0, icon: Heart, color: "text-rose-500" },
-                  { label: "XP", val: userData?.xp || 0, icon: Trophy, color: "text-purple-400" },
-                ].map(stat => (
-                  <div key={stat.label} className="flex justify-between items-center group px-2">
-                    <div className="flex items-center gap-4 text-white/40">
-                      <stat.icon className={cn("w-4 h-4", stat.color)} />
-                      <span className="text-[9px] font-black uppercase tracking-widest group-hover:text-white transition-colors">{stat.label}</span>
+                  <div className="flex items-center gap-4">
+                    <div className={cn("p-3 rounded-xl transition-colors", (userData?.isPublic ?? true) ? "bg-emerald-500/20 text-emerald-400" : "bg-zinc-800 text-zinc-400")}>
+                      {(userData?.isPublic ?? true) ? <Globe className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
                     </div>
-                    <span className="text-2xl font-black italic tabular-nums">{stat.val}</span>
+                    <div>
+                      <h4 className="text-white font-black uppercase tracking-wider text-sm">Public Profile Visibility</h4>
+                      <p className="text-white/40 text-xs font-bold mt-1">When disabled, only your friends can see your full profile data.</p>
+                    </div>
                   </div>
-                ))}
-              </div>
-
-              <div className="flex justify-between items-center px-2 pt-4 border-t border-white/5">
-                <div className="flex items-center gap-4 text-white/40">
-                   <Activity className="w-4 h-4 text-emerald-500" />
-                   <span className="text-[9px] font-black uppercase tracking-widest">Status</span>
+                  <div className={cn("w-14 h-8 rounded-full transition-colors flex items-center p-1", (userData?.isPublic ?? true) ? "bg-emerald-500" : "bg-zinc-800")}>
+                    <div className={cn("w-6 h-6 rounded-full bg-white transition-transform shadow-md", (userData?.isPublic ?? true) ? "translate-x-6" : "translate-x-0")} />
+                  </div>
                 </div>
-                <span className="text-lg font-black italic text-white animate-pulse">Online</span>
+
+                {/* Save Button */}
+                <div className="pt-4">
+                  <Button 
+                    onClick={handleUpdate} 
+                    disabled={isUpdating}
+                    className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground rounded-[2rem] font-black uppercase text-lg tracking-widest shadow-[0_10px_30px_rgba(var(--primary),0.3)] transition-all hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(var(--primary),0.4)] active:translate-y-0 active:shadow-none relative overflow-hidden group"
+                  >
+                    {/* Button Glare */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
+                    
+                    {isUpdating ? <Loader2 className="w-6 h-6 animate-spin" /> : "Save Profile Identity"}
+                  </Button>
+                </div>
+
               </div>
-            </div>
-          </Card>
+            </Card>
+          </motion.div>
         </div>
+
       </div>
     </div>
   );

@@ -97,6 +97,12 @@ export default function DevCentreLayout({ children }: { children: React.ReactNod
         { name: "Xakteir Dev Git", path: "/dev-centre/git", icon: GitBranch },
         { name: "Xakteir Dev Billing", path: "/dev-centre/billing", icon: DollarSign },
       ]
+    },
+    {
+      title: "Automation & Logic",
+      links: [
+        { name: "Xakteir Dev Automate", path: "/dev-centre/automate", icon: Network },
+      ]
     }
   ];
 

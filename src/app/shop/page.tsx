@@ -26,6 +26,27 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { RenderHat, RenderAura, RenderDecor, getNameplateClass, RenderPet, RenderBanner } from "@/components/RenderHat";
+import confetti from "canvas-confetti";
+
+const triggerConfetti = () => {
+  const duration = 3 * 1000;
+  const animationEnd = Date.now() + duration;
+  const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+
+  const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+  const interval: any = setInterval(function() {
+    const timeLeft = animationEnd - Date.now();
+
+    if (timeLeft <= 0) {
+      return clearInterval(interval);
+    }
+
+    const particleCount = 50 * (timeLeft / duration);
+    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+  }, 250);
+};
 
 const ALL_SHOP_ITEMS = [
   // Hats (11 items)
@@ -329,6 +350,7 @@ export default function ShopPage() {
         currencyBalance: increment(-selectedItem.price),
         [selectedItem.type]: selectedItem.key
       });
+      triggerConfetti();
       toast({ title: "Identity Updated", description: `${selectedItem.name} equipped.` });
     } catch (e) {
       toast({ variant: "destructive", title: "Sync Failed" });
@@ -353,6 +375,7 @@ export default function ShopPage() {
         updateObj[item.type] = item.key;
       });
       await updateDoc(doc(firestore, "users", user.uid), updateObj);
+      triggerConfetti();
       toast({ title: "Bundle Acquired!", description: `All items in ${bundle.name} equipped.` });
     } catch (e) {
       toast({ variant: "destructive", title: "Sync Failed" });
@@ -545,12 +568,14 @@ export default function ShopPage() {
                       setSelectedItem(null);
                     }}
                     className={cn(
-                      "glass-card cursor-pointer rounded-[3rem] overflow-hidden transition-all duration-500 group h-full flex flex-col justify-between border-2", 
+                      "glass-card cursor-pointer rounded-[3rem] overflow-hidden transition-all duration-700 group h-full flex flex-col justify-between border-2 relative", 
                       previewSetId === set.id 
-                        ? "shadow-[0_0_40px_rgba(245,158,11,0.5)] border-amber-500/50 scale-[1.02]"
-                        : "border-white/5 hover:border-white/20 hover:scale-[1.01]"
+                        ? "shadow-[0_0_80px_rgba(245,158,11,0.6)] border-amber-500/80 scale-[1.03] z-10"
+                        : "border-white/10 hover:border-white/30 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]"
                     )}
                   >
+                    {/* Holographic Glare Effect */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.1),transparent_70%)] mix-blend-overlay z-50" />
                     <div className={cn("h-48 flex flex-col justify-center p-8 relative overflow-hidden", set.bg)}>
                       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20" />
                       <div className="flex justify-between items-start z-10">
@@ -612,12 +637,14 @@ export default function ShopPage() {
                 <Card 
                   onClick={() => handleSelectItem(item)} 
                   className={cn(
-                      "glass-card cursor-pointer rounded-[3rem] overflow-hidden transition-all duration-500 group h-full", 
+                      "glass-card cursor-pointer rounded-[3rem] overflow-hidden transition-all duration-700 group h-full relative", 
                       selectedItem?.id === item.id 
-                          ? cn("scale-[1.02] border-2", getRarityGlow(item.rarity))
-                          : "border border-white/5 hover:border-white/20 hover:scale-[1.01]"
+                          ? cn("scale-[1.04] border-2 z-10", getRarityGlow(item.rarity))
+                          : "border border-white/10 hover:border-white/30 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(255,255,255,0.05)]"
                   )}
                 >
+                  {/* Holographic Glare Effect */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.15),transparent_70%)] mix-blend-overlay z-50" />
                   <div className={cn("h-56 flex items-center justify-center relative overflow-hidden", item.bg)}>
                     <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20" />
                     <motion.div 
