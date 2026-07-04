@@ -10,12 +10,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, warning: "Webhook not configured" });
     }
 
-    const now = new Date();
-    // Format: At HH:mm on D/MM/YY admin said
-    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    const date = now.toLocaleDateString('en-GB', { day: 'numeric', month: '2-digit', year: '2-digit' });
-    
-    const formattedMessage = `At ${time} on ${date} ${authorName || "admin"} said\n${content}\n\nfrom xakteir`;
+    const formattedMessage = `# ${title}\n${content}`;
 
     const payload = {
       content: formattedMessage
