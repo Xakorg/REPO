@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useDoc, useFirestore } from '@/firebase/client-provider';
+import { useDoc, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
 export function GlobalThemeWrapper({ children }: { children: React.ReactNode }) {
