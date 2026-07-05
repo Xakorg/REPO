@@ -123,6 +123,16 @@ export default function AdminDashboardPage() {
     setMounted(true); 
   }, []);
 
+  const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email?.toLowerCase() || "");
+
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!mounted || !firestore || !user) return null;
+    return doc(firestore, "admins", user.uid);
+  }, [mounted, firestore, user]);
+
+  const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminRoleRef);
+  const hasAccess = isSuperAdmin || !!adminRole;
+
   useEffect(() => {
     if (mounted && hasAccess) {
       fetchAnalytics();
@@ -203,15 +213,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email?.toLowerCase() || "");
 
-  const adminRoleRef = useMemoFirebase(() => {
-    if (!mounted || !firestore || !user) return null;
-    return doc(firestore, "admins", user.uid);
-  }, [mounted, firestore, user]);
-
-  const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminRoleRef);
-  const hasAccess = isSuperAdmin || !!adminRole;
 
   const usersQuery = useMemoFirebase(() => {
     if (!mounted || !firestore || !hasAccess) return null;
