@@ -13,7 +13,8 @@ import {
   Radio,
   LockKeyhole,
   MessageSquare,
-  Reply
+  Reply,
+  X
 } from "lucide-react";
 import {
   Table,
@@ -563,11 +564,11 @@ export default function AdminDashboardPage() {
                     </div>
                     <div className="flex flex-wrap gap-2 pt-4">
                        {autoModInput.bannedWords.map(word => (
-                         <Badge key={word} className="bg-rose-500/20 text-rose-500 hover:bg-rose-500/40 border-none font-black text-xs px-4 py-2 uppercase cursor-pointer" onClick={() => setAutoModInput({...autoModInput, bannedWords: autoModInput.bannedWords.filter(w => w !== word)})}>
-                            {word} &times;
+                         <Badge key={word} className="bg-rose-500/20 text-rose-500 hover:bg-rose-500/40 border-none font-black text-xs px-4 py-2 uppercase cursor-pointer flex items-center" onClick={() => setAutoModInput({...autoModInput, bannedWords: autoModInput.bannedWords.filter(w => w !== word)})}>
+                            <span>{word}</span> <X className="w-3 h-3 ml-1" />
                          </Badge>
                        ))}
-                       {autoModInput.bannedWords.length === 0 && <span className="text-xs italic text-muted-foreground opacity-50 uppercase tracking-widest py-2">No words banned</span>}
+                       {autoModInput.bannedWords.length === 0 ? <span className="text-xs italic text-muted-foreground opacity-50 uppercase tracking-widest py-2">No words banned</span> : null}
                     </div>
                     <div className="flex gap-2 pt-4">
                        <Input value={newBannedWord} onChange={(e) => setNewBannedWord(e.target.value)} placeholder="Add a word..." className="h-12 bg-black/60 border-white/10 text-white italic font-bold" />
