@@ -547,14 +547,18 @@ export default function AdminDashboardPage() {
                        <h4 className="text-lg font-black uppercase text-white">Punishment Action</h4>
                        <p className="text-xs text-muted-foreground mt-1 italic font-medium">What happens when a user says a banned word.</p>
                     </div>
-                    <select 
-                       value={autoModInput.punishmentAction}
-                       onChange={(e) => setAutoModInput({...autoModInput, punishmentAction: e.target.value})}
-                       className="h-12 w-48 bg-black/60 rounded-xl px-4 border border-white/10 text-white font-black italic uppercase"
-                    >
-                       <option value="block">Block Message</option>
-                       <option value="fine">Fine (-500 credits)</option>
-                    </select>
+                    <div className="flex gap-2">
+                       <Button 
+                         variant={autoModInput.punishmentAction === "block" ? "default" : "outline"}
+                         onClick={() => setAutoModInput({...autoModInput, punishmentAction: "block"})}
+                         className={`rounded-xl h-12 px-6 font-black uppercase tracking-widest text-xs ${autoModInput.punishmentAction === 'block' ? 'bg-rose-600 text-white hover:bg-rose-500' : 'text-white border-white/20 hover:bg-white/10'}`}
+                       >Block</Button>
+                       <Button 
+                         variant={autoModInput.punishmentAction === "fine" ? "default" : "outline"}
+                         onClick={() => setAutoModInput({...autoModInput, punishmentAction: "fine"})}
+                         className={`rounded-xl h-12 px-6 font-black uppercase tracking-widest text-xs ${autoModInput.punishmentAction === 'fine' ? 'bg-rose-600 text-white hover:bg-rose-500' : 'text-white border-white/20 hover:bg-white/10'}`}
+                       >Fine (-500)</Button>
+                    </div>
                  </div>
 
                  <div className="bg-black/40 p-6 rounded-2xl border border-white/5 space-y-4">
