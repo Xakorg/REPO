@@ -96,12 +96,51 @@ export default function XakSocialPage() {
     }
   }, [chatMessages]);
 
+  const systemSettingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "system_settings", "global");
+  }, [firestore]);
+  const { data: systemSettings } = useDoc(systemSettingsRef);
+  const isChatLocked = !!systemSettings?.chatLocked;
+
+  const autoModSettingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "system_settings", "automod");
+  }, [firestore]);
+  const { data: autoModSettings } = useDoc(autoModSettingsRef);
+
   const handleSendChat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim() || !user || !firestore) return;
+    if (isChatLocked) {
+      toast({ variant: "destructive", title: "Chat Locked", description: "The global chat is currently locked by administrators." });
+      return;
+    }
 
     const content = chatInput;
     setChatInput("");
+
+    // Auto-Mod Interception
+    if (autoModSettings && autoModSettings.bannedWords && autoModSettings.bannedWords.length > 0) {
+      const lowerContent = content.toLowerCase();
+      const hasBannedWord = autoModSettings.bannedWords.some((word: string) => lowerContent.includes(word));
+      
+      if (hasBannedWord) {
+        toast({ variant: "destructive", title: "Message Blocked", description: "Your message contained restricted terminology." });
+        
+        if (autoModSettings.punishmentAction === 'fine') {
+          try {
+            await updateDoc(doc(firestore, "users", user.uid), {
+              currencyBalance: increment(-500)
+            });
+            toast({ variant: "destructive", title: "Auto-Mod Fine", description: "You have been fined 500 credits for a community violation." });
+          } catch (err) {
+            console.error("Failed to apply fine", err);
+          }
+        }
+        return; // Block message from sending
+      }
+    }
 
     try {
       const cleanName = user.displayName?.replace(/^@+/, "") || "Member";
@@ -252,10 +291,16 @@ export default function XakSocialPage() {
                       </div>
                     </ScrollArea>
                     <div className="p-6 bg-zinc-900/50 border-t border-white/10">
-                      <form onSubmit={handleSendChat} className="flex gap-4">
-                        <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Send a message..." className="bg-black/60 border-white/5 h-14 rounded-2xl px-6 font-bold text-xs shadow-inner italic text-white" />
-                        <Button type="submit" size="icon" className="h-14 w-14 bg-primary rounded-2xl shadow-xl"><Send className="w-6 h-6 text-white" /></Button>
-                      </form>
+                      {isChatLocked ? (
+                        <div className="h-14 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center">
+                          <span className="text-xs font-black uppercase text-rose-500 tracking-widest italic">Global Chat is currently locked</span>
+                        </div>
+                      ) : (
+                        <form onSubmit={handleSendChat} className="flex gap-4">
+                          <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Send a message..." className="bg-black/60 border-white/5 h-14 rounded-2xl px-6 font-bold text-xs shadow-inner italic text-white" />
+                          <Button type="submit" size="icon" className="h-14 w-14 bg-primary rounded-2xl shadow-xl"><Send className="w-6 h-6 text-white" /></Button>
+                        </form>
+                      )}
                     </div>
                  </Card>
               </div>

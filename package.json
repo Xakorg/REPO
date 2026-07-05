@@ -92,7 +92,7 @@
     "react-dom": "19.0.0",
     "react-force-graph-3d": "^1.29.1",
     "react-hook-form": "^7.54.2",
-    "recharts": "^2.15.1",
+    "recharts": "^2.15.4",
     "require-in-the-middle": "^7.3.0",
     "resend": "^6.12.4",
     "server-only": "^0.0.1",

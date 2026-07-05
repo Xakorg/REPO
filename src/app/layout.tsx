@@ -15,6 +15,9 @@ import { NotificationManager } from '@/components/NotificationManager';
 import { FocusModeListener } from '@/components/FocusModeListener';
 import { DesktopBridge } from '@/components/desktop-bridge';
 import { FaviconController } from '@/components/layout/FaviconController';
+import { MaintenanceModeGuard } from '@/components/MaintenanceModeGuard';
+
+import { GlobalThemeWrapper } from '@/components/GlobalThemeWrapper';
 
 export const metadata: Metadata = {
   title: 'Xakteir',
@@ -49,22 +52,26 @@ export default function RootLayout({
         </svg>
 
         <FirebaseClientProvider>
-          <OnboardingProvider>
-            <LockedAccountGuard>
-              <FocusModeListener />
-              <FaviconController />
-              <AppLayoutWrapper>
-                {children}
-              </AppLayoutWrapper>
-              <CommandCenter />
-              <UpdateManager />
-              <NotificationManager />
-              <TimeTravelOverlay />
-              <FirebaseErrorListener />
-              <Toaster />
-              <DesktopBridge />
-            </LockedAccountGuard>
-          </OnboardingProvider>
+          <GlobalThemeWrapper>
+            <OnboardingProvider>
+              <LockedAccountGuard>
+                <MaintenanceModeGuard>
+                  <FocusModeListener />
+                  <FaviconController />
+                  <AppLayoutWrapper>
+                    {children}
+                  </AppLayoutWrapper>
+                  <CommandCenter />
+                  <UpdateManager />
+                  <NotificationManager />
+                  <TimeTravelOverlay />
+                  <FirebaseErrorListener />
+                  <Toaster />
+                  <DesktopBridge />
+                </MaintenanceModeGuard>
+              </LockedAccountGuard>
+            </OnboardingProvider>
+          </GlobalThemeWrapper>
         </FirebaseClientProvider>
       </body>
     </html>

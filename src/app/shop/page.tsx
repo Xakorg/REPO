@@ -68,6 +68,15 @@ export default function ShopPage() {
   const { data: userData } = useDoc(userRef);
   const balance = userData?.currencyBalance || 0;
 
+  const systemSettingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "system_settings", "global");
+  }, [firestore]);
+  const { data: systemSettings } = useDoc(systemSettingsRef);
+  
+  const saleMultiplier = systemSettings?.globalSaleMultiplier || 1;
+  const isShopLocked = !!systemSettings?.shopLocked;
+
   // Rotation Logic
   const { weekItems } = useMemo(() => {
     const now = new Date();
@@ -140,9 +149,17 @@ export default function ShopPage() {
     setSelectedItem(item);
   };
 
+  const getPrice = (price: number) => Math.floor(price * saleMultiplier);
+
   const handleSyncItem = async () => {
     if (!user || !firestore || !selectedItem) return;
-    if (balance < selectedItem.price) {
+    if (isShopLocked) {
+      toast({ variant: "destructive", title: "Shop Locked", description: "The marketplace is currently disabled by administrators." });
+      return;
+    }
+
+    const finalPrice = getPrice(selectedItem.price);
+    if (balance < finalPrice) {
       toast({ variant: "destructive", title: "Low Credits" });
       return;
     }
@@ -150,7 +167,7 @@ export default function ShopPage() {
     setIsSyncing(true);
     try {
       await updateDoc(doc(firestore, "users", user.uid), {
-        currencyBalance: increment(-selectedItem.price),
+        currencyBalance: increment(-finalPrice),
         [selectedItem.type]: selectedItem.key,
         inventory: arrayUnion(selectedItem.key)
       });
@@ -165,7 +182,13 @@ export default function ShopPage() {
 
   const handleBuyBundle = async (bundle: any) => {
     if (!user || !firestore) return;
-    if (balance < bundle.price) {
+    if (isShopLocked) {
+      toast({ variant: "destructive", title: "Shop Locked", description: "The marketplace is currently disabled by administrators." });
+      return;
+    }
+
+    const finalPrice = getPrice(bundle.price);
+    if (balance < finalPrice) {
       toast({ variant: "destructive", title: "Low Credits" });
       return;
     }
@@ -173,7 +196,7 @@ export default function ShopPage() {
     setIsSyncing(true);
     try {
       const updateObj: Record<string, any> = {
-        currencyBalance: increment(-bundle.price),
+        currencyBalance: increment(-finalPrice),
         inventory: arrayUnion(...bundle.items.map((i: any) => i.key))
       };
       bundle.items.forEach((item: any) => {
@@ -191,7 +214,13 @@ export default function ShopPage() {
 
   const handleGift = async () => {
     if (!user || !firestore || !selectedItem || !giftTarget.trim()) return;
-    if (balance < selectedItem.price) {
+    if (isShopLocked) {
+      toast({ variant: "destructive", title: "Shop Locked", description: "The marketplace is currently disabled by administrators." });
+      return;
+    }
+
+    const finalPrice = getPrice(selectedItem.price);
+    if (balance < finalPrice) {
       toast({ variant: "destructive", title: "Low Credits" });
       return;
     }
@@ -209,7 +238,7 @@ export default function ShopPage() {
       const targetId = snap.docs[0].id;
       
       await updateDoc(doc(firestore, "users", user.uid), {
-        currencyBalance: increment(-selectedItem.price)
+        currencyBalance: increment(-finalPrice)
       });
 
       await updateDoc(doc(firestore, "users", targetId), {
@@ -389,8 +418,8 @@ export default function ShopPage() {
                           {set.rarity}
                         </Badge>
                         <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/5 shadow-inner">
-                          <Zap className="w-4 h-4 text-amber-500 fill-amber-500/50" />
-                          <span className="text-lg font-black italic">{set.price}</span>
+                          <Zap className="w-5 h-5 text-primary" />
+                          <span className="text-lg font-black italic">{getPrice(set.price)}</span>
                         </div>
                       </div>
                       <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter mt-6 z-10 leading-none">{set.name}</h3>
@@ -473,8 +502,8 @@ export default function ShopPage() {
                     <div className="flex justify-between items-start mb-4">
                       <h3 className="text-2xl font-black text-foreground uppercase italic tracking-tighter leading-none pr-4">{item.name}</h3>
                       <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/5 shadow-inner shrink-0">
-                        <Zap className="w-4 h-4 text-amber-500 fill-amber-500/50" />
-                        <span className="text-lg font-black italic">{item.price}</span>
+                        <Zap className="w-4 h-4 text-primary" />
+                        <span className="text-lg font-black italic">{getPrice(item.price)}</span>
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground font-bold italic line-clamp-2 leading-relaxed opacity-80">{item.description}</p>

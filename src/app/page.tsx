@@ -66,6 +66,12 @@ function XakteirDashboard() {
   }, [firestore, user]);
   const { data: userData } = useDoc(userRef);
 
+  const systemSettingsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "system_settings", "global");
+  }, [firestore]);
+  const { data: systemSettings } = useDoc(systemSettingsRef);
+
   const feedQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "globalMessages"), where("type", "==", "broadcast"), limit(50));
@@ -123,7 +129,12 @@ function XakteirDashboard() {
           </div>
         </div>
 
-        <div className="w-full max-w-4xl relative group">
+        <div className="w-full max-w-4xl relative group space-y-6">
+          {systemSettings?.welcomeMessage && (
+            <div className="w-full text-center bg-primary/10 border-2 border-primary/20 rounded-3xl p-6 shadow-[0_0_40px_rgba(var(--primary),0.2)] animate-fade-in backdrop-blur-xl">
+               <p className="text-sm md:text-xl italic font-black text-white">{systemSettings.welcomeMessage}</p>
+            </div>
+          )}
           <form onSubmit={handleSearch} className="relative flex items-center w-full shadow-2xl rounded-full">
             <Input 
               value={searchInput}

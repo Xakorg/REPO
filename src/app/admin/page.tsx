@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useAuth, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
-import { collection, doc, query, limit, orderBy, serverTimestamp, getDoc } from "firebase/firestore";
+import { collection, doc, query, limit, orderBy, serverTimestamp, getDoc, getCountFromServer, getAggregateFromServer, sum } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, TerminalSquare, Activity } from "lucide-react";
@@ -71,7 +71,137 @@ export default function AdminDashboardPage() {
   const [hotfixPrompt, setHotfixPrompt] = useState("");
   const [isDeployingHotfix, setIsDeployingHotfix] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  // Analytics State
+  const [analyticsData, setAnalyticsData] = useState<{
+    totalUsers: number;
+    totalCredits: number;
+    totalMessages: number;
+  } | null>(null);
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+
+  const fetchAnalytics = async () => {
+    if (!firestore || !hasAccess) return;
+    setIsLoadingAnalytics(true);
+    try {
+      const usersCol = collection(firestore, "users");
+      const usersSnap = await getDocs(usersCol);
+      
+      let totalUsersCount = 0;
+      let totalCreditsCount = 0;
+      let onlineUsersCount = 0; // Simple approximation: users who have been active recently (if timestamp available), but for now we just count signed up users who aren't hidden
+
+      usersSnap.forEach((doc) => {
+        const data = doc.data();
+        const isPublic = data.isPublic !== false; // defaults to true
+        const isHidden = data.isHidden === true;
+        
+        if (isPublic && !isHidden) {
+          totalUsersCount++;
+          // We can also check online status here if we have a field for it
+        }
+        
+        totalCreditsCount += (data.currencyBalance || 0);
+      });
+
+      // Total Messages
+      const msgCol = collection(firestore, "globalMessages");
+      const msgSnap = await getCountFromServer(msgCol);
+
+      setAnalyticsData({
+        totalUsers: totalUsersCount,
+        totalCredits: totalCreditsCount,
+        totalMessages: msgSnap.data().count
+      });
+    } catch (error) {
+      console.error("Failed to fetch analytics:", error);
+    } finally {
+      setIsLoadingAnalytics(false);
+    }
+  };
+
+  useEffect(() => { 
+    setMounted(true); 
+  }, []);
+
+  useEffect(() => {
+    if (mounted && hasAccess) {
+      fetchAnalytics();
+    }
+  }, [mounted, hasAccess]);
+
+  // System Settings State
+  const systemSettingsRef = useMemoFirebase(() => {
+    if (!mounted || !firestore || !hasAccess) return null;
+    return doc(firestore, "system_settings", "global");
+  }, [mounted, firestore, hasAccess]);
+
+  const { data: systemSettingsData, isLoading: isLoadingSystemSettings } = useDoc(systemSettingsRef);
+
+  const [systemSettingsInput, setSystemSettingsInput] = useState({
+    maintenanceMode: false,
+    welcomeMessage: "",
+    globalSaleMultiplier: 1.0,
+    chatLocked: false,
+    shopLocked: false,
+    globalTheme: "default"
+  });
+
+  useEffect(() => {
+    if (systemSettingsData) {
+      setSystemSettingsInput({
+        maintenanceMode: !!systemSettingsData.maintenanceMode,
+        welcomeMessage: systemSettingsData.welcomeMessage || "",
+        globalSaleMultiplier: systemSettingsData.globalSaleMultiplier ?? 1.0,
+        chatLocked: !!systemSettingsData.chatLocked,
+        shopLocked: !!systemSettingsData.shopLocked,
+        globalTheme: systemSettingsData.globalTheme || "default"
+      });
+    }
+  }, [systemSettingsData]);
+
+  const handleSaveSystemSettings = async () => {
+    if (!firestore || !hasAccess) return;
+    try {
+      await setDocumentNonBlocking(doc(firestore, "system_settings", "global"), systemSettingsInput, { merge: true });
+      toast({ title: "System Settings Saved" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Failed to save settings" });
+    }
+  };
+
+  // Auto-Mod Settings State
+  const autoModSettingsRef = useMemoFirebase(() => {
+    if (!mounted || !firestore || !hasAccess) return null;
+    return doc(firestore, "system_settings", "automod");
+  }, [mounted, firestore, hasAccess]);
+
+  const { data: autoModSettingsData } = useDoc(autoModSettingsRef);
+
+  const [autoModInput, setAutoModInput] = useState({
+    bannedWords: [] as string[],
+    punishmentAction: "block"
+  });
+
+  const [newBannedWord, setNewBannedWord] = useState("");
+
+  useEffect(() => {
+    if (autoModSettingsData) {
+      setAutoModInput({
+        bannedWords: autoModSettingsData.bannedWords || [],
+        punishmentAction: autoModSettingsData.punishmentAction || "block"
+      });
+    }
+  }, [autoModSettingsData]);
+
+  const handleSaveAutoMod = async () => {
+    if (!firestore || !hasAccess) return;
+    try {
+      await setDocumentNonBlocking(doc(firestore, "system_settings", "automod"), autoModInput, { merge: true });
+      toast({ title: "Auto-Mod Saved" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Failed to save auto-mod" });
+    }
+  };
 
   const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email?.toLowerCase() || "");
 
@@ -93,8 +223,14 @@ export default function AdminDashboardPage() {
     return query(collection(firestore, "contact_messages"), orderBy("timestamp", "desc"), limit(50));
   }, [mounted, firestore, hasAccess]);
 
+  const reportsQuery = useMemoFirebase(() => {
+    if (!mounted || !firestore || !hasAccess) return null;
+    return query(collection(firestore, "reports"), orderBy("timestamp", "desc"), limit(50));
+  }, [mounted, firestore, hasAccess]);
+
   const { data: allUsers, isLoading: isLoadingUsers } = useCollection(usersQuery);
   const { data: supportMessages, isLoading: isLoadingSupport } = useCollection(contactMessagesQuery);
+  const { data: globalReports, isLoading: isLoadingReports } = useCollection(reportsQuery);
 
   const handleSetPowers = () => {
     if (!firestore || !userToManage) return;
@@ -158,31 +294,51 @@ export default function AdminDashboardPage() {
         content: broadcast.content.trim(),
         author: user.uid,
         timestamp: serverTimestamp(),
-        type: "broadcast"
+        type: 'broadcast'
       });
-
-      // Call Discord Webhook API
-      try {
-        await fetch("/api/discord/broadcast", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: broadcast.title.trim(),
-            content: broadcast.content.trim(),
-            authorName: user.displayName?.replace(/^@+/, ""),
-            avatarUrl: user.photoURL
-          })
-        });
-      } catch (err) {
-        console.error("Failed to trigger Discord webhook:", err);
-      }
-
-      toast({ title: "Broadcast queued" });
+      fetch('/api/discord/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+           title: broadcast.title.trim(),
+           content: broadcast.content.trim()
+        })
+      });
+      toast({ title: "Broadcast Sent" });
       setBroadcast({ title: "", content: "" });
     } catch (e) {
-      toast({ variant: "destructive", title: "Broadcast failed" });
+      toast({ variant: "destructive", title: "Failed to send broadcast" });
     } finally {
       setIsBroadcasting(false);
+    }
+  };
+
+  const [airdropAmount, setAirdropAmount] = useState<number>(0);
+  const [isAirdropping, setIsAirdropping] = useState(false);
+
+  const handleAirdrop = async () => {
+    if (!firestore || !hasAccess || airdropAmount <= 0) return;
+    setIsAirdropping(true);
+    try {
+      const usersCol = collection(firestore, "users");
+      const usersSnap = await getDocs(usersCol);
+      const batchPromises: Promise<void>[] = [];
+      
+      usersSnap.docs.forEach((userDoc) => {
+        batchPromises.push(
+          updateDocumentNonBlocking(doc(firestore, "users", userDoc.id), {
+            currencyBalance: increment(airdropAmount)
+          })
+        );
+      });
+      
+      await Promise.all(batchPromises);
+      toast({ title: "Airdrop Complete", description: `Gave ${airdropAmount} credits to ${usersSnap.docs.length} users!` });
+      setAirdropAmount(0);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Airdrop Failed" });
+    } finally {
+      setIsAirdropping(false);
     }
   };
 
@@ -284,11 +440,20 @@ export default function AdminDashboardPage() {
           <TabsTrigger value="users" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
             <Users className="w-4 h-4 mr-2 hidden sm:inline" /> Users
           </TabsTrigger>
+          <TabsTrigger value="reports" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
+            <ShieldCheck className="w-4 h-4 mr-2 hidden sm:inline" /> Reports
+          </TabsTrigger>
+          <TabsTrigger value="automod" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
+            <ShieldCheck className="w-4 h-4 mr-2 hidden sm:inline" /> Auto-Mod
+          </TabsTrigger>
           <TabsTrigger value="analytics" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
             <Activity className="w-4 h-4 mr-2 hidden sm:inline" /> Analytics
           </TabsTrigger>
           <TabsTrigger value="broadcast" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
             <Radio className="w-4 h-4 mr-2 hidden sm:inline" /> Broadcast
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
+            <Radio className="w-4 h-4 mr-2 hidden sm:inline" /> Settings
           </TabsTrigger>
           <TabsTrigger value="hotfix" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary text-black bg-white/5 hover:bg-white/10">
             <TerminalSquare className="w-4 h-4 mr-2 hidden sm:inline" /> AI Hotfix
@@ -326,6 +491,100 @@ export default function AdminDashboardPage() {
                     )}
                  </div>
               </ScrollArea>
+           </Card>
+        </TabsContent>
+
+        <TabsContent value="reports" className="animate-in slide-in-from-bottom-8">
+           <Card className="glass-card rounded-[2rem] md:rounded-[4rem] border-white/20 overflow-hidden shadow-2xl bg-black/40">
+              <div className="p-6 md:p-12 border-b-4 border-white/10 bg-white/5">
+                 <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">Report Queue</h2>
+              </div>
+              <ScrollArea className="h-[600px]">
+                 <div className="divide-y divide-white/5">
+                    {isLoadingReports ? (
+                      <div className="py-20 flex justify-center"><Loader2 className="animate-spin w-12 h-12 text-primary opacity-20" /></div>
+                    ) : (!globalReports || globalReports.length === 0) ? (
+                      <div className="py-40 text-center opacity-20 font-black uppercase tracking-widest">No reports yet</div>
+                    ) : (
+                      globalReports.map(report => (
+                        <div key={report.id} className="p-6 md:p-10 hover:bg-white/5 transition-all flex flex-col md:flex-row md:items-start justify-between gap-4 group">
+                           <div className="space-y-4 text-white flex-1">
+                              <div className="flex flex-wrap items-center gap-4">
+                                 <Badge className="bg-rose-500/20 text-rose-500 border-none font-black text-[9px] px-4 py-1 uppercase">{report.targetType}</Badge>
+                                 <span className="text-[12px] font-black text-white uppercase">{report.targetName}</span>
+                                 <span className="text-[9px] font-black text-muted-foreground uppercase opacity-40">{report.timestamp?.seconds ? new Date(report.timestamp.seconds * 1000).toLocaleString() : '...'}</span>
+                                 {report.status === 'resolved' && <Badge className="bg-green-600 text-white border-none font-black text-[9px] px-4 uppercase">Resolved</Badge>}
+                              </div>
+                              <p className="text-lg md:text-xl font-medium italic text-foreground max-w-3xl leading-relaxed text-white">Reason: {report.reason}</p>
+                              <p className="text-xs text-muted-foreground italic">Reported by: {report.reporterName}</p>
+                           </div>
+                           <div className="flex gap-3 shrink-0">
+                              {report.status !== 'resolved' && (
+                                <Button onClick={() => updateDocumentNonBlocking(doc(firestore!, "reports", report.id), { status: 'resolved' })} variant="outline" className="rounded-xl h-10 md:h-12 px-4 md:px-6 font-black uppercase text-[10px] tracking-widest hover:bg-green-500 hover:text-white transition-all border-white/10 text-white"><ShieldCheck className="w-4 h-4 mr-2" /> Resolve</Button>
+                              )}
+                              <Button onClick={() => deleteDocumentNonBlocking(doc(firestore!, "reports", report.id))} variant="ghost" size="icon" className="h-10 w-10 md:h-12 md:w-12 rounded-xl text-rose-500 hover:bg-rose-500/10"><Trash2 className="w-5 h-5" /></Button>
+                           </div>
+                        </div>
+                      ))
+                    )}
+                 </div>
+              </ScrollArea>
+           </Card>
+        </TabsContent>
+
+        <TabsContent value="automod" className="animate-in slide-in-from-bottom-8">
+           <Card className="max-w-4xl mx-auto glass-card rounded-[2rem] md:rounded-[4rem] p-6 md:p-16 border-white/10 shadow-2xl space-y-6 md:space-y-12 bg-black/40">
+              <header className="space-y-4">
+                 <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-rose-500">Auto-Mod Rules</h2>
+                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.4em]">Autonomous content moderation</p>
+              </header>
+              <div className="space-y-8 bg-white/5 p-8 rounded-3xl border border-white/5">
+                 <div className="flex justify-between items-center bg-black/40 p-6 rounded-2xl border border-white/5">
+                    <div>
+                       <h4 className="text-lg font-black uppercase text-white">Punishment Action</h4>
+                       <p className="text-xs text-muted-foreground mt-1 italic font-medium">What happens when a user says a banned word.</p>
+                    </div>
+                    <select 
+                       value={autoModInput.punishmentAction}
+                       onChange={(e) => setAutoModInput({...autoModInput, punishmentAction: e.target.value})}
+                       className="h-12 w-48 bg-black/60 rounded-xl px-4 border border-white/10 text-white font-black italic uppercase"
+                    >
+                       <option value="block">Block Message</option>
+                       <option value="fine">Fine (-500 credits)</option>
+                    </select>
+                 </div>
+
+                 <div className="bg-black/40 p-6 rounded-2xl border border-white/5 space-y-4">
+                    <div>
+                       <h4 className="text-lg font-black uppercase text-rose-500">Banned Words List</h4>
+                       <p className="text-xs text-muted-foreground mt-1 italic font-medium">Messages containing these words will trigger the punishment.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-4">
+                       {autoModInput.bannedWords.map(word => (
+                         <Badge key={word} className="bg-rose-500/20 text-rose-500 hover:bg-rose-500/40 border-none font-black text-xs px-4 py-2 uppercase cursor-pointer" onClick={() => setAutoModInput({...autoModInput, bannedWords: autoModInput.bannedWords.filter(w => w !== word)})}>
+                            {word} &times;
+                         </Badge>
+                       ))}
+                       {autoModInput.bannedWords.length === 0 && <span className="text-xs italic text-muted-foreground opacity-50 uppercase tracking-widest py-2">No words banned</span>}
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                       <Input value={newBannedWord} onChange={(e) => setNewBannedWord(e.target.value)} placeholder="Add a word..." className="h-12 bg-black/60 border-white/10 text-white italic font-bold" />
+                       <Button 
+                         onClick={() => {
+                           if(newBannedWord.trim() && !autoModInput.bannedWords.includes(newBannedWord.trim().toLowerCase())){
+                             setAutoModInput({...autoModInput, bannedWords: [...autoModInput.bannedWords, newBannedWord.trim().toLowerCase()]});
+                             setNewBannedWord("");
+                           }
+                         }} 
+                         className="h-12 px-6 font-black uppercase text-[10px]"
+                       >Add</Button>
+                    </div>
+                 </div>
+
+                 <Button onClick={handleSaveAutoMod} className="w-full h-16 bg-rose-600 hover:bg-rose-500 rounded-2xl font-black uppercase tracking-widest text-white shadow-xl">
+                    Save Auto-Mod Rules
+                 </Button>
+              </div>
            </Card>
         </TabsContent>
 
@@ -401,45 +660,110 @@ export default function AdminDashboardPage() {
            <Card className="glass-card rounded-[2rem] md:rounded-[4rem] p-6 md:p-12 border-white/5 shadow-2xl space-y-8 bg-zinc-950/40">
               <div className="flex items-center justify-between">
                  <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white">Live Analytics</h2>
-                 <Badge variant="outline" className="border-primary/50 text-primary bg-primary/10 animate-pulse">Real-Time Data</Badge>
+                 <Button onClick={fetchAnalytics} disabled={isLoadingAnalytics} variant="outline" className="rounded-xl border-primary/50 text-primary bg-primary/10 hover:bg-primary/20 hover:text-primary">
+                    <RefreshCw className={cn("w-4 h-4 mr-2", isLoadingAnalytics && "animate-spin")} /> Refresh
+                 </Button>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                  <div className="bg-zinc-950/50 rounded-3xl p-8 border border-white/5 flex flex-col items-center justify-center text-center space-y-4 shadow-inner relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-5"><Users className="w-32 h-32" /></div>
                     <p className="text-muted-foreground uppercase font-black tracking-widest text-[10px] z-10">Total Registered Users</p>
-                    <p className="text-6xl font-black italic text-white z-10">{allUsers?.length || 0}</p>
+                    <p className="text-6xl font-black italic text-white z-10">{analyticsData?.totalUsers || 0}</p>
                  </div>
                  <div className="bg-primary/10 rounded-3xl p-8 border border-primary/20 flex flex-col items-center justify-center text-center space-y-4 shadow-inner relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-5 text-primary"><Activity className="w-32 h-32" /></div>
-                    <p className="text-primary uppercase font-black tracking-widest text-[10px] z-10">Real DAU (24H Active)</p>
+                    <p className="text-primary uppercase font-black tracking-widest text-[10px] z-10">Total Credits Circulating</p>
                     <p className="text-6xl font-black italic text-primary z-10">
-                      {allUsers?.filter(u => {
-                        const activeTime = u.lastActiveAt?.toDate?.() || u.createdAt?.toDate?.() || new Date(0);
-                        return (new Date().getTime() - activeTime.getTime()) < 24 * 60 * 60 * 1000;
-                      }).length || 0}
+                      {analyticsData?.totalCredits || 0}
                     </p>
                  </div>
                  <div className="bg-zinc-950/50 rounded-3xl p-8 border border-white/5 flex flex-col items-center justify-center text-center space-y-4 shadow-inner relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-5"><MessageSquare className="w-32 h-32" /></div>
-                    <p className="text-muted-foreground uppercase font-black tracking-widest text-[10px] z-10">Pending Support Tickets</p>
-                    <p className="text-6xl font-black italic text-white z-10">{supportMessages?.filter(m => m.status !== 'replied').length || 0}</p>
+                    <p className="text-muted-foreground uppercase font-black tracking-widest text-[10px] z-10">Total Global Messages</p>
+                    <p className="text-6xl font-black italic text-white z-10">{analyticsData?.totalMessages || 0}</p>
                  </div>
               </div>
            </Card>
         </TabsContent>
 
         <TabsContent value="broadcast" className="animate-in slide-in-from-bottom-8">
-           <Card className="max-w-3xl mx-auto glass-card rounded-[2rem] md:rounded-[4rem] p-6 md:p-16 border-white/10 shadow-2xl space-y-6 md:space-y-12 bg-black/40">
-              <header className="text-center space-y-4">
-                 <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">Global Alert</h2>
-                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.4em]">Broadcast to all members</p>
+           <div className="max-w-3xl mx-auto space-y-8">
+             <Card className="glass-card rounded-[2rem] md:rounded-[4rem] p-6 md:p-16 border-white/10 shadow-2xl space-y-6 md:space-y-12 bg-black/40">
+                <header className="text-center space-y-4">
+                   <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">Global Alert</h2>
+                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.4em]">Broadcast to all members</p>
+                </header>
+                <div className="space-y-8">
+                   <Input value={broadcast.title} onChange={(e) => setBroadcast({...broadcast, title: e.target.value})} placeholder="Headline..." className="h-16 bg-secondary/30 rounded-2xl font-bold italic text-white" />
+                   <textarea value={broadcast.content} onChange={(e) => setBroadcast({...broadcast, content: e.target.value})} placeholder="Content..." className="min-h-[250px] w-full bg-secondary/30 rounded-3xl p-8 italic border-white/10 text-white" />
+                   <Button disabled={!broadcast.title || isBroadcasting} onClick={handleSendBroadcast} className="w-full h-20 bg-primary rounded-3xl font-black uppercase text-xl shadow-2xl border-b-8 border-primary/20 text-white">
+                     {isBroadcasting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}SEND BROADCAST
+                   </Button>
+                </div>
+             </Card>
+
+             <Card className="glass-card rounded-[2rem] md:rounded-[4rem] p-6 md:p-16 border-emerald-500/20 shadow-2xl space-y-6 md:space-y-12 bg-emerald-950/20">
+                <header className="text-center space-y-4">
+                   <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-emerald-500">Economy Airdrop</h2>
+                   <p className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-[0.4em]">Gift credits to ALL registered users instantly</p>
+                </header>
+                <div className="space-y-8">
+                   <div className="flex gap-4">
+                     <Input type="number" value={airdropAmount || ""} onChange={(e) => setAirdropAmount(Number(e.target.value))} placeholder="Amount of credits..." className="h-20 text-2xl bg-secondary/30 rounded-2xl font-black italic text-emerald-400 border-emerald-500/30" />
+                     <Button disabled={airdropAmount <= 0 || isAirdropping} onClick={handleAirdrop} className="h-20 px-12 bg-emerald-600 hover:bg-emerald-500 rounded-3xl font-black uppercase text-xl shadow-2xl border-b-8 border-emerald-800 text-white">
+                       {isAirdropping ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Coins className="w-6 h-6 mr-2" />}MAKE IT RAIN
+                     </Button>
+                   </div>
+                </div>
+             </Card>
+           </div>
+        </TabsContent>
+
+        <TabsContent value="settings" className="animate-in slide-in-from-bottom-8">
+           <Card className="max-w-4xl mx-auto glass-card rounded-[2rem] md:rounded-[4rem] p-6 md:p-16 border-white/10 shadow-2xl space-y-6 md:space-y-12 bg-black/40">
+              <header className="space-y-4">
+                 <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">System Settings</h2>
+                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.4em]">Global environment variables</p>
               </header>
-              <div className="space-y-8">
-                 <Input value={broadcast.title} onChange={(e) => setBroadcast({...broadcast, title: e.target.value})} placeholder="Headline..." className="h-16 bg-secondary/30 rounded-2xl font-bold italic text-white" />
-                 <textarea value={broadcast.content} onChange={(e) => setBroadcast({...broadcast, content: e.target.value})} placeholder="Content..." className="min-h-[250px] w-full bg-secondary/30 rounded-3xl p-8 italic border-white/10 text-white" />
-                 <Button disabled={!broadcast.title || isBroadcasting} onClick={handleSendBroadcast} className="w-full h-20 bg-primary rounded-3xl font-black uppercase text-xl shadow-2xl border-b-8 border-primary/20 text-white">
-                   {isBroadcasting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}SEND BROADCAST
+              <div className="space-y-8 bg-white/5 p-8 rounded-3xl border border-white/5">
+                 <div className="flex justify-between items-center bg-black/40 p-6 rounded-2xl border border-white/5">
+                    <div>
+                       <h4 className="text-lg font-black uppercase text-rose-500">Maintenance Mode</h4>
+                       <p className="text-xs text-muted-foreground mt-1 italic font-medium">Locks the entire application. Only Administrators can bypass.</p>
+                    </div>
+                    <input 
+                       type="checkbox" 
+                       checked={systemSettingsInput.maintenanceMode}
+                       onChange={(e) => setSystemSettingsInput({...systemSettingsInput, maintenanceMode: e.target.checked})}
+                       className="w-8 h-8 rounded border-white/10 bg-zinc-900 accent-rose-500 cursor-pointer"
+                    />
+                 </div>
+
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Global Welcome Message</label>
+                    <textarea 
+                      value={systemSettingsInput.welcomeMessage} 
+                      onChange={(e) => setSystemSettingsInput({...systemSettingsInput, welcomeMessage: e.target.value})} 
+                      placeholder="Welcome to Xakteir..." 
+                      className="min-h-[150px] w-full bg-zinc-950/50 rounded-2xl p-6 italic border-white/10 text-white focus:border-primary" 
+                    />
+                 </div>
+
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Global Shop Price Multiplier (e.g. 0.5 for 50% off, 1.0 for normal)</label>
+                    <Input 
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      value={systemSettingsInput.globalSaleMultiplier} 
+                      onChange={(e) => setSystemSettingsInput({...systemSettingsInput, globalSaleMultiplier: parseFloat(e.target.value) || 1.0})} 
+                      className="h-16 w-full bg-zinc-950/50 rounded-2xl px-6 font-black italic border-white/10 text-white focus:border-primary" 
+                    />
+                 </div>
+                 
+                 <Button onClick={handleSaveSystemSettings} className="w-full h-16 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-lg shadow-xl hover:bg-primary/80">
+                   Save System Configuration
                  </Button>
               </div>
            </Card>
@@ -605,6 +929,36 @@ export default function AdminDashboardPage() {
                       }}
                       className="w-6 h-6 rounded border-white/10 bg-zinc-900 accent-primary text-black cursor-pointer"
                    />
+                </div>
+
+                <div className="p-6 rounded-2xl bg-white/5 border border-white/5">
+                   <h4 className="text-sm font-black uppercase text-primary mb-4">Deep Profile Inspect</h4>
+                   <div className="space-y-4">
+                      <div>
+                        <span className="text-[10px] uppercase text-muted-foreground font-black tracking-widest">Bio:</span>
+                        <p className="text-sm text-white italic bg-black/40 p-3 rounded-lg mt-1 border border-white/5">{userToManage?.bio || 'No bio set.'}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase text-muted-foreground font-black tracking-widest">Inventory ({userToManage?.inventory?.length || 0} items):</span>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                           {userToManage?.inventory?.length ? userToManage.inventory.map((item: string) => (
+                             <Badge key={item} variant="secondary" className="bg-primary/20 text-primary border-none">{item}</Badge>
+                           )) : <span className="text-xs text-muted-foreground italic">Empty inventory</span>}
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center bg-black/40 p-3 rounded-lg border border-white/5">
+                        <span className="text-[10px] uppercase text-muted-foreground font-black tracking-widest">Account Created:</span>
+                        <span className="text-xs font-bold text-white">
+                          {userToManage?.createdAt?.seconds ? new Date(userToManage.createdAt.seconds * 1000).toLocaleString() : 'Unknown'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center bg-black/40 p-3 rounded-lg border border-white/5">
+                        <span className="text-[10px] uppercase text-muted-foreground font-black tracking-widest">Last Active:</span>
+                        <span className="text-xs font-bold text-white">
+                          {userToManage?.lastActiveAt?.seconds ? new Date(userToManage.lastActiveAt.seconds * 1000).toLocaleString() : 'Unknown'}
+                        </span>
+                      </div>
+                   </div>
                 </div>
 
                 {(isSuperAdmin || adminRole?.canChangePasswords) && (
