@@ -282,6 +282,24 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────
+    // SYSTEM SETTINGS
+    // ─────────────────────────────────────────────
+
+    match /system_settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
+    // ADMIN HOTFIXES
+    // ─────────────────────────────────────────────
+
+    match /admin_hotfixes/{id} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────
     // GLOBAL MESSAGES
     // ─────────────────────────────────────────────
 
