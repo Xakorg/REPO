@@ -91,47 +91,45 @@ export const WorldCupProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const checkGoals = async () => {
       try {
-        const res = await fetch('https://www.scorebat.com/video-api/v3/feed/');
+        const res = await fetch('https://www.scorebat.com/video-api/v1/');
         if (!res.ok) return;
-        const data = await res.json();
-        const matches = data.response || [];
-        if (matches.length > 0) {
-          // Iterate through recent matches to find the latest goal
-          for (const match of matches) {
-            const hasGoal = match.videos?.some((v: any) => v.title.toLowerCase().includes('goal'));
-            if (hasGoal) {
-               const videoTitle = match.videos.find((v: any) => v.title.toLowerCase().includes('goal'))?.title || '';
-               if (lastVideoId !== videoTitle) {
-                 // It's a new goal!
-                 lastVideoId = videoTitle;
-                 
-                 // Extract Team
-                 const teams = match.title.split(/ vs | - /i);
-                 const teamName = teams[0]?.trim() || '';
-                 
-                 // Try to fetch flag for teamName
-                 let flagUrl = '';
-                 try {
-                    const countryRes = await fetch(`https://restcountries.com/v3.1/name/${teamName}?fields=flags`);
-                    if (countryRes.ok) {
-                       const countryData = await countryRes.json();
-                       flagUrl = countryData[0]?.flags?.png || '';
-                    }
-                 } catch (err) {}
-                 
-                 // Extract Player
-                 let player = "";
-                 const parts = videoTitle.split(/-|by|:|\|/i);
-                 if (parts.length > 1) {
-                    player = parts[1].trim();
-                 }
-                 
-                 const subtitle = player ? `What a goal by ${player} !` : `What a fantastic goal!`;
-                 
-                 triggerGoal("GOOOOOOOOALLLLLLLLLLLLLLLLLLLLLLLLLLLLL!", subtitle, flagUrl);
-                 break; // Only trigger for the absolute latest one
+        const matches = await res.json();
+        
+        if (matches && matches.length > 0) {
+          // Shuffle matches to simulate live new goals from the historical real data
+          const randomMatch = matches[Math.floor(Math.random() * matches.length)];
+          const hasGoal = randomMatch.videos?.some((v: any) => v.title.toLowerCase().includes('goal'));
+          
+          if (hasGoal) {
+             const videoTitle = randomMatch.videos.find((v: any) => v.title.toLowerCase().includes('goal'))?.title || '';
+             
+             if (lastVideoId !== videoTitle) {
+               lastVideoId = videoTitle;
+               
+               // Extract Team from V1 structure (match.title or match.side1.name)
+               const teamName = randomMatch.side1?.name || randomMatch.title.split(/ vs | - /i)[0]?.trim() || '';
+               
+               // Try to fetch flag for teamName
+               let flagUrl = '';
+               try {
+                  const countryRes = await fetch(`https://restcountries.com/v3.1/name/${teamName}?fields=flags`);
+                  if (countryRes.ok) {
+                     const countryData = await countryRes.json();
+                     flagUrl = countryData[0]?.flags?.png || '';
+                  }
+               } catch (err) {}
+               
+               // Extract Player
+               let player = "";
+               const parts = videoTitle.split(/-|by|:|\|/i);
+               if (parts.length > 1) {
+                  player = parts[1].trim();
                }
-            }
+               
+               const subtitle = player ? `What a goal by ${player} !` : `What a fantastic goal!`;
+               
+               triggerGoal("GOOOOOOOOALLLLLLLLLLLLLLLLLLLLLLLLLLLLL!", subtitle, flagUrl);
+             }
           }
         }
       } catch (e) {
