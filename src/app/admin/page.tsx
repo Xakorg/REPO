@@ -14,7 +14,10 @@ import {
   LockKeyhole,
   MessageSquare,
   Reply,
-  X
+  X,
+  Trophy,
+  Coins,
+  RefreshCw
 } from "lucide-react";
 import {
   Table,
@@ -71,6 +74,12 @@ export default function AdminDashboardPage() {
   // Hotfix State
   const [hotfixPrompt, setHotfixPrompt] = useState("");
   const [isDeployingHotfix, setIsDeployingHotfix] = useState(false);
+
+  // World Cup Controls State
+  const [goalTitle, setGoalTitle] = useState("GOOOOOALLLLLLL!");
+  const [goalSubtitle, setGoalSubtitle] = useState("What a goal by Cristiano Ronaldo!");
+  const [goalFlag, setGoalFlag] = useState("https://flagcdn.com/w320/pt.png");
+  const [isTriggeringGoal, setIsTriggeringGoal] = useState(false);
 
   // Analytics State
   const [analyticsData, setAnalyticsData] = useState<{
@@ -367,6 +376,28 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleTriggerGoal = async () => {
+    if (!firestore || !hasAccess || !goalTitle.trim()) return;
+    setIsTriggeringGoal(true);
+    try {
+      // We push a "system_goal" event to globalMessages so all clients can pick it up
+      await addDocumentNonBlocking(collection(firestore, "globalMessages"), {
+        uid: user.uid,
+        author: "SYSTEM",
+        type: 'system_goal',
+        title: goalTitle,
+        subtitle: goalSubtitle,
+        flag: goalFlag,
+        timestamp: serverTimestamp(),
+      });
+      toast({ title: "GOAL TRIGGERED GLOBALLY!" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Failed to trigger goal" });
+    } finally {
+      setIsTriggeringGoal(false);
+    }
+  };
+
   if (!mounted) return null;
   if (!user) return <div className="p-32 text-center text-4xl font-black uppercase italic text-white">Sign in for access.</div>;
   
@@ -457,6 +488,9 @@ export default function AdminDashboardPage() {
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary">
             <Radio className="w-4 h-4 mr-2 hidden sm:inline" /> Settings
+          </TabsTrigger>
+          <TabsTrigger value="worldcup" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-emerald-500">
+            <Trophy className="w-4 h-4 mr-2 hidden sm:inline" /> World Cup
           </TabsTrigger>
           <TabsTrigger value="hotfix" className="flex-1 rounded-[1rem] md:rounded-[2rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary text-black bg-white/5 hover:bg-white/10">
             <TerminalSquare className="w-4 h-4 mr-2 hidden sm:inline" /> AI Hotfix
@@ -771,6 +805,49 @@ export default function AdminDashboardPage() {
                  
                  <Button onClick={handleSaveSystemSettings} className="w-full h-16 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-lg shadow-xl hover:bg-primary/80">
                    Save System Configuration
+                 </Button>
+              </div>
+           </Card>
+        </TabsContent>
+
+        <TabsContent value="worldcup" className="animate-in slide-in-from-bottom-8">
+           <Card className="max-w-4xl mx-auto glass-card rounded-[2rem] md:rounded-[4rem] p-6 md:p-16 border-emerald-500/30 shadow-[0_0_50px_rgba(16,185,129,0.1)] space-y-6 md:space-y-12 bg-emerald-950/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
+                <Trophy className="w-64 h-64 text-emerald-500" />
+              </div>
+              <header className="relative z-10 space-y-4">
+                 <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-emerald-400">World Cup Controls</h2>
+                 <p className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-[0.4em]">Manually trigger global goal events</p>
+              </header>
+              <div className="relative z-10 space-y-8 bg-black/40 p-8 rounded-3xl border border-emerald-500/20">
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500 ml-2">Goal Title (e.g. GOOOOOOAL!)</label>
+                    <Input 
+                      value={goalTitle} 
+                      onChange={(e) => setGoalTitle(e.target.value)} 
+                      className="h-16 w-full bg-emerald-950/50 rounded-2xl px-6 font-black italic border-emerald-500/30 text-white text-2xl" 
+                    />
+                 </div>
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500 ml-2">Subtitle (e.g. Cristiano Ronaldo scores!)</label>
+                    <Input 
+                      value={goalSubtitle} 
+                      onChange={(e) => setGoalSubtitle(e.target.value)} 
+                      className="h-14 w-full bg-emerald-950/50 rounded-2xl px-6 font-bold border-emerald-500/30 text-emerald-100" 
+                    />
+                 </div>
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500 ml-2">Flag Image URL (e.g. https://flagcdn.com/w320/pt.png)</label>
+                    <Input 
+                      value={goalFlag} 
+                      onChange={(e) => setGoalFlag(e.target.value)} 
+                      className="h-14 w-full bg-emerald-950/50 rounded-2xl px-6 font-bold border-emerald-500/30 text-emerald-100" 
+                    />
+                 </div>
+                 
+                 <Button onClick={handleTriggerGoal} disabled={isTriggeringGoal} className="w-full h-20 bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 rounded-2xl font-black uppercase tracking-widest text-xl shadow-2xl border-b-8 border-emerald-800 text-black">
+                   {isTriggeringGoal ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <Trophy className="w-6 h-6 mr-2" />}
+                   TRIGGER GLOBAL GOAL NOW
                  </Button>
               </div>
            </Card>
