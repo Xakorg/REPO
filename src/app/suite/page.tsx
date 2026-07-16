@@ -126,7 +126,7 @@ export default function XakteirSuiteHub() {
                 
                 <div className="space-y-4">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="h-12 rounded-xl bg-white/5 flex items-center px-4 gap-4 animate-pulse" style={{ animationDelay: \`\${i * 0.1}s\` }}>
+                    <div key={i} className="h-12 rounded-xl bg-white/5 flex items-center px-4 gap-4 animate-pulse" style={{ animationDelay: `${i * 0.1}s` }}>
                       <div className="w-6 h-6 rounded-md bg-white/10" />
                       <div className="flex-1 space-y-2">
                         <div className="h-2 bg-white/10 rounded w-1/2" />
@@ -149,11 +149,11 @@ export default function XakteirSuiteHub() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {SUITE_APPS.map((app, idx) => (
                 <Link key={idx} href={app.url} className="group block h-full">
-                  <div className={\`h-full p-6 md:p-8 rounded-3xl bg-zinc-900/50 border \${app.border} backdrop-blur-sm relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-\${app.text}/10\`}>
-                    <div className={\`absolute inset-0 bg-gradient-to-br \${app.color} opacity-50 group-hover:opacity-100 transition-opacity duration-500\`} />
+                  <div className={`h-full p-6 md:p-8 rounded-3xl bg-zinc-900/50 border ${app.border} backdrop-blur-sm relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-${app.text}/10`}>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${app.color} opacity-50 group-hover:opacity-100 transition-opacity duration-500`} />
                     
                     <div className="relative z-10 flex flex-col h-full">
-                      <div className={\`w-14 h-14 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center mb-8 shadow-xl \${app.text}\`}>
+                      <div className={`w-14 h-14 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center mb-8 shadow-xl ${app.text}`}>
                         <app.icon className="w-6 h-6" />
                       </div>
                       
