@@ -1,4 +1,4 @@
-
+import React, { Suspense } from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
@@ -61,9 +61,9 @@ export default function RootLayout({
                     <FocusModeListener />
                     <FaviconController />
                     <AppLayoutWrapper>
-                      <React.Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-[#05030d] z-[9999]"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+                      <Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-[#05030d] z-[9999]"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
                         {children}
-                      </React.Suspense>
+                      </Suspense>
                     </AppLayoutWrapper>
                     <CommandCenter />
                     <UpdateManager />
