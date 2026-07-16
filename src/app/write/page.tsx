@@ -1,13 +1,41 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSuiteStore } from '@/lib/store';
 import { Settings, Share, MessageSquare, History, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { XakteirEditor } from '@/components/editor/XakteirEditor';
+import { useUser, useFirestore } from '@/firebase';
 
 export default function XakteirWrite() {
   const { isFocusMode, toggleFocusMode } = useSuiteStore();
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const [content, setContent] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!firestore || !user) return;
+    import('firebase/firestore').then(({ doc, getDoc }) => {
+      getDoc(doc(firestore, 'users', user.uid, 'write', 'scratchpad')).then(snap => {
+         if (snap.exists()) {
+            setContent(snap.data().content);
+         } else {
+            setContent(`<h1>Untitled Document</h1><p></p>`);
+         }
+      });
+    });
+  }, [firestore, user]);
+
+  const saveContent = async (newContent: string) => {
+    if (!firestore || !user) return;
+    setSaving(true);
+    try {
+      const { doc, setDoc } = await import('firebase/firestore');
+      await setDoc(doc(firestore, 'users', user.uid, 'write', 'scratchpad'), { content: newContent });
+    } catch (e) {}
+    setSaving(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-transparent text-white pt-24">
@@ -21,15 +49,23 @@ export default function XakteirWrite() {
           <Button variant="ghost" size="sm" className="text-white/60 hover:text-white uppercase tracking-widest text-[10px] font-black">Tools</Button>
         </div>
         <div className="ml-auto flex gap-2">
+           {saving && <span className="text-[10px] font-black uppercase text-white/40 mr-4 self-center tracking-widest flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> Saving...</span>}
            <Button variant="outline" size="sm" className="border-white/10 bg-white/5 text-white gap-2"><Share className="w-3 h-3" /> Share</Button>
            <Button variant="default" size="sm" className="bg-primary text-black font-black uppercase tracking-widest text-[10px]"><Wand2 className="w-3 h-3 mr-2" /> Xak AI</Button>
         </div>
       </div>
 
       <div className="flex-1 flex justify-center p-8 mt-10">
-         <div className="w-full max-w-[850px] min-h-[1100px] bg-white text-black p-24 shadow-2xl rounded-sm">
+         <div className="w-full max-w-[850px] min-h-[1100px] bg-white text-black p-24 shadow-2xl rounded-sm relative">
             {/* The Live Editor Canvas */}
-            <XakteirEditor />
+            {content === null ? (
+               <div className="absolute inset-0 flex items-center justify-center bg-white"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>
+            ) : (
+               <XakteirEditor 
+                  initialContent={content} 
+                  onChange={(html) => saveContent(html)} 
+               />
+            )}
          </div>
       </div>
 

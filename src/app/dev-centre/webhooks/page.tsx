@@ -107,13 +107,13 @@ export default function WebhooksBlade() {
                 )}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[10px] py-0">{hook.method}</Badge>
+                  <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[10px] py-0">{(hook as any).method}</Badge>
                   <span className="text-[10px] text-zinc-500">
-                    {hook.timestamp ? new Date(hook.timestamp).toLocaleTimeString() : 'Just now'}
+                    {(hook as any).timestamp ? new Date((hook as any).timestamp).toLocaleTimeString() : 'Just now'}
                   </span>
                 </div>
                 <div className="text-xs font-mono text-zinc-300 truncate">
-                  {hook.ip}
+                  {(hook as any).ip}
                 </div>
               </button>
             ))}

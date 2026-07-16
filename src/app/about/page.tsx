@@ -43,7 +43,7 @@ export default function AboutPage() {
                 </div>
                 <div>
                   <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Share Feedback</p>
-                  <p className="text-lg font-bold text-foreground">Support Panel Available in Dashboard</p>
+                  <a href="/feedback" className="text-lg font-bold text-primary hover:text-primary/80 transition-colors underline decoration-2 underline-offset-4">Post an Anonymous Review</a>
                 </div>
               </div>
               <Badge variant="outline" className="border-white/10 text-[10px] font-black uppercase px-6 py-2 rounded-full">Early Access v4.2.8</Badge>

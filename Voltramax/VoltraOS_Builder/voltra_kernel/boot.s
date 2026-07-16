@@ -4,11 +4,12 @@
  */
 
 /* Multiboot Header Magic constants so GRUB knows this is a real OS */
-.set ALIGN,    1<<0             /* align loaded modules on page boundaries */
-.set MEMINFO,  1<<1             /* provide memory map */
-.set FLAGS,    ALIGN | MEMINFO  /* this is the Multiboot 'flag' field */
-.set MAGIC,    0x1BADB002       /* 'magic number' lets bootloader find the header */
-.set CHECKSUM, -(MAGIC + FLAGS) /* checksum of above, to prove we are multiboot */
+.set ALIGN,    1<<0             
+.set MEMINFO,  1<<1             
+.set VIDMODE,  1<<2
+.set FLAGS,    ALIGN | MEMINFO | VIDMODE
+.set MAGIC,    0x1BADB002       
+.set CHECKSUM, -(MAGIC + FLAGS) 
 
 /* Declare the Multiboot header */
 .section .multiboot
@@ -16,6 +17,11 @@
 .long MAGIC
 .long FLAGS
 .long CHECKSUM
+.long 0, 0, 0, 0, 0
+.long 0
+.long 1024
+.long 768
+.long 32
 
 /* Set up the initial stack (16KB) for our C code to run */
 .section .bss
@@ -31,6 +37,10 @@ stack_top:
 _start:
     /* Point the CPU stack pointer to the top of our newly created stack */
     mov $stack_top, %esp
+
+    /* Push Multiboot Info structure pointer and Magic Number */
+    push %ebx
+    push %eax
 
     /* Call our C kernel main function! */
     call kernel_main

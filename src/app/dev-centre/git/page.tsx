@@ -20,7 +20,7 @@ export default function GitIntegrationBlade() {
   
   const [isLinking, setIsLinking] = useState(false);
 
-  const projectRepos = repos.filter(r => r.projectId === activeProjectId);
+  const projectRepos = repos.filter((r: any) => r.projectId === activeProjectId);
 
   const handleFetchRepos = async () => {
     if (!pat.trim()) {
@@ -146,7 +146,7 @@ export default function GitIntegrationBlade() {
                     onChange={(e) => setSelectedRepoFullName(e.target.value)}
                     className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none cursor-pointer hover:border-pink-500/50 transition-colors"
                   >
-                    {fetchedRepos.map(r => (
+                    {fetchedRepos.map((r: any) => (
                       <option key={r.id} value={r.full_name}>{r.full_name}</option>
                     ))}
                   </select>

@@ -31,7 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useAuth, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
-import { collection, doc, query, limit, orderBy, serverTimestamp, getDoc, getCountFromServer, getAggregateFromServer, sum } from "firebase/firestore";
+import {  collection, doc, query, limit, orderBy, serverTimestamp, getDoc, getCountFromServer, getAggregateFromServer, sum , increment } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, TerminalSquare, Activity } from "lucide-react";

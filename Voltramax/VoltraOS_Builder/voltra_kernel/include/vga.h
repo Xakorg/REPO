@@ -23,6 +23,12 @@ enum vga_color {
     VGA_COLOR_WHITE = 15,
 };
 
+extern uint8_t terminal_color;
+
+static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) {
+    return fg | bg << 4;
+}
+
 void terminal_initialize(void);
 void terminal_setcolor(uint8_t color);
 void terminal_putentryat(char c, uint8_t color, size_t x, size_t y);

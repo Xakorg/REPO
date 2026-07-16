@@ -101,7 +101,6 @@ export default function SportsPage() {
             FIFA WC 2026
           </Badge>
         </div>
-      </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">

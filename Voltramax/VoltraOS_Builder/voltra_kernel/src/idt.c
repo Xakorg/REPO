@@ -63,11 +63,19 @@ void init_idt(void) {
     idt_set_gate(29, (uint32_t)isr29, 0x08, 0x8E);
     idt_set_gate(30, (uint32_t)isr30, 0x08, 0x8E);
     idt_set_gate(31, (uint32_t)isr31, 0x08, 0x8E);
+    
+    // Hardware IRQs
+    extern void irq0();
+    idt_set_gate(32, (uint32_t)irq0, 0x08, 0x8E);
+    
+    // System Call Hook! (DPL 3 allows User Mode apps to trigger it)
+    extern void isr128();
+    idt_set_gate(128, (uint32_t)isr128, 0x08, 0xEE);
 
     idt_flush((uint32_t)&idt_ptr);
     
     uint8_t old_color = terminal_color;
     terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK));
-    printf("[VOLTRA KERNEL] Interrupt Descriptor Table (IDT) Loaded with 32 Hooks.\n");
+    printf("[VOLTRA KERNEL] Interrupt Descriptor Table (IDT) Loaded.\n");
     terminal_setcolor(old_color);
 }

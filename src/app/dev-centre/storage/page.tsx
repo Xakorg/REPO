@@ -134,8 +134,8 @@ export default function StorageBlade() {
                   
                   <div className="flex items-center gap-3">
                     <div className="text-right hidden sm:block mr-4">
-                      <p className="text-xs font-bold text-white">{bucket.objectCount} objects</p>
-                      <p className="text-[10px] uppercase font-black tracking-widest text-zinc-500">{(bucket.sizeBytes / 1024 / 1024).toFixed(2)} MB</p>
+                      <p className="text-xs font-bold text-white">{(bucket as any).objectCount} objects</p>
+                      <p className="text-[10px] uppercase font-black tracking-widest text-zinc-500">{((bucket as any).sizeBytes / 1024 / 1024).toFixed(2)} MB</p>
                     </div>
                     <Button 
                       onClick={() => handleDelete(bucket.id)}

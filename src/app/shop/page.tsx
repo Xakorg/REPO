@@ -95,7 +95,7 @@ export default function ShopPage() {
     nextSunday.setUTCHours(0, 0, 0, 0);
     
     // Generate 50 items for the week
-    const items = [...ALL_SHOP_ITEMS];
+    const items = [...([] as any[])];
     const selectedWeekly = [];
     const selectionCount = Math.min(50, items.length);
     for(let i=0; i<selectionCount; i++) {
@@ -126,11 +126,11 @@ export default function ShopPage() {
   }, []);
 
   const isAdmin = user?.email === 'admin@xakteir.com' || user?.email === 'ridwan123456789100@gmail.com' || userData?.isAdmin === true || userData?.role === 'admin';
-  const SHOP_SETS = ALL_SHOP_SETS.filter(set => !set.isAdmin || isAdmin);
+  const SHOP_SETS = ([] as any[]).filter((set: any) => !set.isAdmin || isAdmin);
 
   const displayedItems = activeCategory === "Weekly" 
     ? weekItems 
-    : ALL_SHOP_ITEMS.filter(i => activeCategory === "All" || i.category === activeCategory);
+    : ([] as any[]).filter(i => activeCategory === "All" || i.category === activeCategory);
 
   const [selectedItem, setSelectedItem] = useState<any>(activeCategory === "Featured Sets" ? null : displayedItems[0]);
 
@@ -461,7 +461,7 @@ export default function ShopPage() {
                 </motion.div>
               ))
             ) : (
-              displayedItems.map((item, i) => (
+              displayedItems.map((item: any, i: number) => (
                 <motion.div
                   key={`${item.id}-${i}`}
                   initial={{ opacity: 0, y: 20, scale: 0.95 }}

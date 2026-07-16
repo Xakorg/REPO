@@ -1,61 +1,56 @@
 #include "isr.h"
 #include "vga.h"
 #include "string.h"
+#include "ports.h"
 
-// Array of custom error messages mapped to the CPU exception codes!
+// Defined in timer.c & syscall.c
+extern void timer_callback(registers_t *regs);
+extern void syscall_handler(registers_t *regs);
+
 char *exception_messages[] = {
-    "Division By Zero Exception",
-    "Debug Exception",
-    "Non Maskable Interrupt Exception",
-    "Breakpoint Exception",
-    "Into Detected Overflow Exception",
-    "Out of Bounds Exception",
-    "Invalid Opcode Exception",
-    "No Coprocessor Exception",
-    "Double Fault Exception",
-    "Coprocessor Segment Overrun Exception",
-    "Bad TSS Exception",
-    "Segment Not Present Exception",
-    "Stack Fault Exception",
-    "General Protection Fault Exception",
-    "Page Fault Exception",
-    "Unknown Interrupt Exception",
-    "Coprocessor Fault Exception",
-    "Alignment Check Exception (486+)",
-    "Machine Check Exception (Pentium/586+)",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved"
+    "Division By Zero", "Debug", "Non Maskable Interrupt", "Breakpoint", "Overflow",
+    "Out of Bounds", "Invalid Opcode", "No Coprocessor", "Double Fault",
+    "Coprocessor Segment Overrun", "Bad TSS", "Segment Not Present",
+    "Stack Fault", "General Protection Fault", "Page Fault", "Unknown Interrupt",
+    "Coprocessor Fault", "Alignment Check", "Machine Check",
+    "Reserved","Reserved","Reserved","Reserved","Reserved","Reserved",
+    "Reserved","Reserved","Reserved","Reserved","Reserved","Reserved","Reserved"
 };
 
-// This gets called directly from the Assembly interrupt.s file!
 void isr_handler(registers_t regs) {
-    terminal_setcolor(vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED)); // Red Screen of Death!
-    printf("\n[!!! FATAL KERNEL PANIC !!!]\n");
-    printf(">> CPU EXCEPTION TRIGGERED: ");
-    
-    if (regs.int_no < 32) {
-        printf(exception_messages[regs.int_no]);
-        printf("\n");
-    } else {
-        printf("UNKNOWN EXCEPTION\n");
+    if (regs.int_no == 128) {
+        syscall_handler(&regs);
+        return;
     }
-    
-    printf(">> ERROR CODE: "); print_hex(regs.err_code); printf("\n");
-    printf(">> HALTING SYSTEM TO PROTECT HARDWARE.\n");
 
-    // Freeze the computer forever.
-    while(1) {
-        asm volatile("hlt");
+    if (regs.int_no >= 32) {
+        // Hardware IRQ Received!
+        if (regs.int_no == 32) {
+            timer_callback(&regs);
+        }
+        
+        // Acknowledge the PIC Hardware
+        if (regs.int_no >= 40) outb(0xA0, 0x20); // Slave
+        outb(0x20, 0x20); // Master
+        return; // Return back to executing code! Do not panic!
     }
+
+    // Otherwise, it is a CPU Exception!
+    terminal_setcolor(vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED)); // Red Screen of Death
+    printf("\n[!!! FATAL KERNEL PANIC !!!]\n");
+    printf(">> EXCEPTION: ");
+    if (regs.int_no < 32) printf(exception_messages[regs.int_no]);
+    printf("\n");
+    
+    printf(">> REGISTER DUMP:\n");
+    printf("   EIP (Instruction Pointer): 0x"); print_hex(regs.eip);
+    printf("   EAX: 0x"); print_hex(regs.eax);
+    printf("\n   EBX: 0x"); print_hex(regs.ebx);
+    printf("   ECX: 0x"); print_hex(regs.ecx);
+    printf("\n   EDX: 0x"); print_hex(regs.edx);
+    printf("   ESP: 0x"); print_hex(regs.esp);
+    printf("\n   EBP: 0x"); print_hex(regs.ebp);
+    
+    printf("\n>> KERNEL HALTED TO PROTECT HARDWARE.\n");
+    while(1) { asm volatile("hlt"); }
 }

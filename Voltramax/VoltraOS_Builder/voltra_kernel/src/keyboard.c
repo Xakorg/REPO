@@ -45,8 +45,8 @@ const char kbd_us[128] = {
 void keyboard_handler_main(void) {
     uint8_t status = inb(0x64);
     if (status & 0x01) {
-        int8_t keycode = inb(0x60);
-        if (keycode >= 0 && keycode < 128) {
+        uint8_t keycode = inb(0x60);
+        if (keycode < 128) {
             char key = kbd_us[keycode];
             if (key) {
                 terminal_putchar(key);

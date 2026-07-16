@@ -13,12 +13,35 @@ import {
   Trash2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useUser, useFirestore } from "@/firebase";
 
 export default function CalculatorPage() {
+  const { user } = useUser();
+  const firestore = useFirestore();
   const [expression, setExpression] = useState("");
   const [result, setResult] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!firestore || !user) return;
+    import('firebase/firestore').then(({ doc, getDoc }) => {
+      getDoc(doc(firestore, 'users', user.uid, 'calculator', 'history')).then(snap => {
+         if (snap.exists()) {
+            setHistory(snap.data().history || []);
+         }
+      });
+    });
+  }, [firestore, user]);
+
+  const saveHistoryToDB = async (newHistory: string[]) => {
+    setHistory(newHistory);
+    if (!firestore || !user) return;
+    try {
+      const { doc, setDoc } = await import('firebase/firestore');
+      await setDoc(doc(firestore, 'users', user.uid, 'calculator', 'history'), { history: newHistory });
+    } catch (e) {}
+  };
 
   const handleInput = (val: string) => {
     setExpression((prev) => prev + val);
@@ -32,7 +55,7 @@ export default function CalculatorPage() {
       const finalRes = res.toString();
       setResult(finalRes);
       if (expression && finalRes) {
-        setHistory([`${expression} = ${finalRes}`, ...history].slice(0, 10));
+        saveHistoryToDB([`${expression} = ${finalRes}`, ...history].slice(0, 50));
       }
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: "Invalid calculation logic." });

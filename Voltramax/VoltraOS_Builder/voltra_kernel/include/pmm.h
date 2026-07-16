@@ -2,6 +2,7 @@
 #define PMM_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 #define PMM_BLOCK_SIZE 4096

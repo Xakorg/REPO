@@ -9,7 +9,8 @@ import { Loader2, Wrench } from "lucide-react";
 const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
 
 export function MaintenanceModeGuard({ children }: { children: React.ReactNode }) {
-  const { user, isLoading: isUserLoading } = useUser();
+  const { user } = useUser();
+  const isUserLoading = false;
   const firestore = useFirestore();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);

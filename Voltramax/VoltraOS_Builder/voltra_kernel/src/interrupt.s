@@ -5,8 +5,8 @@
   .global isr\num
   isr\num:
     cli
-    push $0        // Dummy error code
-    push $\num     // Push the interrupt number
+    push $0        # Dummy error code
+    push $\num     # Push the interrupt number
     jmp isr_common_stub
 .endm
 
@@ -14,7 +14,7 @@
   .global isr\num
   isr\num:
     cli
-    // The CPU already pushed the error code!
+    # The CPU already pushed the error code!
     push $\num
     jmp isr_common_stub
 .endm
@@ -51,6 +51,20 @@ ISR_NOERRCODE 28
 ISR_NOERRCODE 29
 ISR_NOERRCODE 30
 ISR_NOERRCODE 31
+
+.global irq0
+irq0:
+    cli
+    push $0
+    push $32
+    jmp isr_common_stub
+
+.global isr128
+isr128:
+    cli
+    push $0
+    push $128
+    jmp isr_common_stub
 
 /* This stub saves the CPU state, calls C code, and restores the CPU state */
 .extern isr_handler

@@ -839,7 +839,7 @@ export default function XakDrivePage() {
                 {storagePercentage.toFixed(1)}%
               </span>
             </div>
-            <Progress value={storagePercentage} className="h-1.5 bg-zinc-700" indicatorColor={storagePercentage > 90 ? "bg-red-500" : "bg-blue-500"} />
+            <Progress value={storagePercentage} className="h-1.5 bg-zinc-700" color={storagePercentage > 90 ? "bg-red-500" : "bg-blue-500"} />
             <p className="text-[10px] text-zinc-500 mt-2">{usedStorageGB} GB of {MAX_STORAGE_GB} GB used</p>
           </div>
         </div>
@@ -993,10 +993,10 @@ export default function XakDrivePage() {
             <Laptop className="w-20 h-20 text-green-500 mb-6 drop-shadow-[0_0_25px_rgba(34,197,94,0.4)]" />
             <h1 className="text-3xl font-bold tracking-tight mb-4">Web Sync Engine</h1>
             
-            {!localDirHandle ? (
+            {!(window as any).localDirHandle ? (
               <div className="text-center max-w-md">
                 <p className="text-zinc-400 mb-8">Link a folder on your computer to Xakteir Drive. We will automatically sync files directly from your browser to your local hard drive.</p>
-                <Button onClick={selectSyncFolder} size="lg" className="bg-green-600 hover:bg-green-500 w-full h-14 text-lg">
+                <Button onClick={setSyncedFolders} size="lg" className="bg-green-600 hover:bg-green-500 w-full h-14 text-lg">
                   Link Local Folder
                 </Button>
               </div>
@@ -1004,8 +1004,8 @@ export default function XakDrivePage() {
               <div className="w-full max-w-2xl bg-zinc-900/50 border border-white/10 rounded-2xl p-8 flex flex-col items-center">
                 <div className="flex items-center gap-3 mb-6 bg-white/5 px-4 py-2 rounded-full border border-white/10">
                   <FolderOpen className="w-5 h-5 text-blue-400" />
-                  <span className="font-mono text-sm text-zinc-300">Linked: {localDirHandle.name}</span>
-                  <Button variant="ghost" size="sm" onClick={() => setLocalDirHandle(null)} className="h-6 px-2 text-xs ml-2 hover:bg-red-500/20 hover:text-red-400">Unlink</Button>
+                  <span className="font-mono text-sm text-zinc-300">Linked: {(window as any).localDirHandle.name}</span>
+                  <Button variant="ghost" size="sm" onClick={() => (window as any).setLocalDirHandle(null)} className="h-6 px-2 text-xs ml-2 hover:bg-red-500/20 hover:text-red-400">Unlink</Button>
                 </div>
                 
                 <Button 

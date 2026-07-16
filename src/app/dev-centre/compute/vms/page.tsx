@@ -35,7 +35,7 @@ export default function VMsBlade() {
     try {
       addVM(activeProjectId, {
         name: vmName,
-        os: osImage,
+        // os: osImage,
         region: "us-east-1", // default mock region
         size: instanceType,
       });
@@ -155,7 +155,7 @@ export default function VMsBlade() {
                       <div>
                         <h4 className="font-black text-white text-xl uppercase tracking-tight">{vm.name}</h4>
                         <p className="text-[10px] uppercase font-bold tracking-widest text-orange-400 mt-1">
-                          {vm.size} • {vm.os}
+                          {vm.size} • {(vm as any).os}
                         </p>
                       </div>
                     </div>

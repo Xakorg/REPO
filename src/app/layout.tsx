@@ -61,7 +61,9 @@ export default function RootLayout({
                     <FocusModeListener />
                     <FaviconController />
                     <AppLayoutWrapper>
-                      {children}
+                      <React.Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-[#05030d] z-[9999]"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+                        {children}
+                      </React.Suspense>
                     </AppLayoutWrapper>
                     <CommandCenter />
                     <UpdateManager />

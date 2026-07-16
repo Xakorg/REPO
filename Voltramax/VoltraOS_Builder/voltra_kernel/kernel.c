@@ -7,50 +7,111 @@
 #include "pmm.h"
 #include "vmm.h"
 #include "heap.h"
+#include "pci.h"
+#include "timer.h"
+#include "ata.h"
+#include "vfs.h"
+#include "fat32.h"
+#include "multiboot.h"
+#include "graphics.h"
+#include "font.h"
+#include "mouse.h"
+#include "window.h"
+#include "task.h"
+#include "rtl8139.h"
 
-void kernel_main(void) {
-    // 1. Boot up the display
-    terminal_initialize();
+extern void switch_to_user_mode();
+// A generic wrapper that triggers INT 0x80 to politely ask the Kernel to print!
+void syscall_print(char* str, uint32_t x, uint32_t y, uint32_t color) {
+    asm volatile("int $0x80" : : "a"(1), "b"(str), "c"(x), "d"(y), "S"(color));
+}
+// Thread A drops down into Ring 3 (User Mode)
+void thread_A() {
+    switch_to_user_mode(); 
+    while(1) {
+        syscall_print("[THREAD A]: Running in RING 3 USER MODE!", 120, 250, COLOR_GREEN);
+    }
+}
+
+// Thread B stays in Ring 0 (Kernel Mode)
+void thread_B() {
+    while(1) {
+        draw_string("[THREAD B]: Running in RING 0 KERNEL MODE!", 120, 270, COLOR_RED, COLOR_WHITE);
+    }
+}
+
+void kernel_main(uint32_t magic, multiboot_info_t* mbd) {
+    if (magic != 0x2BADB002) return;
+
+    graphics_init(mbd);
     
-    // 2. Setup CPU Architecture (Segmentation & Interrupts)
+    // --- XAKTEIR BOOT SCREEN ---
+    uint32_t sw = get_screen_width();
+    draw_xakteir_background(0);
+    
+    // "VOLTRAMAX" (9 chars, scaled 6x = 48px width per char)
+    draw_string_scaled("VOLTRAMAX", (sw - (9 * 48))/2, 200, COLOR_WHITE, 0, 6);
+    
+    // "by xakteir" (10 chars, scaled 2x = 16px width per char)
+    draw_string_scaled("by xakteir", (sw - (10 * 16))/2, 280, 0x00EEEEEE, 0, 2);
+    
+    uint32_t boot_y = 500;
+    uint32_t boot_x = (sw - (25 * 16))/2; 
+    draw_string_scaled("Booting OS ", boot_x, boot_y, COLOR_WHITE, 0, 2);
+    boot_x += (11 * 16); 
+
     init_gdt();
+    draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
+    
     init_idt();
     pic_remap();
+    draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
     
-    // 3. Setup Voltramax Memory Subsystem
-    // In a real GRUB boot, we get the memory map size from Multiboot.
-    // For now, we assume 512MB of RAM, and put the Bitmap at 0x100000.
     pmm_init(512 * 1024, 0x100000); 
+    draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
     
-    // Enable Virtual Paging!
     vmm_init();
+    draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
     
-    // Boot the Kernel Heap!
     heap_init();
+    draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
     
-    // Enable Hardware Interrupts (STI)
+    init_timer(1000); 
+    mouse_init(); 
+    draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
+    
+    rtl8139_init();
+    draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
+    
+    tasking_init();
+    create_task(thread_A);
+    create_task(thread_B);
+    draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
+    
+    if (ata_identify_device()) {
+        fat32_init();
+        vfs_root = fat32_mount();
+    } 
+    draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
+    
+    // Now animate the Xakteir colors for 15 seconds! (900 frames)
+    for (uint32_t frame = 0; frame < 900; frame++) {
+        draw_xakteir_background(frame);
+        draw_string_scaled("VOLTRAMAX", (sw - (9 * 48))/2, 200, COLOR_WHITE, 0, 6);
+        draw_string_scaled("by xakteir", (sw - (10 * 16))/2, 280, 0x00EEEEEE, 0, 2);
+        draw_string_scaled("Booting OS . . . . . . . .", (sw - (26 * 16))/2, boot_y, COLOR_WHITE, 0, 2);
+        
+        // Artificial delay for ~60fps
+        for(volatile int d=0; d<1000000; d++); 
+    }
+    
+    // --- BOOT COMPLETE, LAUNCH DESKTOP ---
+    wm_init(); 
+    
     asm volatile("sti");
 
-    // 4. Draw the UI!
-    uint8_t ui_color = 0x1F; // Blue background, White text
-    draw_ui_box(0, 0, 80, 25, ui_color, " VOLTRA OS LEGENDARY KERNEL v0.2 ");
-    
-    terminal_setcursor(2, 2);
-    terminal_setcolor(0x0A); // Light green
-    
-    printf("\n>> CPU ARCHITECTURE: x86_64 Bare Metal Detected.\n");
-    printf(">> PMM: "); print_hex(pmm_get_memory_size()); printf(" BYTES PHYSICAL RAM MANAGED.\n");
-    printf(">> VMM: VIRTUAL PAGING ENABLED (CR3 LOADED).\n");
-    printf(">> HEAP: DYNAMIC KERNEL ALLOCATION ONLINE.\n");
-    printf(">> KEYBOARD DRIVER: LOADED ON PORT 0x60.\n");
-    
-    terminal_setcolor(0x0F); // White
-    printf("\n  [ Welcome to VoltraOS. Total Hardware & Memory Control Achieved. ]\n");
-    printf("  [ Try typing on your keyboard. The OS is listening... ]\n\n> ");
-    
-    // 5. The Infinite Kernel Loop
     while(1) {
-        // Poll keyboard manually for our custom setup
-        keyboard_handler_main();
+        mouse_poll();
+        wm_update();
     }
 }

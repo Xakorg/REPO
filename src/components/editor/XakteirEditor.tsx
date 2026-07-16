@@ -7,7 +7,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { Bold, Italic, Strikethrough, Heading1, Heading2, List, ListOrdered, Quote } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
 
-export function XakteirEditor() {
+export function XakteirEditor({ initialContent = `<h1>Untitled Document</h1><p></p>`, onChange }: { initialContent?: string, onChange?: (html: string) => void }) {
   const [mounted, setMounted] = useState(false);
 
   const editor = useEditor({
@@ -17,7 +17,10 @@ export function XakteirEditor() {
         placeholder: 'Start typing your thoughts here... (Try highlighting text to format, or use Markdown)',
       }),
     ],
-    content: `<h1>Untitled Document</h1><p></p>`,
+    content: initialContent,
+    onUpdate: ({ editor }) => {
+      onChange?.(editor.getHTML());
+    },
     editorProps: {
       attributes: {
         class: 'prose prose-lg dark:prose-invert prose-headings:font-black prose-h1:text-5xl prose-h1:tracking-tighter prose-p:text-xl prose-p:leading-relaxed max-w-none focus:outline-none',
