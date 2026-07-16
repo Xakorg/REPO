@@ -1,6 +1,6 @@
-
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { GlitchLogo } from "@/components/ui/glitch-logo";
 import { 
@@ -16,6 +16,39 @@ import {
 } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
+
+const FEEDBACK_MESSAGES = [
+  "What's Your Thoughts?",
+  "What do you think?",
+  "What's Your feedback?",
+  "Have a suggestion?",
+  "Tell us how we did!",
+  "We'd love your input!",
+  "Help us improve!"
+];
+
+function RotatingFeedbackButton() {
+  const [msgIndex, setMsgIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIndex((prev) => (prev + 1) % FEEDBACK_MESSAGES.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <Link href="https://xakteir.com/feedback" className="relative group block overflow-hidden rounded-xl bg-gradient-to-r from-primary/20 to-purple-500/20 border border-primary/30 p-1 mt-6">
+      <div className="absolute inset-0 bg-primary/10 group-hover:bg-primary/30 transition-colors duration-300" />
+      <div className="relative px-4 py-2 flex items-center justify-center gap-2">
+        <Heart className="w-4 h-4 text-primary animate-pulse" />
+        <span className="text-xs md:text-sm font-bold text-foreground italic transition-all duration-300">
+          {FEEDBACK_MESSAGES[msgIndex]}
+        </span>
+      </div>
+    </Link>
+  );
+}
 
 export function Footer() {
   const firestore = useFirestore();
@@ -48,6 +81,7 @@ export function Footer() {
               </button>
             ))}
           </div>
+          <RotatingFeedbackButton />
         </div>
 
         <div className="space-y-6 md:space-y-8">

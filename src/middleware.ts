@@ -23,6 +23,33 @@ export function middleware(req: NextRequest) {
     return NextResponse.rewrite(new URL(`/sites/${slug}`, req.url));
   }
 
+  // 1.5 Handle explicit Suite Apps
+  const suiteApps = ['forms', 'write', 'sheets', 'slides'];
+  for (const app of suiteApps) {
+    if (hostname === `${app}.suite.xakteir.com` || hostname === `www.${app}.suite.xakteir.com`) {
+      if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+      if (!req.cookies.has('xak_session')) {
+        return NextResponse.redirect(new URL('/auth', req.url));
+      }
+      
+      // If path is /, rewrite to /app. If path is /something, rewrite to /app/something.
+      if (path === '/') return NextResponse.rewrite(new URL(`/${app}`, req.url));
+      if (path.startsWith(`/${app}`)) return NextResponse.next();
+      return NextResponse.rewrite(new URL(`/${app}${path}`, req.url));
+    }
+  }
+
+  // 1.6 Handle the main Suite Dashboard
+  if (hostname === 'suite.xakteir.com' || hostname === 'www.suite.xakteir.com') {
+    if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+    if (!req.cookies.has('xak_session')) {
+      return NextResponse.redirect(new URL('/auth', req.url));
+    }
+    if (path === '/') return NextResponse.rewrite(new URL('/suite', req.url));
+    if (path.startsWith('/suite')) return NextResponse.next();
+    return NextResponse.redirect(`https://xakteir.com${path}`);
+  }
+
   // 2. Handle XakCode standalone deployment via code.xakteir.com
   if (hostname === 'code.xakteir.com' || hostname === 'www.code.xakteir.com') {
     
@@ -276,7 +303,8 @@ export function middleware(req: NextRequest) {
     hostname !== 'play.voltra.xakteir.com' && hostname !== 'www.play.voltra.xakteir.com' && !hostname.startsWith('play.voltra.localhost') &&
     hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com' && !hostname.startsWith('voltramax.localhost') &&
     hostname !== 'microdimension.xakteir.com' && hostname !== 'www.microdimension.xakteir.com' && !hostname.startsWith('microdimension.localhost') &&
-    hostname !== 'everyworld.xakteir.com' && hostname !== 'www.everyworld.xakteir.com' && !hostname.startsWith('everyworld.localhost')
+    hostname !== 'everyworld.xakteir.com' && hostname !== 'www.everyworld.xakteir.com' && !hostname.startsWith('everyworld.localhost') &&
+    !hostname.endsWith('.suite.xakteir.com') && hostname !== 'suite.xakteir.com' && hostname !== 'www.suite.xakteir.com'
   ) {
     if (
       path === '/xakarena' || path.startsWith('/xakarena/') || 
@@ -286,7 +314,9 @@ export function middleware(req: NextRequest) {
       path === '/voltraplay' || path.startsWith('/voltraplay/') ||
       path === '/voltramax' || path.startsWith('/voltramax/') ||
       path === '/microdimension' || path.startsWith('/microdimension/') ||
-      path === '/everyworld' || path.startsWith('/everyworld/')
+      path === '/everyworld' || path.startsWith('/everyworld/') ||
+      path === '/suite' || path.startsWith('/suite/') ||
+      suiteApps.some(app => path === `/${app}` || path.startsWith(`/${app}/`))
     ) {
       // Rewrite to a non-existent route to trigger Next.js 404 (Hidden from users)
       return NextResponse.rewrite(new URL('/404', req.url));

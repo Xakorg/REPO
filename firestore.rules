@@ -638,5 +638,18 @@ service cloud.firestore {
     match /admin_hotfixes/{docId} {
       allow read, write: if isAdmin();
     }
+
+    // ─────────────────────────────────────────────
+    // NEW SUITE APPS (FORMS & FEEDBACK)
+    // ─────────────────────────────────────────────
+    match /forms/{formId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if isOwner(resource.data.ownerId) || isAdmin();
+    }
+    
+    match /feedback/{feedbackId} {
+      allow create, read: if true;
+      allow update, delete: if isAdmin();
+    }
   }
 }
