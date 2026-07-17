@@ -18,7 +18,7 @@ import { FaviconController } from '@/components/layout/FaviconController';
 import { MaintenanceModeGuard } from '@/components/MaintenanceModeGuard';
 
 import { GlobalThemeWrapper } from '@/components/GlobalThemeWrapper';
-import { WorldCupProvider } from '@/components/WorldCupProvider';
+import { GlobalThemeWrapper } from '@/components/GlobalThemeWrapper';
 
 export const metadata: Metadata = {
   title: 'Xakteir',
@@ -54,7 +54,7 @@ export default function RootLayout({
 
         <FirebaseClientProvider>
           <GlobalThemeWrapper>
-            <WorldCupProvider>
+
               <OnboardingProvider>
                 <LockedAccountGuard>
                   <MaintenanceModeGuard>
@@ -75,7 +75,7 @@ export default function RootLayout({
                   </MaintenanceModeGuard>
                 </LockedAccountGuard>
               </OnboardingProvider>
-            </WorldCupProvider>
+
           </GlobalThemeWrapper>
         </FirebaseClientProvider>
       </body>
