@@ -94,24 +94,15 @@ export default function AdminDashboardPage() {
     setIsLoadingAnalytics(true);
     try {
       const usersCol = collection(firestore, "users");
-      const usersSnap = await getDocs(usersCol);
       
-      let totalUsersCount = 0;
-      let totalCreditsCount = 0;
-      let onlineUsersCount = 0; // Simple approximation: users who have been active recently (if timestamp available), but for now we just count signed up users who aren't hidden
-
-      usersSnap.forEach((doc: any) => {
-        const data = doc.data();
-        const isPublic = data.isPublic !== false; // defaults to true
-        const isHidden = data.isHidden === true;
-        
-        if (isPublic && !isHidden) {
-          totalUsersCount++;
-          // We can also check online status here if we have a field for it
-        }
-        
-        totalCreditsCount += (data.currencyBalance || 0);
+      // Use aggregation queries to prevent massive N+1 document reads and billing spikes
+      const usersCountSnap = await getCountFromServer(usersCol);
+      const usersAggSnap = await getAggregateFromServer(usersCol, {
+        totalCredits: sum('currencyBalance')
       });
+
+      const totalUsersCount = usersCountSnap.data().count;
+      const totalCreditsCount = usersAggSnap.data().totalCredits;
 
       // Total Messages
       const msgCol = collection(firestore, "globalMessages");

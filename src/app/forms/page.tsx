@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSuiteStore } from '@/lib/store';
-import { Settings, Share, MessageSquare, History, Wand2, Eye, Plus, FileText, Trash2, ArrowLeft, GripVertical, CheckCircle2, Copy, BarChart3, LayoutTemplate, Printer } from 'lucide-react';
+import { Settings, Share, MessageSquare, History, Wand2, Eye, Plus, FileText, Trash2, ArrowLeft, GripVertical, CheckCircle2, Copy, BarChart3, LayoutTemplate, Printer, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUser, useFirestore, useCollection, useDoc } from '@/firebase';
 import { collection, query, where, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
@@ -130,6 +130,22 @@ function FormsApp() {
     saveForm(newData);
   };
 
+  const moveQuestion = (qId: string, direction: 'up' | 'down') => {
+    if (!activeForm) return;
+    const index = activeForm.questions.findIndex((q: any) => q.id === qId);
+    if (index < 0) return;
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === activeForm.questions.length - 1) return;
+    
+    const newQuestions = [...activeForm.questions];
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    [newQuestions[index], newQuestions[swapIndex]] = [newQuestions[swapIndex], newQuestions[index]];
+    
+    const newData = { ...activeForm, questions: newQuestions };
+    setActiveForm(newData);
+    saveForm(newData);
+  };
+
   // Dashboard View
   if (!formId) {
     return (
@@ -233,7 +249,8 @@ function FormsApp() {
                 <motion.div key={q.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-zinc-900 border border-white/5 rounded-[2rem] p-8 shadow-xl group relative focus-within:ring-2 focus-within:ring-primary/50 transition-all">
                    
                    <div className="absolute -left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2">
-                     <div className="p-2 bg-white/5 rounded-lg cursor-grab active:cursor-grabbing text-white/40 hover:text-white"><GripVertical className="w-5 h-5" /></div>
+                     <button onClick={() => moveQuestion(q.id, 'up')} className="p-2 bg-white/5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors"><ArrowUp className="w-5 h-5" /></button>
+                     <button onClick={() => moveQuestion(q.id, 'down')} className="p-2 bg-white/5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors"><ArrowDown className="w-5 h-5" /></button>
                    </div>
 
                    <div className="flex items-start gap-6 mb-6">
@@ -251,18 +268,23 @@ function FormsApp() {
                         className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-4 text-sm font-bold text-white focus:outline-none focus:border-primary w-48"
                       >
                          <option value="choice">Multiple Choice</option>
+                         <option value="checkboxes">Checkboxes</option>
+                         <option value="dropdown">Dropdown</option>
                          <option value="text">Short Answer</option>
                          <option value="paragraph">Paragraph</option>
                          <option value="rating">Rating</option>
+                         <option value="date">Date</option>
                       </select>
                    </div>
                    
-                   {/* Options for Choice */}
-                   {q.type === 'choice' && (
+                   {/* Options for Choice, Checkboxes, Dropdown */}
+                   {(q.type === 'choice' || q.type === 'checkboxes' || q.type === 'dropdown') && (
                      <div className="space-y-3 pl-2">
                         {q.options?.map((opt: string, optIdx: number) => (
                           <div key={optIdx} className="flex items-center gap-4 text-white/60 group/opt">
-                             <div className="w-5 h-5 rounded-full border-2 border-white/20 shrink-0"></div>
+                             {q.type === 'choice' && <div className="w-5 h-5 rounded-full border-2 border-white/20 shrink-0"></div>}
+                             {q.type === 'checkboxes' && <div className="w-5 h-5 rounded-[4px] border-2 border-white/20 shrink-0"></div>}
+                             {q.type === 'dropdown' && <div className="text-xs font-bold w-5 text-center shrink-0">{optIdx + 1}.</div>}
                              <input 
                                value={opt} 
                                onChange={(e) => {
@@ -273,6 +295,12 @@ function FormsApp() {
                                className="flex-1 bg-transparent border-b border-transparent hover:border-white/10 focus:border-primary focus:outline-none py-1 transition-colors" 
                                placeholder={`Option ${optIdx + 1}`} 
                              />
+                             {q.logicEnabled && (
+                               <select className="bg-zinc-950 border border-white/10 rounded-lg px-2 py-1 text-xs text-white/60 focus:border-primary focus:outline-none max-w-[150px]">
+                                  <option value="next">Continue to next</option>
+                                  <option value="submit">Submit form</option>
+                               </select>
+                             )}
                              <button onClick={() => {
                                const newOpts = q.options.filter((_: any, idx: number) => idx !== optIdx);
                                updateQuestion(q.id, { options: newOpts });
@@ -280,7 +308,9 @@ function FormsApp() {
                           </div>
                         ))}
                         <div className="flex items-center gap-4 text-white/40 pt-2">
-                           <div className="w-5 h-5 rounded-full border-2 border-white/10 shrink-0"></div>
+                           {q.type === 'choice' && <div className="w-5 h-5 rounded-full border-2 border-white/10 shrink-0"></div>}
+                           {q.type === 'checkboxes' && <div className="w-5 h-5 rounded-[4px] border-2 border-white/10 shrink-0"></div>}
+                           {q.type === 'dropdown' && <div className="text-xs font-bold w-5 text-center shrink-0">{(q.options?.length || 0) + 1}.</div>}
                            <button onClick={() => {
                              const newOpts = [...(q.options || []), `Option ${(q.options?.length || 0) + 1}`];
                              updateQuestion(q.id, { options: newOpts });
@@ -301,9 +331,20 @@ function FormsApp() {
                        {[1,2,3,4,5].map(star => <div key={star} className="w-10 h-10 bg-white/5 rounded-xl border border-white/10"></div>)}
                      </div>
                    )}
+                   {q.type === 'date' && (
+                     <div className="border-b-2 border-white/10 w-48 pb-2 text-white/20 text-sm font-bold pl-2 flex items-center justify-between">
+                        <span>Month, day, year</span>
+                        <div className="w-4 h-4 bg-white/20 rounded"></div>
+                     </div>
+                   )}
 
                    {/* Question Footer Actions */}
                    <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-end gap-4">
+                      {(q.type === 'choice' || q.type === 'dropdown') && (
+                        <Button variant="ghost" size="sm" onClick={() => updateQuestion(q.id, { logicEnabled: !q.logicEnabled })} className={cn("text-[10px] font-black uppercase tracking-widest rounded-lg", q.logicEnabled ? "text-primary bg-primary/10" : "text-white/40 hover:text-white")}>
+                           Logic
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => addQuestion(q.type)} className="text-white/40 hover:text-white hover:bg-white/5 rounded-lg"><Copy className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => deleteQuestion(q.id)} className="text-white/40 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg"><Trash2 className="w-4 h-4" /></Button>
                       <div className="w-px h-6 bg-white/10"></div>
