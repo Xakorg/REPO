@@ -7,7 +7,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { Bold, Italic, Strikethrough, Heading1, Heading2, List, ListOrdered, Quote } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
 
-export function XakteirEditor({ initialContent = `<h1>Untitled Document</h1><p></p>`, onChange }: { initialContent?: string, onChange?: (html: string) => void }) {
+export function XakteirEditor({ initialContent = `<h1>Untitled Document</h1><p></p>`, onChange, isFocusMode }: { initialContent?: string, onChange?: (html: string, text: string) => void, isFocusMode?: boolean }) {
   const [mounted, setMounted] = useState(false);
 
   const editor = useEditor({
@@ -19,11 +19,11 @@ export function XakteirEditor({ initialContent = `<h1>Untitled Document</h1><p><
     ],
     content: initialContent,
     onUpdate: ({ editor }) => {
-      onChange?.(editor.getHTML());
+      onChange?.(editor.getHTML(), editor.getText());
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-lg dark:prose-invert prose-headings:font-black prose-h1:text-5xl prose-h1:tracking-tighter prose-p:text-xl prose-p:leading-relaxed max-w-none focus:outline-none',
+        class: `prose prose-lg dark:prose-invert prose-headings:font-black prose-h1:text-5xl prose-h1:tracking-tighter prose-p:text-xl prose-p:leading-relaxed max-w-none focus:outline-none transition-colors duration-700 ${isFocusMode ? 'prose-h1:text-white prose-p:text-white/90 prose-strong:text-white' : ''}`,
       },
     },
   });
@@ -36,7 +36,7 @@ export function XakteirEditor({ initialContent = `<h1>Untitled Document</h1><p><
 
   return (
     <div className="relative w-full">
-      {editor && (
+      {editor && !isFocusMode && (
         <div className="sticky top-0 z-10 flex flex-wrap gap-1 p-2 bg-black/40 backdrop-blur-xl border-b border-white/10 shadow-2xl mb-4 rounded-xl opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity">
           <Toggle
             size="sm"

@@ -656,6 +656,13 @@ service cloud.firestore {
       }
     }
     
+    match /write_docs/{docId} {
+      allow create: if isSignedIn();
+      // Publicly readable so published docs work
+      allow read: if true;
+      allow update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || request.auth.uid in resource.data.collaborators || isAdmin());
+    }
+    
     match /feedback/{feedbackId} {
       allow create, read: if true;
       allow update, delete: if isAdmin();
