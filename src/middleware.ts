@@ -300,36 +300,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.rewrite(new URL(`/everyworld${path}`, req.url));
   }
 
-  // 14. Enforce Subdomain Isolation (Prevent direct path access from other domains)
-  if (
-    hostname !== 'xakarena.xakteir.com' && hostname !== 'www.xakarena.xakteir.com' &&
-    hostname !== 'creator.xakarena.xakteir.com' && hostname !== 'www.creator.xakarena.xakteir.com' &&
-    hostname !== 'voltra.xakteir.com' && hostname !== 'www.voltra.xakteir.com' && !hostname.startsWith('voltra.localhost') &&
-    hostname !== 'store.voltra.xakteir.com' && hostname !== 'www.store.voltra.xakteir.com' && !hostname.startsWith('store.voltra.localhost') &&
-    hostname !== 'play.voltra.xakteir.com' && hostname !== 'www.play.voltra.xakteir.com' && !hostname.startsWith('play.voltra.localhost') &&
-    hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com' && !hostname.startsWith('voltramax.localhost') &&
-    hostname !== 'microdimension.xakteir.com' && hostname !== 'www.microdimension.xakteir.com' && !hostname.startsWith('microdimension.localhost') &&
-    hostname !== 'everyworld.xakteir.com' && hostname !== 'www.everyworld.xakteir.com' && !hostname.startsWith('everyworld.localhost') &&
-    !hostname.endsWith('.suite.xakteir.com') && hostname !== 'suite.xakteir.com' && hostname !== 'www.suite.xakteir.com'
-  ) {
-    if (
-      path === '/xakarena' || path.startsWith('/xakarena/') || 
-      path === '/xakarena-creator' || path.startsWith('/xakarena-creator/') ||
-      path === '/voltra' || path.startsWith('/voltra/') ||
-      path === '/voltrastore' || path.startsWith('/voltrastore/') ||
-      path === '/voltraplay' || path.startsWith('/voltraplay/') ||
-      path === '/voltramax' || path.startsWith('/voltramax/') ||
-      path === '/microdimension' || path.startsWith('/microdimension/') ||
-      path === '/everyworld' || path.startsWith('/everyworld/') ||
-      path === '/suite' || path.startsWith('/suite/') ||
-      suiteApps.some(app => path === `/${app}` || path.startsWith(`/${app}/`))
-    ) {
-      // Rewrite to a non-existent route to trigger Next.js 404 (Hidden from users)
-      return NextResponse.rewrite(new URL('/404', req.url));
-    }
-  }
-
-  // Redirect paths on xakteir.com to their respective subdomains (only in production)
+  // 14. Redirect paths on xakteir.com to their respective subdomains (only in production)
   const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.startsWith('192.168.');
   
   if (
@@ -387,6 +358,35 @@ export function middleware(req: NextRequest) {
     for (const app of suiteApps) {
       if (path === `/${app}`) return NextResponse.redirect(`https://${app}.suite.xakteir.com`);
       if (path.startsWith(`/${app}/`)) return NextResponse.redirect(`https://${app}.suite.xakteir.com${path.replace(`/${app}`, '')}`);
+    }
+  }
+
+  // 15. Enforce Subdomain Isolation (Prevent direct path access from other domains)
+  if (
+    hostname !== 'xakarena.xakteir.com' && hostname !== 'www.xakarena.xakteir.com' &&
+    hostname !== 'creator.xakarena.xakteir.com' && hostname !== 'www.creator.xakarena.xakteir.com' &&
+    hostname !== 'voltra.xakteir.com' && hostname !== 'www.voltra.xakteir.com' && !hostname.startsWith('voltra.localhost') &&
+    hostname !== 'store.voltra.xakteir.com' && hostname !== 'www.store.voltra.xakteir.com' && !hostname.startsWith('store.voltra.localhost') &&
+    hostname !== 'play.voltra.xakteir.com' && hostname !== 'www.play.voltra.xakteir.com' && !hostname.startsWith('play.voltra.localhost') &&
+    hostname !== 'voltramax.xakteir.com' && hostname !== 'www.voltramax.xakteir.com' && !hostname.startsWith('voltramax.localhost') &&
+    hostname !== 'microdimension.xakteir.com' && hostname !== 'www.microdimension.xakteir.com' && !hostname.startsWith('microdimension.localhost') &&
+    hostname !== 'everyworld.xakteir.com' && hostname !== 'www.everyworld.xakteir.com' && !hostname.startsWith('everyworld.localhost') &&
+    !hostname.endsWith('.suite.xakteir.com') && hostname !== 'suite.xakteir.com' && hostname !== 'www.suite.xakteir.com'
+  ) {
+    if (
+      path === '/xakarena' || path.startsWith('/xakarena/') || 
+      path === '/xakarena-creator' || path.startsWith('/xakarena-creator/') ||
+      path === '/voltra' || path.startsWith('/voltra/') ||
+      path === '/voltrastore' || path.startsWith('/voltrastore/') ||
+      path === '/voltraplay' || path.startsWith('/voltraplay/') ||
+      path === '/voltramax' || path.startsWith('/voltramax/') ||
+      path === '/microdimension' || path.startsWith('/microdimension/') ||
+      path === '/everyworld' || path.startsWith('/everyworld/') ||
+      path === '/suite' || path.startsWith('/suite/') ||
+      suiteApps.some(app => path === `/${app}` || path.startsWith(`/${app}/`))
+    ) {
+      // Rewrite to a non-existent route to trigger Next.js 404 (Hidden from users)
+      return NextResponse.rewrite(new URL('/404', req.url));
     }
   }
 
