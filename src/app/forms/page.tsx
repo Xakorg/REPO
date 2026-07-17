@@ -191,6 +191,78 @@ function FormsApp() {
     );
   }
 
+  // Preview / Public Response View
+  if (viewMode === 'preview' || viewMode === 'responses') {
+    return (
+      <div className={cn("min-h-screen pt-24 px-4 pb-32 transition-colors duration-1000 bg-gradient-to-br flex justify-center", activeForm.themeColor || "from-zinc-900 to-black")}>
+         
+         <Button variant="ghost" onClick={() => navigateTo(`/forms?id=${formId}&view=edit`, router)} className="fixed top-6 left-6 text-white/60 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-xl rounded-xl shadow-2xl z-50">
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Editor
+         </Button>
+
+         <div className="w-full max-w-[700px] space-y-6">
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-zinc-950/80 backdrop-blur-3xl border border-white/10 rounded-3xl p-10 shadow-2xl relative overflow-hidden">
+               <div className={cn("absolute top-0 left-0 right-0 h-3 bg-gradient-to-r", activeForm.themeColor || "from-purple-500 to-indigo-500")}></div>
+               <h1 className="text-5xl font-black tracking-tighter text-white mb-4">{activeForm.title || "Untitled Form"}</h1>
+               <p className="text-white/60 text-lg">{activeForm.description}</p>
+            </motion.div>
+
+            {viewMode === 'responses' ? (
+              <div className="bg-zinc-950/80 backdrop-blur-3xl border border-white/10 rounded-3xl p-10 text-center">
+                 <BarChart3 className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                 <h2 className="text-2xl font-bold text-white mb-2">0 Responses</h2>
+                 <p className="text-white/40">Waiting for responses...</p>
+              </div>
+            ) : (
+              activeForm.questions?.map((q: any, i: number) => (
+                <motion.div key={q.id} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: i * 0.1 }} className="bg-zinc-950/80 backdrop-blur-3xl border border-white/10 rounded-3xl p-8 shadow-xl">
+                   <h3 className="text-xl font-bold text-white mb-6 flex items-start gap-2">
+                     {q.title} {q.required && <span className="text-rose-500">*</span>}
+                   </h3>
+                   
+                   {q.type === 'text' && <input type="text" className="w-full bg-transparent border-b border-white/20 focus:border-white focus:outline-none py-2 text-white transition-colors" placeholder="Your answer" />}
+                   {q.type === 'paragraph' && <textarea className="w-full bg-transparent border-b border-white/20 focus:border-white focus:outline-none py-2 text-white transition-colors resize-y min-h-[100px]" placeholder="Your answer" />}
+                   
+                   {(q.type === 'choice' || q.type === 'checkboxes') && (
+                     <div className="space-y-4">
+                        {q.options?.map((opt: string, optIdx: number) => (
+                          <label key={optIdx} className="flex items-center gap-4 cursor-pointer group">
+                             <div className={cn("w-5 h-5 border-2 border-white/20 flex items-center justify-center transition-colors group-hover:border-white/40", q.type === 'choice' ? 'rounded-full' : 'rounded')}></div>
+                             <span className="text-white/80 group-hover:text-white transition-colors">{opt}</span>
+                          </label>
+                        ))}
+                     </div>
+                   )}
+
+                   {q.type === 'dropdown' && (
+                     <select className="w-full bg-zinc-900 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-white focus:outline-none">
+                        <option value="">Choose</option>
+                        {q.options?.map((opt: string, optIdx: number) => <option key={optIdx} value={opt}>{opt}</option>)}
+                     </select>
+                   )}
+
+                   {q.type === 'rating' && (
+                     <div className="flex gap-4">
+                        {[1,2,3,4,5].map(star => <button key={star} className="w-12 h-12 rounded-full border border-white/20 hover:bg-white/10 text-white/60 hover:text-white font-bold transition-all">{star}</button>)}
+                     </div>
+                   )}
+
+                   {q.type === 'date' && <input type="date" className="bg-transparent border-b border-white/20 focus:border-white focus:outline-none py-2 text-white transition-colors [color-scheme:dark]" />}
+                </motion.div>
+              ))
+            )}
+
+            {viewMode === 'preview' && (
+              <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex justify-between items-center pt-4">
+                 <Button className="bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest px-8 rounded-xl h-12">Submit</Button>
+                 <Button variant="ghost" className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-widest">Clear form</Button>
+              </motion.div>
+            )}
+         </div>
+      </div>
+    );
+  }
+
   // Editor View
   if (!activeForm) {
     return <div className="min-h-screen flex items-center justify-center text-white"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
