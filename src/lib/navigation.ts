@@ -35,13 +35,10 @@ export function navigateTo(path: string, router: any) {
     // Strip domain and use pathname + search + hash for router
     const relativePath = targetObj.pathname + targetObj.search + targetObj.hash;
     
-    // In Next.js App Router, router.push can sometimes fail to trigger a visual update
-    // due to aggressive client-side caching or useSearchParams bugs in Layouts.
-    // Calling router.refresh() forces a re-render from the server, fixing the glitch.
+    // In Next.js App Router, router.push transitions natively handle server payload fetching.
+    // Do NOT call router.refresh() here, as it interrupts the push transition,
+    // causing the URL to change while the UI hangs.
     router.push(relativePath);
-    if (typeof router.refresh === 'function') {
-      router.refresh();
-    }
   } catch (e) {
     window.location.href = targetUrl;
   }
