@@ -644,7 +644,16 @@ service cloud.firestore {
     // ─────────────────────────────────────────────
     match /forms/{formId} {
       allow create: if isSignedIn();
-      allow read, update, delete: if isOwner(resource.data.ownerId) || isAdmin();
+      // Anyone needs to be able to read the form to fill it out
+      allow read: if true;
+      allow update, delete: if isOwner(resource.data.ownerId) || isAdmin();
+      
+      match /responses/{responseId} {
+        // Anyone can submit a response to a form
+        allow create: if true;
+        // Only the form owner or an admin can read/manage the responses
+        allow read, update, delete: if isOwner(get(/databases/$(database)/documents/forms/$(formId)).data.ownerId) || isAdmin();
+      }
     }
     
     match /feedback/{feedbackId} {
