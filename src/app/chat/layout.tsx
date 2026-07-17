@@ -897,6 +897,11 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     return () => unsub();
   }, [firestore, user]);
 
+  const latestCallbacks = useRef({ handleEndDirectCall: () => {}, startDirectCallWebRTC: (id: string, isInitiator: boolean) => {}, activeCallSession: null as any });
+  useEffect(() => {
+    latestCallbacks.current = { handleEndDirectCall, startDirectCallWebRTC, activeCallSession };
+  });
+
   // Handle active call session updates
   useEffect(() => {
     if (!firestore || !user) return;
@@ -909,14 +914,14 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         const data = docSnap.data();
         if (data.status === "declined" || data.status === "disconnected") {
           toast({ title: "Call ended" });
-          handleEndDirectCall();
-        } else if (data.status === "accepted" && (!activeCallSession || activeCallSession.status !== "accepted")) {
+          latestCallbacks.current.handleEndDirectCall();
+        } else if (data.status === "accepted" && (!latestCallbacks.current.activeCallSession || latestCallbacks.current.activeCallSession.status !== "accepted")) {
           setActiveCallSession({ id: docSnap.id, ...data });
           setIsCallingOutgoing(false);
-          startDirectCallWebRTC(docSnap.id, data.callerId === user.uid);
+          latestCallbacks.current.startDirectCallWebRTC(docSnap.id, data.callerId === user.uid);
         }
       } else {
-        handleEndDirectCall();
+        latestCallbacks.current.handleEndDirectCall();
       }
     });
     

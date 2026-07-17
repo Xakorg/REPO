@@ -8,7 +8,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     const jsonResponse = await handleUpload({
       body,
       request,
-      onBeforeGenerateToken: async (pathname) => {
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        if (!clientPayload) throw new Error("Unauthorized: Missing authentication token.");
         return {
           allowedContentTypes: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/zip', 'application/x-zip-compressed', 'video/mp4', 'audio/mpeg', 'audio/wav', 'application/json', 'application/octet-stream'],
           maximumSizeInBytes: 50 * 1024 * 1024, // 50MB limit

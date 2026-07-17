@@ -12,7 +12,7 @@ import { useDevCentreStore } from "@/lib/dev-centre-store";
 
 export default function WebhooksBlade() {
   const { toast } = useToast();
-  const { activeProjectId, webhooks, clearWebhooks } = useDevCentreStore();
+  const { activeProjectId, webhooks, deleteWebhook } = useDevCentreStore();
 
   const [copied, setCopied] = useState(false);
   const [selectedHook, setSelectedHook] = useState<any | null>(null);
@@ -30,7 +30,7 @@ export default function WebhooksBlade() {
 
   const handleClearAll = () => {
     if (!activeProjectId) return;
-    clearWebhooks(activeProjectId);
+    projectWebhooks.forEach(w => deleteWebhook(w.id));
     setSelectedHook(null);
     toast({ title: "Cleared", description: "All webhook logs have been cleared." });
   };

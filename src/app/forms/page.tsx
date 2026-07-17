@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSuiteStore } from '@/lib/store';
-import { Settings, Share, MessageSquare, History, Wand2, Eye, Plus, FileText, Trash2, ArrowLeft, GripVertical, CheckCircle2, Copy, BarChart3, LayoutTemplate } from 'lucide-react';
+import { Settings, Share, MessageSquare, History, Wand2, Eye, Plus, FileText, Trash2, ArrowLeft, GripVertical, CheckCircle2, Copy, BarChart3, LayoutTemplate, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUser, useFirestore, useCollection, useDoc } from '@/firebase';
 import { collection, query, where, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
@@ -192,6 +192,7 @@ function FormsApp() {
         </div>
         <div className="ml-auto flex gap-3">
            {saving && <span className="text-[10px] font-black uppercase text-white/40 mr-4 self-center tracking-widest flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> Saving...</span>}
+           <Button variant="ghost" onClick={() => window.print()} className="text-[10px] font-black uppercase tracking-widest rounded-xl text-white/40 hover:text-white transition-all"><Printer className="w-4 h-4 mr-2" /> Print</Button>
            <Button variant="outline" onClick={() => navigateTo(`/forms?id=${formId}&view=preview`, router)} className="border-white/10 bg-zinc-900 text-white gap-2 font-black uppercase text-[10px] tracking-widest rounded-xl"><Eye className="w-4 h-4" /> Preview</Button>
            <Button className="bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest text-[10px] rounded-xl"><Share className="w-4 h-4 mr-2" /> Send</Button>
         </div>

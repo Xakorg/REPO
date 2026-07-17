@@ -31,7 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useAuth, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
-import {  collection, doc, query, limit, orderBy, serverTimestamp, getDoc, getCountFromServer, getAggregateFromServer, sum , increment } from "firebase/firestore";
+import {  collection, doc, query, limit, orderBy, serverTimestamp, getDoc, getDocs, getCountFromServer, getAggregateFromServer, sum , increment } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, TerminalSquare, Activity } from "lucide-react";
@@ -100,7 +100,7 @@ export default function AdminDashboardPage() {
       let totalCreditsCount = 0;
       let onlineUsersCount = 0; // Simple approximation: users who have been active recently (if timestamp available), but for now we just count signed up users who aren't hidden
 
-      usersSnap.forEach((doc) => {
+      usersSnap.forEach((doc: any) => {
         const data = doc.data();
         const isPublic = data.isPublic !== false; // defaults to true
         const isHidden = data.isHidden === true;
@@ -334,17 +334,13 @@ export default function AdminDashboardPage() {
     try {
       const usersCol = collection(firestore, "users");
       const usersSnap = await getDocs(usersCol);
-      const batchPromises: Promise<void>[] = [];
       
-      usersSnap.docs.forEach((userDoc) => {
-        batchPromises.push(
-          updateDocumentNonBlocking(doc(firestore, "users", userDoc.id), {
-            currencyBalance: increment(airdropAmount)
-          })
-        );
+      usersSnap.docs.forEach((userDoc: any) => {
+        updateDocumentNonBlocking(doc(firestore, "users", userDoc.id), {
+          currencyBalance: increment(airdropAmount)
+        });
       });
       
-      await Promise.all(batchPromises);
       toast({ title: "Airdrop Complete", description: `Gave ${airdropAmount} credits to ${usersSnap.docs.length} users!` });
       setAirdropAmount(0);
     } catch (e) {
@@ -382,7 +378,7 @@ export default function AdminDashboardPage() {
     try {
       // We push a "system_goal" event to globalMessages so all clients can pick it up
       await addDocumentNonBlocking(collection(firestore, "globalMessages"), {
-        uid: user.uid,
+        uid: user?.uid || "SYSTEM",
         author: "SYSTEM",
         type: 'system_goal',
         title: goalTitle,

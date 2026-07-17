@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useDoc, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
@@ -12,7 +12,7 @@ export function GlobalThemeWrapper({ children }: { children: React.ReactNode }) 
     setMounted(true);
   }, []);
 
-  const systemSettingsRef = firestore ? doc(firestore, "system_settings", "global") : null;
+  const systemSettingsRef = useMemo(() => firestore ? doc(firestore, "system_settings", "global") : null, [firestore]);
   const { data: systemSettings } = useDoc(systemSettingsRef);
 
   if (!mounted || !systemSettings) {

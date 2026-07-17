@@ -1,6 +1,6 @@
 "use client";
  
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, limit } from "firebase/firestore";
@@ -11,6 +11,7 @@ export function FaviconController() {
   const firestore = useFirestore();
   const [hostname, setHostname] = useState("");
   const [hueOffset, setHueOffset] = useState(0);
+  const oldFaviconDrawnRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -622,6 +623,8 @@ export function FaviconController() {
     };
 
     if (useOldFavicon) {
+      if (oldFaviconDrawnRef.current === activeApp.count) return;
+      oldFaviconDrawnRef.current = activeApp.count;
       if (activeApp.count > 0) {
         const img = new Image();
         img.src = "/favicon.ico";
@@ -662,6 +665,7 @@ export function FaviconController() {
         setFavicon("/favicon.ico");
       }
     } else {
+      oldFaviconDrawnRef.current = null;
       // Draw dynamic favicon
       ctx.strokeStyle = "#ffffff";
       ctx.fillStyle = "none";

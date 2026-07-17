@@ -126,6 +126,8 @@
     "electron": "^42.4.0",
     "electron-builder": "^26.15.3",
     "electron-updater": "^6.8.9",
+    "eslint": "^10.7.0",
+    "eslint-config-next": "^16.2.10",
     "faker": "^5.5.3",
     "genkit-cli": "^1.29.0",
     "minimist": "^1.2.8",

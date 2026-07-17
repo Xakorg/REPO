@@ -11,7 +11,7 @@ import { useDevCentreStore } from "@/lib/dev-centre-store";
 
 export default function GitIntegrationBlade() {
   const { toast } = useToast();
-  const { activeProjectId, repos, addRepo, deleteRepo } = useDevCentreStore();
+  const { activeProjectId, gitRepos, linkGitRepo, unlinkGitRepo } = useDevCentreStore();
 
   const [pat, setPat] = useState("");
   const [isFetching, setIsFetching] = useState(false);
@@ -20,7 +20,7 @@ export default function GitIntegrationBlade() {
   
   const [isLinking, setIsLinking] = useState(false);
 
-  const projectRepos = repos.filter((r: any) => r.projectId === activeProjectId);
+  const projectRepos = gitRepos.filter((r: any) => r.projectId === activeProjectId);
 
   const handleFetchRepos = async () => {
     if (!pat.trim()) {
@@ -60,7 +60,7 @@ export default function GitIntegrationBlade() {
     setTimeout(() => {
       try {
         const repoUrl = `https://github.com/${selectedRepoFullName}`;
-        addRepo(activeProjectId, selectedRepoFullName, repoUrl, "GitHub");
+        linkGitRepo(activeProjectId, "github", selectedRepoFullName, "main");
         toast({ title: "Repository Linked", description: `${selectedRepoFullName} has been securely connected.` });
         
         // Reset state after linking
@@ -76,7 +76,7 @@ export default function GitIntegrationBlade() {
   };
 
   const handleUnlink = (repoId: string) => {
-    deleteRepo(repoId);
+    unlinkGitRepo(repoId);
     toast({ title: "Repository Unlinked", description: "The connection to Xakteir has been removed." });
   };
 
@@ -194,7 +194,7 @@ export default function GitIntegrationBlade() {
                       <Github className="w-4 h-4 text-pink-400" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-white text-base">{repo.name}</h4>
+                      <h4 className="font-bold text-white text-base">{repo.repoName}</h4>
                       <div className="flex items-center gap-2 mt-1">
                         <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                         <span className="text-[10px] uppercase font-black tracking-widest text-zinc-500">

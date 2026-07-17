@@ -230,11 +230,6 @@ export default function ServerChatPage() {
   // Member List Panel
   const [showMemberPanel, setShowMemberPanel] = useState(false);
 
-  // If room3d is active, render Room3D instead of Chat
-  if (searchParams.get("room3d") === "true") {
-    return <Room3D serverName={serverName} />;
-  }
-
   // ── LISTEN TO VIEWPORT SCROLLING ─────────────────────────────────────────
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -1232,6 +1227,11 @@ export default function ServerChatPage() {
       setIsSummarizing(false);
     }
   };
+
+  // If room3d is active, render Room3D instead of Chat
+  if (searchParams.get("room3d") === "true") {
+    return <Room3D serverName={serverName} />;
+  }
 
   if (!user) return null;
 

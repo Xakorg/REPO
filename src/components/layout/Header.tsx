@@ -282,8 +282,6 @@ export function Header() {
   if (!mounted) return null;
   if (isFocusMode || pathname?.startsWith('/xaksports') || pathname?.startsWith('/xakarena')) return null;
 
-  if (isFocusMode) return null;
-
   return (
     <header className="h-20 bg-black/40 backdrop-blur-2xl sticky top-0 z-[100] px-10 border-b-2 border-white/10 shadow-[0_10px_50px_rgba(0,0,0,0.4)]">
       <div className="max-w-[1800px] mx-auto h-full flex items-center justify-between relative">

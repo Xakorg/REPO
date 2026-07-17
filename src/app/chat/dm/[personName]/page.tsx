@@ -204,18 +204,23 @@ export default function DirectMessagePage() {
   useEffect(() => {
     if (!firestore || !dmChatId) return;
     let unsub: (() => void) | undefined;
+    let isMounted = true;
     (async () => {
       try {
         const { onSnapshot } = await import("firebase/firestore");
         const dmRef = doc(firestore, "chats", dmChatId);
         unsub = onSnapshot(dmRef, (snap) => {
-          if (snap.exists()) setChatDocData(snap.data());
+          if (snap.exists() && isMounted) setChatDocData(snap.data());
         });
+        if (!isMounted && unsub) unsub();
       } catch (e) {
         console.error("Read receipt listener error:", e);
       }
     })();
-    return () => { if (unsub) unsub(); };
+    return () => { 
+      isMounted = false;
+      if (unsub) unsub(); 
+    };
   }, [firestore, dmChatId]);
 
   // 4. Subscribe to messages inside the private DM chat

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
-export async function GET(req: Request, { params }: { params: { app_id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ app_id: string }> }) {
   try {
-    const { app_id } = params;
+    const { app_id } = await params;
     
     const res = await fetch(`https://flathub.org/api/v2/appstream/${app_id}`, {
       headers: {

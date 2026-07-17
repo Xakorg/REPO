@@ -1,7 +1,6 @@
 import React, { Suspense } from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
-import { Header } from '@/components/layout/Header';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { AppLayoutWrapper } from '@/components/layout/AppLayoutWrapper';

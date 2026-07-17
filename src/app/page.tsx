@@ -88,7 +88,7 @@ function XakteirDashboard() {
   }, [feedItems]);
 
   const isSuperAdmin = useMemo(() => SUPER_ADMIN_EMAILS.includes(user?.email?.toLowerCase() || ""), [user]);
-  const needsMigration = useMemo(() => !!(user?.email?.toLowerCase().endsWith("@xakteir.com") && !userData?.personalEmail && !isSuperAdmin), [user, userData, isSuperAdmin]);
+  const needsMigration = useMemo(() => !!(user?.email?.toLowerCase().endsWith("@xakteir.com") && userData !== undefined && !userData?.personalEmail && !isSuperAdmin), [user, userData, isSuperAdmin]);
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();

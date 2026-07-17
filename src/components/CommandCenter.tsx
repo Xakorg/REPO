@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Search, 
   X, 
@@ -58,7 +58,7 @@ export function CommandCenter() {
     return query(collection(firestore, "system_apps"), limit(10));
   }, [firestore]);
 
-  const results = [
+  const results = useMemo(() => [
     { name: "Whiteboard", type: "App", icon: LayoutGrid, href: "/whiteboard" },
     { name: "Xakteir Suite", type: "App", icon: FileText, href: "/suite" },
     { name: "Xakteir Write", type: "Suite App", icon: FileText, href: "/write" },
@@ -68,7 +68,7 @@ export function CommandCenter() {
     { name: "Games", type: "App", icon: Gamepad2, href: "/games" },
     { name: "Xak AI", type: "App", icon: Zap, href: "/ai-chat" },
     { name: "XakCode", type: "App", icon: FileText, href: "/xakcode" },
-  ].filter(r => r.name.toLowerCase().includes(queryInput.toLowerCase()));
+  ].filter(r => r.name.toLowerCase().includes(queryInput.toLowerCase())), [queryInput]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -125,7 +125,7 @@ export function CommandCenter() {
               <div className="space-y-4">
                  <p className="px-4 text-[9px] font-black uppercase tracking-[0.4em] text-primary italic">Global Results</p>
                  <div className="space-y-2">
-                    {results.length > 0 ? results.map((res, i) => (
+                    {results.length > 0 ? results.map((res: any, i: number) => (
                       <button 
                         key={i}
                         onClick={() => handleNavigate(res.href)}

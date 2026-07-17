@@ -137,11 +137,11 @@ export default function FunctionsBlade() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest text-zinc-500">
                     <span>URL</span>
-                    <a href={func.url} target="_blank" className="text-sky-400 hover:underline lowercase normal-case tracking-normal">{typeof window !== "undefined" ? window.location.origin : ""}{func.url}</a>
+                    <a href={`/${func.name}`} target="_blank" className="text-sky-400 hover:underline lowercase normal-case tracking-normal">{typeof window !== "undefined" ? window.location.origin : ""}/{func.name}</a>
                   </div>
                   <div className="flex justify-between items-center text-[10px] uppercase font-black tracking-widest text-zinc-600">
                     <span>Runtime: Node.js 20.x</span>
-                    <span>{new Date(func.updatedAt).toLocaleDateString()}</span>
+                    <span>{new Date(func.lastDeployed).toLocaleDateString()}</span>
                   </div>
                 </div>
               </div>

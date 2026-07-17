@@ -8,8 +8,8 @@ import { useTheme } from "next-themes";
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), { ssr: false });
 
 export default function KnowledgeGraph3D({ files }: { files: any[] }) {
-  const fgRef = useRef<any>();
-  const [graphData, setGraphData] = useState({ nodes: [], links: [] });
+  const fgRef = useRef<any>(null);
+  const [graphData, setGraphData] = useState<{nodes: any[], links: any[]}>({ nodes: [], links: [] });
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const { theme } = useTheme();
 

@@ -65,7 +65,7 @@ export function Footer() {
     <footer className="w-full border-t-2 md:border-t-4 border-white/10 bg-background/60 backdrop-blur-3xl py-12 md:py-20 px-6 md:px-10 relative overflow-hidden">
       <div className="absolute inset-0 arcade-grid opacity-5 pointer-events-none" />
       
-      <div className="max-w-7xl auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 relative z-10">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 relative z-10">
         <div className="space-y-6 md:space-y-8">
           <div className="flex items-center gap-4 group">
             <GlitchLogo className="scale-[0.4] md:scale-50 group-hover:rotate-12 transition-transform" />

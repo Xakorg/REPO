@@ -170,7 +170,7 @@ export default function XakDrivePage() {
 
   // Storage Calculation
   const calculateStorage = () => {
-    if (!driveFilesRaw) return 0;
+    if (!driveFilesRaw) return "0.00";
     let totalMB = 0;
     driveFilesRaw.forEach(f => {
       if (!f.isFolder && f.size && f.size.includes("MB")) {
@@ -264,7 +264,7 @@ export default function XakDrivePage() {
       for (let i = 0; i < files.length; i++) {
         // Only upload files, skip directories if they somehow appear
         if (files[i].size > 0 || files[i].name) {
-          await uploadToCloud(files[i], files[i].webkitRelativePath.replace(rootFolderName + '/', '').replace(/\\//g, '-'), rootId);
+          await uploadToCloud(files[i], files[i].webkitRelativePath.replace(rootFolderName + '/', '').replace(/\//g, '-'), rootId);
         }
       }
       
@@ -300,6 +300,7 @@ export default function XakDrivePage() {
       const blob = await upload(`users/${user!.uid}/drive/${Date.now()}_${fileName}`, file as File, {
         access: 'public',
         handleUploadUrl: '/api/upload',
+        clientPayload: user!.uid,
         onUploadProgress: (progressEvent) => {
           setUploadProgress(progressEvent.percentage);
         }
@@ -996,7 +997,7 @@ export default function XakDrivePage() {
             {!(window as any).localDirHandle ? (
               <div className="text-center max-w-md">
                 <p className="text-zinc-400 mb-8">Link a folder on your computer to Xakteir Drive. We will automatically sync files directly from your browser to your local hard drive.</p>
-                <Button onClick={setSyncedFolders} size="lg" className="bg-green-600 hover:bg-green-500 w-full h-14 text-lg">
+                <Button onClick={setupLocalSync} size="lg" className="bg-green-600 hover:bg-green-500 w-full h-14 text-lg">
                   Link Local Folder
                 </Button>
               </div>
@@ -1009,7 +1010,7 @@ export default function XakDrivePage() {
                 </div>
                 
                 <Button 
-                  onClick={runBidirectionalSync} 
+                  onClick={() => runBidirectionalSync(currentFolderId)} 
                   disabled={isSyncing}
                   size="lg" 
                   className={cn("w-full h-14 text-lg font-semibold transition-all", isSyncing ? "bg-zinc-700" : "bg-green-600 hover:bg-green-500")}

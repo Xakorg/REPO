@@ -136,7 +136,7 @@ export default function ShopPage() {
 
   useEffect(() => {
     if (activeCategory === "Featured Sets") {
-      setPreviewSetId(SHOP_SETS[0].id);
+      setPreviewSetId(SHOP_SETS[0]?.id);
       setSelectedItem(null);
     } else {
       setPreviewSetId(null);
@@ -293,27 +293,27 @@ export default function ShopPage() {
   }, [previewSetId]);
 
   const previewHat = previewSet 
-    ? previewSet.items.find(i => i.type === 'hat')?.key 
+    ? previewSet.items.find((i: any) => i.type === 'hat')?.key 
     : (selectedItem?.type === 'hat' ? selectedItem.key : userData?.hat);
 
   const previewAura = previewSet 
-    ? previewSet.items.find(i => i.type === 'aura')?.key 
+    ? previewSet.items.find((i: any) => i.type === 'aura')?.key 
     : (selectedItem?.type === 'aura' ? selectedItem.key : userData?.aura);
 
   const previewDecor = previewSet 
-    ? previewSet.items.find(i => i.type === 'decor')?.key 
+    ? previewSet.items.find((i: any) => i.type === 'decor')?.key 
     : (selectedItem?.type === 'decor' ? selectedItem.key : userData?.decor);
 
   const previewPet = previewSet 
-    ? previewSet.items.find(i => i.type === 'pet')?.key 
+    ? previewSet.items.find((i: any) => i.type === 'pet')?.key 
     : (selectedItem?.type === 'pet' ? selectedItem.key : userData?.pet);
 
   const previewBanner = previewSet 
-    ? previewSet.items.find(i => i.type === 'banner')?.key 
+    ? previewSet.items.find((i: any) => i.type === 'banner')?.key 
     : (selectedItem?.type === 'banner' ? selectedItem.key : userData?.banner);
 
   const previewNameplate = previewSet 
-    ? previewSet.items.find(i => i.type === 'nameplate')?.key 
+    ? previewSet.items.find((i: any) => i.type === 'nameplate')?.key 
     : (selectedItem?.type === 'nameplate' ? selectedItem.key : userData?.nameplate);
 
   return (
@@ -429,7 +429,7 @@ export default function ShopPage() {
                       <div className="space-y-2">
                         <p className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Includes:</p>
                         <div className="flex flex-wrap gap-2">
-                          {set.itemsList.map((item, idx) => (
+                          {set.itemsList.map((item: any, idx: number) => (
                             <span key={idx} className="text-[8px] font-black uppercase tracking-[0.1em] text-white/70 bg-white/5 border border-white/10 px-2 py-1 rounded-md">{item}</span>
                           ))}
                         </div>

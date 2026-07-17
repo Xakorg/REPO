@@ -373,6 +373,15 @@ export function middleware(req: NextRequest) {
 
     if (path === '/everyworld') return NextResponse.redirect('https://everyworld.xakteir.com');
     if (path.startsWith('/everyworld/')) return NextResponse.redirect(`https://everyworld.xakteir.com${path.replace('/everyworld', '')}`);
+
+    if (path === '/suite') return NextResponse.redirect('https://suite.xakteir.com');
+    if (path.startsWith('/suite/')) return NextResponse.redirect(`https://suite.xakteir.com${path.replace('/suite', '')}`);
+
+    const suiteApps = ['forms', 'write', 'sheets', 'slides'];
+    for (const app of suiteApps) {
+      if (path === `/${app}`) return NextResponse.redirect(`https://${app}.suite.xakteir.com`);
+      if (path.startsWith(`/${app}/`)) return NextResponse.redirect(`https://${app}.suite.xakteir.com${path.replace(`/${app}`, '')}`);
+    }
   }
 
   // Default behavior for xakteir.com (allow everything)

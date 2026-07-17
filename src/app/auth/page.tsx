@@ -1,5 +1,7 @@
 "use client";
 
+import * as OTPAuth from "otpauth";
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -209,6 +211,43 @@ export default function AuthPage() {
         setIsLoading(false);
         toast({ variant: "destructive", title: "Access Denied", description: "Incorrect email or password." });
       });
+  };
+
+  const handleVerify2FA = async () => {
+    if (!auth?.currentUser || !firestore) return;
+    setIsLoading(true);
+    try {
+      const userDoc = await getDoc(doc(firestore, "users", auth.currentUser.uid));
+      const secret = userDoc.data()?.twoFactorSecret;
+      
+      if (!secret) {
+        toast({ variant: "destructive", title: "Error", description: "2FA is not configured properly." });
+        setIsLoading(false);
+        return;
+      }
+      
+      const totp = new OTPAuth.TOTP({
+        issuer: "Xakteir",
+        label: auth.currentUser.email || "User",
+        algorithm: "SHA1",
+        digits: 6,
+        period: 30,
+        secret: OTPAuth.Secret.fromBase32(secret)
+      });
+      
+      const delta = totp.validate({ token: otpCode, window: 1 });
+      if (delta !== null) {
+        toast({ title: "Success", description: "You have been verified." });
+        finishWizard();
+      } else {
+        toast({ variant: "destructive", title: "Invalid Code", description: "The code you entered is incorrect." });
+        setOtpCode("");
+        setIsLoading(false);
+      }
+    } catch (e) {
+      setIsLoading(false);
+      toast({ variant: "destructive", title: "Error", description: "Verification failed." });
+    }
   };
 
   const finishWizard = () => {
@@ -480,7 +519,7 @@ export default function AuthPage() {
                     className="h-20 bg-black/40 border-8 border-white/5 rounded-[2rem] text-center text-5xl font-black tracking-widest italic text-primary" 
                    />
                 </div>
-                <Button onClick={() => router.push("/")} disabled={otpCode.length < 6} className="w-full h-18 bg-primary text-black hover:bg-primary/90 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-xl">Confirm Code</Button>
+                <Button onClick={handleVerify2FA} disabled={otpCode.length < 6 || isLoading} className="w-full h-18 bg-primary text-black hover:bg-primary/90 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-xl">{isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Confirm Code"}</Button>
              </div>
           ) : step === 'forgot' ? (
             <form onSubmit={handleForgotPassword} className="space-y-6 animate-in slide-in-from-top-4">
