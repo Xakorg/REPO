@@ -29,7 +29,7 @@
 
 @layer base {
   html {
-    zoom: 0.67;
+    zoom: 0.8;
   }
   * { @apply border-border selection:bg-primary/20 selection:text-primary; }
   body {
