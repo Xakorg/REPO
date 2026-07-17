@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSuiteStore } from '@/lib/store';
-import { Settings, Share, MessageSquare, History, Wand2, Eye, Plus, FileText, Trash2, ArrowLeft, GripVertical, CheckCircle2, Copy, BarChart3, LayoutTemplate, Printer, ArrowUp, ArrowDown } from 'lucide-react';
+import { Settings, Share, MessageSquare, History, Wand2, Eye, Plus, FileText, Trash2, ArrowLeft, GripVertical, CheckCircle2, Copy, BarChart3, LayoutTemplate, Printer, ArrowUp, ArrowDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUser, useFirestore, useCollection, useDoc } from '@/firebase';
 import { collection, query, where, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
@@ -30,6 +30,7 @@ function FormsApp() {
   // Editor State
   const [activeForm, setActiveForm] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  const [isThemePanelOpen, setIsThemePanelOpen] = useState(false);
   
   useEffect(() => {
     if (!firestore || !user) return;
@@ -204,7 +205,7 @@ function FormsApp() {
           <div className="h-6 w-px bg-white/10"></div>
           <Button variant="ghost" className={cn("text-[11px] font-black uppercase tracking-widest rounded-xl transition-all", viewMode === 'edit' ? "bg-white/10 text-white" : "text-white/40 hover:text-white")} onClick={() => navigateTo(`/forms?id=${formId}&view=edit`, router)}>Questions</Button>
           <Button variant="ghost" className={cn("text-[11px] font-black uppercase tracking-widest rounded-xl transition-all", viewMode === 'responses' ? "bg-white/10 text-white" : "text-white/40 hover:text-white")} onClick={() => navigateTo(`/forms?id=${formId}&view=responses`, router)}>Responses</Button>
-          <Button variant="ghost" className="text-[11px] font-black uppercase tracking-widest rounded-xl text-white/40 hover:text-white transition-all"><Settings className="w-4 h-4 mr-2" /> Theme</Button>
+          <Button variant="ghost" className="text-[11px] font-black uppercase tracking-widest rounded-xl text-white/40 hover:text-white transition-all" onClick={() => setIsThemePanelOpen(!isThemePanelOpen)}><Settings className="w-4 h-4 mr-2" /> Theme</Button>
         </div>
         <div className="ml-auto flex gap-3">
            {saving && <span className="text-[10px] font-black uppercase text-white/40 mr-4 self-center tracking-widest flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> Saving...</span>}
@@ -370,6 +371,46 @@ function FormsApp() {
 
          </div>
       </div>
+
+      {/* Theme Panel */}
+      <AnimatePresence>
+        {isThemePanelOpen && (
+          <motion.div initial={{ x: 300, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 300, opacity: 0 }} className="fixed top-20 right-0 bottom-0 w-[300px] bg-zinc-950/90 backdrop-blur-3xl border-l border-white/10 z-50 p-6 shadow-2xl flex flex-col">
+             <div className="flex items-center justify-between mb-8">
+               <h3 className="text-lg font-black tracking-widest uppercase">Theme</h3>
+               <Button variant="ghost" size="icon" onClick={() => setIsThemePanelOpen(false)} className="text-white/40 hover:text-white rounded-xl"><X className="w-5 h-5" /></Button>
+             </div>
+             
+             <div className="space-y-6">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/40 mb-3 block">Color Palette</label>
+                  <div className="grid grid-cols-5 gap-3">
+                     {[
+                       'from-purple-500 to-indigo-500',
+                       'from-rose-500 to-orange-500',
+                       'from-emerald-500 to-teal-500',
+                       'from-blue-500 to-cyan-500',
+                       'from-zinc-500 to-slate-500',
+                       'from-amber-400 to-orange-500',
+                       'from-fuchsia-500 to-pink-500',
+                       'from-lime-400 to-emerald-500'
+                     ].map(color => (
+                        <button 
+                          key={color} 
+                          onClick={() => {
+                             const newData = { ...activeForm, themeColor: color };
+                             setActiveForm(newData);
+                             saveForm(newData);
+                          }}
+                          className={cn("w-full aspect-square rounded-full bg-gradient-to-br transition-all border-2", color, activeForm.themeColor === color ? "border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.5)]" : "border-transparent hover:scale-105")}
+                        />
+                     ))}
+                  </div>
+                </div>
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
