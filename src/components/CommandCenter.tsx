@@ -26,6 +26,7 @@ import { collection, query, limit } from 'firebase/firestore';
 export function CommandCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const [queryInput, setQueryInput] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const router = useRouter();
   const firestore = useFirestore();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -69,6 +70,30 @@ export function CommandCenter() {
     { name: "XakCode", type: "App", icon: FileText, href: "/xakcode" },
   ].filter(r => r.name.toLowerCase().includes(queryInput.toLowerCase()));
 
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [queryInput]);
+
+  useEffect(() => {
+    const handleNavigationKeys = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex(prev => Math.min(prev + 1, results.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex(prev => Math.max(prev - 1, 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (results[selectedIndex]) {
+          handleNavigate(results[selectedIndex].href);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleNavigationKeys);
+    return () => window.removeEventListener('keydown', handleNavigationKeys);
+  }, [isOpen, results, selectedIndex]);
+
   const handleNavigate = (href: string) => {
     router.push(href);
     setIsOpen(false);
@@ -104,18 +129,33 @@ export function CommandCenter() {
                       <button 
                         key={i}
                         onClick={() => handleNavigate(res.href)}
-                        className="w-full p-6 rounded-2xl hover:bg-white/5 flex items-center justify-between group transition-all"
+                        className={cn(
+                          "w-full p-6 rounded-2xl flex items-center justify-between group transition-all",
+                          i === selectedIndex ? "bg-white/10" : "hover:bg-white/5"
+                        )}
                       >
                          <div className="flex items-center gap-6">
-                            <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-primary transition-all">
-                               <res.icon className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <div className={cn(
+                              "w-12 h-12 rounded-xl flex items-center justify-center border transition-all",
+                              i === selectedIndex ? "bg-primary/20 border-primary" : "bg-white/5 border-white/10 group-hover:border-primary"
+                            )}>
+                               <res.icon className={cn(
+                                 "w-6 h-6 transition-colors",
+                                 i === selectedIndex ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                               )} />
                             </div>
                             <div className="text-left">
-                               <h4 className="text-xl font-black uppercase italic group-hover:text-white transition-colors">{res.name}</h4>
+                               <h4 className={cn(
+                                 "text-xl font-black uppercase italic transition-colors",
+                                 i === selectedIndex ? "text-white" : "group-hover:text-white"
+                               )}>{res.name}</h4>
                                <p className="text-[8px] font-bold text-muted-foreground uppercase mt-1">{res.type}</p>
                             </div>
                          </div>
-                         <ArrowRight className="w-5 h-5 text-primary opacity-0 group-hover:opacity-100 transition-all -translate-x-4 group-hover:translate-x-0" />
+                         <ArrowRight className={cn(
+                           "w-5 h-5 text-primary transition-all",
+                           i === selectedIndex ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0"
+                         )} />
                       </button>
                     )) : (
                       <div className="py-20 text-center opacity-20 uppercase font-black tracking-widest italic">

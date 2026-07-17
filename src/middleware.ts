@@ -17,7 +17,7 @@ export function middleware(req: NextRequest) {
   }
 
   // 1. Handle wildcard published subdomains (e.g. projectname.code.xakteir.com)
-  if (hostname.endsWith('.code.xakteir.com')) {
+  if (hostname.endsWith('.code.xakteir.com') && hostname !== 'www.code.xakteir.com') {
     const slug = hostname.replace('.code.xakteir.com', '');
     // Rewrite directly to the site viewer route
     return NextResponse.rewrite(new URL(`/sites/${slug}`, req.url));

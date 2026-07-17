@@ -35,7 +35,7 @@ export function MaintenanceModeGuard({ children }: { children: React.ReactNode }
   const hasAdminAccess = isSuperAdmin || !!adminRole;
 
   // We don't want to block the admin page so admins can turn it off!
-  if (pathname === "/admin") {
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     return <>{children}</>;
   }
 

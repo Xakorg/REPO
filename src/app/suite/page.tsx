@@ -12,7 +12,7 @@ const SUITE_APPS = [
   {
     name: "Write",
     description: "The modern document editor for lightning-fast creation.",
-    url: "https://write.suite.xakteir.com",
+    url: "/write",
     icon: FileText,
     color: "from-blue-500/20 to-blue-600/10",
     border: "border-blue-500/30",
@@ -21,7 +21,7 @@ const SUITE_APPS = [
   {
     name: "Sheets",
     description: "Powerful spreadsheets built for seamless data crunching.",
-    url: "https://sheets.suite.xakteir.com",
+    url: "/sheets",
     icon: FileSpreadsheet,
     color: "from-green-500/20 to-green-600/10",
     border: "border-green-500/30",
@@ -30,7 +30,7 @@ const SUITE_APPS = [
   {
     name: "Slides",
     description: "Create stunning presentations that captivate your audience.",
-    url: "https://slides.suite.xakteir.com",
+    url: "/slides",
     icon: Presentation,
     color: "from-yellow-500/20 to-yellow-600/10",
     border: "border-yellow-500/30",
@@ -39,7 +39,7 @@ const SUITE_APPS = [
   {
     name: "Forms",
     description: "Build beautiful forms and surveys in seconds.",
-    url: "https://forms.suite.xakteir.com",
+    url: "/forms",
     icon: FileJson,
     color: "from-purple-500/20 to-purple-600/10",
     border: "border-purple-500/30",
@@ -76,7 +76,7 @@ export default function XakteirSuiteHub() {
           
           <div className="flex items-center gap-4">
             {!user ? (
-              <Link href="https://xakteir.com/auth">
+              <Link href="/auth">
                 <Button className="bg-primary hover:bg-primary/90 text-black font-black uppercase italic tracking-widest text-xs px-6 rounded-xl shadow-2xl">
                   Sign In
                 </Button>
