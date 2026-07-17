@@ -118,7 +118,7 @@ export default function WorkspacePage() {
   const editorRef = useRef<any>(null);
   const [yDoc, setYDoc] = useState<Y.Doc | null>(null);
   const [provider, setProvider] = useState<WebrtcProvider | null>(null);
-  const [binding, setBinding] = useState<MonacoBinding | null>(null);
+  const bindingRef = useRef<MonacoBinding | null>(null);
 
   // Initialize WebRTC and Yjs when multiplayer is active
   useEffect(() => {
@@ -169,7 +169,7 @@ export default function WorkspacePage() {
   };
 
   const setupBinding = (editor: any, doc: Y.Doc, prov: WebrtcProvider) => {
-    if (binding) binding.destroy();
+    if (bindingRef.current) bindingRef.current.destroy();
     const ytext = doc.getText(activeFile);
     
     if (ytext.toString() === "" && codeText !== "") {
@@ -177,7 +177,7 @@ export default function WorkspacePage() {
     }
 
     const newBinding = new MonacoBinding(ytext, editor.getModel(), new Set([editor]), prov.awareness);
-    setBinding(newBinding);
+    bindingRef.current = newBinding;
     
     ytext.observe(() => {
        handleFileChange(ytext.toString());
@@ -189,9 +189,9 @@ export default function WorkspacePage() {
     if (editorRef.current && yDoc && provider) {
        setupBinding(editorRef.current, yDoc, provider);
     } else if (editorRef.current && (!yDoc || !provider)) {
-       if (binding) {
-         binding.destroy();
-         setBinding(null);
+       if (bindingRef.current) {
+         bindingRef.current.destroy();
+         bindingRef.current = null;
        }
     }
   }, [activeFile, yDoc, provider]);

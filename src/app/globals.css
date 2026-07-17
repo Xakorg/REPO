@@ -28,6 +28,9 @@
 }
 
 @layer base {
+  html {
+    font-size: 67%;
+  }
   * { @apply border-border selection:bg-primary/20 selection:text-primary; }
   body {
     @apply text-foreground antialiased min-h-screen relative overflow-x-hidden;

@@ -24,16 +24,6 @@ export function LockedAccountGuard({ children }: { children: React.ReactNode }) 
 
   const { data: userData } = useDoc(userDocRef);
 
-  useEffect(() => {
-    if (user && userData?.isBanned && userData.bannedUntil && Date.now() > userData.bannedUntil) {
-      import("firebase/firestore").then(({ updateDoc }) => {
-         if (userDocRef) {
-           updateDoc(userDocRef, { isBanned: false, bannedUntil: null });
-         }
-      });
-    }
-  }, [user, userData, userDocRef]);
-
   if (!mounted) return null;
 
   if (user && userData?.isBanned) {
