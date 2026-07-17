@@ -31,6 +31,7 @@ function FormsApp() {
   const [activeForm, setActiveForm] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [isThemePanelOpen, setIsThemePanelOpen] = useState(false);
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   
   useEffect(() => {
     if (!firestore || !user) return;
@@ -283,7 +284,7 @@ function FormsApp() {
            {saving && <span className="text-[10px] font-black uppercase text-white/40 mr-4 self-center tracking-widest flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> Saving...</span>}
            <Button variant="ghost" onClick={() => window.print()} className="text-[10px] font-black uppercase tracking-widest rounded-xl text-white/40 hover:text-white transition-all"><Printer className="w-4 h-4 mr-2" /> Print</Button>
            <Button variant="outline" onClick={() => navigateTo(`/forms?id=${formId}&view=preview`, router)} className="border-white/10 bg-zinc-900 text-white gap-2 font-black uppercase text-[10px] tracking-widest rounded-xl"><Eye className="w-4 h-4" /> Preview</Button>
-           <Button className="bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest text-[10px] rounded-xl"><Share className="w-4 h-4 mr-2" /> Send</Button>
+           <Button onClick={() => setIsPublishModalOpen(true)} className="bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest text-[10px] rounded-xl"><Share className="w-4 h-4 mr-2" /> Send</Button>
         </div>
       </div>
 
@@ -482,6 +483,40 @@ function FormsApp() {
              </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* Publish Modal */}
+      <AnimatePresence>
+         {isPublishModalOpen && (
+           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-zinc-900 border border-white/10 rounded-3xl p-8 max-w-[500px] w-full shadow-2xl relative">
+                <Button variant="ghost" size="icon" onClick={() => setIsPublishModalOpen(false)} className="absolute top-6 right-6 text-white/40 hover:text-white rounded-xl"><X className="w-5 h-5" /></Button>
+                <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
+                   <Share className="w-8 h-8 text-primary" />
+                </div>
+                <h2 className="text-2xl font-black text-white mb-2">Publish Form</h2>
+                <p className="text-white/60 mb-8">Share this link to let anyone fill out your form. Responses will appear in your Responses tab.</p>
+                
+                <div className="bg-black/50 border border-white/10 rounded-2xl p-4 flex items-center gap-4 mb-6">
+                   <div className="flex-1 truncate text-white/80 font-mono text-sm">
+                      {`https://forms.suite.xakteir.com/p/${formId}`}
+                   </div>
+                   <Button onClick={() => {
+                      navigator.clipboard.writeText(`https://forms.suite.xakteir.com/p/${formId}`);
+                      toast({ title: 'Copied!', description: 'Link copied to clipboard.' });
+                   }} className="bg-white/10 hover:bg-white/20 text-white rounded-xl h-10 px-4 flex-shrink-0">
+                      Copy Link
+                   </Button>
+                </div>
+
+                <div className="flex gap-4">
+                   <Button onClick={() => window.open(`/p/${formId}`, '_blank')} className="flex-1 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest rounded-xl h-12">
+                      Open Published Form
+                   </Button>
+                </div>
+             </motion.div>
+           </div>
+         )}
       </AnimatePresence>
     </div>
   );

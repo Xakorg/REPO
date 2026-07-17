@@ -28,6 +28,12 @@ export function middleware(req: NextRequest) {
   for (const app of suiteApps) {
     if (hostname === `${app}.suite.xakteir.com` || hostname === `www.${app}.suite.xakteir.com`) {
       if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+      
+      // Allow public published document routes
+      if (path.startsWith('/p/')) {
+        return NextResponse.rewrite(new URL(`/${app}${path}`, req.url));
+      }
+
       if (!req.cookies.has('xak_session')) {
         return NextResponse.redirect(new URL('/auth', req.url));
       }
