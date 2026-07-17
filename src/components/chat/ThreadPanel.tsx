@@ -27,7 +27,7 @@ export function ThreadPanel({ message, onClose, channelId, dmId }: ThreadPanelPr
   }
 
   // Fetch replies
-  const q = firestore ? query(collection(firestore, repliesPath), orderBy("timestamp", "asc")) : null;
+  const q = firestore && repliesPath ? query(collection(firestore, repliesPath), orderBy("timestamp", "asc")) : null;
   const { data: replies } = useCollection(q);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);

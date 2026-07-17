@@ -18,7 +18,6 @@ import { FaviconController } from '@/components/layout/FaviconController';
 import { MaintenanceModeGuard } from '@/components/MaintenanceModeGuard';
 
 import { GlobalThemeWrapper } from '@/components/GlobalThemeWrapper';
-import { GlobalThemeWrapper } from '@/components/GlobalThemeWrapper';
 
 export const metadata: Metadata = {
   title: 'Xakteir',

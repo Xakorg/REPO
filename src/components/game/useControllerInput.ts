@@ -68,8 +68,11 @@ export function useControllerInput(playerIndex: 1 | 2 | 3 | 4 = 1) {
         
         // A / Cross button
         kick = gp.buttons[0]?.pressed;
-      } else if (playerIndex <= 2) {
-        // Fallback to keyboard only for P1 and P2
+      }
+      
+      // Fallback/override to keyboard if P1 or P2 is actively typing
+      if (playerIndex <= 2 && (keys.up || keys.down || keys.left || keys.right || keys.action)) {
+        x = 0; y = 0; // Override gamepad movement
         if (keys.up) y -= 1;
         if (keys.down) y += 1;
         if (keys.left) x -= 1;

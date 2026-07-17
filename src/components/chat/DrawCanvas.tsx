@@ -31,7 +31,7 @@ export function DrawCanvas({ onSend, onClose }: DrawCanvasProps) {
 
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     setIsDrawing(true);
-    draw(e);
+    draw(e, true);
   };
 
   const stopDrawing = () => {
@@ -43,8 +43,8 @@ export function DrawCanvas({ onSend, onClose }: DrawCanvasProps) {
     }
   };
 
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing) return;
+  const draw = (e: React.MouseEvent | React.TouchEvent, forced = false) => {
+    if (!isDrawing && !forced) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
