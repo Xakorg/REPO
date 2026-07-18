@@ -168,7 +168,7 @@ export default function XakteirWrite() {
         </div>
       </div>
 
-      <div className="flex-1 flex justify-center p-8 mt-10">
+      <div className="flex-1 flex justify-center p-8 mt-10 relative">
          <div className={`w-full max-w-[850px] min-h-[1100px] bg-white text-black p-12 md:p-24 shadow-2xl rounded-sm relative transition-all duration-700 ${isFocusMode ? 'shadow-none bg-black text-white/90 p-4 md:p-12' : ''}`}>
             {content === null ? (
                <div className="absolute inset-0 flex items-center justify-center bg-white"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>
@@ -180,6 +180,30 @@ export default function XakteirWrite() {
                />
             )}
          </div>
+
+         {/* Outline / Minimap Sidebar */}
+         {!isFocusMode && content && (
+            <div className="hidden xl:block absolute right-8 top-8 w-64 pt-10">
+               <div className="sticky top-28 border-l border-white/10 pl-6 py-2">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-4">Outline</h4>
+                  <div className="flex flex-col gap-3">
+                     {Array.from(content.matchAll(/<(h[1-3])[^>]*>(.*?)<\/\1>/g)).map((m, i) => {
+                        const level = parseInt(m[1][1]);
+                        const text = m[2].replace(/<[^>]+>/g, '');
+                        if (!text.trim()) return null;
+                        return (
+                           <div 
+                              key={i} 
+                              className={`text-sm cursor-pointer text-white/60 hover:text-white transition-colors truncate ${level === 1 ? 'font-bold' : level === 2 ? 'pl-3' : 'pl-6 text-xs'}`}
+                           >
+                              {text}
+                           </div>
+                        );
+                     })}
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
 
       {/* Analytics Widget (Hide in Focus Mode) */}
