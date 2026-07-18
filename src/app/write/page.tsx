@@ -9,6 +9,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { collection, doc, getDoc, getDocs, setDoc, query, where, orderBy, serverTimestamp, addDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 export default function XakteirWrite() {
   const { isFocusMode, toggleFocusMode } = useSuiteStore();
@@ -177,9 +178,42 @@ export default function XakteirWrite() {
         <div className="flex gap-4 items-center">
           <Button variant="ghost" size="icon" onClick={() => window.location.href = '/write'} className="text-white/60 hover:text-white rounded-xl mr-2"><ArrowLeft className="w-4 h-4" /></Button>
           <span className="font-bold text-sm text-white/80 max-w-[200px] truncate pr-4 border-r border-white/10">{activeDoc?.title || 'Untitled'}</span>
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white uppercase tracking-widest text-[10px] font-black hidden md:flex">File</Button>
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white uppercase tracking-widest text-[10px] font-black hidden md:flex">Edit</Button>
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white uppercase tracking-widest text-[10px] font-black hidden md:flex">View</Button>
+          
+          <DropdownMenu>
+             <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-white/60 hover:text-white uppercase tracking-widest text-[10px] font-black hidden md:flex">File</Button>
+             </DropdownMenuTrigger>
+             <DropdownMenuContent className="w-48 bg-zinc-950 border-white/10 text-white rounded-xl">
+                <DropdownMenuItem onClick={handleCreateNew} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">New Document</DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuItem onClick={() => setIsPublishModalOpen(true)} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Publish to Web</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.print()} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Print</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsHistoryModalOpen(true)} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Version History</DropdownMenuItem>
+             </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+             <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-white/60 hover:text-white uppercase tracking-widest text-[10px] font-black hidden md:flex">Edit</Button>
+             </DropdownMenuTrigger>
+             <DropdownMenuContent className="w-48 bg-zinc-950 border-white/10 text-white rounded-xl">
+                <DropdownMenuItem onClick={() => document.execCommand('undo')} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Undo</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => document.execCommand('redo')} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Redo</DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuItem onClick={() => document.execCommand('copy')} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Copy</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => document.execCommand('paste')} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Paste</DropdownMenuItem>
+             </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+             <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-white/60 hover:text-white uppercase tracking-widest text-[10px] font-black hidden md:flex">View</Button>
+             </DropdownMenuTrigger>
+             <DropdownMenuContent className="w-48 bg-zinc-950 border-white/10 text-white rounded-xl">
+                <DropdownMenuItem onClick={toggleFocusMode} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Toggle Focus Mode</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => document.querySelector('.prose')?.requestFullscreen()} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Fullscreen</DropdownMenuItem>
+             </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="ml-auto flex gap-2">
            {saving && <span className="text-[10px] font-black uppercase text-white/40 mr-4 self-center tracking-widest flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> Saving...</span>}
