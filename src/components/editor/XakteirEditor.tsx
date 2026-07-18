@@ -32,6 +32,22 @@ export function XakteirEditor({ initialContent = `<h1>Untitled Document</h1><p><
     setMounted(true);
   }, []);
 
+  // Listen for external content updates (Real-time Collaboration Sync)
+  useEffect(() => {
+    if (editor && initialContent !== editor.getHTML()) {
+      // Save current cursor position
+      const { from, to } = editor.state.selection;
+      
+      // Update content without firing the onUpdate event to prevent infinite loops
+      editor.commands.setContent(initialContent || '', false);
+      
+      // Attempt to restore cursor position (may slightly shift if text length changed massively, but works for basic sync)
+      try {
+         editor.commands.setTextSelection({ from, to });
+      } catch (e) {}
+    }
+  }, [initialContent, editor]);
+
   if (!mounted || !editor) return <div className="min-h-[1000px] animate-pulse bg-white/5 rounded-xl"></div>;
 
   return (

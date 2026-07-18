@@ -661,6 +661,10 @@ service cloud.firestore {
       // Publicly readable so published docs work
       allow read: if true;
       allow update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || request.auth.uid in resource.data.collaborators || isAdmin());
+      
+      match /history/{historyId} {
+         allow read, write: if isSignedIn() && (get(/databases/$(database)/documents/write_docs/$(docId)).data.ownerId == request.auth.uid || request.auth.uid in get(/databases/$(database)/documents/write_docs/$(docId)).data.collaborators);
+      }
     }
     
     match /feedback/{feedbackId} {

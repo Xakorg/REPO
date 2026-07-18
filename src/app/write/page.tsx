@@ -25,6 +25,8 @@ export default function XakteirWrite() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [historyVersions, setHistoryVersions] = useState<any[]>([]);
 
   // Stats
   const [wordCount, setWordCount] = useState(0);
@@ -34,24 +36,43 @@ export default function XakteirWrite() {
     if (!firestore || !user) return;
     
     if (docId) {
-      // Load specific document
+      // Load specific document in real-time
       const loadDoc = async () => {
-        try {
-           const ref = doc(firestore, 'write_docs', docId);
-           const snap = await getDoc(ref);
-           if (snap.exists() && (snap.data().ownerId === user.uid || snap.data().collaborators?.includes(user.uid))) {
-              setActiveDoc({ id: snap.id, ...snap.data() });
-              setContent(snap.data().content || `<h1>Untitled Document</h1><p></p>`);
-           } else {
-              router.push('/write');
-           }
-        } catch (e) {
-           console.error(e);
-        } finally {
-           setLoading(false);
-        }
+         try {
+            const { onSnapshot } = await import('firebase/firestore');
+            const ref = doc(firestore, 'write_docs', docId);
+            
+            const unsubscribe = onSnapshot(ref, (snap) => {
+               if (snap.exists() && (snap.data().ownerId === user.uid || snap.data().collaborators?.includes(user.uid))) {
+                  setActiveDoc({ id: snap.id, ...snap.data() });
+                  
+                  // Only update the actual editor content if the change didn't originate from this exact local client right now
+                  // This prevents the cursor from jumping while the user is actively typing
+                  if (!snap.metadata.hasPendingWrites) {
+                     setContent(snap.data().content || `<h1>Untitled Document</h1><p></p>`);
+                  }
+               } else {
+                  router.push('/write');
+               }
+               setLoading(false);
+            }, (error) => {
+               console.error(error);
+               setLoading(false);
+            });
+            
+            return unsubscribe;
+         } catch (e) {
+            console.error(e);
+            setLoading(false);
+         }
       };
-      loadDoc();
+      
+      let unsub: any;
+      loadDoc().then(u => unsub = u);
+      
+      return () => {
+         if (unsub) unsub();
+      };
     } else {
       // Load dashboard
       const loadDashboard = async () => {
@@ -232,7 +253,19 @@ export default function XakteirWrite() {
         <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10 text-white/60 hover:text-white">
           <MessageSquare className="w-4 h-4" />
         </Button>
-        <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10 text-white/60 hover:text-white">
+        <Button 
+          onClick={async () => {
+             if (firestore && docId) {
+                const { collection, getDocs, query, orderBy } = await import('firebase/firestore');
+                const snap = await getDocs(query(collection(firestore, 'write_docs', docId, 'history'), orderBy('savedAt', 'desc')));
+                setHistoryVersions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+             }
+             setIsHistoryModalOpen(true);
+          }} 
+          variant="ghost" 
+          size="icon" 
+          className="rounded-full hover:bg-white/10 text-white/60 hover:text-white"
+        >
           <History className="w-4 h-4" />
         </Button>
       </div>
@@ -268,6 +301,56 @@ export default function XakteirWrite() {
                    <Button onClick={() => setIsPublishModalOpen(false)} variant="outline" className="flex-1 border-white/10 text-white hover:bg-white/5 font-black uppercase tracking-widest rounded-xl h-12">
                       Close
                    </Button>
+                </div>
+             </motion.div>
+           </div>
+         )}
+      </AnimatePresence>
+
+      {/* History Modal */}
+      <AnimatePresence>
+         {isHistoryModalOpen && (
+           <div className="fixed inset-0 z-50 flex bg-black/60 backdrop-blur-sm">
+             <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="absolute right-0 top-0 bottom-0 w-[400px] bg-zinc-950 border-l border-white/10 shadow-2xl p-6 flex flex-col">
+                <div className="flex items-center justify-between mb-8">
+                   <h2 className="text-xl font-black text-white flex items-center gap-2"><History className="w-5 h-5 text-primary" /> Version History</h2>
+                   <Button variant="ghost" size="icon" onClick={() => setIsHistoryModalOpen(false)} className="text-white/40 hover:text-white rounded-xl"><Settings className="w-5 h-5" /></Button>
+                </div>
+
+                <Button onClick={async () => {
+                   if (!firestore || !user || !docId) return;
+                   const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+                   await addDoc(collection(firestore, 'write_docs', docId, 'history'), {
+                      content: activeDoc?.content,
+                      title: activeDoc?.title,
+                      savedAt: serverTimestamp(),
+                      savedBy: user.uid
+                   });
+                   // Refresh history list
+                   const { getDocs, query, orderBy } = await import('firebase/firestore');
+                   const snap = await getDocs(query(collection(firestore, 'write_docs', docId, 'history'), orderBy('savedAt', 'desc')));
+                   setHistoryVersions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                }} className="bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-widest rounded-xl h-12 mb-6 w-full">
+                   Save Current Version
+                </Button>
+
+                <div className="flex-1 overflow-y-auto flex flex-col gap-2">
+                   {historyVersions.length === 0 ? (
+                      <div className="text-center text-white/40 text-sm mt-10">No versions saved yet.</div>
+                   ) : (
+                      historyVersions.map((v, i) => (
+                         <div key={v.id} className="bg-white/5 border border-white/5 hover:border-primary/50 transition-colors rounded-xl p-4 cursor-pointer" onClick={() => {
+                            if (confirm('Restore this version? This will overwrite the current document.')) {
+                               const { doc, setDoc } = require('firebase/firestore');
+                               setDoc(doc(firestore, 'write_docs', docId), { content: v.content }, { merge: true });
+                               setIsHistoryModalOpen(false);
+                            }
+                         }}>
+                            <div className="text-sm font-bold text-white mb-1">Version {historyVersions.length - i}</div>
+                            <div className="text-[10px] uppercase tracking-widest text-white/40">{v.savedAt?.toDate().toLocaleString()}</div>
+                         </div>
+                      ))
+                   )}
                 </div>
              </motion.div>
            </div>
