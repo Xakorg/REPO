@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSuiteStore } from '@/lib/store';
 import { Settings, Share, MessageSquare, History, Wand2, Plus, FileText, ArrowLeft, Printer, Download, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -105,7 +105,9 @@ export default function XakteirWrite() {
     window.location.href = `/write?id=${newDoc.id}`;
   };
 
-  const saveContent = async (html: string, plainText: string) => {
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const saveContent = (html: string, plainText: string) => {
     if (!firestore || !user || !docId || !activeDoc) return;
     
     // Update stats locally
@@ -118,14 +120,22 @@ export default function XakteirWrite() {
     const newTitle = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '') : 'Untitled Document';
     
     setSaving(true);
-    try {
-      await setDoc(doc(firestore, 'write_docs', docId), {
-         content: html,
-         title: newTitle,
-         updatedAt: serverTimestamp()
-      }, { merge: true });
-    } catch (e) {}
-    setSaving(false);
+    
+    if (saveTimeoutRef.current) {
+       clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(async () => {
+       try {
+         const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+         await setDoc(doc(firestore, 'write_docs', docId), {
+            content: html,
+            title: newTitle,
+            updatedAt: serverTimestamp()
+         }, { merge: true });
+       } catch (e) {}
+       setSaving(false);
+    }, 1000);
   };
 
   if (loading) {
