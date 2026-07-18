@@ -7,7 +7,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { Bold, Italic, Strikethrough, Heading1, Heading2, List, ListOrdered, Quote } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
 
-export function XakteirEditor({ initialContent = `<h1>Untitled Document</h1><p></p>`, onChange, isFocusMode }: { initialContent?: string, onChange?: (html: string, text: string) => void, isFocusMode?: boolean }) {
+export const XakteirEditor = React.memo(function XakteirEditorComponent({ initialContent = `<h1>Untitled Document</h1><p></p>`, onChange, isFocusMode }: { initialContent?: string, onChange?: (html: string, text: string) => void, isFocusMode?: boolean }) {
   const [mounted, setMounted] = useState(false);
 
   const editor = useEditor({
@@ -125,4 +125,7 @@ export function XakteirEditor({ initialContent = `<h1>Untitled Document</h1><p><
       <EditorContent editor={editor} className="min-h-[1000px]" />
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Only re-render if isFocusMode changes. Ignore onChange identity changes.
+  return prevProps.isFocusMode === nextProps.isFocusMode;
+});
