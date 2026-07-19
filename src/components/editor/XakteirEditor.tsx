@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useEditor, EditorContent, FloatingMenu } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Bold, Italic, Strikethrough, Heading1, Heading2, List, ListOrdered, Quote } from 'lucide-react';
@@ -100,25 +100,6 @@ export const XakteirEditor = React.memo(function XakteirEditorComponent({ initia
             <Quote className="w-4 h-4" />
           </Toggle>
         </div>
-      )}
-
-      {/* Floating Menu for Slash Commands (appears on empty lines) */}
-      {editor && (
-        <FloatingMenu editor={editor} tippyOptions={{ duration: 100 }} className="flex bg-zinc-900 border border-white/10 shadow-2xl rounded-xl p-1 gap-1 overflow-hidden">
-          <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg text-sm font-bold text-white/80 hover:text-white transition-colors">
-             <Heading1 className="w-4 h-4 text-primary" /> H1
-          </button>
-          <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg text-sm font-bold text-white/80 hover:text-white transition-colors">
-             <Heading2 className="w-4 h-4 text-primary" /> H2
-          </button>
-          <div className="w-px bg-white/10 my-2 mx-1" />
-          <button onClick={() => editor.chain().focus().toggleBulletList().run()} className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg text-sm font-bold text-white/80 hover:text-white transition-colors">
-             <List className="w-4 h-4 text-primary" /> Bullet
-          </button>
-          <button onClick={() => editor.chain().focus().toggleBlockquote().run()} className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg text-sm font-bold text-white/80 hover:text-white transition-colors">
-             <Quote className="w-4 h-4 text-primary" /> Quote
-          </button>
-        </FloatingMenu>
       )}
 
       {/* Editor Canvas */}
