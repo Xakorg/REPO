@@ -383,10 +383,10 @@ export default function XakteirWrite() {
                       <div className="text-center text-white/40 text-sm mt-10">No versions saved yet.</div>
                    ) : (
                       historyVersions.map((v, i) => (
-                         <div key={v.id} className="bg-white/5 border border-white/5 hover:border-primary/50 transition-colors rounded-xl p-4 cursor-pointer" onClick={() => {
+                         <div key={v.id} className="bg-white/5 border border-white/5 hover:border-primary/50 transition-colors rounded-xl p-4 cursor-pointer" onClick={async () => {
                             if (confirm('Restore this version? This will overwrite the current document.')) {
-                               const { doc, setDoc } = require('firebase/firestore');
-                               setDoc(doc(firestore, 'write_docs', docId), { content: v.content }, { merge: true });
+                               const { doc, setDoc } = await import('firebase/firestore');
+                               await setDoc(doc(firestore, 'write_docs', docId), { content: v.content }, { merge: true });
                                setIsHistoryModalOpen(false);
                             }
                          }}>
