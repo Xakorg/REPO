@@ -110,6 +110,27 @@ export async function performWebSearch(query: string) {
     }
   }
 
+  // Ultimate Fallback: Wikipedia Search API
+  try {
+    const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&utf8=&format=json`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      next: { revalidate: 3600 }
+    });
+    if (wikiRes.ok) {
+      const wikiData = await wikiRes.json();
+      if (wikiData.query && wikiData.query.search && wikiData.query.search.length > 0) {
+        return wikiData.query.search.map((item: any) => ({
+          title: item.title,
+          url: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
+          description: item.snippet.replace(/<[^>]+>/g, '') + '...',
+          engine: 'wikipedia'
+        }));
+      }
+    }
+  } catch (e) {
+    console.warn("Wikipedia search fallback failed", e);
+  }
+
   return [];
 }
 
@@ -144,6 +165,35 @@ export async function performImageSearch(query: string) {
       continue;
     }
   }
+
+  // Ultimate Fallback: Wikimedia Commons Image Search
+  try {
+    const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=10&prop=imageinfo&iiprop=url&format=json`, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      next: { revalidate: 3600 }
+    });
+    if (wikiRes.ok) {
+      const wikiData = await wikiRes.json();
+      if (wikiData.query && wikiData.query.pages) {
+        const results = [];
+        for (const pageId in wikiData.query.pages) {
+          const page = wikiData.query.pages[pageId];
+          if (page.imageinfo && page.imageinfo.length > 0) {
+            results.push({
+              title: page.title.replace('File:', ''),
+              img_src: page.imageinfo[0].url,
+              url: page.imageinfo[0].descriptionurl,
+              source: 'wikimedia'
+            });
+          }
+        }
+        if (results.length > 0) return results;
+      }
+    }
+  } catch (e) {
+    console.warn("Wikimedia image fallback failed", e);
+  }
+
   return [];
 }
 
