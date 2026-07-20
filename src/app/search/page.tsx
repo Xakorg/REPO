@@ -2611,38 +2611,40 @@ console.log(solve("hello"));`}
 
             {/* Desktop Sidebar Knowledge Panel */}
             {activeCategory === "all" && activeDefinition && (
-              <div className="hidden xl:block w-[400px] shrink-0 sticky top-10 animate-in slide-in-from-right-8 fade-in duration-500">
-                <Card className="p-6 border-white/10 bg-zinc-900/40 rounded-[2.5rem] overflow-hidden shadow-2xl space-y-6">
+              <div className="hidden xl:flex fixed top-0 right-0 w-[450px] h-screen bg-zinc-950 border-l border-zinc-800 shadow-2xl flex-col z-[100] animate-in slide-in-from-right-full duration-500">
+                <div className="flex-1 overflow-y-auto p-10 space-y-8 scrollbar-hide">
                   {activeDefinition.image && (
-                    <div className="w-full h-48 rounded-2xl overflow-hidden border border-white/10 bg-zinc-950 relative">
+                    <div className="w-full h-64 rounded-[2rem] overflow-hidden border border-white/10 bg-zinc-900 relative shadow-inner">
                       <img src={activeDefinition.image} alt={activeDefinition.title} className="w-full h-full object-cover absolute inset-0" />
                     </div>
                   )}
                   <div>
-                    <h2 className="text-3xl font-black text-white leading-tight">{activeDefinition.title}</h2>
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="text-xs font-black uppercase tracking-widest text-primary">
+                    <h2 className="text-4xl font-black text-white leading-tight">{activeDefinition.title}</h2>
+                    <div className="flex items-center gap-3 mt-4">
+                      <div className="text-xs font-black uppercase tracking-widest text-primary bg-primary/10 px-4 py-2 rounded-xl">
                         {activeDefinition.type}
                       </div>
                       {activeDefinition.facts?.Phonetic && (
-                        <span className="text-zinc-500 font-mono text-sm">| {activeDefinition.facts.Phonetic}</span>
+                        <span className="text-zinc-500 font-mono text-sm">{activeDefinition.facts.Phonetic}</span>
                       )}
                     </div>
                   </div>
-                  <p className="text-sm text-zinc-300 leading-relaxed">
+                  <p className="text-base text-zinc-300 leading-relaxed font-medium">
                     {activeDefinition.definition}
                   </p>
                   {activeDefinition.facts?.Example && (
-                    <p className="text-sm text-zinc-500 italic mt-2 border-l-2 border-zinc-800 pl-3">
-                      "{activeDefinition.facts.Example}"
-                    </p>
+                    <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800">
+                      <p className="text-sm text-zinc-400 italic">
+                        "{activeDefinition.facts.Example}"
+                      </p>
+                    </div>
                   )}
                   {activeDefinition.url && (
-                    <a href={activeDefinition.url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs font-bold text-blue-400 hover:underline mt-4">
-                      Read more on Wikipedia <ExternalLink className="w-3 h-3" />
+                    <a href={activeDefinition.url} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 px-6 py-4 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-colors mt-6 w-full">
+                      Read more on Wikipedia <ExternalLink className="w-4 h-4" />
                     </a>
                   )}
-                </Card>
+                </div>
               </div>
             )}
           </div>
