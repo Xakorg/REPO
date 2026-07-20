@@ -2281,41 +2281,51 @@ console.log(solve("hello"));`}
             </div>
           )}
 
-          {/* Dictionary Definition Widget (Main Column) */}
-          {activeCategory === "all" && activeDefinition && (
-            <Card className="p-6 border-white/10 bg-zinc-900/40 rounded-3xl overflow-hidden animate-in slide-in-from-top-4 max-w-3xl">
-              <div className="flex gap-6">
-                {activeDefinition.image && (
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 border border-white/10">
-                    <img src={activeDefinition.image} alt={activeDefinition.title} className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h2 className="text-2xl font-black text-white">{activeDefinition.title}</h2>
-                    {activeDefinition.facts?.Phonetic && (
-                      <span className="text-zinc-500 font-mono text-sm">{activeDefinition.facts.Phonetic}</span>
-                    )}
-                  </div>
-                  <div className="text-xs font-black uppercase tracking-widest text-primary mb-3">
-                    {activeDefinition.type}
-                  </div>
-                  <p className="text-sm text-zinc-300 leading-relaxed">
-                    {activeDefinition.definition}
-                  </p>
-                  {activeDefinition.facts?.Example && (
-                    <p className="text-sm text-zinc-500 italic mt-2">
-                      "{activeDefinition.facts.Example}"
-                    </p>
-                  )}
+          {/* Main Layout Flex Wrapper */}
+          <div className="flex flex-col xl:flex-row gap-10 items-start w-full relative">
+            <div className="flex-1 w-full max-w-3xl">
+
+              {/* Mobile Dictionary Definition Widget */}
+              {activeCategory === "all" && activeDefinition && (
+                <div className="xl:hidden mb-10">
+                  <Card className="p-6 border-white/10 bg-zinc-900/40 rounded-3xl overflow-hidden animate-in slide-in-from-top-4">
+                    <div className="flex gap-6">
+                      {activeDefinition.image && (
+                        <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 border border-white/10 bg-zinc-950">
+                          <img src={activeDefinition.image} alt={activeDefinition.title} className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h2 className="text-2xl font-black text-white">{activeDefinition.title}</h2>
+                          {activeDefinition.facts?.Phonetic && (
+                            <span className="text-zinc-500 font-mono text-sm">{activeDefinition.facts.Phonetic}</span>
+                          )}
+                        </div>
+                        <div className="text-xs font-black uppercase tracking-widest text-primary mb-3">
+                          {activeDefinition.type}
+                        </div>
+                        <p className="text-sm text-zinc-300 leading-relaxed">
+                          {activeDefinition.definition}
+                        </p>
+                        {activeDefinition.facts?.Example && (
+                          <p className="text-sm text-zinc-500 italic mt-2">
+                            "{activeDefinition.facts.Example}"
+                          </p>
+                        )}
+                        {activeDefinition.url && (
+                          <a href={activeDefinition.url} target="_blank" rel="noreferrer" className="block text-xs font-bold text-blue-400 hover:underline mt-2">
+                            Read more
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
                 </div>
-              </div>
-            </Card>
-          )}
+              )}
 
-
-          {/* Results Lists */}
-          <div className="space-y-10 pb-20 max-w-3xl">
+              {/* Results Lists */}
+              <div className="space-y-10 pb-20">
             {/* Category: PEOPLE */}
             {(activeCategory === "all" || activeCategory === "people") && matchedUsers.length > 0 && !safeSearchWarning && (
               <div className="space-y-4 animate-fade-in">
@@ -2594,6 +2604,45 @@ console.log(solve("hello"));`}
                     <p className="text-xs font-black uppercase tracking-[0.4em] text-zinc-500">No results found in index</p>
                   </div>
                 )}
+              </div>
+            )}
+              </div>
+            </div>
+
+            {/* Desktop Sidebar Knowledge Panel */}
+            {activeCategory === "all" && activeDefinition && (
+              <div className="hidden xl:block w-[400px] shrink-0 sticky top-10 animate-in slide-in-from-right-8 fade-in duration-500">
+                <Card className="p-6 border-white/10 bg-zinc-900/40 rounded-[2.5rem] overflow-hidden shadow-2xl space-y-6">
+                  {activeDefinition.image && (
+                    <div className="w-full h-48 rounded-2xl overflow-hidden border border-white/10 bg-zinc-950 relative">
+                      <img src={activeDefinition.image} alt={activeDefinition.title} className="w-full h-full object-cover absolute inset-0" />
+                    </div>
+                  )}
+                  <div>
+                    <h2 className="text-3xl font-black text-white leading-tight">{activeDefinition.title}</h2>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="text-xs font-black uppercase tracking-widest text-primary">
+                        {activeDefinition.type}
+                      </div>
+                      {activeDefinition.facts?.Phonetic && (
+                        <span className="text-zinc-500 font-mono text-sm">| {activeDefinition.facts.Phonetic}</span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm text-zinc-300 leading-relaxed">
+                    {activeDefinition.definition}
+                  </p>
+                  {activeDefinition.facts?.Example && (
+                    <p className="text-sm text-zinc-500 italic mt-2 border-l-2 border-zinc-800 pl-3">
+                      "{activeDefinition.facts.Example}"
+                    </p>
+                  )}
+                  {activeDefinition.url && (
+                    <a href={activeDefinition.url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs font-bold text-blue-400 hover:underline mt-4">
+                      Read more on Wikipedia <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </Card>
               </div>
             )}
           </div>
