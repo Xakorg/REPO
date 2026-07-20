@@ -589,7 +589,8 @@ function SearchContent() {
       const internal: any[] = [];
       if (user && firestore) {
         try {
-          const qEmails = query(collection(firestore, "users", user.uid, "emails"), orderBy("timestamp", "desc"), limit(20));
+          // Xakteir Mail
+          const qEmails = query(collection(firestore, "emails"), where("recipientList", "array-contains", user.email || ""), limit(50));
           const snap = await getDocs(qEmails);
           snap.forEach(doc => {
             const d = doc.data();
@@ -608,7 +609,8 @@ function SearchContent() {
         } catch(e) {}
         
         try {
-          const qDocs = query(collection(firestore, "users", user.uid, "suite_documents"), orderBy("updatedAt", "desc"), limit(20));
+          // Xakteir Write
+          const qDocs = query(collection(firestore, "write_docs"), where("ownerId", "==", user.uid), limit(50));
           const snap = await getDocs(qDocs);
           snap.forEach(doc => {
             const d = doc.data();
@@ -617,7 +619,7 @@ function SearchContent() {
                 id: doc.id,
                 title: d.title,
                 type: "Suite Document",
-                url: `/suite`,
+                url: `/write?id=${doc.id}`,
                 description: `Last edited: ${new Date(d.updatedAt?.toMillis() || Date.now()).toLocaleDateString()}`,
                 icon: 'file'
               });

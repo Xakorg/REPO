@@ -41,12 +41,13 @@ async function getHealthySearxInstances() {
 export async function performWebSearch(query: string) {
   if (!query) return [];
 
+  // Try DuckDuckGo HTML version first
   try {
-    const res = await fetch('https://lite.duckduckgo.com/lite/', {
+    const res = await fetch('https://html.duckduckgo.com/html/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/114.0.0.0 Safari/537.36'
       },
       body: `q=${encodeURIComponent(query)}`
     });
@@ -54,7 +55,7 @@ export async function performWebSearch(query: string) {
     if (res.ok) {
       const html = await res.text();
       const results = [];
-      const linkRegex = /<a[^>]*href="([^"]+)"[^>]*class='result-link'>([\s\S]*?)<\/a>[\s\S]*?<td class='result-snippet'>([\s\S]*?)<\/td>/g;
+      const linkRegex = /<a[^>]*href="([^"]+)"[^>]*class='result__url'[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]*class='result__snippet[^>]*>([\s\S]*?)<\/a>/g;
       let match;
       
       while ((match = linkRegex.exec(html)) !== null) {
@@ -75,17 +76,23 @@ export async function performWebSearch(query: string) {
       }
     }
   } catch (e) {
-    console.error('DDG Lite scrape failed', e);
+    console.warn('DDG HTML scrape failed, falling back to SearxNG', e);
   }
 
+  // Fallback to SearxNG Instances
   const instances = await getHealthySearxInstances();
   for (let i = 0; i < Math.min(3, instances.length); i++) {
     const instance = instances[i];
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 second timeout
       const res = await fetch(`${instance}/search?q=${encodeURIComponent(query)}&format=json`, {
-        headers: { 'User-Agent': 'Mozilla/5.0' },
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/115.0' },
+        signal: controller.signal,
         next: { revalidate: 60 }
       });
+      clearTimeout(timeoutId);
+      
       if (res.ok) {
         const data = await res.json();
         if (data.results && data.results.length > 0) {
@@ -93,7 +100,7 @@ export async function performWebSearch(query: string) {
             title: r.title,
             url: r.url,
             description: r.content || r.snippet || "",
-            engine: r.engine
+            engine: r.engine || 'searx'
           }));
         }
       }
@@ -113,10 +120,14 @@ export async function performImageSearch(query: string) {
   for (let i = 0; i < Math.min(4, instances.length); i++) {
     const instance = instances[i];
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
       const res = await fetch(`${instance}/search?q=${encodeURIComponent(query)}&categories=images&format=json`, {
         headers: { 'User-Agent': 'Mozilla/5.0' },
+        signal: controller.signal,
         next: { revalidate: 60 }
       });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
         if (data.results && data.results.length > 0) {
