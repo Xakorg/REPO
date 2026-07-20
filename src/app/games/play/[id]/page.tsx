@@ -67,6 +67,11 @@ const GAME_MAP: Record<string, React.ComponentType<any>> = {
   whack:        dynamic(() => import("@/components/games/WhackAMole")),
   word:         dynamic(() => import("@/components/games/WordSearch")),
   xbr:          dynamic(() => import("@/components/games/XBRArena")),
+  blockDrop:    dynamic(() => import("@/components/games/BlockDrop")),
+  mazeMuncher:  dynamic(() => import("@/components/games/MazeMuncher")),
+  wordGuess:    dynamic(() => import("@/components/games/WordGuess")),
+  spaceRocks:   dynamic(() => import("@/components/games/SpaceRocks")),
+  rhythmTap:    dynamic(() => import("@/components/games/RhythmTap")),
 };
  
 export default function GamePlayerPage() {

@@ -139,7 +139,12 @@ const legacyGamesData = [
   { id: 'typing', name: 'Typing Test', type: 'Discovery' },
   { id: 'whack', name: 'Whack-a-Mole', type: 'Arcade' },
   { id: 'word', name: 'Word Search', type: 'Puzzle' },
-  { id: 'xbr', name: 'XBR Arena', type: '3D' }
+  { id: 'xbr', name: 'XBR Arena', type: '3D' },
+  { id: 'blockDrop', name: 'Block Drop', type: 'Arcade' },
+  { id: 'mazeMuncher', name: 'Maze Muncher', type: 'Arcade' },
+  { id: 'wordGuess', name: 'Word Guess', type: 'Puzzle' },
+  { id: 'spaceRocks', name: 'Space Rocks', type: 'Arcade' },
+  { id: 'rhythmTap', name: 'Rhythm Tap', type: 'Arcade' }
 ];
 
 const legacyGames: GameMeta[] = legacyGamesData.map(g => ({
