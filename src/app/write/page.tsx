@@ -127,13 +127,12 @@ export default function XakteirWrite() {
     
     saveTimeoutRef.current = setTimeout(async () => {
        try {
-         const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
          await setDoc(doc(firestore, 'write_docs', docId), {
             content: html,
             title: newTitle,
             updatedAt: serverTimestamp()
          }, { merge: true });
-       } catch (e) {}
+       } catch (e) { console.error("Save failed", e); }
        setSaving(false);
     }, 1000);
   };
@@ -194,10 +193,10 @@ export default function XakteirWrite() {
                 <Button variant="ghost" size="sm" className="text-white/60 hover:text-white uppercase tracking-widest text-[10px] font-black hidden md:flex">File</Button>
              </DropdownMenuTrigger>
              <DropdownMenuContent className="w-48 bg-zinc-950 border-white/10 text-white rounded-xl">
-                <DropdownMenuItem onClick={handleCreateNew} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">New Document</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.dispatchEvent(new CustomEvent('editor-command', {detail:'new'}))} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">New Document</DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-white/10" />
                 <DropdownMenuItem onClick={() => setIsPublishModalOpen(true)} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Publish to Web</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => window.print()} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Print</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.dispatchEvent(new CustomEvent('editor-command', {detail:'print'}))} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Print</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsHistoryModalOpen(true)} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Version History</DropdownMenuItem>
              </DropdownMenuContent>
           </DropdownMenu>
@@ -207,11 +206,11 @@ export default function XakteirWrite() {
                 <Button variant="ghost" size="sm" className="text-white/60 hover:text-white uppercase tracking-widest text-[10px] font-black hidden md:flex">Edit</Button>
              </DropdownMenuTrigger>
              <DropdownMenuContent className="w-48 bg-zinc-950 border-white/10 text-white rounded-xl">
-                <DropdownMenuItem onClick={() => document.execCommand('undo')} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Undo</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => document.execCommand('redo')} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Redo</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.dispatchEvent(new CustomEvent('editor-command', {detail:'undo'}))} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Undo</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.dispatchEvent(new CustomEvent('editor-command', {detail:'redo'}))} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Redo</DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-white/10" />
-                <DropdownMenuItem onClick={() => document.execCommand('copy')} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Copy</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => document.execCommand('paste')} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Paste</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.dispatchEvent(new CustomEvent('editor-command', {detail:'copy'}))} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Copy</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.dispatchEvent(new CustomEvent('editor-command', {detail:'paste'}))} className="hover:bg-white/10 cursor-pointer rounded-lg text-xs font-bold uppercase tracking-widest p-3">Paste</DropdownMenuItem>
              </DropdownMenuContent>
           </DropdownMenu>
 

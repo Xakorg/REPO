@@ -32,6 +32,18 @@ export const XakteirEditor = React.memo(function XakteirEditorComponent({ initia
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!editor) return;
+    const handleCommand = (e: any) => {
+      const cmd = e.detail;
+      if (cmd === 'undo') editor.chain().focus().undo().run();
+      if (cmd === 'redo') editor.chain().focus().redo().run();
+      // copy/paste are usually handled by browser native shortcuts anyway, but we can't easily trigger clipboard API without user interaction in some browsers
+    };
+    window.addEventListener('editor-command', handleCommand);
+    return () => window.removeEventListener('editor-command', handleCommand);
+  }, [editor]);
+
   // Removed naive real-time sync because it locks the editor if HTML strings slightly differ
   // Real-time text sync requires Yjs to work properly without cursor jumping.
 
