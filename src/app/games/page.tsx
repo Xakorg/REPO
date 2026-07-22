@@ -60,7 +60,7 @@ export default function PlayStationGamesLibrary() {
     if (stored) {
       setLibraryIds(JSON.parse(stored));
     } else {
-      const defaultIds = ["xaksports", "retro_engine", "pixel_knight"];
+      const defaultIds = ["cyber_pulse", "xaksports", "retro_engine", "pixel_knight"];
       localStorage.setItem("xakteir_game_library", JSON.stringify(defaultIds));
       setLibraryIds(defaultIds);
     }

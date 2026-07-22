@@ -7,17 +7,18 @@ import { motion } from 'framer-motion';
 import { Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function PublicWriteDocument({ params }: { params: { id: string } }) {
+export default function PublicWriteDocument({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
   const firestore = useFirestore();
   const [docData, setDocData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!firestore || !params.id) return;
+    if (!firestore || !id) return;
     const fetchDoc = async () => {
       try {
-        const docRef = doc(firestore, 'write_docs', params.id);
+        const docRef = doc(firestore, 'write_docs', id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setDocData({ id: docSnap.id, ...docSnap.data() });
@@ -31,7 +32,7 @@ export default function PublicWriteDocument({ params }: { params: { id: string }
       }
     };
     fetchDoc();
-  }, [firestore, params.id]);
+  }, [firestore, id]);
 
   if (loading) {
     return <div className="min-h-screen bg-[#05030d] flex items-center justify-center text-white"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>;

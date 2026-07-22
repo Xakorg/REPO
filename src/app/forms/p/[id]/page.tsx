@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CheckCircle2 } from 'lucide-react';
 
-export default function PublicFormPage({ params }: { params: { id: string } }) {
+export default function PublicFormPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
   const firestore = useFirestore();
   const [form, setForm] = useState<any>(null);
   const [answers, setAnswers] = useState<Record<string, any>>({});
@@ -18,10 +19,10 @@ export default function PublicFormPage({ params }: { params: { id: string } }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!firestore || !params.id) return;
+    if (!firestore || !id) return;
     const fetchForm = async () => {
       try {
-        const docRef = doc(firestore, 'forms', params.id);
+        const docRef = doc(firestore, 'forms', id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setForm({ id: docSnap.id, ...docSnap.data() });
@@ -35,7 +36,7 @@ export default function PublicFormPage({ params }: { params: { id: string } }) {
       }
     };
     fetchForm();
-  }, [firestore, params.id]);
+  }, [firestore, id]);
 
   const handleSubmit = async () => {
     if (!firestore || !form) return;

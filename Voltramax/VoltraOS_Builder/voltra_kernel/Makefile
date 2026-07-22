@@ -3,7 +3,7 @@ AS = as --32
 CFLAGS = -m32 -fno-pie -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Iinclude
 LDFLAGS = -m32 -no-pie -ffreestanding -O2 -nostdlib -lgcc
 
-OBJS = boot.o kernel.o src/vga.o src/ports.o src/string.o src/gdt.o src/gdt_flush.o src/idt.o src/idt_load.o src/isr.o src/interrupt.o src/keyboard.o src/pmm.o src/vmm.o src/heap.o src/pci.o src/timer.o src/ata.o src/vfs.o src/fat32.o src/graphics.o src/font.o src/mouse.o src/window.o src/task.o src/task_switch.o src/syscall.o src/user.o src/tss_flush.o src/elf.o src/rtl8139.o
+OBJS = boot.o kernel.o src/vga.o src/ports.o src/string.o src/gdt.o src/gdt_flush.o src/idt.o src/idt_load.o src/isr.o src/interrupt.o src/keyboard.o src/pmm.o src/vmm.o src/heap.o src/pci.o src/timer.o src/ata.o src/vfs.o src/fat32.o src/graphics.o src/font.o src/mouse.o src/window.o src/task.o src/task_switch.o src/syscall.o src/user.o src/tss_flush.o src/elf.o src/rtl8139.o src/vds_compositor.o src/ahci.o src/nvme.o src/pe_loader.o
 
 all: voltraos.iso
 

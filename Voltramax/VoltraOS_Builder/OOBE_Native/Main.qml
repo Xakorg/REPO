@@ -41,69 +41,37 @@ Window {
         }
     }
 
-    // MAIN CONTENT
-    Item {
-        anchors.centerIn: parent
-        width: childrenRect.width
-        height: childrenRect.height
+    // MAIN CONTENT (Handled by StackView for fluid page transitions)
+    StackView {
+        id: stackView
+        anchors.fill: parent
+        initialItem: "WelcomePage.qml"
 
-        Row {
-            id: titleRow
-            spacing: 5
-            anchors.horizontalCenter: parent.horizontalCenter
-
-            // Dynamic Letter Generation for VOLTRAMAX
-            Repeater {
-                model: ["V", "O", "L", "T", "R", "A", "M", "A", "X"]
-                
-                Text {
-                    text: modelData
-                    font.family: "Syne"
-                    font.pixelSize: 140
-                    font.weight: Font.Black
-                    font.letterSpacing: 15
-                    color: "white"
-                    opacity: 0
-                    y: 100
-
-                    // Real C++ Spring Physics Engine Hook
-                    SpringAnimation on y {
-                        from: 100
-                        to: 0
-                        spring: 2.0
-                        damping: 0.15
-                        epsilon: 0.25
-                        running: true
-                    }
-
-                    NumberAnimation on opacity {
-                        from: 0
-                        to: 1
-                        duration: 1000
-                        easing.type: Easing.OutCubic
-                        running: true
-                    }
-                }
+        // Custom push transition for a premium slide-up and fade-in effect
+        pushEnter: Transition {
+            PropertyAnimation {
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: 600
+                easing.type: Easing.OutCubic
+            }
+            PropertyAnimation {
+                property: "y"
+                from: 50
+                to: 0
+                duration: 600
+                easing.type: Easing.OutBack
             }
         }
-
-        // Subtitle fades in after the physics settle
-        Text {
-            id: subtitle
-            anchors.top: titleRow.bottom
-            anchors.topMargin: 50
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: "Welcome to <font color='#ffd700'>VoltraMax</font>. Your 5-in-1 laptop. From Xakteir."
-            font.family: "Inter"
-            font.pixelSize: 36
-            color: "#a0a0a0"
-            textFormat: Text.RichText
-            opacity: 0
-
-            SequentialAnimation on opacity {
-                running: true
-                PauseAnimation { duration: 2500 }
-                NumberAnimation { to: 1.0; duration: 2000; easing.type: Easing.InOutQuad }
+        
+        pushExit: Transition {
+            PropertyAnimation {
+                property: "opacity"
+                from: 1
+                to: 0
+                duration: 400
+                easing.type: Easing.InCubic
             }
         }
     }

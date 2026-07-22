@@ -34,14 +34,14 @@ export default function VoltraOSAppStorePublisher() {
   const handleFileDrop = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.name.endsWith('.exe')) {
-        toast({ variant: "destructive", title: "Invalid format", description: "Please upload a Windows .exe file." });
+      if (!file.name.endsWith('.exe') && !file.name.endsWith('.deb') && !file.name.endsWith('.vex')) {
+        toast({ variant: "destructive", title: "Invalid format", description: "Please upload a .exe, .deb, or .vex file." });
         return;
       }
       setSelectedFile(file);
       setIsConverted(false);
       
-      // Simulate .exe to .volt conversion layer
+      // Simulate Universal compatibility wrapping
       setIsConverting(true);
       setTimeout(() => {
         setIsConverting(false);
@@ -129,10 +129,10 @@ export default function VoltraOSAppStorePublisher() {
         <div className="space-y-6">
           <Card className="p-8 bg-zinc-950/40 border border-white/5 rounded-3xl">
             <h3 className="font-black uppercase text-lg mb-4 flex items-center gap-3 text-white">
-              <Code className="text-green-500 w-5 h-5" /> Auto-Conversion
+              <Code className="text-green-500 w-5 h-5" /> Universal Deployment
             </h3>
             <p className="text-xs text-zinc-400 mb-6 font-medium leading-relaxed">
-              VoltraOS makes porting effortless. Just upload your Windows <code className="bg-black/50 px-2 py-1 rounded text-green-500 font-mono text-[10px]">.exe</code> file, and our backend will automatically wrap and convert it into a native VoltraOS binary.
+              VoltraOS runs the world's apps. Just upload your Windows <code className="bg-black/50 px-2 py-1 rounded text-green-500 font-mono text-[10px]">.exe</code>, Linux <code className="bg-black/50 px-2 py-1 rounded text-blue-500 font-mono text-[10px]">.deb</code>, or native <code className="bg-black/50 px-2 py-1 rounded text-purple-500 font-mono text-[10px]">.vex</code> file, and our backend will automatically orchestrate the translation layer for the App Store.
             </p>
             
             <div className="h-px w-full bg-white/5 my-6" />
@@ -141,7 +141,7 @@ export default function VoltraOSAppStorePublisher() {
               <ShieldCheck className="text-green-500 w-5 h-5" /> Micro-Sandboxing
             </h3>
             <p className="text-xs text-zinc-400 font-medium leading-relaxed">
-              Every converted package is heuristically scanned by Hub Shield. The app will be safely containerized before deployment to the global VoltraStore.
+              Every uploaded package is heuristically scanned by Hub Shield. The app will be safely containerized before deployment to the global VoltraStore.
             </p>
           </Card>
         </div>
@@ -197,11 +197,11 @@ export default function VoltraOSAppStorePublisher() {
             </div>
 
             <div className="pt-6">
-              <label className="text-[9px] uppercase font-black tracking-[0.2em] text-zinc-500 mb-3 block ml-2">Windows Executable (.exe)</label>
+              <label className="text-[9px] uppercase font-black tracking-[0.2em] text-zinc-500 mb-3 block ml-2">Universal Executable (.exe, .deb, .vex)</label>
               <div className="border-2 border-dashed border-green-500/30 rounded-[2.5rem] p-12 text-center bg-green-500/5 hover:bg-green-500/10 transition-all cursor-pointer relative group">
                 <input 
                   type="file" 
-                  accept=".exe"
+                  accept=".exe,.deb,.vex"
                   onChange={handleFileDrop}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                 />
@@ -209,20 +209,20 @@ export default function VoltraOSAppStorePublisher() {
                 {isConverting ? (
                   <div className="flex flex-col items-center justify-center">
                     <RefreshCw className="w-16 h-16 text-green-500 mx-auto mb-4 animate-spin" />
-                    <p className="font-black text-white text-xl">Converting to VoltraOS Native...</p>
-                    <p className="text-green-500 text-xs font-bold mt-2 uppercase tracking-widest animate-pulse">Running Wine Translation Layer</p>
+                    <p className="font-black text-white text-xl">Configuring Translation Layer...</p>
+                    <p className="text-green-500 text-xs font-bold mt-2 uppercase tracking-widest animate-pulse">Running OS Heuristics</p>
                   </div>
                 ) : isConverted ? (
                   <div className="flex flex-col items-center justify-center">
                     <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                    <p className="font-black text-white text-xl">Conversion Successful!</p>
-                    <p className="text-zinc-400 text-xs font-bold mt-2">{selectedFile?.name} is ready for VoltraOS.</p>
+                    <p className="font-black text-white text-xl">Configuration Successful!</p>
+                    <p className="text-zinc-400 text-xs font-bold mt-2">{selectedFile?.name} is ready for the Universal Store.</p>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center">
                     <Box className="w-16 h-16 text-green-500 mx-auto mb-4 opacity-80 group-hover:scale-110 transition-transform duration-300" />
-                    <p className="font-black text-white text-xl tracking-tight">Drop your .exe file here</p>
-                    <p className="text-zinc-500 text-xs font-bold mt-2">We will automatically convert it for VoltraOS.</p>
+                    <p className="font-black text-white text-xl tracking-tight">Drop your executable here</p>
+                    <p className="text-zinc-500 text-xs font-bold mt-2">Upload Windows (.exe), Linux (.deb), or Native (.vex) files.</p>
                   </div>
                 )}
               </div>

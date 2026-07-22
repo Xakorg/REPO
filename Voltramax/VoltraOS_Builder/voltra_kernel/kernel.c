@@ -19,6 +19,9 @@
 #include "window.h"
 #include "task.h"
 #include "rtl8139.h"
+#include "vds_compositor.h"
+#include "ahci.h"
+#include "nvme.h"
 
 extern void switch_to_user_mode();
 // A generic wrapper that triggers INT 0x80 to politely ask the Kernel to print!
@@ -80,6 +83,14 @@ void kernel_main(uint32_t magic, multiboot_info_t* mbd) {
     mouse_init(); 
     draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
     
+    // Register Storage Drivers
+    ahci_init_driver();
+    nvme_init_driver();
+    
+    // Enumerate PCI Bus and bind drivers
+    pci_scan_bus();
+    draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
+    
     rtl8139_init();
     draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
     
@@ -106,12 +117,12 @@ void kernel_main(uint32_t magic, multiboot_info_t* mbd) {
     }
     
     // --- BOOT COMPLETE, LAUNCH DESKTOP ---
-    wm_init(); 
+    vds_init(); 
     
     asm volatile("sti");
 
     while(1) {
         mouse_poll();
-        wm_update();
+        vds_composite_frame();
     }
 }

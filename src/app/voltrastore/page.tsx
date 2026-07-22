@@ -20,6 +20,9 @@ export default function VoltraStorePage() {
   const [flathubApps, setFlathubApps] = useState<any[]>([]);
   const [isLoadingFlathub, setIsLoadingFlathub] = useState(false);
 
+  // Global Windows Registry State (Simulated Infinite Database)
+  const [windowsApps, setWindowsApps] = useState<any[]>([]);
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -57,6 +60,27 @@ export default function VoltraStorePage() {
       console.error("Flathub API Error:", err);
       setIsLoadingFlathub(false);
     });
+
+    // Simulate querying the entire global Windows software database
+    if (debouncedSearchQuery) {
+      // If they search, generate a highly realistic Windows match
+      const genericWindowsApp = {
+        id: `win-${debouncedSearchQuery.replace(/\s+/g, '-').toLowerCase()}`,
+        name: debouncedSearchQuery.charAt(0).toUpperCase() + debouncedSearchQuery.slice(1),
+        dev: "Global Windows Publisher",
+        summary: `The industry standard ${debouncedSearchQuery} application for Windows, now running natively on VoltraOS via the NT Subsystem.`,
+        icon: `https://ui-avatars.com/api/?name=${debouncedSearchQuery}&background=0078D7&color=fff`
+      };
+      setWindowsApps([genericWindowsApp]);
+    } else {
+      // Default massive Windows apps already indexed
+      setWindowsApps([
+        { id: "win-photoshop", name: "Adobe Photoshop", dev: "Adobe Inc.", summary: "The industry standard in digital imaging and graphic design.", icon: "https://ui-avatars.com/api/?name=Ps&background=001E36&color=31A8FF" },
+        { id: "win-cyberpunk", name: "Cyberpunk 2077", dev: "CD PROJEKT RED", summary: "An open-world, action-adventure RPG set in the megalopolis of Night City.", icon: "https://ui-avatars.com/api/?name=CP&background=FCEE0A&color=000" },
+        { id: "win-office", name: "Microsoft Word", dev: "Microsoft Corporation", summary: "The premium word processing application you know and love.", icon: "https://ui-avatars.com/api/?name=W&background=2B579A&color=fff" }
+      ]);
+    }
+
   }, [debouncedSearchQuery, activeCategory]);
 
   useEffect(() => {
@@ -74,25 +98,62 @@ export default function VoltraStorePage() {
     alert("Voltra OS devices are not yet globally available. Installation will be supported upon physical release of VoltraMax, VoltraPlay, and VoltraTab.");
   };
 
-  const getDeviceIcon = (device: string) => {
-    switch (device) {
-      case "VoltraMax": return <Monitor className="w-4 h-4" />;
-      case "VoltraPlay": return <Gamepad2 className="w-4 h-4" />;
-      case "VoltraTab": return <TabletSmartphone className="w-4 h-4" />;
-      default: return null;
-    }
-  };
+  // =========================================================================
+  // UNIVERSAL APP MERGING
+  // We explicitly HIDE whether an app is Windows, Linux, or Native Voltra.
+  // We merge all data streams into a single, unified UI feed.
+  // =========================================================================
+  const allUniversalApps = useMemo(() => {
+    const apps = [];
 
-  const filteredNative = useMemo(() => {
-    return nativeApps.filter(app => {
+    // 1. Process Native/Windows Apps (from Firebase)
+    for (const app of nativeApps) {
       const matchesSearch = app.appName.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || 
-                            app.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-                            app.developerName.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+                            app.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+      const matchesCategory = activeCategory === "Discover" || app.appName.toLowerCase().includes(activeCategory.toLowerCase()); 
       
-      const matchesCategory = activeCategory === "Discover"; 
-      return matchesSearch && matchesCategory;
-    });
-  }, [debouncedSearchQuery, activeCategory, nativeApps]);
+      if (matchesSearch && matchesCategory) {
+        apps.push({
+          id: app.id,
+          name: app.appName,
+          developer: app.developerName,
+          description: app.description,
+          icon: `https://ui-avatars.com/api/?name=${app.appName}&background=random`,
+          link: `/Voltra/${app.id}`,
+          rating: "5.0"
+        });
+      }
+    }
+
+    // 2. Process Linux Apps (from Flathub)
+    for (const app of flathubApps) {
+      apps.push({
+        id: app.app_id || app.id,
+        name: app.name,
+        developer: app.developer_name || app.dev || "Open Source Contributor",
+        description: app.summary || app.description,
+        icon: app.icon || `https://ui-avatars.com/api/?name=${app.name}&background=random`,
+        link: `/Flathub/${app.app_id || app.id}`,
+        rating: "4.8"
+      });
+    }
+
+    // 3. Process Windows Apps (from Global Registry)
+    for (const app of windowsApps) {
+      apps.push({
+        id: app.id,
+        name: app.name,
+        developer: app.dev,
+        description: app.summary,
+        icon: app.icon,
+        link: `/Windows/${app.id}`,
+        rating: "4.9"
+      });
+    }
+
+    // Shuffle slightly or sort to interleave Windows, Linux, and Voltra apps
+    return apps.sort((a, b) => a.name.localeCompare(b.name));
+  }, [debouncedSearchQuery, activeCategory, nativeApps, flathubApps, windowsApps]);
 
   const navCategories = ["Discover", "Games", "Productivity", "Creators"];
 
@@ -124,12 +185,9 @@ export default function VoltraStorePage() {
               type="text" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search VoltraStore..." 
+              placeholder="Search all apps & games..." 
               className="w-64 bg-white/5 border border-white/10 rounded-full pl-10 pr-5 py-2 text-sm font-medium focus:outline-none focus:border-purple-500/50 transition-colors placeholder:text-zinc-600 text-white"
             />
-          </div>
-          <div className="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-black text-purple-400">
-            X
           </div>
         </div>
       </nav>
@@ -148,9 +206,9 @@ export default function VoltraStorePage() {
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
             
             <div className="relative z-20 max-w-2xl space-y-6">
-              <span className="text-purple-400 font-black uppercase tracking-[0.3em] text-xs border border-purple-500/30 px-3 py-1 rounded-full bg-purple-500/10">Featured on VoltraOS</span>
-              <h1 className="text-6xl font-black uppercase tracking-tighter italic">No Limits.<br/>No Compromises.</h1>
-              <p className="text-xl text-zinc-400 font-medium">Discover native Voltra applications and thousands of open-source Flathub classics perfectly optimized for the Voltra hardware ecosystem.</p>
+              <span className="text-purple-400 font-black uppercase tracking-[0.3em] text-xs border border-purple-500/30 px-3 py-1 rounded-full bg-purple-500/10">Universal Compatibility</span>
+              <h1 className="text-6xl font-black uppercase tracking-tighter italic">One Store.<br/>Every App.</h1>
+              <p className="text-xl text-zinc-400 font-medium">VoltraOS natively runs the world's most popular software and games without you ever needing to know what OS they were built for.</p>
               <div className="pt-4">
                 <button onClick={handleInstall} className="bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-widest px-8 py-4 rounded-full flex items-center gap-3 transition-colors">
                   <Download className="w-5 h-5" /> Install Voltra Engine
@@ -161,137 +219,62 @@ export default function VoltraStorePage() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-7xl mx-auto px-8 mt-20 space-y-32">
+      <div className="max-w-7xl mx-auto px-8 mt-20 space-y-16">
         
-        {/* State Indicators */}
-        {debouncedSearchQuery && (
-          <div className="pb-8 border-b border-white/10">
-            <h2 className="text-4xl font-black uppercase tracking-tighter">
-              Search Results for <span className="text-purple-500">"{debouncedSearchQuery}"</span>
+        <div className="flex items-end justify-between">
+          <div>
+            <h2 className="text-3xl font-black uppercase tracking-tight flex items-center gap-3">
+              <span className="w-3 h-8 bg-purple-500 rounded-full" /> 
+              {debouncedSearchQuery ? `Search Results for "${debouncedSearchQuery}"` : activeCategory}
             </h2>
-            <p className="text-zinc-500 mt-2 font-bold">{flathubApps.length + filteredNative.length} applications found</p>
+            <p className="text-zinc-500 mt-2 font-medium">
+              {isLoadingFlathub ? "Scanning Universal Application Network..." : `${allUniversalApps.length} applications ready for VoltraOS.`}
+            </p>
           </div>
-        )}
-        
-        {/* Voltra Native Exclusives */}
-        {(activeCategory === "Discover" || filteredNative.length > 0) && (
-          <section className="space-y-8">
-            <div className="flex items-end justify-between">
-              <div>
-                <h2 className="text-3xl font-black uppercase tracking-tight flex items-center gap-3">
-                  <span className="w-3 h-8 bg-purple-500 rounded-full" /> Voltra Exclusives
-                </h2>
-                <p className="text-zinc-500 mt-2 font-medium">Native .volt applications compiled specifically for the Voltra Ecosystem.</p>
-              </div>
-            </div>
+        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredNative.length === 0 ? (
-                <div className="col-span-full h-40 border border-white/5 rounded-3xl flex flex-col items-center justify-center text-zinc-600">
-                  <LayoutGrid className="w-8 h-8 mb-3 opacity-50" />
-                  <span className="font-bold uppercase tracking-widest text-xs">No Native Apps Found</span>
-                </div>
-              ) : (
-                filteredNative.map(app => (
-                  <Link href={`/Voltra/${app.id}`} key={app.id}>
-                    <motion.div 
-                      whileHover={{ y: -5 }}
-                      className="bg-zinc-950 border border-white/5 rounded-[2rem] p-6 hover:border-purple-500/30 transition-colors cursor-pointer group h-full"
-                    >
-                      <div className="flex gap-5">
-                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500/20 to-black border border-purple-500/20 flex items-center justify-center flex-shrink-0">
-                          <span className="text-3xl font-black text-purple-400">{app.appName.charAt(0)}</span>
-                        </div>
-                        <div className="space-y-2 flex-1 min-w-0">
-                          <h3 className="font-black text-xl truncate pr-4">{app.appName}</h3>
-                          <p className="text-zinc-500 text-xs font-bold truncate">{app.developerName}</p>
-                          <div className="flex gap-2 flex-wrap">
-                            {app.compatibility?.map((device: string) => (
-                              <span key={device} className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 bg-white/5 px-2 py-1 rounded-md flex items-center gap-1" title={device}>
-                                {getDeviceIcon(device)} <span className="hidden sm:inline">{device.replace('Voltra', '')}</span>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="mt-6 text-sm text-zinc-400 line-clamp-2">{app.description}</p>
-                      <div className="mt-6 flex items-center justify-between">
-                        <span className="text-xs font-black uppercase text-purple-400 tracking-widest bg-purple-500/10 px-3 py-1 rounded-full">Free</span>
-                        <button onClick={handleInstall} className="bg-white text-black font-black uppercase tracking-widest text-xs px-5 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-zinc-200">
-                          Install
-                        </button>
-                      </div>
-                    </motion.div>
-                  </Link>
-                ))
-              )}
+        {/* Universal Unified App Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {allUniversalApps.length === 0 && !isLoadingFlathub ? (
+            <div className="col-span-full h-64 border border-white/5 rounded-3xl flex flex-col items-center justify-center text-zinc-600">
+              <LayoutGrid className="w-12 h-12 mb-4 opacity-50" />
+              <span className="font-bold uppercase tracking-widest text-sm">No Applications Found</span>
             </div>
-          </section>
-        )}
-
-        {/* Flathub Integration */}
-        {(activeCategory !== "Discover" || flathubApps.length > 0 || !debouncedSearchQuery) && (
-          <section className="space-y-8">
-            <div className="flex items-end justify-between">
-              <div>
-                <h2 className="text-3xl font-black uppercase tracking-tight flex items-center gap-3">
-                  <span className="w-3 h-8 bg-blue-500 rounded-full" /> {activeCategory !== "Discover" ? activeCategory : "Global Open Source Hub"}
-                </h2>
-                <p className="text-zinc-500 mt-2 font-medium">Powered natively by the Flathub V2 API. Infinite possibilities.</p>
-              </div>
-            </div>
-
-            {isLoadingFlathub ? (
-              <div className="col-span-full h-64 border border-white/5 rounded-3xl flex flex-col items-center justify-center text-blue-500">
-                <Loader2 className="w-10 h-10 mb-4 animate-spin" />
-                <span className="font-bold uppercase tracking-widest text-xs animate-pulse">Syncing with Flathub Nodes...</span>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {flathubApps.length === 0 ? (
-                  <div className="col-span-full h-40 border border-white/5 rounded-3xl flex flex-col items-center justify-center text-zinc-600">
-                    <LayoutGrid className="w-8 h-8 mb-3 opacity-50" />
-                    <span className="font-bold uppercase tracking-widest text-xs">No Apps Found</span>
+          ) : (
+            allUniversalApps.map(app => (
+              <Link href={app.link} key={app.id}>
+                <motion.div 
+                  whileHover={{ y: -5 }}
+                  className="bg-zinc-950 border border-white/5 rounded-[2rem] p-6 hover:border-purple-500/30 transition-colors cursor-pointer group flex flex-col relative h-full"
+                >
+                  <div className="w-24 h-24 mx-auto mb-6 mt-4 rounded-3xl overflow-hidden bg-white/5 flex items-center justify-center p-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={app.icon} 
+                      alt={app.name} 
+                      className="w-full h-full object-contain drop-shadow-2xl" 
+                      onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=' + app.name + '&background=random' }} 
+                    />
                   </div>
-                ) : (
-                  flathubApps.map(app => (
-                    <Link href={`/Flathub/${app.app_id || app.id}`} key={app.app_id || app.id}>
-                      <motion.div 
-                        whileHover={{ y: -5 }}
-                        className="bg-zinc-950 border border-white/5 rounded-[2rem] p-6 hover:border-blue-500/30 transition-colors cursor-pointer group flex flex-col relative h-full"
-                      >
-                        <div className="w-24 h-24 mx-auto mb-6 mt-4 rounded-3xl overflow-hidden bg-white/5 flex items-center justify-center p-4">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img 
-                            src={app.icon || `https://ui-avatars.com/api/?name=${app.name}&background=random`} 
-                            alt={app.name} 
-                            className="w-full h-full object-contain drop-shadow-2xl" 
-                            onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=' + app.name + '&background=random' }} 
-                          />
-                        </div>
-                        <div className="text-center space-y-1 mb-4 flex-1">
-                          <h3 className="font-black text-lg leading-tight line-clamp-1">{app.name}</h3>
-                          <p className="text-zinc-500 text-xs font-bold line-clamp-1">{app.developer_name || app.dev}</p>
-                          <p className="text-zinc-400 text-xs pt-2 line-clamp-2">{app.summary || app.description}</p>
-                        </div>
-                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
-                          <div className="flex items-center gap-1 text-yellow-500">
-                            <Star className="w-3 h-3 fill-yellow-500" />
-                            <span className="text-xs font-bold">4.8</span>
-                          </div>
-                          <button onClick={handleInstall} className="bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-full transition-colors">
-                            Get
-                          </button>
-                        </div>
-                      </motion.div>
-                    </Link>
-                  ))
-                )}
-              </div>
-            )}
-          </section>
-        )}
-
+                  <div className="text-center space-y-1 mb-4 flex-1">
+                    <h3 className="font-black text-lg leading-tight line-clamp-1">{app.name}</h3>
+                    <p className="text-zinc-500 text-xs font-bold line-clamp-1">{app.developer}</p>
+                    <p className="text-zinc-400 text-xs pt-2 line-clamp-2">{app.description}</p>
+                  </div>
+                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+                    <div className="flex items-center gap-1 text-yellow-500">
+                      <Star className="w-3 h-3 fill-yellow-500" />
+                      <span className="text-xs font-bold">{app.rating}</span>
+                    </div>
+                    <button onClick={handleInstall} className="bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-all">
+                      Install
+                    </button>
+                  </div>
+                </motion.div>
+              </Link>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

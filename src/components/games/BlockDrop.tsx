@@ -40,7 +40,7 @@ export default function BlockDrop() {
     if (!ctx) return;
 
     let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-    let piece = { shape: [], color: 0, x: 0, y: 0 };
+    let piece: { shape: number[][]; color: number; x: number; y: number } = { shape: [], color: 0, x: 0, y: 0 };
     let dropCounter = 0;
     let dropInterval = 1000;
     let lastTime = 0;
@@ -167,27 +167,27 @@ export default function BlockDrop() {
 
     function draw() {
       ctx!.fillStyle = "#09090b"; // zinc-950
-      ctx!.fillRect(0, 0, canvas.width, canvas.height);
+      ctx!.fillRect(0, 0, canvas!.width, canvas!.height);
 
       drawMatrix(board, 0, 0);
       drawMatrix(piece.shape, piece.x, piece.y);
 
       if (!started && !isGameOver) {
         ctx!.fillStyle = "rgba(0,0,0,0.5)";
-        ctx!.fillRect(0, 0, canvas.width, canvas.height);
+        ctx!.fillRect(0, 0, canvas!.width, canvas!.height);
         ctx!.fillStyle = "white";
         ctx!.font = "20px sans-serif";
         ctx!.textAlign = "center";
-        ctx!.fillText("Click to Start", canvas.width / 2, canvas.height / 2);
+        ctx!.fillText("Click to Start", canvas!.width / 2, canvas!.height / 2);
       } else if (isGameOver) {
         ctx!.fillStyle = "rgba(0,0,0,0.7)";
-        ctx!.fillRect(0, 0, canvas.width, canvas.height);
+        ctx!.fillRect(0, 0, canvas!.width, canvas!.height);
         ctx!.fillStyle = "white";
         ctx!.font = "bold 30px sans-serif";
         ctx!.textAlign = "center";
-        ctx!.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+        ctx!.fillText("GAME OVER", canvas!.width / 2, canvas!.height / 2 - 20);
         ctx!.font = "16px sans-serif";
-        ctx!.fillText("Click to Restart", canvas.width / 2, canvas.height / 2 + 20);
+        ctx!.fillText("Click to Restart", canvas!.width / 2, canvas!.height / 2 + 20);
       }
     }
 
