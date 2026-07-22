@@ -125,11 +125,11 @@ export default function GamesStorePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent" />
                   <div className="absolute bottom-4 left-4 flex gap-2">
-                    {game.genre.slice(0,2).map(g => (
+                    {game.genre?.slice(0,2).map(g => (
                       <span key={g} className="px-2 py-1 rounded bg-black/60 backdrop-blur text-[10px] font-bold text-zinc-300">
                         {g}
                       </span>
-                    ))}
+                    )) || null}
                   </div>
                 </div>
 

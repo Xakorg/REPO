@@ -178,7 +178,8 @@ export default function GamePlayerPage() {
  
   if (!game) return <div className="p-20 text-white font-sans text-center">Game Not Found.</div>;
  
-  const GameComponent = GAME_MAP[gameId];
+  const PascalId = gameId ? gameId.charAt(0).toUpperCase() + gameId.slice(1) : "";
+  const GameComponent = GAME_MAP[gameId] || (PascalId ? dynamic(() => import(`@/components/games/${PascalId}`)) : null);
  
   const KEY_CODES: Record<string, number> = {
     ArrowLeft: 37,

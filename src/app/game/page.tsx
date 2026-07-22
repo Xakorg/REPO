@@ -22,14 +22,21 @@ import {
   Info,
   ChevronRight,
   ShieldAlert,
-  Radio
+  Radio,
+  Rocket,
+  Target,
+  Sparkle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// --- WEB AUDIO API PROCEDURAL SOUND SYNTHESIZER ---
+// --- WEB AUDIO API PROCEDURAL SOUND & MUSIC SYNTHESIZER ---
 class SoundEffects {
   ctx: AudioContext | null = null;
   muted: boolean = false;
+  musicOsc1: OscillatorNode | null = null;
+  musicOsc2: OscillatorNode | null = null;
+  musicGain: GainNode | null = null;
+  musicIntervalId: any = null;
 
   init() {
     if (!this.ctx && typeof window !== "undefined") {
@@ -49,8 +56,8 @@ class SoundEffects {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(850, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(120, this.ctx.currentTime + 0.12);
 
       gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
@@ -61,14 +68,14 @@ class SoundEffects {
       osc.start();
       osc.stop(this.ctx.currentTime + 0.12);
     } catch {
-      // Audio context fallbacks
+      // Audio fallback
     }
   }
 
   playExplosion(isBig = false) {
     if (this.muted || !this.ctx) return;
     try {
-      const duration = isBig ? 0.5 : 0.25;
+      const duration = isBig ? 0.55 : 0.25;
       const bufferSize = this.ctx.sampleRate * duration;
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const output = buffer.getChannelData(0);
@@ -82,11 +89,11 @@ class SoundEffects {
 
       const filter = this.ctx.createBiquadFilter();
       filter.type = "lowpass";
-      filter.frequency.setValueAtTime(isBig ? 400 : 800, this.ctx.currentTime);
-      filter.frequency.linearRampToValueAtTime(50, this.ctx.currentTime + duration);
+      filter.frequency.setValueAtTime(isBig ? 350 : 750, this.ctx.currentTime);
+      filter.frequency.linearRampToValueAtTime(40, this.ctx.currentTime + duration);
 
       const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(isBig ? 0.35 : 0.2, this.ctx.currentTime);
+      gain.gain.setValueAtTime(isBig ? 0.38 : 0.2, this.ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
 
       whiteNoise.connect(filter);
@@ -96,14 +103,14 @@ class SoundEffects {
       whiteNoise.start();
       whiteNoise.stop(this.ctx.currentTime + duration);
     } catch {
-      // Audio fallbacks
+      // Audio fallback
     }
   }
 
   playPowerup() {
     if (this.muted || !this.ctx) return;
     try {
-      const notes = [300, 450, 600, 900];
+      const notes = [320, 480, 640, 960];
       notes.forEach((freq, idx) => {
         if (!this.ctx) return;
         const osc = this.ctx.createOscillator();
@@ -131,17 +138,17 @@ class SoundEffects {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(120, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.3);
+      osc.frequency.setValueAtTime(110, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(900, this.ctx.currentTime + 0.35);
 
-      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+      gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start();
-      osc.stop(this.ctx.currentTime + 0.4);
+      osc.stop(this.ctx.currentTime + 0.45);
     } catch {
       // Fallback
     }
@@ -153,10 +160,10 @@ class SoundEffects {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = "square";
-      osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(35, this.ctx.currentTime + 0.1);
 
-      gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+      gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
 
       osc.connect(gain);
@@ -168,6 +175,72 @@ class SoundEffects {
       // Fallback
     }
   }
+
+  playWaveStart() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const notes = [220, 440, 880];
+      notes.forEach((freq, idx) => {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.08);
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + idx * 0.08 + 0.2);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(this.ctx.currentTime + idx * 0.08);
+        osc.stop(this.ctx.currentTime + idx * 0.08 + 0.2);
+      });
+    } catch {
+      // Fallback
+    }
+  }
+
+  startMusic() {
+    if (this.muted || !this.ctx) return;
+    this.stopMusic();
+
+    try {
+      const notes = [110, 110, 164.81, 146.83, 110, 130.81, 164.81, 220];
+      let noteStep = 0;
+
+      this.musicGain = this.ctx.createGain();
+      this.musicGain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+      this.musicGain.connect(this.ctx.destination);
+
+      this.musicIntervalId = setInterval(() => {
+        if (!this.ctx || this.muted || !this.musicGain) return;
+        const freq = notes[noteStep % notes.length];
+        noteStep++;
+
+        const osc = this.ctx.createOscillator();
+        const noteGain = this.ctx.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+        noteGain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+        noteGain.gain.exponentialRampToValueAtTime(0.005, this.ctx.currentTime + 0.18);
+
+        osc.connect(noteGain);
+        noteGain.connect(this.musicGain);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.18);
+      }, 200);
+    } catch {
+      // Fallback
+    }
+  }
+
+  stopMusic() {
+    if (this.musicIntervalId) {
+      clearInterval(this.musicIntervalId);
+      this.musicIntervalId = null;
+    }
+  }
 }
 
 const sfx = new SoundEffects();
@@ -175,6 +248,7 @@ const sfx = new SoundEffects();
 // --- GAME TYPES ---
 type GameState = "MENU" | "PLAYING" | "PAUSED" | "SHOP" | "GAMEOVER" | "ACHIEVEMENTS";
 type GameMode = "SURVIVAL" | "BOSS_RUSH" | "TIME_ATTACK";
+type ShipType = "BALANCED" | "TANK" | "SPEED";
 
 interface Achievement {
   id: string;
@@ -239,16 +313,58 @@ interface PowerUp {
   radius: number;
 }
 
+interface FloatingText {
+  id: number;
+  text: string;
+  x: number;
+  y: number;
+  color: string;
+  alpha: number;
+  life: number;
+}
+
+const SHIP_STATS: Record<ShipType, { name: string; desc: string; hpBonus: number; shieldBonus: number; speed: number; color: string; icon: string }> = {
+  BALANCED: {
+    name: "Apex Striker",
+    desc: "Standard fighter with optimized speed & hull integrity.",
+    hpBonus: 0,
+    shieldBonus: 0,
+    speed: 5.8,
+    color: "#00f3ff",
+    icon: "🚀"
+  },
+  TANK: {
+    name: "Vanguard Titan",
+    desc: "Heavy armor chassis (+40 HP & Shield) with high defensive output.",
+    hpBonus: 40,
+    shieldBonus: 40,
+    speed: 4.8,
+    color: "#a855f7",
+    icon: "🛡️"
+  },
+  SPEED: {
+    name: "Phantom Spectre",
+    desc: "High mobility phantom interceptor (+25% Speed & rapid fire agility).",
+    hpBonus: -15,
+    shieldBonus: 10,
+    speed: 7.2,
+    color: "#ff00e5",
+    icon: "⚡"
+  }
+};
+
 export default function CyberPulseGame() {
   // Navigation & States
   const [gameState, setGameState] = useState<GameState>("MENU");
   const [gameMode, setGameMode] = useState<GameMode>("SURVIVAL");
+  const [selectedShip, setSelectedShip] = useState<ShipType>("BALANCED");
   const [isMuted, setIsMuted] = useState(false);
   const [highScore, setHighScore] = useState(0);
   const [coins, setCoins] = useState(0);
   const [score, setScore] = useState(0);
   const [wave, setWave] = useState(1);
   const [timeRemaining, setTimeRemaining] = useState(90);
+  const [waveBanner, setWaveBanner] = useState<string | null>(null);
 
   // Upgrades
   const [upgrades, setUpgrades] = useState({
@@ -261,16 +377,21 @@ export default function CyberPulseGame() {
 
   // Player Stats Live
   const [playerHp, setPlayerHp] = useState(100);
+  const [playerMaxHp, setPlayerMaxHp] = useState(100);
   const [playerShield, setPlayerShield] = useState(100);
+  const [playerMaxShield, setPlayerMaxShield] = useState(100);
   const [empCharges, setEmpCharges] = useState(1);
   const [multiplier, setMultiplier] = useState(1);
   const [overdriveActive, setOverdriveActive] = useState(false);
+
+  // Boss state HUD
+  const [bossHp, setBossHp] = useState<{ current: number; max: number } | null>(null);
 
   // Achievements
   const [achievements, setAchievements] = useState<Achievement[]>([
     { id: "first_blood", title: "First Strike", desc: "Destroy your first enemy drone", unlocked: false, icon: "⚔️" },
     { id: "boss_slayer", title: "Titan Slayer", desc: "Defeat a Dreadnought Leviathan Boss", unlocked: false, icon: "👑" },
-    { id: "shield_master", title: "Invincible Guard", desc: "Reach max shield level", unlocked: false, icon: "🛡️" },
+    { id: "shield_master", title: "Invincible Guard", desc: "Reach max shield level in upgrades", unlocked: false, icon: "🛡️" },
     { id: "coin_hoarder", title: "Cyber Tycoon", desc: "Accumulate 200 Cyber Credits", unlocked: false, icon: "💎" },
     { id: "high_scorer", title: "Cyber Legend", desc: "Score 10,000 points in a single run", unlocked: false, icon: "🔥" }
   ]);
@@ -308,6 +429,7 @@ export default function CyberPulseGame() {
     particles: [] as Particle[],
     stars: [] as Star[],
     powerups: [] as PowerUp[],
+    floatingTexts: [] as FloatingText[],
     score: 0,
     multiplier: 1,
     multiplierTimer: 0,
@@ -338,6 +460,11 @@ export default function CyberPulseGame() {
       const savedAch = localStorage.getItem("cyber_pulse_achievements");
       if (savedAch) {
         try { setAchievements(JSON.parse(savedAch)); } catch {}
+      }
+
+      const savedShip = localStorage.getItem("cyber_pulse_selected_ship");
+      if (savedShip && (savedShip === "BALANCED" || savedShip === "TANK" || savedShip === "SPEED")) {
+        setSelectedShip(savedShip as ShipType);
       }
     }
   }, []);
@@ -371,7 +498,17 @@ export default function CyberPulseGame() {
         triggerEMP();
       }
       if (e.code === "KeyP" || e.code === "Escape") {
-        setGameState(prev => (prev === "PLAYING" ? "PAUSED" : prev === "PAUSED" ? "PLAYING" : prev));
+        setGameState(prev => {
+          if (prev === "PLAYING") {
+            sfx.stopMusic();
+            return "PAUSED";
+          }
+          if (prev === "PAUSED") {
+            sfx.startMusic();
+            return "PLAYING";
+          }
+          return prev;
+        });
       }
     };
 
@@ -391,6 +528,31 @@ export default function CyberPulseGame() {
   const toggleMute = () => {
     sfx.muted = !isMuted;
     setIsMuted(!isMuted);
+    if (isMuted && gameState === "PLAYING") {
+      sfx.startMusic();
+    } else {
+      sfx.stopMusic();
+    }
+  };
+
+  // Select Ship
+  const handleSelectShip = (ship: ShipType) => {
+    setSelectedShip(ship);
+    localStorage.setItem("cyber_pulse_selected_ship", ship);
+    triggerToast(`🚀 Selected Fighter: ${SHIP_STATS[ship].name}`);
+  };
+
+  // Add Floating Text
+  const addFloatingText = (text: string, x: number, y: number, color = "#00f3ff") => {
+    gameLoopState.current.floatingTexts.push({
+      id: Math.random(),
+      text,
+      x,
+      y,
+      color,
+      alpha: 1,
+      life: 0
+    });
   };
 
   // EMP Wave Action
@@ -402,16 +564,18 @@ export default function CyberPulseGame() {
     sfx.playEmp();
 
     const state = gameLoopState.current;
-    state.shake = 18;
+    state.shake = 20;
 
     // Destroy all enemy projectiles
     state.projectiles = state.projectiles.filter(p => !p.isEnemy);
 
     // Damage and push back all enemies
     state.enemies.forEach(enemy => {
-      enemy.hp -= 150;
-      enemy.vx *= -2;
-      enemy.vy *= -2;
+      const dmg = 180 + upgrades.damageLevel * 30;
+      enemy.hp -= dmg;
+      enemy.vx *= -2.5;
+      enemy.vy *= -2.5;
+      addFloatingText(`EMP -${dmg}`, enemy.x, enemy.y, "#00f3ff");
 
       // EMP Blast particles
       for (let i = 0; i < 16; i++) {
@@ -424,7 +588,7 @@ export default function CyberPulseGame() {
           radius: 3,
           color: "#00f3ff",
           life: 1,
-          maxLife: 20
+          maxLife: 22
         });
       }
     });
@@ -435,12 +599,12 @@ export default function CyberPulseGame() {
       state.particles.push({
         x: state.player.x,
         y: state.player.y,
-        vx: Math.cos(angle) * 14,
-        vy: Math.sin(angle) * 14,
+        vx: Math.cos(angle) * 16,
+        vy: Math.sin(angle) * 16,
         radius: 4,
         color: "#00f3ff",
         life: 1,
-        maxLife: 30
+        maxLife: 32
       });
     }
   };
@@ -448,20 +612,28 @@ export default function CyberPulseGame() {
   // Start / Reset Game
   const startGame = (mode: GameMode) => {
     sfx.init();
+    sfx.startMusic();
     setGameMode(mode);
     setGameState("PLAYING");
     setScore(0);
     setWave(1);
     setMultiplier(1);
     setOverdriveActive(false);
+    setBossHp(null);
     setTimeRemaining(mode === "TIME_ATTACK" ? 90 : 0);
 
-    const baseShield = 100 + (upgrades.shieldLevel - 1) * 25;
-    const baseHp = 100;
+    const shipConfig = SHIP_STATS[selectedShip];
+    const baseHp = 100 + shipConfig.hpBonus;
+    const baseShield = 100 + (upgrades.shieldLevel - 1) * 25 + shipConfig.shieldBonus;
 
     setPlayerHp(baseHp);
+    setPlayerMaxHp(baseHp);
     setPlayerShield(baseShield);
+    setPlayerMaxShield(baseShield);
     setEmpCharges(upgrades.empCapacity);
+
+    // Wave Banner
+    showWaveBanner(1);
 
     // Reset loop state
     const canvas = canvasRef.current;
@@ -469,12 +641,12 @@ export default function CyberPulseGame() {
     const height = canvas ? canvas.height : 700;
 
     const stars: Star[] = [];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 110; i++) {
       stars.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        size: Math.random() * 2 + 0.5,
-        speed: Math.random() * 2 + 0.5,
+        size: Math.random() * 2.2 + 0.5,
+        speed: Math.random() * 2.5 + 0.5,
         alpha: Math.random() * 0.8 + 0.2
       });
     }
@@ -486,7 +658,7 @@ export default function CyberPulseGame() {
         vx: 0,
         vy: 0,
         radius: 18,
-        speed: 5 + upgrades.speedLevel * 0.8,
+        speed: shipConfig.speed + upgrades.speedLevel * 0.8,
         maxHp: baseHp,
         hp: baseHp,
         maxShield: baseShield,
@@ -502,6 +674,7 @@ export default function CyberPulseGame() {
       particles: [],
       stars,
       powerups: [],
+      floatingTexts: [],
       score: 0,
       multiplier: 1,
       multiplierTimer: 0,
@@ -520,26 +693,34 @@ export default function CyberPulseGame() {
     }
   };
 
+  const showWaveBanner = (waveNum: number) => {
+    sfx.playWaveStart();
+    setWaveBanner(`WAVE ${waveNum}: ENGAGING HOSTILES`);
+    setTimeout(() => setWaveBanner(null), 3000);
+  };
+
   // Spawn Boss Enemy
   const spawnBoss = (width: number, height: number) => {
+    const hp = 1800 + wave * 300;
     const boss: Enemy = {
       id: gameLoopState.current.nextEnemyId++,
       x: width / 2,
       y: 120,
-      vx: 3,
+      vx: 3.5,
       vy: 0,
-      radius: 48,
-      hp: 1500,
-      maxHp: 1500,
+      radius: 52,
+      hp,
+      maxHp: hp,
       type: "BOSS",
       color: "#ff0055",
       shootTimer: 0,
-      shootInterval: 30,
-      scoreValue: 2500,
+      shootInterval: 25,
+      scoreValue: 3000,
       rotation: 0
     };
     gameLoopState.current.enemies.push(boss);
     gameLoopState.current.bossActive = true;
+    setBossHp({ current: hp, max: hp });
     triggerToast("⚠️ WARNING: Dreadnought Leviathan Approaching!");
   };
 
@@ -586,7 +767,7 @@ export default function CyberPulseGame() {
       state.time += delta;
 
       // Clear Canvas with backdrop trail
-      ctx.fillStyle = "rgba(9, 10, 15, 0.35)";
+      ctx.fillStyle = "rgba(9, 10, 18, 0.35)";
       ctx.fillRect(0, 0, width, height);
 
       // --- SCREEN SHAKE OFFSET ---
@@ -595,21 +776,28 @@ export default function CyberPulseGame() {
         const dx = (Math.random() - 0.5) * state.shake;
         const dy = (Math.random() - 0.5) * state.shake;
         ctx.translate(dx, dy);
-        state.shake *= 0.9;
+        state.shake *= 0.88;
         if (state.shake < 0.2) state.shake = 0;
       }
 
       // --- STARFIELD PARALLAX ---
+      const starSpeedMult = state.player.overdriveTimer > 0 ? 3.5 : 1;
       state.stars.forEach(star => {
-        star.y += star.speed;
+        star.y += star.speed * starSpeedMult;
         if (star.y > height) {
           star.y = 0;
           star.x = Math.random() * width;
         }
         ctx.fillStyle = `rgba(0, 243, 255, ${star.alpha})`;
         ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
+
+        if (state.player.overdriveTimer > 0) {
+          // Warp Speed streaks
+          ctx.fillRect(star.x, star.y, star.size, star.size * 5);
+        } else {
+          ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
       });
 
       // --- TIME ATTACK TIMER ---
@@ -617,7 +805,17 @@ export default function CyberPulseGame() {
         state.timeAttackTimer -= delta;
         setTimeRemaining(Math.max(0, Math.ceil(state.timeAttackTimer)));
         if (state.timeAttackTimer <= 0) {
+          sfx.stopMusic();
           setGameState("GAMEOVER");
+        }
+      }
+
+      // --- MULTIPLIER EXPIRATION ---
+      if (state.multiplierTimer > 0) {
+        state.multiplierTimer -= delta;
+        if (state.multiplierTimer <= 0) {
+          state.multiplier = 1;
+          setMultiplier(1);
         }
       }
 
@@ -670,8 +868,8 @@ export default function CyberPulseGame() {
       // Shield Regeneration
       if (player.shield < player.maxShield) {
         player.shieldRegenTimer += delta;
-        if (player.shieldRegenTimer > 4) {
-          player.shield = Math.min(player.maxShield, player.shield + 8 * delta);
+        if (player.shieldRegenTimer > 3.5) {
+          player.shield = Math.min(player.maxShield, player.shield + 10 * delta);
           setPlayerShield(Math.round(player.shield));
         }
       }
@@ -680,15 +878,15 @@ export default function CyberPulseGame() {
       const isShooting = keysRef.current["Space"] || touchFireRef.current;
       player.fireTimer += delta;
       const baseInterval = Math.max(0.08, 0.22 - (upgrades.fireRateLevel - 1) * 0.03);
-      const fireInterval = player.overdriveTimer > 0 ? baseInterval * 0.4 : baseInterval;
+      const fireInterval = player.overdriveTimer > 0 ? baseInterval * 0.45 : baseInterval;
 
       if (isShooting && player.fireTimer >= fireInterval) {
         player.fireTimer = 0;
         sfx.playLaser();
 
-        const pDamage = (15 + (upgrades.damageLevel - 1) * 5) * (player.overdriveTimer > 0 ? 1.8 : 1);
+        const pDamage = (16 + (upgrades.damageLevel - 1) * 5) * (player.overdriveTimer > 0 ? 1.8 : 1);
 
-        if (player.weaponType === "SPREAD") {
+        if (player.weaponType === "SPREAD" || selectedShip === "SPEED") {
           // 3-way spread
           [-0.25, 0, 0.25].forEach(angle => {
             state.projectiles.push({
@@ -699,11 +897,11 @@ export default function CyberPulseGame() {
               radius: 4,
               color: "#ff00e5",
               isEnemy: false,
-              damage: pDamage
+              damage: pDamage * 0.85
             });
           });
         } else {
-          // Standard / Overdrive Twin plasma
+          // Twin plasma bolts
           state.projectiles.push({
             x: player.x - 8,
             y: player.y - 15,
@@ -732,22 +930,22 @@ export default function CyberPulseGame() {
       ctx.translate(player.x, player.y);
 
       // Thruster Trail
-      ctx.fillStyle = player.overdriveTimer > 0 ? "#ffb700" : "#00f3ff";
+      ctx.fillStyle = player.overdriveTimer > 0 ? "#ffb700" : SHIP_STATS[selectedShip].color;
       ctx.beginPath();
       ctx.moveTo(-6, 15);
-      ctx.lineTo(0, 25 + Math.random() * 8);
+      ctx.lineTo(0, 26 + Math.random() * 9);
       ctx.lineTo(6, 15);
       ctx.fill();
 
-      // Ship Hull
+      // Ship Geometry
       ctx.fillStyle = player.overdriveTimer > 0 ? "#ff0055" : "#0f172a";
-      ctx.strokeStyle = player.overdriveTimer > 0 ? "#ffb700" : "#00f3ff";
+      ctx.strokeStyle = player.overdriveTimer > 0 ? "#ffb700" : SHIP_STATS[selectedShip].color;
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.moveTo(0, -20);
-      ctx.lineTo(16, 16);
+      ctx.moveTo(0, -22);
+      ctx.lineTo(18, 16);
       ctx.lineTo(0, 8);
-      ctx.lineTo(-16, 16);
+      ctx.lineTo(-18, 16);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
@@ -759,7 +957,7 @@ export default function CyberPulseGame() {
         ctx.shadowBlur = 12;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(0, 0, player.radius + 6, 0, Math.PI * 2);
+        ctx.arc(0, 0, player.radius + 7, 0, Math.PI * 2);
         ctx.stroke();
       }
 
@@ -768,27 +966,40 @@ export default function CyberPulseGame() {
       // --- WAVE SPAWNING & ENEMY AI ---
       if (gameMode !== "BOSS_RUSH") {
         state.waveSpawnTimer += delta;
-        if (state.enemies.length === 0 || (state.waveSpawnTimer > 3 && state.enemies.length < 12)) {
+
+        // Wave Progression Check
+        if (state.enemies.length === 0 && state.waveSpawnTimer > 2) {
+          state.wave += 1;
+          setWave(state.wave);
+          showWaveBanner(state.wave);
+
+          // Boss Spawn every 5 waves
+          if (state.wave % 5 === 0 && !state.bossActive) {
+            spawnBoss(width, height);
+          }
+        }
+
+        if ((state.enemies.length === 0 || (state.waveSpawnTimer > 3 && state.enemies.length < 12)) && !state.bossActive) {
           state.waveSpawnTimer = 0;
-          const spawnCount = Math.min(2 + Math.floor(state.wave * 1.5), 10);
+          const spawnCount = Math.min(2 + Math.floor(state.wave * 1.4), 12);
 
           for (let i = 0; i < spawnCount; i++) {
             const randType = Math.random();
             let enemyType: Enemy["type"] = "DRONE";
-            let hp = 30 + state.wave * 10;
+            let hp = 35 + state.wave * 12;
             let radius = 16;
             let color = "#ff0055";
             let scoreVal = 100;
 
             if (randType > 0.75) {
               enemyType = "HEAVY";
-              hp = 120 + state.wave * 25;
+              hp = 140 + state.wave * 30;
               radius = 26;
               color = "#a855f7";
               scoreVal = 350;
             } else if (randType > 0.45) {
               enemyType = "SCOUT";
-              hp = 50 + state.wave * 12;
+              hp = 60 + state.wave * 15;
               radius = 18;
               color = "#ffb700";
               scoreVal = 200;
@@ -798,7 +1009,7 @@ export default function CyberPulseGame() {
               id: state.nextEnemyId++,
               x: Math.random() * (width - 60) + 30,
               y: -30 - Math.random() * 100,
-              vx: (Math.random() - 0.5) * 2,
+              vx: (Math.random() - 0.5) * 2.2,
               vy: Math.random() * 1.5 + 1.2,
               radius,
               hp,
@@ -806,7 +1017,7 @@ export default function CyberPulseGame() {
               type: enemyType,
               color,
               shootTimer: Math.random() * 2,
-              shootInterval: enemyType === "HEAVY" ? 1.8 : 2.5,
+              shootInterval: enemyType === "HEAVY" ? 1.8 : 2.4,
               scoreValue: scoreVal,
               rotation: 0
             });
@@ -825,8 +1036,9 @@ export default function CyberPulseGame() {
           enemy.vx *= -1;
         }
 
-        // Boss Movement Pattern
+        // Boss Movement Pattern & Sync HUD
         if (enemy.type === "BOSS") {
+          setBossHp({ current: Math.max(0, Math.round(enemy.hp)), max: enemy.maxHp });
           if (enemy.y < 120) enemy.vy = 1;
           else enemy.vy = 0;
 
@@ -839,18 +1051,18 @@ export default function CyberPulseGame() {
           enemy.shootTimer = 0;
           if (enemy.type === "HEAVY" || enemy.type === "BOSS") {
             // Radial Ring Shot
-            const bullets = enemy.type === "BOSS" ? 12 : 6;
+            const bullets = enemy.type === "BOSS" ? 14 : 6;
             for (let b = 0; b < bullets; b++) {
               const angle = (Math.PI * 2 * b) / bullets + enemy.rotation;
               state.projectiles.push({
                 x: enemy.x,
                 y: enemy.y,
-                vx: Math.cos(angle) * 4,
-                vy: Math.sin(angle) * 4,
+                vx: Math.cos(angle) * 4.5,
+                vy: Math.sin(angle) * 4.5,
                 radius: 5,
                 color: "#ff0055",
                 isEnemy: true,
-                damage: 12
+                damage: 14
               });
             }
           } else {
@@ -861,8 +1073,8 @@ export default function CyberPulseGame() {
             state.projectiles.push({
               x: enemy.x,
               y: enemy.y,
-              vx: (dx / dist) * 5,
-              vy: (dy / dist) * 5,
+              vx: (dx / dist) * 5.5,
+              vy: (dy / dist) * 5.5,
               radius: 4,
               color: "#ff0055",
               isEnemy: true,
@@ -902,8 +1114,8 @@ export default function CyberPulseGame() {
 
         ctx.restore();
 
-        // Draw Enemy Health Bar (if damaged)
-        if (enemy.hp < enemy.maxHp) {
+        // Draw Enemy Health Bar (if damaged & not boss)
+        if (enemy.hp < enemy.maxHp && enemy.type !== "BOSS") {
           ctx.fillStyle = "rgba(0,0,0,0.6)";
           ctx.fillRect(enemy.x - 20, enemy.y - enemy.radius - 12, 40, 5);
           ctx.fillStyle = "#ff0055";
@@ -935,7 +1147,7 @@ export default function CyberPulseGame() {
           if (dist < p.radius + player.radius) {
             state.projectiles.splice(pIdx, 1);
             sfx.playHit();
-            state.shake = 10;
+            state.shake = 12;
 
             // Damage Shield first, then Health
             if (player.shield > 0) {
@@ -949,6 +1161,7 @@ export default function CyberPulseGame() {
 
             if (player.hp <= 0) {
               sfx.playExplosion(true);
+              sfx.stopMusic();
               setGameState("GAMEOVER");
             }
           }
@@ -983,12 +1196,19 @@ export default function CyberPulseGame() {
                 if (enemy.type === "BOSS") {
                   unlockAchievement("boss_slayer");
                   state.bossActive = false;
+                  setBossHp(null);
+                  triggerToast("🎉 DREADNOUGHT DESTROYED! +3,000 PTS!");
                 }
 
-                // Add Score & Multiplier
-                state.score += enemy.scoreValue * state.multiplier;
+                // Increment Multiplier & Score
+                state.multiplier = Math.min(8, state.multiplier + 1);
+                state.multiplierTimer = 6;
+                setMultiplier(state.multiplier);
+
+                const addedScore = enemy.scoreValue * state.multiplier;
+                state.score += addedScore;
                 setScore(state.score);
-                state.multiplierTimer = 5;
+                addFloatingText(`+${addedScore}`, enemy.x, enemy.y, "#00f3ff");
 
                 if (state.score > highScore) {
                   setHighScore(state.score);
@@ -996,24 +1216,24 @@ export default function CyberPulseGame() {
                   if (state.score >= 10000) unlockAchievement("high_scorer");
                 }
 
-                // Spawn Power-up Chance (20% chance)
-                if (Math.random() < 0.25) {
+                // Spawn Power-up Chance (25% chance)
+                if (Math.random() < 0.28) {
                   const types: PowerUp["type"][] = ["SHIELD", "SPREAD", "EMP", "OVERDRIVE", "COIN"];
                   const selectedType = types[Math.floor(Math.random() * types.length)];
                   state.powerups.push({
                     x: enemy.x,
                     y: enemy.y,
-                    vy: 2,
+                    vy: 2.2,
                     type: selectedType,
-                    radius: 12
+                    radius: 13
                   });
                 }
 
                 // Explosion Particles
-                const particleCount = enemy.type === "BOSS" ? 40 : 16;
+                const particleCount = enemy.type === "BOSS" ? 45 : 18;
                 for (let i = 0; i < particleCount; i++) {
                   const angle = Math.random() * Math.PI * 2;
-                  const spd = Math.random() * 6 + 2;
+                  const spd = Math.random() * 6.5 + 2;
                   state.particles.push({
                     x: enemy.x,
                     y: enemy.y,
@@ -1022,7 +1242,7 @@ export default function CyberPulseGame() {
                     radius: Math.random() * 3 + 1,
                     color: enemy.color,
                     life: 1,
-                    maxLife: 30
+                    maxLife: 32
                   });
                 }
               }
@@ -1064,19 +1284,23 @@ export default function CyberPulseGame() {
           sfx.playPowerup();
 
           if (pu.type === "SHIELD") {
-            player.shield = Math.min(player.maxShield, player.shield + 40);
+            player.shield = Math.min(player.maxShield, player.shield + 45);
             setPlayerShield(Math.round(player.shield));
-            triggerToast("🛡️ Shield Restored +40");
+            addFloatingText("SHIELD +45", player.x, player.y - 20, "#00f3ff");
+            triggerToast("🛡️ Shield Restored +45");
           } else if (pu.type === "SPREAD") {
             player.weaponType = "SPREAD";
             player.weaponDuration = 10;
+            addFloatingText("SPREAD CANNON!", player.x, player.y - 20, "#ff00e5");
             triggerToast("⚡ Spread Laser Engaged (10s)");
           } else if (pu.type === "EMP") {
             setEmpCharges(prev => prev + 1);
+            addFloatingText("+1 EMP CHARGE", player.x, player.y - 20, "#a855f7");
             triggerToast("💣 EMP Charge Acquired!");
           } else if (pu.type === "OVERDRIVE") {
             player.overdriveTimer = 8;
             setOverdriveActive(true);
+            addFloatingText("QUANTUM OVERDRIVE!", player.x, player.y - 20, "#ffb700");
             triggerToast("🔥 QUANTUM OVERDRIVE ACTIVATED!");
           } else if (pu.type === "COIN") {
             setCoins(prev => {
@@ -1085,12 +1309,31 @@ export default function CyberPulseGame() {
               if (nextCoins >= 200) unlockAchievement("coin_hoarder");
               return nextCoins;
             });
+            addFloatingText("+25 CREDITS 💎", player.x, player.y - 20, "#ffb700");
             triggerToast("💎 +25 Cyber Credits");
           }
         }
 
         if (pu.y > height + 30) {
           state.powerups.splice(puIdx, 1);
+        }
+      });
+
+      // --- FLOATING TEXT ANIMATION ---
+      state.floatingTexts.forEach((ft, ftIdx) => {
+        ft.y -= 1.2;
+        ft.life += 1;
+        ft.alpha = Math.max(0, 1 - ft.life / 40);
+
+        ctx.fillStyle = ft.color;
+        ctx.globalAlpha = ft.alpha;
+        ctx.font = "bold 13px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.globalAlpha = 1.0;
+
+        if (ft.life >= 40) {
+          state.floatingTexts.splice(ftIdx, 1);
         }
       });
 
@@ -1123,7 +1366,7 @@ export default function CyberPulseGame() {
     return () => {
       if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
     };
-  }, [gameState, gameMode, upgrades, empCharges, highScore, unlockAchievement]);
+  }, [gameState, gameMode, upgrades, empCharges, highScore, selectedShip, unlockAchievement]);
 
   return (
     <div className="relative w-full h-screen bg-slate-950 text-slate-100 overflow-hidden flex flex-col font-sans select-none">
@@ -1135,10 +1378,10 @@ export default function CyberPulseGame() {
         <div className="flex items-center gap-3">
           <Link
             href="/games"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-cyan-400 border border-slate-700 transition"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-cyan-400 border border-slate-700 transition text-sm font-semibold"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-semibold">Games Hub</span>
+            <span>Games Hub</span>
           </Link>
           <div className="h-5 w-px bg-slate-800" />
           <div className="flex items-center gap-2">
@@ -1186,6 +1429,22 @@ export default function CyberPulseGame() {
         )}
       </AnimatePresence>
 
+      {/* WAVE ANNOUNCEMENT BANNER */}
+      <AnimatePresence>
+        {waveBanner && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className="absolute top-36 left-1/2 -translate-x-1/2 z-40 px-8 py-3 rounded-2xl bg-cyan-950/90 border-2 border-cyan-400 shadow-2xl shadow-cyan-500/50 backdrop-blur-md text-center"
+          >
+            <h3 className="text-xl font-black font-mono tracking-widest text-cyan-300 uppercase animate-pulse">
+              {waveBanner}
+            </h3>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* MAIN GAME CONTAINER */}
       <div className="relative flex-1 flex items-center justify-center p-4">
         {/* CANVAS */}
@@ -1207,12 +1466,12 @@ export default function CyberPulseGame() {
                   <span className="flex items-center gap-1 text-red-400 font-bold">
                     <Flame className="w-3.5 h-3.5" /> HULL HP
                   </span>
-                  <span>{playerHp} / 100</span>
+                  <span>{playerHp} / {playerMaxHp}</span>
                 </div>
                 <div className="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
                   <div
                     className="bg-gradient-to-r from-red-600 to-pink-500 h-full transition-all duration-200"
-                    style={{ width: `${playerHp}%` }}
+                    style={{ width: `${Math.max(0, (playerHp / playerMaxHp) * 100)}%` }}
                   />
                 </div>
 
@@ -1225,16 +1484,39 @@ export default function CyberPulseGame() {
                 <div className="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
                   <div
                     className="bg-gradient-to-r from-cyan-500 to-blue-600 h-full transition-all duration-200"
-                    style={{ width: `${(playerShield / (100 + (upgrades.shieldLevel - 1) * 25)) * 100}%` }}
+                    style={{ width: `${Math.max(0, (playerShield / playerMaxShield) * 100)}%` }}
                   />
                 </div>
               </div>
+
+              {/* Boss Health Bar (Top Center) */}
+              {bossHp && (
+                <div className="w-80 p-3 rounded-xl bg-red-950/80 border border-red-500/50 backdrop-blur-md flex flex-col gap-1.5 text-center shadow-lg shadow-red-500/20 animate-pulse">
+                  <div className="text-xs font-black font-mono text-red-400 tracking-wider">
+                    ⚠️ DREADNOUGHT LEVIATHAN
+                  </div>
+                  <div className="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-red-900">
+                    <div
+                      className="bg-gradient-to-r from-red-500 via-pink-500 to-amber-500 h-full transition-all duration-150"
+                      style={{ width: `${(bossHp.current / bossHp.max) * 100}%` }}
+                    />
+                  </div>
+                  <div className="text-[10px] font-mono text-red-300">
+                    HP: {bossHp.current} / {bossHp.max}
+                  </div>
+                </div>
+              )}
 
               {/* Score & EMP Stats */}
               <div className="flex flex-col items-end gap-2">
                 <div className="px-5 py-2 rounded-xl bg-slate-900/70 border border-cyan-500/30 backdrop-blur-md text-right">
                   <div className="text-xs font-mono text-slate-400 uppercase">Current Score</div>
                   <div className="text-2xl font-black text-cyan-400 font-mono tracking-wider">{score.toLocaleString()}</div>
+                  {multiplier > 1 && (
+                    <div className="text-xs font-bold font-mono text-amber-400 animate-bounce">
+                      {multiplier}X COMBO MULTIPLIER!
+                    </div>
+                  )}
                 </div>
 
                 {gameMode === "TIME_ATTACK" && (
@@ -1259,7 +1541,10 @@ export default function CyberPulseGame() {
                   </button>
 
                   <button
-                    onClick={() => setGameState("PAUSED")}
+                    onClick={() => {
+                      sfx.stopMusic();
+                      setGameState("PAUSED");
+                    }}
                     className="pointer-events-auto p-2 rounded-xl bg-slate-900/70 border border-slate-800 hover:bg-slate-800 text-slate-300 transition"
                   >
                     <Pause className="w-5 h-5" />
@@ -1338,6 +1623,31 @@ export default function CyberPulseGame() {
                 <p className="text-sm text-slate-400 mt-2 max-w-md">
                   Pilot your high-tech starfighter against endless swarms of rogue mechs. Upgrade weapons, unleash EMP blasts, and dominate the leaderboard!
                 </p>
+              </div>
+
+              {/* Ship Selector Bar */}
+              <div className="w-full flex flex-col gap-2">
+                <div className="text-xs font-mono text-slate-400 uppercase tracking-widest">Select Fighter Hangar</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["BALANCED", "TANK", "SPEED"] as ShipType[]).map(ship => (
+                    <button
+                      key={ship}
+                      onClick={() => handleSelectShip(ship)}
+                      className={cn(
+                        "p-3 rounded-xl border text-left transition flex flex-col gap-1",
+                        selectedShip === ship
+                          ? "bg-cyan-950/60 border-cyan-400 text-cyan-300 shadow-md shadow-cyan-500/20"
+                          : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200"
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5 font-bold text-xs">
+                        <span>{SHIP_STATS[ship].icon}</span>
+                        <span>{SHIP_STATS[ship].name}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 leading-tight">{SHIP_STATS[ship].desc}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Game Mode Selector */}
@@ -1553,7 +1863,10 @@ export default function CyberPulseGame() {
               <h3 className="text-2xl font-bold text-slate-100">SYSTEM PAUSED</h3>
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => setGameState("PLAYING")}
+                  onClick={() => {
+                    sfx.startMusic();
+                    setGameState("PLAYING");
+                  }}
                   className="py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold transition"
                 >
                   Resume Mission
@@ -1565,7 +1878,10 @@ export default function CyberPulseGame() {
                   <RotateCcw className="w-4 h-4" /> Restart Mission
                 </button>
                 <button
-                  onClick={() => setGameState("MENU")}
+                  onClick={() => {
+                    sfx.stopMusic();
+                    setGameState("MENU");
+                  }}
                   className="py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 transition"
                 >
                   Abort to Main Menu
