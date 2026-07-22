@@ -60,9 +60,7 @@ class RacingSoundEffects {
       this.engineOsc.connect(this.engineGain);
       this.engineGain.connect(this.ctx.destination);
       this.engineOsc.start();
-    } catch {
-      // Audio fallback
-    }
+    } catch {}
   }
 
   updateEnginePitch(speedRatio: number) {

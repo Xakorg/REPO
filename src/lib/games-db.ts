@@ -24,20 +24,20 @@ const premiumGames: GameMeta[] = [
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberpulse",
     releaseDate: "2026",
     price: "Free",
-    route: "/game"
+    route: "/games/cyber-pulse"
   },
   {
-    id: "neon_drift_2099",
-    title: "Neon Drift 2099",
+    id: "neon_velocity",
+    title: "Neon Velocity 2099",
     developer: "Xakteir Studios",
-    type: "Arcade",
-    genre: ["Racing", "Sci-Fi", "Arcade", "Action"],
-    description: "Tear up the cybernetic highway in high-speed drift battles. Outrun police interceptors, dodge dense traffic, and unleash nitro power!",
-    bannerUrl: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neondrift2099",
+    type: "3D",
+    genre: ["Racing", "Sci-Fi", "Action", "Arcade"],
+    description: "Blast through neon synthwave highways at breakneck speeds. Dodge obstacles, fire plasma cannons, collect credits, and upgrade your vehicle.",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neonvelocity",
     releaseDate: "2026",
     price: "Free",
-    route: "/game2"
+    route: "/game/neon-velocity"
   },
   {
     id: "code_arena",

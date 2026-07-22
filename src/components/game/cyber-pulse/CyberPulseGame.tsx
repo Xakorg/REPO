@@ -24,8 +24,7 @@ import {
   ShieldAlert,
   Radio,
   Rocket,
-  Target,
-  Sparkle
+  Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +33,6 @@ class SoundEffects {
   ctx: AudioContext | null = null;
   muted: boolean = false;
   musicOsc1: OscillatorNode | null = null;
-  musicOsc2: OscillatorNode | null = null;
   musicGain: GainNode | null = null;
   musicIntervalId: any = null;
 
@@ -67,9 +65,7 @@ class SoundEffects {
 
       osc.start();
       osc.stop(this.ctx.currentTime + 0.12);
-    } catch {
-      // Audio fallback
-    }
+    } catch {}
   }
 
   playExplosion(isBig = false) {
@@ -102,9 +98,7 @@ class SoundEffects {
 
       whiteNoise.start();
       whiteNoise.stop(this.ctx.currentTime + duration);
-    } catch {
-      // Audio fallback
-    }
+    } catch {}
   }
 
   playPowerup() {
@@ -127,9 +121,7 @@ class SoundEffects {
         osc.start(this.ctx.currentTime + idx * 0.05);
         osc.stop(this.ctx.currentTime + idx * 0.05 + 0.08);
       });
-    } catch {
-      // Fallback
-    }
+    } catch {}
   }
 
   playEmp() {
@@ -149,9 +141,7 @@ class SoundEffects {
 
       osc.start();
       osc.stop(this.ctx.currentTime + 0.45);
-    } catch {
-      // Fallback
-    }
+    } catch {}
   }
 
   playHit() {
@@ -171,9 +161,7 @@ class SoundEffects {
 
       osc.start();
       osc.stop(this.ctx.currentTime + 0.1);
-    } catch {
-      // Fallback
-    }
+    } catch {}
   }
 
   playWaveStart() {
@@ -194,9 +182,7 @@ class SoundEffects {
         osc.start(this.ctx.currentTime + idx * 0.08);
         osc.stop(this.ctx.currentTime + idx * 0.08 + 0.2);
       });
-    } catch {
-      // Fallback
-    }
+    } catch {}
   }
 
   startMusic() {
@@ -230,9 +216,7 @@ class SoundEffects {
         osc.start();
         osc.stop(this.ctx.currentTime + 0.18);
       }, 200);
-    } catch {
-      // Fallback
-    }
+    } catch {}
   }
 
   stopMusic() {
