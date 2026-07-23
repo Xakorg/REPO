@@ -4,6 +4,11 @@
 #include <QDebug>
 #include "DesktopDaemon.h"
 #include "BrowserEngine.h"
+#include "StreamEngine.h"
+#include "VoltMasterEngine.h"
+#include "TerminalPTY.h"
+#include "SettingsEngine.h"
+#include "InstallerEngine.h"
 #include <QtWebEngineQuick>
 
 // ----------------------------------------------------------------------------
@@ -40,21 +45,41 @@ int main(int argc, char *argv[])
     // Inject the massive Browser Engine backend
     BrowserEngine browserEngine;
     engine.rootContext()->setContextProperty("VoltBrowserEngine", &browserEngine);
+    
+    // Inject Xakteir Stream Engine
+    StreamEngine streamEngine;
+    engine.rootContext()->setContextProperty("XakteirStreamEngine", &streamEngine);
+    
+    // Inject VoltMaster Telemetry Engine
+    VoltMasterEngine voltMasterEngine;
+    engine.rootContext()->setContextProperty("VoltMasterEngine", &voltMasterEngine);
+    
+    // Inject Terminal PTY Backend
+    TerminalPTY terminalPty;
+    engine.rootContext()->setContextProperty("TerminalPTY", &terminalPty);
+    
+    // Inject System Settings Engine
+    SettingsEngine settingsEngine;
+    engine.rootContext()->setContextProperty("SettingsEngine", &settingsEngine);
+    
+    // Inject Bare Metal Installer
+    InstallerEngine installerEngine;
+    engine.rootContext()->setContextProperty("InstallerEngine", &installerEngine);
 
-    // 5. Load the Desktop UI
-    const QUrl url(QStringLiteral("qrc:/Desktop.qml")); // Assuming qrc, but for now we'll load raw path
+    // 5. Load the Boot Splash Screen
+    const QUrl url(QStringLiteral("qrc:/BootSplash.qml")); // Assuming qrc, but for now we'll load raw path
     // Since we aren't using a qrc file in this scaffold, load the local file directly:
-    const QUrl localUrl = QUrl::fromLocalFile("Desktop.qml");
+    const QUrl localUrl = QUrl::fromLocalFile("BootSplash.qml");
 
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                      &app, [localUrl](QObject *obj, const QUrl &objUrl) {
         if (!obj && localUrl == objUrl) {
-            qCritical() << "[FATAL] Failed to load Desktop.qml! VDS Panic.";
+            qCritical() << "[FATAL] Failed to load BootSplash.qml! VDS Panic.";
             QCoreApplication::exit(-1);
         }
     }, Qt::QueuedConnection);
 
-    qInfo() << "[VDS] Loading Desktop.qml Shell...";
+    qInfo() << "[VDS] Loading BootSplash.qml Sequence...";
     engine.load(localUrl);
 
     // 6. Enter the main event loop

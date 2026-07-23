@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "quantum_surge",
+    title: "Quantum Surge 3D",
+    developer: "Xakteir Studios",
+    type: "3D",
+    genre: ["Action", "Sci-Fi", "3D", "Arcade"],
+    description: "Blast through infinite synthwave highways in 3D. Dodge quantum barriers, trigger hyper boosts, collect shields, and set new high scores.",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumsurge",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/quantum-surge"
+  },
+  {
     id: "quantum_vanguard",
     title: "Quantum Vanguard 2099",
     developer: "Xakteir Studios",

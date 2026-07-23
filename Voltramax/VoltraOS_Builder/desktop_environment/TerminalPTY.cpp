@@ -1,174 +1,151 @@
 #include "TerminalPTY.h"
-#include <QRegularExpression>
-#include <QTimer>
-#include <QDebug>
 #include "SyscallBridge.h"
+#include <QDebug>
+#include <QRandomGenerator>
 
-TerminalPTY::TerminalPTY(QObject *parent) : QObject(parent) {
-    // Initialize with a welcome message
-    executeCommand("echo 'Welcome to VoltraOS Terminal (v1.0.0-ENTERPRISE)'");
+TerminalPTY::TerminalPTY(QObject *parent) 
+    : QObject(parent) 
+{
+    qDebug() << "[TerminalPTY] Initializing Master Pseudo-Terminal Backend...";
+    appendToBuffer("\033[32mVoltraOS Enterprise Shell (v2.0) \033[0m\n");
+    appendToBuffer("Type 'help' to see simulated commands.\n");
 }
 
-TerminalPTY::~TerminalPTY() {
+TerminalPTY::~TerminalPTY() {}
+
+QString TerminalPTY::terminalOutput() const {
+    return m_htmlOutput;
 }
 
 void TerminalPTY::executeCommand(const QString& command) {
-    // Hardware bridge mock: We simulate executing a command via SyscallBridge
-    // In a real scenario, this would use fork() / execve() via int 0x80
-    qDebug() << "[TerminalPTY] Executing:" << command;
+    QMutexLocker locker(&m_ptyMutex);
     
-    // Echo the command being run
-    processRawOutput("\033[1;32mvoltra@root\033[0m:\033[1;34m~\033[0m$ " + command + "\n");
+    // Echo command
+    appendToBuffer("\n\033[36mvoltra@root:~$ \033[0m" + command + "\n");
     
-    // Simulate complex outputs for certain commands
-    if (command.startsWith("make")) {
-        QTimer::singleShot(200, this, [this]() {
-            processRawOutput("CC src/main.o\n");
-            processRawOutput("CC src/kernel.o\n");
-            processRawOutput("\033[31mError:\033[0m undefined reference to 'vmm_map_page'\n");
-            processRawOutput("make: *** [Makefile:20: voltraos.iso] Error 1\n");
-        });
-    } else if (command == "ls") {
-        QTimer::singleShot(100, this, [this]() {
-            processRawOutput("\033[1;34mDesktop\033[0m  \033[1;34mDocuments\033[0m  \033[1;34mDownloads\033[0m  kernel.bin\n");
-        });
-    } else if (command.startsWith("echo")) {
-        // Just print it back (stripping quotes for simulation)
-        QString text = command.mid(5).replace("'", "").replace("\"", "");
-        processRawOutput(text + "\n");
-    } else {
-        QTimer::singleShot(100, this, [this, command]() {
-            processRawOutput("Command not found: " + command + "\n");
-        });
-    }
-}
-
-void TerminalPTY::askXakAI(const QString& query) {
-    qDebug() << "[TerminalPTY] Xak AI Query:" << query;
-    processRawOutput("\n\033[1;33m[Xak AI Analyzing Terminal Context...]\033[0m\n");
-    
-    // Simulate AI inference delay
-    QTimer::singleShot(1500, this, [this, query]() {
-        QString response;
-        if (query.contains("make") || query.contains("error")) {
-            response = "I detected an 'undefined reference' error. This means the linker cannot find the implementation of 'vmm_map_page'. You need to add 'src/vmm.o' to your Makefile's OBJS list.";
-        } else {
-            response = "I am processing your command. Do you want me to write the bash script for you?";
-        }
-        
-        processRawOutput("\033[1;36mXak AI:\033[0m " + response + "\n");
-        emit aiResponseReady(response);
+    // Asynchronously simulate execution
+    QTimer::singleShot(200, this, [this, command]() {
+        runSimulatedCommand(command);
     });
 }
 
-/**
- * The massive ANSI Escape Sequence Parser.
- * It manually crawls raw byte strings to interpret `\033[31;1m` style sequences.
- */
-void TerminalPTY::processRawOutput(const QString& rawOutput) {
-    TerminalLine currentLine;
-    QString currentText = "";
-    
-    for (int i = 0; i < rawOutput.length(); i++) {
-        QChar c = rawOutput[i];
-        
-        // Handle Newline
-        if (c == '\n') {
-            if (!currentText.isEmpty()) {
-                currentLine.spans.append({currentText, m_currentForeground, m_currentBackground, m_currentBold, m_currentItalic, m_currentUnderline});
-                currentText = "";
-            }
-            m_screenBuffer.append(currentLine);
-            currentLine = TerminalLine(); // Reset for next line
-            continue;
-        }
-        
-        // Handle ANSI Escape `\033` (ESC / \e / \x1B)
-        if (c == '\x1B' && i + 1 < rawOutput.length() && rawOutput[i+1] == '[') {
-            // We found a sequence, push whatever text we had using current styles
-            if (!currentText.isEmpty()) {
-                currentLine.spans.append({currentText, m_currentForeground, m_currentBackground, m_currentBold, m_currentItalic, m_currentUnderline});
-                currentText = "";
-            }
-            
-            i += 2; // Skip \x1B and [
-            QString seq = "";
-            while (i < rawOutput.length() && (rawOutput[i].isDigit() || rawOutput[i] == ';')) {
-                seq += rawOutput[i];
-                i++;
-            }
-            
-            // i is now at the sequence terminator (usually 'm')
-            if (i < rawOutput.length() && rawOutput[i] == 'm') {
-                // Parse the codes like "1;31"
-                QStringList codes = seq.split(';', Qt::SkipEmptyParts);
-                if (codes.isEmpty()) codes.append("0"); // Default reset
-                
-                for (const QString& codeStr : codes) {
-                    int code = codeStr.toInt();
-                    if (code == 0) { // Reset
-                        m_currentForeground = QColor("#00FF00"); // Hacker Green Default
-                        m_currentBackground = QColor("#000000");
-                        m_currentBold = false;
-                        m_currentItalic = false;
-                        m_currentUnderline = false;
-                    } else if (code == 1) { m_currentBold = true; }
-                    else if (code == 3) { m_currentItalic = true; }
-                    else if (code == 4) { m_currentUnderline = true; }
-                    // Foreground Colors (30-37)
-                    else if (code >= 30 && code <= 37) {
-                        m_currentForeground = ANSI_COLORS[code - 30];
-                    }
-                    // Background Colors (40-47)
-                    else if (code >= 40 && code <= 47) {
-                        m_currentBackground = ANSI_COLORS[code - 40];
-                    }
-                }
-            }
-            continue;
-        }
-        
-        currentText += c;
+void TerminalPTY::runSimulatedCommand(const QString& cmd) {
+    QMutexLocker locker(&m_ptyMutex);
+    QString c = cmd.trimmed();
+
+    if (c == "help") {
+        appendToBuffer("Available mock commands:\n");
+        appendToBuffer("  \033[33mls\033[0m     - List VFS directory\n");
+        appendToBuffer("  \033[33mmake\033[0m   - Compile kernel (triggers error)\n");
+        appendToBuffer("  \033[33mclear\033[0m  - Clear buffer\n");
+    } 
+    else if (c == "ls") {
+        appendToBuffer("\033[34mdesktop_environment/\033[0m  \033[34mvoltra_kernel/\033[0m  Makefile  readme.txt\n");
     }
-    
-    // Push remaining text
-    if (!currentText.isEmpty()) {
-        currentLine.spans.append({currentText, m_currentForeground, m_currentBackground, m_currentBold, m_currentItalic, m_currentUnderline});
-        m_screenBuffer.append(currentLine);
+    else if (c == "clear") {
+        m_ringBuffer.clear();
+        m_htmlOutput = "";
+        emit outputChanged();
     }
-    
-    // Ensure we don't exceed the ring buffer (e.g., 10,000 lines)
-    while (m_screenBuffer.size() > 10000) {
-        m_screenBuffer.removeFirst();
+    else if (c.startsWith("make")) {
+        // Simulate a massive compile error
+        appendToBuffer("gcc -m32 -ffreestanding -c kernel.c -o kernel.o\n");
+        appendToBuffer("\033[31mkernel.c:142:5: error: expected ';' before 'return'\033[0m\n");
+        appendToBuffer("\033[31mmake: *** [Makefile:22: kernel.o] Error 1\033[0m\n");
+        
+        // Trigger Xak AI Error Analysis
+        simulateErrorAnalysis(c, "kernel.c:142:5: error: expected ';' before 'return'");
     }
-    
-    emit outputUpdated(renderToHtml());
+    else if (!c.isEmpty()) {
+        appendToBuffer("\033[31mbash: " + c + ": command not found\033[0m\n");
+    }
 }
 
-QString TerminalPTY::renderToHtml() {
-    QString html = "<pre style='margin: 0; white-space: pre-wrap;'>";
-    for (const TerminalLine& line : m_screenBuffer) {
-        for (const TerminalSpan& span : line.spans) {
-            html += "<span style='";
-            html += "color: " + span.foregroundColor.name() + "; ";
-            // Only add background if it's not black to keep it clean
-            if (span.backgroundColor != QColor("#000000")) {
-                html += "background-color: " + span.backgroundColor.name() + "; ";
-            }
-            if (span.isBold) html += "font-weight: bold; ";
-            if (span.isItalic) html += "font-style: italic; ";
-            if (span.isUnderline) html += "text-decoration: underline; ";
-            html += "'>";
-            
-            // Escape HTML entities in the raw text
-            QString escapedText = span.text;
-            escapedText.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-            
-            html += escapedText;
-            html += "</span>";
-        }
-        html += "<br>";
+void TerminalPTY::simulateErrorAnalysis(const QString& cmd, const QString& errorOut) {
+    qDebug() << "[TerminalPTY] Handing error to Xak Opal AI Context...";
+    QTimer::singleShot(1000, this, [this, errorOut]() {
+        QString explanation = "Syntax error detected in kernel.c on line 142. A semicolon is missing.";
+        QString fix = "sed -i '142s/$/;/' voltra_kernel/src/kernel.c && make";
+        emit xakAiFixAvailable(explanation, fix);
+    });
+}
+
+// ----------------------------------------------------------------------------
+// MASSIVE ANSI ESCAPE SEQUENCE PARSER
+// ----------------------------------------------------------------------------
+void TerminalPTY::appendToBuffer(const QString& rawString) {
+    // 1. Maintain Ring Buffer Size (Max 1000 lines for mock, normally 10k)
+    m_ringBuffer.enqueue(rawString);
+    if (m_ringBuffer.size() > 1000) {
+        m_ringBuffer.dequeue();
     }
-    html += "</pre>";
+
+    // 2. Rebuild the HTML output by parsing ANSI
+    QString fullHtml;
+    for (const QString& line : m_ringBuffer) {
+        fullHtml += parseAnsiToHtml(line);
+    }
+    
+    // Replace newlines with HTML breaks
+    fullHtml.replace("\n", "<br>");
+    
+    m_htmlOutput = fullHtml;
+    emit outputChanged();
+}
+
+QString TerminalPTY::parseAnsiToHtml(const QString& rawString) {
+    QString html = rawString;
+    
+    // Escape HTML symbols
+    html.replace("<", "&lt;");
+    html.replace(">", "&gt;");
+
+    // Standard ANSI regex pattern: \033[Nm
+    QRegularExpression ansiRegex("\033\\[(\\d+)m");
+    QRegularExpressionMatchIterator i = ansiRegex.globalMatch(html);
+    
+    int offset = 0;
+    bool inSpan = false;
+
+    while (i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        QString colorCode = match.captured(1);
+        QString htmlTag;
+
+        if (colorCode == "0") {
+            if (inSpan) { htmlTag = "</span>"; inSpan = false; }
+            else { htmlTag = ""; }
+        } else if (colorCode == "31") {
+            if (inSpan) { htmlTag = "</span>"; }
+            htmlTag += "<span style='color: #FF5F56;'>";
+            inSpan = true;
+        } else if (colorCode == "32") {
+            if (inSpan) { htmlTag = "</span>"; }
+            htmlTag += "<span style='color: #27C93F;'>";
+            inSpan = true;
+        } else if (colorCode == "33") {
+            if (inSpan) { htmlTag = "</span>"; }
+            htmlTag += "<span style='color: #FFBD2E;'>";
+            inSpan = true;
+        } else if (colorCode == "34") {
+            if (inSpan) { htmlTag = "</span>"; }
+            htmlTag += "<span style='color: #4285F4;'>";
+            inSpan = true;
+        } else if (colorCode == "36") {
+            if (inSpan) { htmlTag = "</span>"; }
+            htmlTag += "<span style='color: #00FFFF;'>";
+            inSpan = true;
+        } else {
+            htmlTag = ""; // Unhandled code
+        }
+
+        html.replace(match.capturedStart() + offset, match.capturedLength(), htmlTag);
+        offset += htmlTag.length() - match.capturedLength();
+    }
+    
+    if (inSpan) {
+        html += "</span>";
+    }
+
     return html;
 }

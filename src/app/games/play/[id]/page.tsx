@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
  
 const GAME_MAP: Record<string, React.ComponentType<any>> = {
+  quantum_surge: dynamic(() => import("@/components/game/quantum-surge")),
   cyber_pulse:  dynamic(() => import("@/components/game/cyber-pulse")),
   neon_velocity: dynamic(() => import("@/components/game/neon-velocity")),
   xaksports:    dynamic(() => import("@/components/game/xaksports")),

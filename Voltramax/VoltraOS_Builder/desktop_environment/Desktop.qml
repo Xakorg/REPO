@@ -77,10 +77,14 @@ Window {
 
                 Repeater {
                     model: ListModel {
-                        id: pinnedApps
-                        ListElement { name: "Browser"; icon: "🌐"; colorHex: "#3b82f6" }
-                        ListElement { name: "Terminal"; icon: "💻"; colorHex: "#22c55e" }
-                        ListElement { name: "Game Hub"; icon: "🎮"; colorHex: "#a855f7" }
+                        id: appsModel
+                        ListElement { name: "Install VoltraOS"; icon: "💿"; iconColor: "#FF0000"; sourceFile: "VoltraInstaller.qml" }
+                        ListElement { name: "System Settings"; icon: "⚙️"; iconColor: "#888888"; sourceFile: "SystemSettings.qml" }
+                        ListElement { name: "VoltMaster"; icon: "⚡"; iconColor: "#00FFCC"; sourceFile: "VoltMaster.qml" }
+                        ListElement { name: "VoltraBrowser"; icon: "🌐"; iconColor: "#4285F4"; sourceFile: "VoltraBrowser.qml" }
+                        ListElement { name: "VoltTerm"; icon: "💻"; iconColor: "#0F0"; sourceFile: "VoltTerm.qml" }
+                        ListElement { name: "Xakteir Stream"; icon: "📡"; iconColor: "#FF5F56"; sourceFile: "XakteirStream.qml" }
+                        ListElement { name: "OOBE Setup"; icon: "⚙️"; iconColor: "#9C27B0"; sourceFile: "../OOBE_Native/OOBE.qml" }
                         ListElement { name: "Files"; icon: "📁"; colorHex: "#eab308" }
                         ListElement { name: "Store"; icon: "🛍️"; colorHex: "#ec4899" }
                         ListElement { name: "XakChat"; icon: "💬"; colorHex: "#10b981" }

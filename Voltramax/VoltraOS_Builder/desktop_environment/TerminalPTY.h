@@ -3,77 +3,55 @@
 
 #include <QObject>
 #include <QString>
-#include <QList>
-#include <QColor>
-#include <QThread>
+#include <QStringList>
+#include <QMutex>
+#include <QTimer>
+#include <QQueue>
+#include <QRegularExpression>
 
 /**
  * ============================================================================
- * VOLTRA OS ENTERPRISE - TERMINAL PTY (PSEUDO-TERMINAL) BACKEND
+ * VOLTRA OS ENTERPRISE - TERMINAL PTY ENGINE
  * ============================================================================
  * 
- * This class handles parsing complex raw byte streams from a shell process.
- * It decodes ANSI Escape Sequences (Colors, Bold, Cursor Movements) and 
- * structures them for the QML Frontend to render in real-time.
+ * Complex C++ Backend representing the Pseudo-Terminal.
+ * Features:
+ * - Real-time ANSI Escape Sequence Parsing -> QML HTML Conversion
+ * - Simulated Command Execution
+ * - Xak AI Kernel Crash Analysis Hooks
  * ============================================================================
  */
 
-// Represents a single formatted character or span of text in the terminal
-struct TerminalSpan {
-    QString text;
-    QColor foregroundColor;
-    QColor backgroundColor;
-    bool isBold;
-    bool isItalic;
-    bool isUnderline;
-};
-
-// Represents a single line in the terminal
-struct TerminalLine {
-    QList<TerminalSpan> spans;
-};
-
 class TerminalPTY : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QString terminalOutput READ terminalOutput NOTIFY outputChanged)
 
 public:
     explicit TerminalPTY(QObject *parent = nullptr);
     ~TerminalPTY();
 
+    QString terminalOutput() const;
+
+    // Receive command from QML
     Q_INVOKABLE void executeCommand(const QString& command);
-    Q_INVOKABLE void askXakAI(const QString& query);
 
 signals:
-    // Fired when the terminal output updates, sending HTML-formatted strings to QML
-    void outputUpdated(const QString& htmlOutput);
-    // Fired when Xak AI finishes analyzing an error
-    void aiResponseReady(const QString& response);
+    void outputChanged();
+    
+    // Triggered when a command fails, prompting Xak AI to offer a fix
+    void xakAiFixAvailable(const QString& explanation, const QString& suggestedCommand);
 
 private:
-    void processRawOutput(const QString& rawOutput);
-    QString renderToHtml();
+    QString m_htmlOutput;
+    QQueue<QString> m_ringBuffer; // Fixed length buffer
+    QMutex m_ptyMutex;
 
-    // The Virtual Screen Buffer
-    QList<TerminalLine> m_screenBuffer;
-    
-    // Current ANSI State Parser Variables
-    QColor m_currentForeground = QColor("#00FF00"); // Hacker Green default
-    QColor m_currentBackground = QColor("#000000"); // Pure Black default
-    bool m_currentBold = false;
-    bool m_currentItalic = false;
-    bool m_currentUnderline = false;
+    void appendToBuffer(const QString& rawString);
+    QString parseAnsiToHtml(const QString& rawString);
 
-    // ANSI Color Palettes (Standard 16 colors)
-    const QColor ANSI_COLORS[8] = {
-        QColor("#000000"), // Black
-        QColor("#FF0000"), // Red
-        QColor("#00FF00"), // Green
-        QColor("#FFFF00"), // Yellow
-        QColor("#0000FF"), // Blue
-        QColor("#FF00FF"), // Magenta
-        QColor("#00FFFF"), // Cyan
-        QColor("#FFFFFF")  // White
-    };
+    // Simulated execution engines
+    void runSimulatedCommand(const QString& cmd);
+    void simulateErrorAnalysis(const QString& cmd, const QString& errorOut);
 };
 
 #endif // TERMINAL_PTY_H
