@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "solar_tempest",
+    title: "Solar Tempest 3D",
+    developer: "Xakteir Studios",
+    type: "3D",
+    genre: ["Sci-Fi", "3D", "Action", "Shooter", "Arcade"],
+    description: "Command your apex starfighter across an erupting solar flare sector in 3D. Destroy mech drones, harvest energy matrix crystals, dodge asteroids, and unleash seeker missiles.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=solartempest",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/solar-tempest"
+  },
+  {
     id: "hyper_horizon",
     title: "Hyper Horizon 3D",
     developer: "Xakteir Studios",
