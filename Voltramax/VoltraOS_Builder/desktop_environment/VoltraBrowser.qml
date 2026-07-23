@@ -19,6 +19,20 @@ Window {
     // Layout Modes: "horizontal", "vertical", "zen"
     property string tabMode: "vertical"
     property string currentUrl: "https://www.google.com"
+    
+    // Xak AI Panel State
+    property bool isXakPanelOpen: false
+    property string xakSummaryHtml: ""
+    
+    Connections {
+        target: typeof VoltBrowserEngine !== "undefined" ? VoltBrowserEngine : null
+        function onXakSummaryReady(url, summary) {
+            if (url === browserWindow.currentUrl) {
+                xakSummaryHtml = summary;
+                isXakPanelOpen = true; // Slide open the panel!
+            }
+        }
+    }
 
     // Glassmorphism Background
     Rectangle {
@@ -161,7 +175,13 @@ Window {
                             }
                             MouseArea {
                                 anchors.fill: parent
-                                onClicked: console.log("Xak AI: Summarizing page!")
+                                onClicked: {
+                                    if (typeof VoltBrowserEngine !== "undefined") {
+                                        VoltBrowserEngine.requestPageSummary(browserWindow.currentUrl);
+                                        xakSummaryHtml = "<h4 style='color:white;'>Xak AI is analyzing the DOM via Ring 0 Syscalls...</h4>";
+                                        isXakPanelOpen = true;
+                                    }
+                                }
                             }
                         }
                     }
@@ -236,6 +256,16 @@ Window {
                                     layer.enabled: true
                                     layer.effect: DropShadow { color: "#FFD700"; radius: 8; samples: 16; spread: 0.2 }
                                 }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        if (typeof VoltBrowserEngine !== "undefined") {
+                                            VoltBrowserEngine.requestPageSummary(browserWindow.currentUrl);
+                                            xakSummaryHtml = "<h4 style='color:white;'>Xak AI is analyzing...</h4>";
+                                            isXakPanelOpen = true;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -274,6 +304,16 @@ Window {
                         color: "#FFD700"
                         layer.enabled: true
                         layer.effect: DropShadow { color: "#FFD700"; radius: 6; samples: 12; spread: 0.2 }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (typeof VoltBrowserEngine !== "undefined") {
+                                    VoltBrowserEngine.requestPageSummary(browserWindow.currentUrl);
+                                    xakSummaryHtml = "<h4 style='color:white;'>Xak AI is analyzing the DOM...</h4>";
+                                    isXakPanelOpen = true;
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -297,6 +337,61 @@ Window {
                             verticalUrlBar.text = url
                             horizontalUrlBar.text = url
                             zenUrlBar.text = url
+                            
+                            // Log history to C++ Engine
+                            if (typeof VoltBrowserEngine !== "undefined") {
+                                VoltBrowserEngine.recordVisit(0, url);
+                            }
+                            // Auto-close AI panel on navigation
+                            isXakPanelOpen = false;
+                        }
+                    }
+                }
+                
+                // XAK AI SLIDING SIDE PANEL (OPTION B)
+                Rectangle {
+                    id: xakSidePanel
+                    Layout.fillHeight: true
+                    Layout.preferredWidth: browserWindow.isXakPanelOpen ? 350 : 0
+                    visible: width > 0
+                    color: "#15151A" // Deep purple/black
+                    border.color: "#FFD700" // Glowing yellow border
+                    border.width: 1
+                    clip: true
+                    
+                    Behavior on Layout.preferredWidth {
+                        NumberAnimation { duration: 300; easing.type: Easing.OutQuart }
+                    }
+                    
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 20
+                        spacing: 15
+                        
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Text { text: "✨"; font.pixelSize: 24 }
+                            Text { text: "Xak Opal Analysis"; color: "white"; font.family: "Syne"; font.pixelSize: 20; font.bold: true; Layout.fillWidth: true }
+                            Rectangle {
+                                width: 20; height: 20; radius: 10; color: "#FF5F56"
+                                MouseArea { anchors.fill: parent; onClicked: browserWindow.isXakPanelOpen = false }
+                            }
+                        }
+                        
+                        Rectangle { height: 1; Layout.fillWidth: true; color: "#33FFFFFF" }
+                        
+                        ScrollView {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Text {
+                                text: browserWindow.xakSummaryHtml
+                                color: "#CCCCCC"
+                                font.family: "Inter"
+                                font.pixelSize: 14
+                                width: xakSidePanel.width - 40
+                                wrapMode: Text.WordWrap
+                                textFormat: Text.RichText
+                            }
                         }
                     }
                 }

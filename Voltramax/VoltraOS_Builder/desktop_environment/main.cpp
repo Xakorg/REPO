@@ -3,6 +3,7 @@
 #include <QQmlContext>
 #include <QDebug>
 #include "DesktopDaemon.h"
+#include "BrowserEngine.h"
 #include <QtWebEngineQuick>
 
 // ----------------------------------------------------------------------------
@@ -35,6 +36,10 @@ int main(int argc, char *argv[])
     // 4. Inject the C++ Daemon into the QML Environment globally
     // This allows Desktop.qml to call `VoltraDaemon.launchApplication(...)`
     engine.rootContext()->setContextProperty("VoltraDaemon", &daemon);
+    
+    // Inject the massive Browser Engine backend
+    BrowserEngine browserEngine;
+    engine.rootContext()->setContextProperty("VoltBrowserEngine", &browserEngine);
 
     // 5. Load the Desktop UI
     const QUrl url(QStringLiteral("qrc:/Desktop.qml")); // Assuming qrc, but for now we'll load raw path

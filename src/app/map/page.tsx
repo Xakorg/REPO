@@ -263,6 +263,9 @@ export default function XakteirMapsPage() {
   // Search / route state
   const [startQuery, setStartQuery] = useState("My Location");
   const [destQuery, setDestQuery] = useState("");
+  const [wikiSidebarOpen, setWikiSidebarOpen] = useState(false);
+  const [wikiData, setWikiData] = useState<any>(null);
+  const [wikiLoading, setWikiLoading] = useState(false);
   const [startPoint, setStartPoint] = useState<{ lat: number; lon: number; name: string } | null>(null);
   const [destPoint, setDestPoint] = useState<{ lat: number; lon: number; name: string } | null>(null);
   const [startSuggestions, setStartSuggestions] = useState<{ name: string; lat: number; lon: number }[]>([]);
@@ -1466,21 +1469,46 @@ export default function XakteirMapsPage() {
   };
 
   const getSuggestions = async (queryStr: string) => {
-    const eirClean = queryStr.replace(/\s+/g, "").toUpperCase();
+    if (!queryStr || !queryStr.trim()) return [];
+    const trimmed = queryStr.trim();
+    const eirClean = trimmed.replace(/\s+/g, "").toUpperCase();
+
     if (EIRCODE_REGEX.test(eirClean)) {
       const resolved = resolveEirCodeLocal(eirClean);
       if (resolved) {
-        return [{ name: `EirCode: ${queryStr.toUpperCase()} (${resolved.name})`, lat: resolved.lat, lon: resolved.lon }];
+        return [{ name: `EirCode: ${trimmed.toUpperCase()} (${resolved.name})`, lat: resolved.lat, lon: resolved.lon }];
       }
     }
+
     try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryStr)}&format=json&limit=5`;
-      const res = await fetch(url, { headers: { "Accept-Language": "en-US,en;q=0.9", "User-Agent": "XakteirMaps/1.0" } });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(trimmed)}&format=json&limit=5`;
+      const res = await fetch(url, { signal: controller.signal, headers: { "Accept-Language": "en-US,en;q=0.9", "User-Agent": "XakteirMaps/1.0" } });
+      clearTimeout(timeoutId);
       const data = await res.json();
-      return data.map((item: any) => ({ name: item.display_name, lat: parseFloat(item.lat), lon: parseFloat(item.lon) }));
-    } catch (e) {
-      return [];
-    }
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map((item: any) => ({ name: item.display_name, lat: parseFloat(item.lat), lon: parseFloat(item.lon) }));
+      }
+    } catch (e) {}
+
+    try {
+      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(trimmed)}&limit=5`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data?.features?.length > 0) {
+        return data.features.map((f: any) => {
+          const parts = [f.properties.name, f.properties.street, f.properties.city, f.properties.country].filter(Boolean);
+          return {
+            name: parts.join(", ") || trimmed,
+            lat: f.geometry.coordinates[1],
+            lon: f.geometry.coordinates[0]
+          };
+        });
+      }
+    } catch (e) {}
+
+    return [];
   };
 
   const fetchRoute = async (start: { lat: number, lon: number }, end: { lat: number, lon: number }, mode: "driving" | "cycling" | "walking") => {
@@ -2913,8 +2941,6 @@ export default function XakteirMapsPage() {
               Back to Planner
             </Button>
           </Card>
-        </div>
-      )}
     </div>
   );
 }

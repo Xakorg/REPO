@@ -79,6 +79,7 @@ Window {
                     model: ListModel {
                         id: pinnedApps
                         ListElement { name: "Browser"; icon: "🌐"; colorHex: "#3b82f6" }
+                        ListElement { name: "Terminal"; icon: "💻"; colorHex: "#22c55e" }
                         ListElement { name: "Game Hub"; icon: "🎮"; colorHex: "#a855f7" }
                         ListElement { name: "Files"; icon: "📁"; colorHex: "#eab308" }
                         ListElement { name: "Store"; icon: "🛍️"; colorHex: "#ec4899" }
@@ -111,6 +112,14 @@ Window {
                                         isAppLauncherOpen = false // Auto-close launcher
                                     } else {
                                         console.log("Failed to load VoltraBrowser: " + component.errorString())
+                                    }
+                                } else if (modelData.name === "Terminal") {
+                                    var compTerm = Qt.createComponent("Terminal.qml")
+                                    if (compTerm.status === Component.Ready) {
+                                        compTerm.createObject(desktop).show()
+                                        isAppLauncherOpen = false
+                                    } else {
+                                        console.log("Failed to load Terminal: " + compTerm.errorString())
                                     }
                                 } else if (modelData.name === "Game Hub") {
                                     var component2 = Qt.createComponent("GameHub.qml")

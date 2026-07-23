@@ -1,24 +1,33 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-
-// VOLTRA OS - NATIVE OOBE RUNTIME
-// This C++ engine directly hooks into the Linux DRM/Wayland layer.
-// Blazing fast boot time, zero web browser overhead.
+#include <QQmlContext>
+#include <QQuickStyle>
+#include "OOBEManager.h"
 
 int main(int argc, char *argv[])
 {
-    // Native High-DPI scaling for ultra-crisp 4K/OLED screens
-    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
-    
-    QGuiApplication app(argc, argv);
-    QQmlApplicationEngine engine;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
 
-    const QUrl url(u"qrc:/Voltra/Main.qml"_qs);
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
-        &app, []() { QCoreApplication::exit(-1); },
-        Qt::QueuedConnection);
+    QGuiApplication app(argc, argv);
     
-    // Loads the cinematic UI directly into the GPU
+    // Set a modern style as a base
+    QQuickStyle::setStyle("Basic");
+
+    OOBEManager oobeManager;
+
+    QQmlApplicationEngine engine;
+    
+    // Expose the C++ manager to QML
+    engine.rootContext()->setContextProperty("OOBE", &oobeManager);
+    
+    const QUrl url(QStringLiteral("qrc:/Main.qml"));
+    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
+                     &app, [url](QObject *obj, const QUrl &objUrl) {
+        if (!obj && url == objUrl)
+            QCoreApplication::exit(-1);
+    }, Qt::QueuedConnection);
     engine.load(url);
 
     return app.exec();

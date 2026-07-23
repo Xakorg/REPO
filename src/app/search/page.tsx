@@ -2609,18 +2609,32 @@ console.log(solve("hello"));`}
               </div>
             </div>
 
-            {/* Desktop Sidebar Knowledge Panel */}
+            {/* Sliding Wikipedia Sidebar */}
             {activeCategory === "all" && activeDefinition && (
-              <div className="hidden xl:flex fixed top-0 right-0 w-[450px] h-screen bg-zinc-950 border-l border-zinc-800 shadow-2xl flex-col z-[100] animate-in slide-in-from-right-full duration-500">
-                <div className="flex-1 overflow-y-auto p-10 space-y-8 scrollbar-hide">
+              <div className="fixed top-0 right-0 w-[450px] max-w-[90vw] h-screen bg-zinc-950/98 backdrop-blur-2xl border-l border-zinc-800 shadow-2xl flex flex-col z-[500] animate-in slide-in-from-right-full duration-400">
+                <div className="p-6 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-5 h-5 text-rose-500" />
+                    <h3 className="text-sm font-black uppercase italic tracking-wider text-white">Wikipedia Reference</h3>
+                  </div>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={() => setWikiDefinition(null)} 
+                    className="text-zinc-400 hover:text-white rounded-full h-8 w-8"
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-hide">
                   {activeDefinition.image && (
-                    <div className="w-full h-64 rounded-[2rem] overflow-hidden border border-white/10 bg-zinc-900 relative shadow-inner">
+                    <div className="w-full h-56 rounded-[2rem] overflow-hidden border border-white/10 bg-zinc-900 relative shadow-inner shrink-0">
                       <img src={activeDefinition.image} alt={activeDefinition.title} className="w-full h-full object-cover absolute inset-0" />
                     </div>
                   )}
                   <div>
-                    <h2 className="text-4xl font-black text-white leading-tight">{activeDefinition.title}</h2>
-                    <div className="flex items-center gap-3 mt-4">
+                    <h2 className="text-3xl font-black text-white leading-tight">{activeDefinition.title}</h2>
+                    <div className="flex items-center gap-3 mt-3">
                       <div className="text-xs font-black uppercase tracking-widest text-primary bg-primary/10 px-4 py-2 rounded-xl">
                         {activeDefinition.type}
                       </div>
@@ -2629,12 +2643,12 @@ console.log(solve("hello"));`}
                       )}
                     </div>
                   </div>
-                  <p className="text-base text-zinc-300 leading-relaxed font-medium">
+                  <p className="text-sm text-zinc-300 leading-relaxed font-medium">
                     {activeDefinition.definition}
                   </p>
                   {activeDefinition.facts?.Example && (
-                    <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800">
-                      <p className="text-sm text-zinc-400 italic">
+                    <div className="bg-zinc-900/50 rounded-2xl p-4 border border-zinc-800">
+                      <p className="text-xs text-zinc-400 italic">
                         "{activeDefinition.facts.Example}"
                       </p>
                     </div>

@@ -1,112 +1,142 @@
-import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 Item {
-    id: root
     width: 1920
     height: 1080
 
-    ColumnLayout {
+    // Connect to C++ Signals for state changes
+    Connections {
+        target: OOBE
+        function onNetworkConnectionSuccess() {
+            stackView.push("AccountPage.qml");
+        }
+        function onNetworkConnectionFailed() {
+            statusText.text = "Connection failed. Please try again.";
+            statusText.color = "#FF3B30"; // Red
+        }
+    }
+
+    Rectangle {
+        width: 600
+        height: 500
         anchors.centerIn: parent
-        spacing: 40
+        color: glassColor
+        radius: 24
+        border.color: glassBorder
+        border.width: 1
 
-        Text {
-            text: "Let's get connected."
-            font.family: "Syne"
-            font.pixelSize: 64
-            font.weight: Font.Bold
-            color: "white"
-            Layout.alignment: Qt.AlignHCenter
-        }
-
-        Text {
-            text: "Select a Wi-Fi network to continue."
-            font.family: "Inter"
-            font.pixelSize: 24
-            color: "#a0a0a0"
-            Layout.alignment: Qt.AlignHCenter
-        }
-
-        Rectangle {
-            width: 600
-            height: 400
-            color: Qt.rgba(255/255, 255/255, 255/255, 0.03)
-            border.color: Qt.rgba(255/255, 255/255, 255/255, 0.1)
-            radius: 20
-            Layout.alignment: Qt.AlignHCenter
-            
-            ListView {
-                anchors.fill: parent
-                anchors.margins: 10
-                clip: true
-                model: ListModel {
-                    ListElement { name: "Xakteir_5G_Ultra"; strength: "Excellent"; secure: true }
-                    ListElement { name: "Voltra_Internal"; strength: "Good"; secure: true }
-                    ListElement { name: "Guest_Network"; strength: "Fair"; secure: false }
-                }
-                delegate: Rectangle {
-                    width: ListView.view.width
-                    height: 80
-                    color: itemMouseArea.containsMouse ? Qt.rgba(255/255, 255/255, 255/255, 0.1) : "transparent"
-                    radius: 10
-
-                    Behavior on color { ColorAnimation { duration: 200 } }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 20
-                        
-                        Text {
-                            text: name
-                            font.family: "Inter"
-                            font.pixelSize: 22
-                            color: "white"
-                            Layout.fillWidth: true
-                        }
-
-                        Text {
-                            text: secure ? "🔒 " + strength : "🔓 " + strength
-                            font.family: "Inter"
-                            font.pixelSize: 18
-                            color: "#888888"
-                        }
-                    }
-
-                    MouseArea {
-                        id: itemMouseArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: stackView.push("XakteirAccountPage.qml")
-                    }
-                }
-            }
-        }
-
-        Rectangle {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 20
-            width: 200
-            height: 50
-            radius: 25
-            color: skipMouse.containsMouse ? Qt.rgba(255/255, 255/255, 255/255, 0.1) : "transparent"
-            border.color: Qt.rgba(255/255, 255/255, 255/255, 0.2)
-            
-            Behavior on color { ColorAnimation { duration: 200 } }
+        Column {
+            anchors.centerIn: parent
+            spacing: 20
+            width: parent.width * 0.8
 
             Text {
-                anchors.centerIn: parent
-                text: "Skip for now"
-                font.family: "Inter"
-                font.pixelSize: 18
-                color: "#aaaaaa"
+                text: "Network Configuration"
+                font.pixelSize: 32
+                font.weight: Font.Light
+                color: textColor
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            
+            Text {
+                id: statusText
+                text: "Select a secure Wi-Fi network."
+                font.pixelSize: 16
+                color: "#666666"
+                anchors.horizontalCenter: parent.horizontalCenter
             }
 
-            MouseArea {
-                id: skipMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                onClicked: stackView.push("XakteirAccountPage.qml")
+            // Fake Wi-Fi List
+            Rectangle {
+                width: parent.width
+                height: 200
+                color: "#20FFFFFF"
+                radius: 12
+                border.color: glassBorder
+                border.width: 1
+                
+                ListView {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    model: ["Voltra_HQ_5G", "Xakteir_Guest", "Enterprise_Secure", "Hidden Network..."]
+                    delegate: Rectangle {
+                        width: parent.width
+                        height: 50
+                        color: "transparent"
+                        radius: 8
+                        
+                        Text {
+                            text: modelData
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                            anchors.leftMargin: 20
+                            color: textColor
+                            font.pixelSize: 18
+                        }
+                        
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onEntered: parent.color = "#10000000"
+                            onExited: parent.color = "transparent"
+                            onClicked: {
+                                ssidInput.text = modelData;
+                                passInput.forceActiveFocus();
+                            }
+                        }
+                    }
+                }
+            }
+
+            TextField {
+                id: ssidInput
+                width: parent.width
+                placeholderText: "SSID"
+                font.pixelSize: 16
+                background: Rectangle {
+                    color: "#40FFFFFF"
+                    radius: 8
+                }
+            }
+
+            TextField {
+                id: passInput
+                width: parent.width
+                placeholderText: "WPA3 Password"
+                echoMode: TextInput.Password
+                font.pixelSize: 16
+                background: Rectangle {
+                    color: "#40FFFFFF"
+                    radius: 8
+                }
+            }
+
+            Rectangle {
+                id: connectBtn
+                width: parent.width
+                height: 50
+                radius: 8
+                color: OOBE.isConnecting ? "#999999" : primaryColor
+                
+                Text {
+                    text: OOBE.isConnecting ? "Authenticating..." : "Connect"
+                    color: "white"
+                    font.pixelSize: 16
+                    anchors.centerIn: parent
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: !OOBE.isConnecting
+                    onClicked: {
+                        if (ssidInput.text !== "") {
+                            statusText.text = "Securing connection...";
+                            statusText.color = primaryColor;
+                            OOBE.connectToNetwork(ssidInput.text, passInput.text);
+                        }
+                    }
+                }
             }
         }
     }

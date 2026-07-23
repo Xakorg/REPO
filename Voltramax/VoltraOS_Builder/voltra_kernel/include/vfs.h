@@ -1,62 +1,117 @@
+/**
+ * ============================================================================
+ * VOLTRA OS ENTERPRISE KERNEL - VIRTUAL FILE SYSTEM (VFS)
+ * ============================================================================
+ * 
+ * DESCRIPTION:
+ * The original VoltraOS hardcoded everything to FAT32. An Enterprise OS 
+ * requires a generic Virtual File System (VFS) abstraction layer so that 
+ * applications can read files transparently, regardless of whether they are 
+ * on an Ext4 SSD, an NTFS hard drive, or a virtual /proc memory system.
+ * 
+ * CORE ABSTRACTIONS (Inspired by Linux VFS):
+ * 1. Superblock: Represents a mounted filesystem (e.g., Ext4 on /dev/sda1).
+ * 2. Inode (Index Node): Represents a specific file or directory on disk. 
+ *    Contains metadata (permissions, size, timestamps).
+ * 3. Dentry (Directory Entry): Represents the hierarchical tree (names). 
+ *    Provides ultra-fast O(1) path resolution via the Dentry Cache (dcache).
+ * 4. File: Represents an *open* file by a process. Contains the current 
+ *    read/write offset.
+ * ============================================================================
+ */
+
 #ifndef VFS_H
 #define VFS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
-#define FS_FILE        0x01
-#define FS_DIRECTORY   0x02
-#define FS_CHARDEVICE  0x03
-#define FS_BLOCKDEVICE 0x04
-#define FS_PIPE        0x05
-#define FS_SYMLINK     0x06
-#define FS_MOUNTPOINT  0x08 
+#define MAX_FILENAME 256
+#define MAX_MOUNTPOINTS 32
 
-struct vfs_node;
+// Forward Declarations
+struct inode;
+struct dentry;
+struct file;
+struct superblock;
 
-// Function pointers for file operations
-typedef uint32_t (*read_type_t)(struct vfs_node*, uint32_t, uint32_t, uint8_t*);
-typedef uint32_t (*write_type_t)(struct vfs_node*, uint32_t, uint32_t, uint8_t*);
-typedef void (*open_type_t)(struct vfs_node*);
-typedef void (*close_type_t)(struct vfs_node*);
-typedef struct dirent * (*readdir_type_t)(struct vfs_node*, uint32_t);
-typedef struct vfs_node * (*finddir_type_t)(struct vfs_node*, char *name);
+// ----------------------------------------------------------------------------
+// FILESYSTEM OPERATIONS (Function Pointers)
+// ----------------------------------------------------------------------------
+// Every concrete filesystem (Ext4, FAT32) must implement these callbacks.
 
-typedef struct vfs_node {
-    char name[128];     // The requested filename.
-    uint32_t mask;      // The permissions mask.
-    uint32_t uid;       // The owning user.
-    uint32_t gid;       // The owning group.
-    uint32_t flags;     // Includes the node type.
-    uint32_t inode;     // This is device-specific - provides a way for a filesystem to identify files.
-    uint32_t length;    // Size of the file, in bytes.
-    uint32_t impl;      // An implementation-defined number.
+typedef struct inode_operations {
+    struct inode* (*lookup)(struct inode* dir, const char* name);
+    int (*create)(struct inode* dir, const char* name, uint32_t mode);
+    int (*mkdir)(struct inode* dir, const char* name, uint32_t mode);
+} inode_ops_t;
+
+typedef struct file_operations {
+    int (*read)(struct file* file, void* buf, uint32_t size, uint64_t offset);
+    int (*write)(struct file* file, const void* buf, uint32_t size, uint64_t offset);
+    int (*open)(struct inode* inode, struct file* file);
+    int (*close)(struct file* file);
+} file_ops_t;
+
+typedef struct super_operations {
+    struct inode* (*alloc_inode)(struct superblock* sb);
+    void (*destroy_inode)(struct inode* inode);
+    void (*write_inode)(struct inode* inode);
+} super_ops_t;
+
+// ----------------------------------------------------------------------------
+// CORE STRUCTURES
+// ----------------------------------------------------------------------------
+
+typedef struct inode {
+    uint32_t inode_no;
+    uint32_t size;
+    uint32_t mode; // Permissions and file type (Dir, File, Symlink)
+    uint32_t ref_count; // How many processes have this file open?
     
-    // Virtual Function Pointers
-    read_type_t read;
-    write_type_t write;
-    open_type_t open;
-    close_type_t close;
-    readdir_type_t readdir;
-    finddir_type_t finddir;
+    struct superblock* sb;
+    inode_ops_t* i_ops;
+    file_ops_t* f_ops;
     
-    struct vfs_node *ptr; // Used by mountpoints and symlinks.
-} vfs_node_t;
+    void* private_data; // Pointer to FS-specific data (e.g., Ext4 extents)
+} inode_t;
 
-// Directory entry structure
-struct dirent {
-    char name[128]; // Filename
-    uint32_t ino;   // Inode number
-};
+typedef struct dentry {
+    char name[MAX_FILENAME];
+    struct inode* d_inode;
+    struct dentry* d_parent;
+    
+    // Links for the Dentry Cache tree
+    struct dentry* first_child;
+    struct dentry* next_sibling;
+} dentry_t;
 
-// Global root of our filesystem
-extern vfs_node_t *vfs_root;
+typedef struct file {
+    dentry_t* dentry;
+    uint64_t offset;
+    uint32_t flags; // O_RDONLY, O_WRONLY
+    uint32_t ref_count;
+    file_ops_t* f_ops;
+} file_t;
 
-// Standard API for the rest of the OS to use
-uint32_t vfs_read(vfs_node_t *node, uint32_t offset, uint32_t size, uint8_t *buffer);
-uint32_t vfs_write(vfs_node_t *node, uint32_t offset, uint32_t size, uint8_t *buffer);
-void vfs_open(vfs_node_t *node, uint8_t read, uint8_t write);
-void vfs_close(vfs_node_t *node);
-struct dirent *vfs_readdir(vfs_node_t *node, uint32_t index);
-vfs_node_t *vfs_finddir(vfs_node_t *node, char *name);
+typedef struct superblock {
+    uint32_t magic;
+    uint32_t block_size;
+    dentry_t* root_dentry; // The root "/" of this filesystem
+    
+    super_ops_t* s_ops;
+    void* private_data; // Pointer to FS-specific super block
+} superblock_t;
 
-#endif
+// ----------------------------------------------------------------------------
+// PUBLIC API
+// ----------------------------------------------------------------------------
+
+void vfs_init();
+int vfs_mount(const char* target_path, superblock_t* sb);
+file_t* vfs_open(const char* path, uint32_t flags);
+int vfs_read(file_t* file, void* buf, uint32_t size);
+int vfs_write(file_t* file, const void* buf, uint32_t size);
+void vfs_close(file_t* file);
+
+#endif // VFS_H

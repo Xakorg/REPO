@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "quantum_vanguard",
+    title: "Quantum Vanguard 2099",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Action", "Sci-Fi", "Shooter", "Arcade"],
+    description: "Pilot your apex starfighter against infinite synthwave armadas. Master time dilation, EMP blasts, procedural Web Audio SFX, and quantum arsenal upgrades.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumvanguard",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/quantum-vanguard"
+  },
+  {
     id: "cyber_pulse",
     title: "Cyber Pulse 2099",
     developer: "Xakteir Studios",

@@ -1,81 +1,60 @@
-import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 Item {
-    id: root
     width: 1920
     height: 1080
 
-    ColumnLayout {
+    Rectangle {
+        width: 600
+        height: 400
         anchors.centerIn: parent
-        spacing: 30
+        color: glassColor
+        radius: 24
+        border.color: glassBorder
+        border.width: 1
 
-        Text {
-            text: "All Set."
-            font.family: "Syne"
-            font.pixelSize: 100
-            font.weight: Font.Black
-            color: "white"
-            Layout.alignment: Qt.AlignHCenter
-            opacity: 0
-
-            NumberAnimation on opacity {
-                from: 0; to: 1; duration: 1500; easing.type: Easing.InOutQuad
-            }
-        }
-
-        Text {
-            text: "Your VoltraMax is ready."
-            font.family: "Inter"
-            font.pixelSize: 32
-            color: "#ffd700"
-            Layout.alignment: Qt.AlignHCenter
-            opacity: 0
-
-            SequentialAnimation on opacity {
-                running: true
-                PauseAnimation { duration: 1000 }
-                NumberAnimation { to: 1.0; duration: 1500; easing.type: Easing.InOutQuad }
-            }
-        }
-
-        Rectangle {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 80
-            width: 300
-            height: 80
-            radius: 40
-            color: launchMouse.containsMouse ? Qt.rgba(255/255, 255/255, 255/255, 0.2) : Qt.rgba(255/255, 255/255, 255/255, 0.1)
-            border.color: "white"
-            border.width: 2
-            opacity: 0
-
-            SequentialAnimation on opacity {
-                running: true
-                PauseAnimation { duration: 2500 }
-                NumberAnimation { to: 1.0; duration: 1500; easing.type: Easing.InOutQuad }
-            }
-
-            Behavior on color { ColorAnimation { duration: 200 } }
+        Column {
+            anchors.centerIn: parent
+            spacing: 30
+            width: parent.width * 0.8
 
             Text {
-                anchors.centerIn: parent
-                text: "Launch VoltraOS"
-                font.family: "Inter"
-                font.pixelSize: 24
-                font.weight: Font.Bold
-                color: "white"
-                letterSpacing: 2
+                text: "You're all set."
+                font.pixelSize: 42
+                font.weight: Font.Light
+                color: textColor
+                anchors.horizontalCenter: parent.horizontalCenter
             }
 
-            MouseArea {
-                id: launchMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                onClicked: {
-                    // In a real environment, this would call a C++ backend to exit OOBE and launch Wayland/Desktop
-                    Qt.quit();
+            Text {
+                text: "The system has been configured.\nWelcome to the future of computing."
+                font.pixelSize: 18
+                color: "#666666"
+                horizontalAlignment: Text.AlignHCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            Rectangle {
+                width: 200
+                height: 50
+                radius: 25
+                color: "#34C759" // Green
+                anchors.horizontalCenter: parent.horizontalCenter
+                
+                Text {
+                    text: "Enter VoltraOS"
+                    color: "white"
+                    font.pixelSize: 16
+                    anchors.centerIn: parent
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        // Tell C++ to finalize writes and close OOBE
+                        OOBE.finalizeOOBE(true, true);
+                    }
                 }
             }
         }

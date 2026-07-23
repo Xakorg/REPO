@@ -1,122 +1,110 @@
-import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 Item {
-    id: root
     width: 1920
     height: 1080
 
-    ColumnLayout {
+    Rectangle {
+        width: 600
+        height: 550
         anchors.centerIn: parent
-        spacing: 40
+        color: glassColor
+        radius: 24
+        border.color: glassBorder
+        border.width: 1
 
-        Text {
-            text: "Who's using this VoltraMax?"
-            font.family: "Syne"
-            font.pixelSize: 64
-            font.weight: Font.Bold
-            color: "white"
-            Layout.alignment: Qt.AlignHCenter
-        }
-
-        Rectangle {
-            width: 500
-            height: 450
-            color: Qt.rgba(255/255, 255/255, 255/255, 0.03)
-            border.color: Qt.rgba(255/255, 255/255, 255/255, 0.1)
-            radius: 20
-            Layout.alignment: Qt.AlignHCenter
-
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 40
-                spacing: 25
-
-                Rectangle {
-                    width: 100
-                    height: 100
-                    radius: 50
-                    color: Qt.rgba(138/255, 43/255, 226/255, 0.5)
-                    border.color: "#a855f7"
-                    border.width: 2
-                    Layout.alignment: Qt.AlignHCenter
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "👤"
-                        font.pixelSize: 40
-                    }
-                }
-
-                TextField {
-                    placeholderText: "Full Name"
-                    Layout.fillWidth: true
-                    font.family: "Inter"
-                    font.pixelSize: 20
-                    color: "white"
-                    background: Rectangle {
-                        color: Qt.rgba(0,0,0,0.5)
-                        border.color: parent.activeFocus ? "#a855f7" : Qt.rgba(255/255, 255/255, 255/255, 0.2)
-                        radius: 8
-                    }
-                    padding: 15
-                }
-
-                TextField {
-                    placeholderText: "Username"
-                    Layout.fillWidth: true
-                    font.family: "Inter"
-                    font.pixelSize: 20
-                    color: "white"
-                    background: Rectangle {
-                        color: Qt.rgba(0,0,0,0.5)
-                        border.color: parent.activeFocus ? "#a855f7" : Qt.rgba(255/255, 255/255, 255/255, 0.2)
-                        radius: 8
-                    }
-                    padding: 15
-                }
-
-                TextField {
-                    placeholderText: "Password"
-                    echoMode: TextInput.Password
-                    Layout.fillWidth: true
-                    font.family: "Inter"
-                    font.pixelSize: 20
-                    color: "white"
-                    background: Rectangle {
-                        color: Qt.rgba(0,0,0,0.5)
-                        border.color: parent.activeFocus ? "#a855f7" : Qt.rgba(255/255, 255/255, 255/255, 0.2)
-                        radius: 8
-                    }
-                    padding: 15
-                }
-            }
-        }
-
-        Rectangle {
-            Layout.alignment: Qt.AlignHCenter
-            width: 250
-            height: 60
-            radius: 30
-            color: nextMouse.containsMouse ? "#a855f7" : "#9333ea"
-            
-            Behavior on color { ColorAnimation { duration: 200 } }
+        Column {
+            anchors.centerIn: parent
+            spacing: 20
+            width: parent.width * 0.8
 
             Text {
-                anchors.centerIn: parent
-                text: "Create Account"
-                font.family: "Inter"
-                font.pixelSize: 20
-                font.weight: Font.DemiBold
-                color: "white"
+                text: "Create Local Account"
+                font.pixelSize: 32
+                font.weight: Font.Light
+                color: textColor
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            
+            Text {
+                text: "Your data is encrypted by the Kernel."
+                font.pixelSize: 16
+                color: "#666666"
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            
+            // Profile Image Placeholder
+            Rectangle {
+                width: 100; height: 100
+                radius: 50
+                color: "#40FFFFFF"
+                anchors.horizontalCenter: parent.horizontalCenter
+                Text { text: "📷"; font.pixelSize: 40; anchors.centerIn: parent }
             }
 
-            MouseArea {
-                id: nextMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                onClicked: stackView.push("CompletePage.qml")
+            TextField {
+                id: userInput
+                width: parent.width
+                placeholderText: "Username"
+                font.pixelSize: 16
+                background: Rectangle { color: "#40FFFFFF"; radius: 8 }
+            }
+
+            TextField {
+                id: passInput
+                width: parent.width
+                placeholderText: "Password"
+                echoMode: TextInput.Password
+                font.pixelSize: 16
+                background: Rectangle { color: "#40FFFFFF"; radius: 8 }
+                
+                onTextChanged: {
+                    OOBE.evaluatePassword(text);
+                }
+            }
+
+            // Password Strength Meter
+            Item {
+                width: parent.width
+                height: 10
+                
+                Rectangle {
+                    width: parent.width * (OOBE.passwordStrength / 100.0)
+                    height: parent.height
+                    radius: 5
+                    color: {
+                        if (OOBE.passwordStrength < 40) return "#FF3B30"; // Weak (Red)
+                        if (OOBE.passwordStrength < 80) return "#FF9500"; // Medium (Orange)
+                        return "#34C759"; // Strong (Green)
+                    }
+                    
+                    Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutQuint } }
+                    Behavior on color { ColorAnimation { duration: 300 } }
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 50
+                radius: 8
+                color: (userInput.text !== "" && passInput.text !== "") ? primaryColor : "#999999"
+                
+                Text {
+                    text: "Next"
+                    color: "white"
+                    font.pixelSize: 16
+                    anchors.centerIn: parent
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: userInput.text !== "" && passInput.text !== ""
+                    onClicked: {
+                        OOBE.createUserAccount(userInput.text, passInput.text);
+                        stackView.push("BiometricPage.qml");
+                    }
+                }
             }
         }
     }
