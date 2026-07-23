@@ -1,1 +1,3 @@
-export { default as CyberPulseGame } from "./CyberPulseGame";
+import CyberPulseGame from "./CyberPulseGame";
+export { CyberPulseGame };
+export default CyberPulseGame;
