@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "hyper_horizon",
+    title: "Hyper Horizon 3D",
+    developer: "Xakteir Studios",
+    type: "3D",
+    genre: ["Racing", "Sci-Fi", "3D", "Action", "Arcade"],
+    description: "Pilot your synthwave apex starfighter across a 3D procedural neon horizon. Shoot rogue pylons, trigger hyper boosts, collect quantum credits, and conquer lightspeed.",
+    bannerUrl: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=hyperhorizon",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/hyper-horizon"
+  },
+  {
     id: "quantum_surge",
     title: "Quantum Surge 3D",
     developer: "Xakteir Studios",
