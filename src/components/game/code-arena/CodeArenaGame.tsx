@@ -203,7 +203,7 @@ export default function CodeArenaGame() {
 
     } catch (err: any) {
       setConsoleOutput(`Error: ${err.message || String(err)}`);
-    } flex-1 {
+    } finally {
       setIsRunning(false);
     }
   };

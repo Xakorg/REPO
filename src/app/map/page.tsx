@@ -2941,6 +2941,8 @@ export default function XakteirMapsPage() {
               Back to Planner
             </Button>
           </Card>
+        </div>
+      )}
     </div>
   );
 }
