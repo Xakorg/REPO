@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "aero_phantom",
+    title: "Aero Phantom 3D",
+    developer: "Xakteir Studios",
+    type: "3D",
+    genre: ["Flight", "3D", "Action", "Dogfight", "Shooter"],
+    description: "Pilot an apex supersonic jet fighter across futuristic synthwave canyons in 3D. Lock onto enemy stealth drones with heat-seeking missiles, fire plasma vulcan cannons, and deploy flare countermeasures.",
+    bannerUrl: "https://images.unsplash.com/photo-1517976487492-5750f3195933?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aerophantom",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/aero-phantom"
+  },
+  {
     id: "solar_tempest",
     title: "Solar Tempest 3D",
     developer: "Xakteir Studios",
