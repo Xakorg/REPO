@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "chronos_protocol",
+    title: "Chronos Protocol 3D",
+    developer: "Xakteir Studios",
+    type: "3D",
+    genre: ["Sci-Fi", "3D", "Action", "Shooter", "Bullet Time"],
+    description: "Control temporal mechanics, manipulate bullet-time time dilation, trigger tachyon shockwaves, and defeat endless synthwave armadas in 3D.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=chronosprotocol",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/chronos-protocol"
+  },
+  {
     id: "nexus_overdrive",
     title: "Nexus Overdrive 3D",
     developer: "Xakteir Studios",
