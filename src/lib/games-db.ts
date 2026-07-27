@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "super_stick_battles",
+    title: "Super Stick Battles",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Action", "Fighting", "Arcade", "2D"],
+    description: "High-octane stickman brawler featuring intense wave survival, 1v1 AI duels, customizable cyber skins, procedural synthwave weapons, and explosive rage ultimate abilities.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=superstickbattles",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/super-stick-battles"
+  },
+  {
     id: "aero_phantom",
     title: "Aero Phantom 3D",
     developer: "Xakteir Studios",
