@@ -60,6 +60,10 @@ const server = dns2.createServer({
   tcp: true,
   handle: (request, send, rinfo) => {
     const response = Packet.createResponseFromRequest(request);
+    if (!request.questions || request.questions.length === 0) {
+      send(response);
+      return;
+    }
     const [question] = request.questions;
     const { name } = question;
     

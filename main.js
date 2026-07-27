@@ -43,7 +43,6 @@ function createWindow() {
   });
 }
 
-let overlayWindow = null;
 function createOverlayWindow() {
   const { screen } = require('electron');
   const primaryDisplay = screen.getPrimaryDisplay();

@@ -9,6 +9,7 @@
 #include "TerminalPTY.h"
 #include "SettingsEngine.h"
 #include "InstallerEngine.h"
+#include "DriveEngine.h"
 #include <QtWebEngineQuick>
 
 // ----------------------------------------------------------------------------
@@ -65,6 +66,10 @@ int main(int argc, char *argv[])
     // Inject Bare Metal Installer
     InstallerEngine installerEngine;
     engine.rootContext()->setContextProperty("InstallerEngine", &installerEngine);
+    
+    // Inject Xakteir Drive Sync Daemon
+    DriveEngine driveEngine;
+    engine.rootContext()->setContextProperty("DriveEngine", &driveEngine);
 
     // 5. Load the Boot Splash Screen
     const QUrl url(QStringLiteral("qrc:/BootSplash.qml")); // Assuming qrc, but for now we'll load raw path

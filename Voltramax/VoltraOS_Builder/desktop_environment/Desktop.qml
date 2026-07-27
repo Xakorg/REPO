@@ -78,6 +78,7 @@ Window {
                 Repeater {
                     model: ListModel {
                         id: appsModel
+                        ListElement { name: "Xakteir Drive"; icon: "☁️"; iconColor: "#4285F4"; sourceFile: "XakteirDrive.qml" }
                         ListElement { name: "Install VoltraOS"; icon: "💿"; iconColor: "#FF0000"; sourceFile: "VoltraInstaller.qml" }
                         ListElement { name: "System Settings"; icon: "⚙️"; iconColor: "#888888"; sourceFile: "SystemSettings.qml" }
                         ListElement { name: "VoltMaster"; icon: "⚡"; iconColor: "#00FFCC"; sourceFile: "VoltMaster.qml" }

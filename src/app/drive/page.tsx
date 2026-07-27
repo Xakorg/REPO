@@ -299,6 +299,7 @@ export default function XakDrivePage() {
       
       const blob = await upload(`users/${user!.uid}/drive/${Date.now()}_${fileName}`, file as File, {
         access: 'public',
+        multipart: true,
         handleUploadUrl: '/api/upload',
         clientPayload: user!.uid,
         onUploadProgress: (progressEvent) => {
@@ -562,12 +563,19 @@ export default function XakDrivePage() {
 
   return (
     <div 
-      className="h-screen bg-zinc-950 text-white flex overflow-hidden font-sans select-none"
+      className="h-screen bg-zinc-950 text-white flex overflow-hidden font-sans select-none relative"
       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
       onDragLeave={(e) => { e.preventDefault(); if (e.clientX === 0) setIsDragging(false); }}
       onDrop={handleDrop}
       onClick={() => setSelectedFiles(new Set())}
     >
+      {/* Dynamic Animated Background */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-600/20 blur-[120px] rounded-full animate-pulse mix-blend-screen" />
+        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] bg-purple-600/20 blur-[120px] rounded-full animate-pulse mix-blend-screen" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[20%] left-[40%] w-[30%] h-[30%] bg-emerald-600/10 blur-[100px] rounded-full animate-pulse mix-blend-screen" style={{ animationDelay: '4s' }} />
+      </div>
+
       {/* DRAG OVERLAY */}
       <AnimatePresence>
         {isDragging && (

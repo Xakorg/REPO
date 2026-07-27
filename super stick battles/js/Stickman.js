@@ -1,0 +1,185 @@
+class Stickman {
+    constructor(x, y, color, controls, world, isPlayer1, charData) {
+        this.world = world;
+        this.color = color;
+        this.controls = controls;
+        this.isPlayer1 = isPlayer1;
+        this.charData = charData;
+        
+        // Apply stats
+        this.maxHealth = charData.stats.hp;
+        this.health = this.maxHealth;
+        this.isDead = false;
+        this.isGrounded = false;
+        
+        this.superMeter = 0;
+        this.superActive = false;
+        
+        // Physics dimensions scaled by weight
+        const headRadius = 15;
+        const torsoW = 15 * charData.stats.weight, torsoH = 45;
+        const limbW = 10 * charData.stats.weight, limbH = 40;
+        
+        const group = Matter.Body.nextGroup(true);
+        
+        const commonOpts = {
+            collisionFilter: { group: group },
+            render: { fillStyle: color },
+            friction: 0.8,
+            restitution: 0.1,
+            density: 0.001 * charData.stats.weight
+        };
+
+        // Create parts
+        this.head = Matter.Bodies.circle(x, y - 50, headRadius, {
+            ...commonOpts,
+            label: `player_head_${isPlayer1 ? '1' : '2'}`
+        });
+        
+        this.torso = Matter.Bodies.rectangle(x, y, torsoW, torsoH, {
+            ...commonOpts,
+            label: `player_torso_${isPlayer1 ? '1' : '2'}`
+        });
+        
+        this.armL = Matter.Bodies.rectangle(x - 20, y - 10, limbW, limbH, commonOpts);
+        this.armR = Matter.Bodies.rectangle(x + 20, y - 10, limbW, limbH, commonOpts);
+        this.legL = Matter.Bodies.rectangle(x - 10, y + 40, limbW, limbH, commonOpts);
+        this.legR = Matter.Bodies.rectangle(x + 10, y + 40, limbW, limbH, commonOpts);
+
+        // Weapon
+        const wp = charData.weapon;
+        this.weapon = Matter.Bodies.rectangle(
+            isPlayer1 ? x + 40 : x - 40, 
+            y, 
+            wp.width, 
+            wp.height, 
+            {
+                collisionFilter: { group: group },
+                render: { fillStyle: '#ffffff' },
+                density: wp.density,
+                label: `weapon_${isPlayer1 ? '1' : '2'}`
+            }
+        );
+
+        this.bodies = [this.head, this.torso, this.armL, this.armR, this.legL, this.legR, this.weapon];
+        
+        // Constraints
+        const stiffnessOpts = { stiffness: 0.9, render: { visible: false } };
+        
+        this.constraints = [
+            Matter.Constraint.create({ bodyA: this.head, bodyB: this.torso, pointA: { x: 0, y: headRadius }, pointB: { x: 0, y: -torsoH/2 }, ...stiffnessOpts }),
+            Matter.Constraint.create({ bodyA: this.torso, bodyB: this.armL, pointA: { x: -torsoW/2, y: -torsoH/2 + 5 }, pointB: { x: 0, y: -limbH/2 }, ...stiffnessOpts }),
+            Matter.Constraint.create({ bodyA: this.torso, bodyB: this.armR, pointA: { x: torsoW/2, y: -torsoH/2 + 5 }, pointB: { x: 0, y: -limbH/2 }, ...stiffnessOpts }),
+            Matter.Constraint.create({ bodyA: this.torso, bodyB: this.legL, pointA: { x: -torsoW/2, y: torsoH/2 }, pointB: { x: 0, y: -limbH/2 }, ...stiffnessOpts }),
+            Matter.Constraint.create({ bodyA: this.torso, bodyB: this.legR, pointA: { x: torsoW/2, y: torsoH/2 }, pointB: { x: 0, y: -limbH/2 }, ...stiffnessOpts }),
+            Matter.Constraint.create({
+                bodyA: this.isPlayer1 ? this.armR : this.armL, 
+                bodyB: this.weapon,
+                pointA: { x: 0, y: limbH/2 }, 
+                pointB: { x: this.isPlayer1 ? -wp.width/2 + 10 : wp.width/2 - 10, y: 0 },
+                ...stiffnessOpts
+            })
+        ];
+
+        this.composite = Matter.Composite.create({ bodies: this.bodies, constraints: this.constraints });
+        Matter.World.add(this.world, this.composite);
+    }
+
+    update(keys) {
+        if (this.isDead) return;
+
+        const stats = this.charData.stats;
+        
+        // Apply movement
+        if (keys[this.controls.left]) Matter.Body.applyForce(this.torso, this.torso.position, { x: -stats.speed, y: 0 });
+        if (keys[this.controls.right]) Matter.Body.applyForce(this.torso, this.torso.position, { x: stats.speed, y: 0 });
+        
+        if (keys[this.controls.up]) {
+            if (this.isGrounded) {
+                Matter.Body.applyForce(this.torso, this.torso.position, { x: 0, y: -stats.jump });
+            } else if (this.charData.super === "Triple Jump" && this.superMeter >= 100 && keys[this.controls.super]) {
+                // Ninja triple jump mid-air
+                Matter.Body.applyForce(this.torso, this.torso.position, { x: 0, y: -stats.jump * 1.5 });
+                this.superMeter = 0;
+            }
+        }
+        
+        if (keys[this.controls.attack]) {
+             const spinDir = this.isPlayer1 ? 0.05 : -0.05;
+             Matter.Body.applyForce(this.weapon, { x: this.weapon.position.x + (this.isPlayer1 ? 20 : -20), y: this.weapon.position.y }, { x: 0, y: -0.01 });
+             Matter.Body.setAngularVelocity(this.weapon, spinDir);
+        }
+
+        // Super Abilities
+        if (keys[this.controls.super] && this.superMeter >= 100) {
+            this.activateSuper();
+        }
+        
+        // Keep torso upright
+        Matter.Body.setAngle(this.torso, 0);
+        Matter.Body.setAngularVelocity(this.torso, 0);
+        Matter.Body.setAngle(this.head, 0);
+        Matter.Body.setAngularVelocity(this.head, 0);
+
+        // Passive Super Charge
+        if (this.superMeter < 100) {
+            this.superMeter += 0.1;
+            this.updateSuperUI();
+        }
+    }
+    
+    activateSuper() {
+        this.superMeter = 0;
+        this.updateSuperUI();
+        const sup = this.charData.super;
+
+        if (sup === "Dash Attack") {
+            const dir = this.isPlayer1 ? 1 : -1;
+            Matter.Body.applyForce(this.torso, this.torso.position, { x: 0.5 * dir, y: 0 });
+            Matter.Body.setAngularVelocity(this.weapon, 0.5 * dir);
+        } else if (sup === "Ground Smash") {
+            Matter.Body.applyForce(this.torso, this.torso.position, { x: 0, y: 1.0 });
+        } else if (sup === "Heal") {
+            this.health = Math.min(this.maxHealth, this.health + 50);
+            this.updateHealthUI();
+        }
+    }
+
+    takeDamage(amount) {
+        if (this.isDead) return;
+        
+        amount *= this.charData.stats.damageMult;
+        this.health -= amount;
+        
+        // Taking damage charges super faster
+        this.superMeter = Math.min(100, this.superMeter + amount);
+        this.updateSuperUI();
+        
+        if (this.health <= 0) {
+            this.health = 0;
+            this.die();
+        }
+        this.updateHealthUI();
+    }
+    
+    updateHealthUI() {
+        const hpPercent = (this.health / this.maxHealth) * 100;
+        const healthBarId = this.isPlayer1 ? 'hud-p1-health' : 'hud-p2-health';
+        document.getElementById(healthBarId).style.width = hpPercent + '%';
+    }
+
+    updateSuperUI() {
+        const superBarId = this.isPlayer1 ? 'hud-p1-super' : 'hud-p2-super';
+        document.getElementById(superBarId).style.width = this.superMeter + '%';
+        if (this.superMeter >= 100) {
+            document.getElementById(superBarId).style.background = '#00ffaa';
+        } else {
+            document.getElementById(superBarId).style.background = 'var(--gold)';
+        }
+    }
+    
+    die() {
+        this.isDead = true;
+        this.constraints.forEach(c => c.stiffness = 0.01);
+    }
+}

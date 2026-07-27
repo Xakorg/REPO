@@ -2025,7 +2025,7 @@ export default function MailPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-900 border-white/10 text-white">
                   <SelectItem value="main">
-                    {userData?.xakteirEmail || (userData?.username ? `${userData.username}@mail.xakteir.com` : user?.email || "Main")}
+                    {userData?.username ? `${userData.username}@mail.xakteir.com` : (userData?.xakteirEmail || user?.email || "Main")}
                   </SelectItem>
                   {aliases.map(a => <SelectItem key={a.id} value={a.id}>{a.address}</SelectItem>)}
                 </SelectContent>

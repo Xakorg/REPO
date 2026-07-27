@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "nexus_overdrive",
+    title: "Nexus Overdrive 3D",
+    developer: "Xakteir Studios",
+    type: "3D",
+    genre: ["Sci-Fi", "3D", "Action", "Shooter", "Space Fighter"],
+    description: "Pilot your custom cyber starfighter through hostile armadas in 3D. Unleash homing missiles, activate hyper overdrive, upgrade weapons, and conquer the sector.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=nexusoverdrive",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/nexus-overdrive"
+  },
+  {
     id: "super_stick_battles",
     title: "Super Stick Battles",
     developer: "Xakteir Studios",

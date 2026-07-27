@@ -1,0 +1,162 @@
+:root {
+    --bg-color: #0f0f13;
+    --p1-color: #00f3ff;
+    --p2-color: #ff0055;
+    --text-color: #ffffff;
+    --font-main: 'Inter', 'Segoe UI', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-main);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+canvas {
+    display: block;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+    background: radial-gradient(circle at center, #1a1a24 0%, #0f0f13 100%);
+    border: 2px solid #2a2a35;
+    border-radius: 10px;
+}
+
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+#health-bars {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 50px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.player-hud {
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.player-hud:nth-child(2) {
+    align-items: flex-end;
+}
+
+.player-name {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.p1-name { color: var(--p1-color); }
+.p2-name { color: var(--p2-color); }
+
+.health-bar-container {
+    width: 100%;
+    height: 25px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid #333;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+
+.health-fill {
+    height: 100%;
+    width: 100%;
+    transition: width 0.1s ease-out;
+}
+
+.p1-fill {
+    background: linear-gradient(90deg, #0088ff, var(--p1-color));
+    box-shadow: 0 0 15px var(--p1-color);
+    transform-origin: left;
+}
+
+.p2-fill {
+    background: linear-gradient(270deg, #aa0033, var(--p2-color));
+    box-shadow: 0 0 15px var(--p2-color);
+    transform-origin: right;
+    float: right;
+}
+
+#game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    background: rgba(15, 15, 19, 0.9);
+    padding: 40px 60px;
+    border-radius: 20px;
+    border: 2px solid #333;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+    pointer-events: auto;
+    backdrop-filter: blur(5px);
+}
+
+#game-over.hidden {
+    display: none;
+}
+
+#winner-text {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px currentColor;
+}
+
+#restart-btn {
+    background: transparent;
+    color: white;
+    border: 2px solid white;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-family: var(--font-main);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#restart-btn:hover {
+    background: white;
+    color: var(--bg-color);
+    box-shadow: 0 0 20px white;
+}
+
+#instructions {
+    text-align: center;
+    padding: 20px;
+    color: #888;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}

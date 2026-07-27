@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Stick Battles</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Google Fonts for premium typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Main Scrolling UI -->
+    <div id="ui-container" class="scroll-container">
+        
+        <!-- LOADOUT SCREEN (Left) -->
+        <section id="loadout-screen" class="ui-section">
+            <div class="panel">
+                <h2>LOADOUT</h2>
+                <div class="players-loadout">
+                    <div class="player-card p1-card">
+                        <h3>Player 1</h3>
+                        <div class="gold-display">Gold: <span id="p1-gold">0</span></div>
+                        <select id="p1-char-select"></select>
+                        <div id="p1-stats" class="stats-box"></div>
+                    </div>
+                    <div class="player-card p2-card">
+                        <h3>Player 2</h3>
+                        <div class="gold-display">Gold: <span id="p2-gold">0</span></div>
+                        <select id="p2-char-select"></select>
+                        <div id="p2-stats" class="stats-box"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PLAY SCREEN (Center) -->
+        <section id="play-screen" class="ui-section">
+            <div class="panel main-panel">
+                <h1 class="game-title">SUPER STICK BATTLES</h1>
+                <p class="subtitle">Swipe Left/Right for Menus</p>
+                
+                <div class="menu-controls">
+                    <div class="form-group">
+                        <label>Game Mode</label>
+                        <select id="game-mode-select">
+                            <option value="deathmatch">Deathmatch (1v1)</option>
+                            <option value="bo3">Best of 3</option>
+                            <option value="juggernaut">Juggernaut (P1 is Giant)</option>
+                            <option value="survival">Survival (Co-op vs AI)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Map</label>
+                        <select id="map-select">
+                            <option value="arena">The Arena</option>
+                            <option value="islands">Floating Islands</option>
+                            <option value="pit">The Pit</option>
+                            <option value="bridge">The Bridge</option>
+                            <option value="stairway">Stairway to Heaven</option>
+                            <option value="bouncy">Bouncy Castle</option>
+                            <option value="cage">The Cage</option>
+                            <!-- Custom maps will be injected here -->
+                        </select>
+                    </div>
+                    
+                    <button id="start-btn" class="btn primary-btn">FIGHT!</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- STORE SCREEN (Right) -->
+        <section id="store-screen" class="ui-section">
+            <div class="panel store-panel">
+                <h2>THE STORE</h2>
+                <p>Unlock new characters with unique stats and super abilities!</p>
+                
+                <div class="store-buyer-select">
+                    <label>Buying for: </label>
+                    <select id="store-buyer">
+                        <option value="p1">Player 1</option>
+                        <option value="p2">Player 2</option>
+                    </select>
+                </div>
+
+                <div class="chests-container">
+                    <div class="chest basic-chest" onclick="buyChest('basic')">
+                        <h3>Basic Chest</h3>
+                        <p>75 Gold</p>
+                        <p class="rates">High chance for Common</p>
+                    </div>
+                    <div class="chest epic-chest" onclick="buyChest('epic')">
+                        <h3>Epic Chest</h3>
+                        <p>150 Gold</p>
+                        <p class="rates">Guaranteed Rare+</p>
+                    </div>
+                    <div class="chest legendary-chest" onclick="buyChest('legendary')">
+                        <h3>Legendary Chest</h3>
+                        <p>250 Gold</p>
+                        <p class="rates">High chance for Legendary</p>
+                    </div>
+                </div>
+                <div id="unlock-modal" class="hidden">
+                    <h2 id="unlock-title">You unlocked:</h2>
+                    <h1 id="unlock-name">CHARACTER NAME</h1>
+                    <button class="btn" onclick="closeUnlockModal()">Awesome</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- MAP BUILDER SCREEN (Far Right) -->
+        <section id="map-builder-screen" class="ui-section">
+            <div class="panel">
+                <h2>MAP BUILDER</h2>
+                <p>Create your own arenas!</p>
+                <div class="builder-controls">
+                    <input type="text" id="custom-map-name" placeholder="Map Name...">
+                    <button class="btn" id="enter-builder-btn">Enter Builder</button>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- GAME OVERLAY (Hidden until game starts) -->
+    <div id="game-overlay" class="hidden">
+        <div id="in-game-hud">
+            <div class="hud-p1">
+                <div class="name-tag" id="hud-p1-name">PLAYER 1</div>
+                <div class="health-bar"><div id="hud-p1-health" class="health-fill p1-fill"></div></div>
+                <div class="super-bar"><div id="hud-p1-super" class="super-fill"></div></div>
+            </div>
+            <div class="hud-timer" id="hud-timer">00:00</div>
+            <div class="hud-p2">
+                <div class="name-tag" id="hud-p2-name">PLAYER 2</div>
+                <div class="health-bar"><div id="hud-p2-health" class="health-fill p2-fill"></div></div>
+                <div class="super-bar"><div id="hud-p2-super" class="super-fill"></div></div>
+            </div>
+        </div>
+
+        <div id="game-over-modal" class="hidden">
+            <h1 id="winner-text">PLAYER WINS!</h1>
+            <p id="reward-text">+50 Gold</p>
+            <button id="return-menu-btn" class="btn">Return to Menu</button>
+        </div>
+    </div>
+
+    <!-- MAP BUILDER OVERLAY -->
+    <div id="builder-overlay" class="hidden">
+        <div class="builder-tools">
+            <button class="btn" id="save-map-btn">Save Map</button>
+            <button class="btn" id="exit-builder-btn">Exit</button>
+            <span>Click and drag to draw platforms.</span>
+        </div>
+    </div>
+
+    <!-- Matter.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    
+    <!-- Game Scripts -->
+    <script src="js/Characters.js"></script>
+    <script src="js/GameManager.js"></script>
+    <script src="js/Store.js"></script>
+    <script src="js/Camera.js"></script>
+    <script src="js/Level.js"></script>
+    <script src="js/MapBuilder.js"></script>
+    <script src="js/Stickman.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

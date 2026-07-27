@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+const SUITE_APPS = ['forms', 'write', 'sheets', 'slides'];
+
 export function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const hostname = req.headers.get('host') || '';
@@ -24,8 +26,7 @@ export function middleware(req: NextRequest) {
   }
 
   // 1.5 Handle explicit Suite Apps
-  const suiteApps = ['forms', 'write', 'sheets', 'slides'];
-  for (const app of suiteApps) {
+  for (const app of SUITE_APPS) {
     if (hostname === `${app}.suite.xakteir.com` || hostname === `www.${app}.suite.xakteir.com`) {
       if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
       
@@ -354,8 +355,7 @@ export function middleware(req: NextRequest) {
     if (path === '/suite') return NextResponse.redirect('https://suite.xakteir.com');
     if (path.startsWith('/suite/')) return NextResponse.redirect(`https://suite.xakteir.com${path.replace('/suite', '')}`);
 
-    const suiteApps = ['forms', 'write', 'sheets', 'slides'];
-    for (const app of suiteApps) {
+    for (const app of SUITE_APPS) {
       if (path === `/${app}`) return NextResponse.redirect(`https://${app}.suite.xakteir.com`);
       if (path.startsWith(`/${app}/`)) return NextResponse.redirect(`https://${app}.suite.xakteir.com${path.replace(`/${app}`, '')}`);
     }
@@ -383,7 +383,7 @@ export function middleware(req: NextRequest) {
       path === '/microdimension' || path.startsWith('/microdimension/') ||
       path === '/everyworld' || path.startsWith('/everyworld/') ||
       path === '/suite' || path.startsWith('/suite/') ||
-      suiteApps.some(app => path === `/${app}` || path.startsWith(`/${app}/`))
+      SUITE_APPS.some(app => path === `/${app}` || path.startsWith(`/${app}/`))
     ) {
       // Rewrite to a non-existent route to trigger Next.js 404 (Hidden from users)
       return NextResponse.rewrite(new URL('/404', req.url));

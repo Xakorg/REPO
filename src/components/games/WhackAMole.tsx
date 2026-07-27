@@ -47,15 +47,14 @@ export default function WhackAMole() {
     return () => clearInterval(interval);
   }, [playing]);
 
-  const whack = (i: number) => {
-    if (!playing || !active.has(i)) return;
-    setActive(prev => { const next = new Set(prev); next.delete(i); return next; });
-    setScore(s => s + 10);
-  };
-
-  const miss = (i: number) => {
-    if (!playing || active.has(i)) return;
-    setMisses(m => m + 1);
+  const handleClick = (i: number) => {
+    if (!playing) return;
+    if (active.has(i)) {
+      setActive(prev => { const next = new Set(prev); next.delete(i); return next; });
+      setScore(s => s + 10);
+    } else {
+      setMisses(m => m + 1);
+    }
   };
 
   return (
@@ -68,7 +67,7 @@ export default function WhackAMole() {
 
       <div className="grid grid-cols-3 gap-4">
         {MOLES.map(i => (
-          <button key={i} onClick={() => whack(i)} onMouseDown={() => miss(i)}
+          <button key={i} onClick={() => handleClick(i)}
             className={`w-32 h-32 rounded-full border-4 transition-all duration-150 overflow-hidden relative ${
               active.has(i) ? "border-emerald-500 bg-emerald-900 scale-110" : "border-zinc-700 bg-zinc-800 hover:border-zinc-500"
             }`}>
