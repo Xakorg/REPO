@@ -991,8 +991,11 @@ export default function NexusOverdriveGame() {
                 }
 
                 return { ...enemy, hp: newHp };
-              }).filter(enemy => enemy.hp > 0);
-            });
+              }
+
+              return enemy;
+            }).filter(enemy => enemy.hp > 0);
+          });
 
           if (!hitEnemy) {
             remainingBullets.push(bullet);
