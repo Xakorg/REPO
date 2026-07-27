@@ -105,6 +105,19 @@ const premiumGames: GameMeta[] = [
     route: "/game/quantum-vanguard"
   },
   {
+    id: "void_vanguard",
+    title: "Void Vanguard 3D",
+    developer: "Xakteir Studios",
+    type: "3D",
+    genre: ["Sci-Fi", "3D", "Action", "Shooter", "Space Fighter"],
+    description: "Apex sci-fi starfighter battle simulator. Unleash EMP shockwaves, homing missile swarms, quantum beams, upgrade ship subsystems, and conquer dreadnought bosses.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=voidvanguard",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/void-vanguard"
+  },
+  {
     id: "cyber_pulse",
     title: "Cyber Pulse 2099",
     developer: "Xakteir Studios",
