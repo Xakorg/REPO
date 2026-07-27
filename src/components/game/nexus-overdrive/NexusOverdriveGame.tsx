@@ -365,7 +365,7 @@ function WarpGridFloor() {
 }
 
 // 3D Player Starfighter
-function 3DPlayerShip({
+function PlayerShip3D({
   position,
   skin,
   isOverdrive,
@@ -442,7 +442,7 @@ function 3DPlayerShip({
 }
 
 // 3D Enemy Models
-function 3DEnemyMesh({ enemy }: { enemy: EnemyUnit }) {
+function EnemyMesh3D({ enemy }: { enemy: EnemyUnit }) {
   const meshRef = useRef<THREE.Group>(null);
 
   useFrame((_, delta) => {
@@ -506,7 +506,7 @@ function 3DEnemyMesh({ enemy }: { enemy: EnemyUnit }) {
 }
 
 // 3D Laser & Projectile Bullets
-function 3DBulletMesh({ bullet }: { bullet: BulletUnit }) {
+function BulletMesh3D({ bullet }: { bullet: BulletUnit }) {
   return (
     <mesh position={bullet.position}>
       <sphereGeometry args={[bullet.isPlayer ? 0.25 : 0.3, 8, 8]} />
@@ -516,7 +516,7 @@ function 3DBulletMesh({ bullet }: { bullet: BulletUnit }) {
 }
 
 // 3D Powerup Items
-function 3DPowerupMesh({ powerup }: { powerup: PowerupUnit }) {
+function PowerupMesh3D({ powerup }: { powerup: PowerupUnit }) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((_, delta) => {
@@ -1102,7 +1102,7 @@ export default function NexusOverdriveGame() {
           <WarpGridFloor />
 
           {/* Player Ship */}
-          <3DPlayerShip
+          <PlayerShip3D
             position={playerPosition}
             skin={selectedSkin}
             isOverdrive={isOverdriveActive}
@@ -1111,17 +1111,17 @@ export default function NexusOverdriveGame() {
 
           {/* Render Enemies */}
           {enemies.map(enemy => (
-            <3DEnemyMesh key={enemy.id} enemy={enemy} />
+            <EnemyMesh3D key={enemy.id} enemy={enemy} />
           ))}
 
           {/* Render Bullets */}
           {bullets.map(bullet => (
-            <3DBulletMesh key={bullet.id} bullet={bullet} />
+            <BulletMesh3D key={bullet.id} bullet={bullet} />
           ))}
 
           {/* Render Powerup Items */}
           {powerups.map(powerup => (
-            <3DPowerupMesh key={powerup.id} powerup={powerup} />
+            <PowerupMesh3D key={powerup.id} powerup={powerup} />
           ))}
         </Canvas>
       </div>
