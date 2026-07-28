@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "shadow_blade_2d",
+    title: "Shadow Blade 2D",
+    developer: "Xakteir Studios",
+    type: "2D Platformer",
+    genre: ["Action", "Cyberpunk", "2D", "Ninja", "Hack and Slash", "Canvas"],
+    description: "High-octane 2D cyberpunk shinobi action. Slice rogue ninjas, deflect plasma bolts, execute cyber dashes, and battle Shadow Oni bosses.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=shadowblade2d",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/shadow-blade"
+  },
+  {
     id: "cyber_nexus_survivor",
     title: "Cyber Nexus Survivor 2D",
     developer: "Xakteir Studios",
