@@ -7,7 +7,7 @@ export default function CodeRedirectPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/xakcode");
+    window.location.replace("/xakcode");
   }, [router]);
 
   return (

@@ -86,7 +86,7 @@ function XakteirDashboard() {
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (searchInput.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchInput.trim())}`);
+      window.location.href = `/search?q=${encodeURIComponent(searchInput.trim())}`;
     }
   };
 
@@ -140,8 +140,8 @@ function XakteirDashboard() {
             </button>
           </form>
           <div className="flex flex-wrap justify-center gap-3 md:gap-8 mt-8 md:mt-14 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-             <Button onClick={() => router.push('/search')} variant="ghost" className="rounded-full px-8 md:px-16 h-10 md:h-16 text-[8px] md:text-[11px] font-black uppercase tracking-[0.3em] text-white/50 hover:bg-primary/10 hover:text-primary border-2 border-white/5 transition-all shadow-xl italic">Search</Button>
-             <Button onClick={() => router.push('/ai-chat')} variant="ghost" className="rounded-full px-8 md:px-16 h-10 md:h-16 text-[8px] md:text-[11px] font-black uppercase tracking-[0.3em] text-white/50 hover:bg-primary/10 hover:text-primary border-2 border-white/5 transition-all shadow-xl italic">Xak AI</Button>
+             <Button onClick={() => window.location.href = '/search'} variant="ghost" className="rounded-full px-8 md:px-16 h-10 md:h-16 text-[8px] md:text-[11px] font-black uppercase tracking-[0.3em] text-white/50 hover:bg-primary/10 hover:text-primary border-2 border-white/5 transition-all shadow-xl italic">Search</Button>
+             <Button onClick={() => window.location.href = '/ai-chat'} variant="ghost" className="rounded-full px-8 md:px-16 h-10 md:h-16 text-[8px] md:text-[11px] font-black uppercase tracking-[0.3em] text-white/50 hover:bg-primary/10 hover:text-primary border-2 border-white/5 transition-all shadow-xl italic">Xak AI</Button>
           </div>
         </div>
 

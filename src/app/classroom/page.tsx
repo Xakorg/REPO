@@ -103,7 +103,7 @@ export default function ClassroomPage() {
       });
       
       toast({ title: "Class Joined!", description: `You have successfully entered ${classDoc.data().name}.` });
-      router.push(`/classroom/${classDoc.id}`);
+      window.location.href = `/classroom/${classDoc.id}`;
       setJoinCodeInput("");
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: "Failed to join class." });
@@ -186,7 +186,7 @@ export default function ClassroomPage() {
             {role === 'teacher' && teacherClasses?.map(c => (
               <Card 
                 key={c.id} 
-                onClick={() => router.push(`/classroom/${c.id}`)}
+                onClick={() => window.location.href = `/classroom/${c.id}`}
                 className="glass-card p-8 border-4 border-white/10 hover:border-primary/50 transition-all rounded-[2.5rem] bg-zinc-950/40 cursor-pointer flex flex-col justify-between group h-60"
               >
                 <div>
@@ -205,7 +205,7 @@ export default function ClassroomPage() {
             {role === 'student' && studentClasses?.map(c => (
               <Card 
                 key={c.id} 
-                onClick={() => router.push(`/classroom/${c.id}`)}
+                onClick={() => window.location.href = `/classroom/${c.id}`}
                 className="glass-card p-8 border-4 border-white/10 hover:border-primary/50 transition-all rounded-[2.5rem] bg-zinc-950/40 cursor-pointer flex flex-col justify-between group h-60"
               >
                 <div>

@@ -33,7 +33,7 @@ export default function RetroEnginePage() {
     <div className="w-full h-screen bg-[#050505] text-white font-sans overflow-hidden flex flex-col">
       {/* Header */}
       <header className="p-6 flex justify-between z-10 bg-black border-b border-white/10">
-         <button onClick={() => router.push('/games')} className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full font-bold hover:bg-white/10 transition-colors">
+         <button onClick={() => window.location.href = '/games'} className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full font-bold hover:bg-white/10 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Library
          </button>
          <div className="flex items-center gap-2">

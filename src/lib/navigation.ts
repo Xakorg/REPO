@@ -15,7 +15,7 @@ export function getAbsoluteUrl(path: string): string {
   return finalPath;
 }
 
-export function navigateTo(path: string, router: any) {
+export function navigateTo(path: string, router: any, replace: boolean = false) {
   if (typeof window === "undefined") return;
 
   const targetUrl = getAbsoluteUrl(path);
@@ -27,7 +27,8 @@ export function navigateTo(path: string, router: any) {
 
     // If origins are different (different subdomains/domains), we MUST do a full page reload
     if (targetObj.origin !== currentObj.origin) {
-      window.location.href = targetObj.href;
+      if (replace) window.location.replace(targetObj.href);
+      else window.location.href = targetObj.href;
       return;
     }
 
@@ -39,10 +40,12 @@ export function navigateTo(path: string, router: any) {
     // This allows Next.js to show loading states and remain responsive.
     import('react').then(({ startTransition }) => {
       startTransition(() => {
-        router.push(relativePath);
+        if (replace) router.replace(relativePath);
+        else router.push(relativePath);
       });
     });
   } catch (e) {
-    window.location.href = targetUrl;
+    if (replace) window.location.replace(targetUrl);
+    else window.location.href = targetUrl;
   }
 }

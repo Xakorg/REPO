@@ -74,7 +74,7 @@ export default function AuthPage() {
   useEffect(() => {
     if (existingUser && !showAnimation && !isAddAccount) {
       const source = searchParams?.get("source");
-      router.push(source ? `/${source}` : "/");
+      window.location.href = source ? `/${source}` : "/";
     }
   }, [existingUser, router, showAnimation, isAddAccount, searchParams]);
 
@@ -89,12 +89,12 @@ export default function AuthPage() {
         }).then(() => {
           if (isMounted) {
             const source = searchParams?.get("source");
-            router.replace(source ? `/${source}` : "/");
+            window.location.replace(source ? `/${source}` : "/");
           }
         }).catch(() => {
           if (isMounted) {
             const source = searchParams?.get("source");
-            router.replace(source ? `/${source}` : "/");
+            window.location.replace(source ? `/${source}` : "/");
           }
         });
       });
@@ -256,7 +256,7 @@ export default function AuthPage() {
       setShowAnimation(false);
       sessionStorage.setItem("start_onboarding", "true");
       const source = searchParams?.get("source");
-      router.push(source ? `/${source}` : "/");
+      window.location.href = source ? `/${source}` : "/";
     }, 3000);
   };
 

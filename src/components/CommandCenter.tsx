@@ -95,7 +95,7 @@ export function CommandCenter() {
   }, [isOpen, results, selectedIndex]);
 
   const handleNavigate = (href: string) => {
-    router.push(href);
+    window.location.href = href;
     setIsOpen(false);
   };
 

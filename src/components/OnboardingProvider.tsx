@@ -46,7 +46,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const startTutorial = () => {
     setActiveStep('welcome');
     setHasInteracted(false);
-    router.push('/');
+    window.location.href = '/';
   };
 
   const completeAction = useCallback((step: string) => {
@@ -61,23 +61,23 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     else if (activeStep === 'questions') setActiveStep('intro');
     else if (activeStep === 'intro') {
       setActiveStep('games');
-      router.push('/games');
+      window.location.href = '/games';
     }
     else if (activeStep === 'games') {
       setActiveStep('studio');
-      router.push('/games/studio');
+      window.location.href = '/games/studio';
     }
     else if (activeStep === 'studio') {
       setActiveStep('buddy');
-      router.push('/buddy');
+      window.location.href = '/buddy';
     }
     else if (activeStep === 'buddy') {
       setActiveStep('ai');
-      router.push('/ai-chat');
+      window.location.href = '/ai-chat';
     }
     else if (activeStep === 'ai') {
       setActiveStep('launcher');
-      router.push('/');
+      window.location.href = '/';
     }
     else if (activeStep === 'launcher') setActiveStep(null);
   };

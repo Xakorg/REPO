@@ -55,7 +55,7 @@ export default function GamesStorePage() {
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-10 py-6 bg-gradient-to-b from-black/90 to-transparent backdrop-blur-md">
         <div className="flex items-center gap-6">
           <button 
-            onClick={() => router.push('/games')}
+            onClick={() => window.location.href = '/games'}
             className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -85,7 +85,7 @@ export default function GamesStorePage() {
           <div className="flex items-center gap-4">
             {libraryIds.includes(featuredGame.id) ? (
               <button 
-                onClick={() => router.push(featuredGame.route)}
+                onClick={() => window.location.href = featuredGame.route}
                 className="flex items-center gap-3 px-8 py-4 bg-white text-black rounded-full font-black tracking-widest uppercase hover:scale-105 transition-transform"
               >
                 <Play className="w-5 h-5 fill-black" />
@@ -145,7 +145,7 @@ export default function GamesStorePage() {
 
                   {isOwned ? (
                     <button 
-                      onClick={() => router.push(game.route)}
+                      onClick={() => window.location.href = game.route}
                       className="w-full py-3 rounded-xl bg-white/10 text-white font-bold tracking-widest uppercase flex items-center justify-center gap-2 hover:bg-white hover:text-black transition-colors"
                     >
                       <Check className="w-4 h-4" />

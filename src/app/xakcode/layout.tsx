@@ -150,7 +150,7 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
         </div>
         <h2 className="text-6xl font-black uppercase italic tracking-tighter text-white">Developer Entry</h2>
         <p className="text-muted-foreground font-bold uppercase tracking-widest max-w-sm">Sign in to initialize your AI code library and hosting suite.</p>
-        <Button onClick={() => router.push('/auth')} className="bg-sky-500 hover:bg-sky-400 text-black h-16 px-16 rounded-[2rem] font-black uppercase text-xs">Sign In</Button>
+        <Button onClick={() => window.location.href = '/auth'} className="bg-sky-500 hover:bg-sky-400 text-black h-16 px-16 rounded-[2rem] font-black uppercase text-xs">Sign In</Button>
       </div>
     );
   }
@@ -219,7 +219,7 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
               return (
                 <button
                   key={item.path}
-                  onClick={() => router.push(item.path)}
+                  onClick={() => window.location.href = item.path}
                   title={item.label}
                   className={cn(
                     "w-10 h-10 rounded-xl flex items-center justify-center transition-all group relative mx-auto",
@@ -237,7 +237,7 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
 
           <div className="w-full px-2">
             <button
-              onClick={() => router.push('/xakcode/settings')}
+              onClick={() => window.location.href = '/xakcode/settings'}
               title="Settings"
               className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center transition-all mx-auto",

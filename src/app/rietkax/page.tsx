@@ -55,7 +55,7 @@ export default function RietkaxPage() {
       <header className="absolute top-10 flex flex-col items-center space-y-4 z-[6000]">
         <Button 
           variant="ghost" 
-          onClick={() => router.push("/")}
+          onClick={() => window.location.href = "/"}
           className="text-rose-500 hover:bg-rose-500/10 font-black uppercase text-[10px] tracking-[0.5em] h-14 px-12 rounded-full border-4 border-rose-500/20 scale-x-[-1] transition-all active:scale-95 bg-black/40 backdrop-blur-xl"
         >
           <ChevronLeft className="w-6 h-6 ml-4" /> Escape Mirror Dimension

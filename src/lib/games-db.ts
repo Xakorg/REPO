@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "aether_mech_overdrive",
+    title: "Aether Mech: Overdrive",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["2D Top-Down", "Action", "Cyberpunk", "Mech", "Sci-Fi", "Shooter"],
+    description: "High-octane tactical 2D cyber-mech arcade combat. Pilot customizable combat mechs, deploy time-warp matrix abilities, level up perks, and conquer rogue AI armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aethermechoverdrive",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/aether-mech-overdrive"
+  },
+  {
     id: "quantum_helix_cyber_odyssey",
     title: "Quantum Helix: Cyber Odyssey",
     developer: "Xakteir Studios",

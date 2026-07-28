@@ -192,7 +192,7 @@ export default function DevCentreOverview() {
                       Enter Environment
                     </Button>
                   ) : (
-                    <Button onClick={() => router.push("/dev-centre/auth")} className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest rounded-xl border-none shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+                    <Button onClick={() => window.location.href = "/dev-centre/auth"} className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest rounded-xl border-none shadow-[0_0_20px_rgba(37,99,235,0.4)]">
                       Go to Auth <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   )}

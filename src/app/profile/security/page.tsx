@@ -86,7 +86,7 @@ export default function SecuritySettingsPage() {
       // Try deleting auth account
       await deleteUser(auth.currentUser);
       toast({ title: "Account Deleted", description: "Your account has been deleted permanently." });
-      router.push("/");
+      window.location.href = "/";
     } catch (e: any) {
       console.error("Auth account deletion failed:", e);
       if (e.code === "auth/requires-recent-login") {

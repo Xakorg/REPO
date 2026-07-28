@@ -58,7 +58,7 @@ export default function InstallerPage() {
 
   const handleLaunch = () => {
     localStorage.setItem('xak_installed', 'true');
-    router.push('/');
+    window.location.href = '/';
   };
 
   return (
@@ -75,7 +75,7 @@ export default function InstallerPage() {
           <div className="flex">
             <button className="h-10 w-12 flex items-center justify-center hover:bg-white/10 transition-colors text-white/60"><Minus className="w-3 h-3" /></button>
             <button className="h-10 w-12 flex items-center justify-center hover:bg-white/10 transition-colors text-white/60"><Square className="w-2.5 h-2.5" /></button>
-            <button onClick={() => router.push('/download')} className="h-10 w-12 flex items-center justify-center hover:bg-[#e81123] transition-colors text-white/60 hover:text-white"><X className="w-4 h-4" /></button>
+            <button onClick={() => window.location.href = '/download'} className="h-10 w-12 flex items-center justify-center hover:bg-[#e81123] transition-colors text-white/60 hover:text-white"><X className="w-4 h-4" /></button>
           </div>
         </header>
  
@@ -210,7 +210,7 @@ export default function InstallerPage() {
         <footer className="h-20 bg-[#2d2d2d] border-t border-white/5 flex items-center justify-end px-10 gap-4">
           {step < 4 && (
             <>
-              <Button variant="ghost" onClick={() => router.push('/download')} className="h-12 px-8 text-[11px] font-bold text-white/40 hover:text-white uppercase">Cancel</Button>
+              <Button variant="ghost" onClick={() => window.location.href = '/download'} className="h-12 px-8 text-[11px] font-bold text-white/40 hover:text-white uppercase">Cancel</Button>
               <Button 
                 onClick={() => step < 3 ? setStep(step + 1) : startInstallation()} 
                 className="bg-primary hover:bg-primary/90 text-white rounded-xl h-12 px-12 font-black uppercase text-[11px] tracking-widest shadow-xl border-b-4 border-primary/20 active:border-b-0 active:translate-y-1 transition-all"

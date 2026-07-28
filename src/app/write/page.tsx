@@ -53,7 +53,7 @@ export default function XakteirWrite() {
                      setContent(snap.data().content || `<h1>Untitled Document</h1><p></p>`);
                   }
                } else {
-                  router.push('/write');
+                  window.location.href = '/write';
                }
                setLoading(false);
             }, (error) => {

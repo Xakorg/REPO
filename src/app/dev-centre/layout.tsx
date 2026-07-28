@@ -151,7 +151,7 @@ export default function DevCentreLayout({ children }: { children: React.ReactNod
             value={activeProjectId || ""} 
             onChange={(e) => {
               if (e.target.value === 'new') {
-                router.push('/dev-centre');
+                window.location.href = '/dev-centre';
               } else {
                 setActiveProject(e.target.value);
               }
@@ -181,7 +181,7 @@ export default function DevCentreLayout({ children }: { children: React.ReactNod
                         if (link.path === "/dev-centre/compute/vms") {
                           window.location.href = link.path;
                         } else {
-                          router.push(link.path);
+                          window.location.href = link.path;
                         }
                       }} 
                       className={cn(

@@ -82,7 +82,7 @@ export default function PlayStationGamesLibrary() {
       } else if (e.key === "Enter" && activeItem) {
         handleLaunch(activeItem);
       } else if (e.key === "Enter" && !activeItem) {
-        router.push('/games/store');
+        window.location.href = '/games/store';
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -110,7 +110,7 @@ export default function PlayStationGamesLibrary() {
   const handleLaunch = (game: GameMeta) => {
     setLaunchingGame(game.id);
     setTimeout(() => {
-      router.push(game.route);
+      window.location.href = game.route;
     }, 2000);
   };
 
@@ -178,7 +178,7 @@ export default function PlayStationGamesLibrary() {
           </div>
           <div className="flex gap-4 md:gap-8 text-xs md:text-sm font-black uppercase tracking-widest text-white/50">
             <span className="text-white">Games</span>
-            <span className="hover:text-white transition-colors cursor-pointer" onClick={() => router.push('/games/store')}>Store</span>
+            <span className="hover:text-white transition-colors cursor-pointer" onClick={() => window.location.href = '/games/store'}>Store</span>
           </div>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
@@ -295,7 +295,7 @@ export default function PlayStationGamesLibrary() {
               <h1 className="text-3xl md:text-6xl font-black tracking-tighter mb-2 md:mb-4">Store</h1>
               <p className="text-sm md:text-lg text-white/70 font-medium mb-6 md:mb-8 leading-relaxed">Discover your next favorite game. Expand your library with native 3D, retro emulators, and top-down adventures.</p>
               <button 
-                onClick={() => router.push('/games/store')}
+                onClick={() => window.location.href = '/games/store'}
                 className="px-8 py-3.5 md:px-10 md:py-4 bg-indigo-600 text-white rounded-full font-black tracking-widest uppercase hover:scale-105 transition-all flex items-center gap-2.5 md:gap-3 shadow-[0_0_40px_rgba(79,70,229,0.4)] text-xs md:text-sm"
               >
                 Browse Catalog

@@ -534,7 +534,7 @@ function SearchContent() {
     }
 
     // Traditional link results will load via the firestore query below
-    router.push(`/search?q=${encodeURIComponent(target.trim())}`, { scroll: false });
+    window.location.href = `/search?q=${encodeURIComponent(target.trim())}`;
 
     const queryLowerTarget = target.toLowerCase().trim();
     if (queryLowerTarget in LOCAL_DEFINITIONS) {
@@ -1193,7 +1193,7 @@ function SearchContent() {
         <div className="flex flex-col md:flex-row items-center gap-6 w-full max-w-7xl mx-auto">
           {/* Logo */}
           <div 
-            onClick={() => router.push('/')} 
+            onClick={() => window.location.href = '/'} 
             className="cursor-pointer flex items-center gap-2 pr-6 md:border-r border-zinc-800 shrink-0"
           >
             <span className="text-3xl font-black tracking-tighter uppercase italic text-white hover:text-rose-500 transition-colors">
@@ -1319,7 +1319,7 @@ function SearchContent() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => router.push("/search/settings")}
+              onClick={() => window.location.href = "/search/settings"}
               className="rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white"
             >
               <Settings className="w-5 h-5" />
@@ -2369,7 +2369,7 @@ console.log(solve("hello"));`}
                         <div className="space-y-4 mt-6">
                           <Button 
                             onClick={() => {
-                              router.push(`/chat/dm/${u.username || u.displayName || u.id}`);
+                              window.location.href = `/chat/dm/${u.username || u.displayName || u.id}`;
                             }}
                             className="w-full h-14 bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-3 border-none italic"
                           >
@@ -2504,7 +2504,7 @@ console.log(solve("hello"));`}
                 {internalResults.length > 0 && !isIndexLoading && (
                   <div className="space-y-4 mb-4">
                     {internalResults.map((res) => (
-                      <Card key={res.id} onClick={() => router.push(res.url)} className="p-4 border border-zinc-800 bg-zinc-900/40 hover:border-primary/50 cursor-pointer rounded-2xl transition-all group">
+                      <Card key={res.id} onClick={() => window.location.href = res.url} className="p-4 border border-zinc-800 bg-zinc-900/40 hover:border-primary/50 cursor-pointer rounded-2xl transition-all group">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                             {res.type === 'Mail' ? <MessageCircle className="w-5 h-5" /> : res.type === 'Suite Document' ? <FileText className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}

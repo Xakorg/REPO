@@ -49,7 +49,7 @@ export function UpdateManager() {
           setActiveUpdate(update);
         } else if (update) {
           // If already seen, just go there
-          router.push(update.targetPath);
+          window.location.href = update.targetPath;
         }
       }
     };
@@ -61,7 +61,7 @@ export function UpdateManager() {
   const handleTryNow = () => {
     if (activeUpdate) {
       localStorage.setItem(activeUpdate.id, 'true');
-      router.push(activeUpdate.targetPath);
+      window.location.href = activeUpdate.targetPath;
       setActiveUpdate(null);
     }
   };
