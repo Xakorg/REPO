@@ -60,7 +60,7 @@ export default function PlayStationGamesLibrary() {
     if (stored) {
       setLibraryIds(JSON.parse(stored));
     } else {
-      const defaultIds = ["cyber_runner_platformer", "cyber_dungeon_rpg", "quantum_grid_puzzle", "synthwave_velocity_runner", "cyber_pinball_odyssey", "aether_pulse_2d", "sector_9_rpg", "gravity_racer_2d", "nexus_grid_defense_2d", "stellar_strike_2d", "shadow_blade_2d", "neon_ronin", "cyber_nexus_survivor", "aether_strike", "stellar_overlord", "chronos_protocol", "void_vanguard", "nexus_overdrive", "super_stick_battles", "aero_phantom", "solar_tempest", "hyper_horizon", "cyber_pulse", "xaksports", "retro_engine", "pixel_knight"];
+      const defaultIds = ["cyber_quest_platformer", "cyber_dungeon_rpg", "quantum_laser_puzzle", "neon_core_defense", "cyber_drift_runner", "cyber_leap_odyssey", "aetheria_realm_of_shadows", "aegis_protocol_td", "quantum_prism_puzzle", "synthwave_beat_rush", "cyber_runner_platformer", "synthwave_velocity_runner", "cyber_pinball_odyssey", "aether_pulse_2d", "sector_9_rpg", "gravity_racer_2d", "nexus_grid_defense_2d", "stellar_strike_2d", "shadow_blade_2d", "neon_ronin", "cyber_nexus_survivor", "aether_strike", "stellar_overlord", "chronos_protocol", "void_vanguard", "nexus_overdrive", "super_stick_battles", "aero_phantom", "solar_tempest", "hyper_horizon", "cyber_pulse", "xaksports", "retro_engine", "pixel_knight"];
       localStorage.setItem("xakteir_game_library", JSON.stringify(defaultIds));
       setLibraryIds(defaultIds);
     }

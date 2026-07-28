@@ -14,6 +14,71 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "neon_ascent",
+    title: "Neon Ascent 2D",
+    developer: "Xakteir Studios",
+    type: "2D Platformer",
+    genre: ["2D", "Platformer", "Precision", "Cyberpunk", "Action"],
+    description: "High-precision 2D cyberpunk platformer with wall jumping, air dashes, keycards, laser vaults, spikes, and 5 level stages.",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neonascent",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/neon-ascent"
+  },
+  {
+    id: "quantum_tactics",
+    title: "Quantum Tactics RPG",
+    developer: "Xakteir Studios",
+    type: "Strategy",
+    genre: ["RPG", "Turn-Based", "Tactical", "Strategy", "Grid"],
+    description: "Grid-based tactical cyberpunk turn-based RPG. Position cyber samurai, manage Action Points (AP), cast elemental spells, and defeat enemy mechs.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumtactics",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/quantum-tactics"
+  },
+  {
+    id: "orbital_puzzle",
+    title: "Orbital Laser Puzzle",
+    developer: "Xakteir Studios",
+    type: "Puzzle",
+    genre: ["Puzzle", "Logic", "Optics", "Laser", "Physics"],
+    description: "Physics laser optics logic puzzle. Rotate precision 45-degree mirrors and beam splitters to power target cores across 5 stages.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=orbitalpuzzle",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/orbital-puzzle"
+  },
+  {
+    id: "vector_dash",
+    title: "Vector Dash Synthwave",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["3D", "Runner", "Racing", "Synthwave", "Arcade"],
+    description: "3D perspective synthwave cyber highway runner. Switch lanes, leap over plasma barriers, trigger nitro overdrive, and upgrade vehicle tech.",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=vectordash",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/vector-dash"
+  },
+  {
+    id: "starlight_commander",
+    title: "Starlight Commander",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["2D Top-Down", "Shooter", "Space", "Sci-Fi", "Arcade"],
+    description: "Sci-Fi vertical space arcade shooter. Pilot your starfighter through hostile armadas, unlock plasma cannons, and defeat motherships.",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=starlightcommander",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/starlight-commander"
+  },
+  {
     id: "cyber_quest_platformer",
     title: "Cyber Quest Platformer 2D",
     developer: "Xakteir Studios",

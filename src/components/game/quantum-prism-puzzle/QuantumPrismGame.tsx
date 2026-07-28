@@ -20,7 +20,8 @@ import {
   RotateCw,
   HelpCircle,
   CheckCircle2,
-  Lock
+  Lock,
+  Grid
 } from "lucide-react";
 import Link from "next/link";
 
@@ -58,6 +59,7 @@ export interface PuzzleLevel {
   emitters: Emitter[];
   targets: Target[];
   grid: Record<string, CellItem>;
+  hint: string;
 }
 
 const PUZZLE_LEVELS: PuzzleLevel[] = [
@@ -66,6 +68,7 @@ const PUZZLE_LEVELS: PuzzleLevel[] = [
     name: "Reflection 101",
     gridW: 6,
     gridH: 6,
+    hint: "Click the mirror in the top right to align the beam downward toward the core.",
     emitters: [{ x: 1, y: 1, dir: "right", color: "#06b6d4" }],
     targets: [{ x: 4, y: 4, color: "#06b6d4", energized: false }],
     grid: {
@@ -77,6 +80,7 @@ const PUZZLE_LEVELS: PuzzleLevel[] = [
     name: "Double Reflection",
     gridW: 6,
     gridH: 6,
+    hint: "Orient both mirrors so the laser bounces off the right wall and down into the target.",
     emitters: [{ x: 0, y: 1, dir: "right", color: "#ec4899" }],
     targets: [{ x: 5, y: 5, color: "#ec4899", energized: false }],
     grid: {
@@ -89,6 +93,7 @@ const PUZZLE_LEVELS: PuzzleLevel[] = [
     name: "Beam Splitter Matrix",
     gridW: 7,
     gridH: 7,
+    hint: "Use the splitter to create dual beams hitting both top and bottom targets simultaneously.",
     emitters: [{ x: 1, y: 3, dir: "right", color: "#a855f7" }],
     targets: [
       { x: 5, y: 1, color: "#a855f7", energized: false },
@@ -104,6 +109,7 @@ const PUZZLE_LEVELS: PuzzleLevel[] = [
     name: "Quantum Prism Divergence",
     gridW: 8,
     gridH: 8,
+    hint: "Split the golden beam into parallel paths to power both energy nodes.",
     emitters: [{ x: 1, y: 2, dir: "right", color: "#eab308" }],
     targets: [
       { x: 6, y: 2, color: "#eab308", energized: false },
@@ -116,9 +122,10 @@ const PUZZLE_LEVELS: PuzzleLevel[] = [
   },
   {
     id: 5,
-    name: "Chrono Laser Array",
+    name: "Chrono Dual Emitter Array",
     gridW: 8,
     gridH: 8,
+    hint: "Cross-reflection required! Direct Cyan and Magenta lasers to their matching core colors.",
     emitters: [
       { x: 0, y: 1, dir: "right", color: "#06b6d4" },
       { x: 0, y: 6, dir: "right", color: "#ec4899" }
@@ -130,6 +137,55 @@ const PUZZLE_LEVELS: PuzzleLevel[] = [
     grid: {
       "3,1": { type: "mirror_slash", rotatable: true, angle: 0 },
       "3,6": { type: "mirror_backslash", rotatable: true, angle: 0 }
+    }
+  },
+  {
+    id: 6,
+    name: "Tachyon Prism Core",
+    gridW: 8,
+    gridH: 8,
+    hint: "Construct a 4-mirror perimeter loop to direct the beam into the central vault.",
+    emitters: [{ x: 0, y: 0, dir: "right", color: "#10b981" }],
+    targets: [{ x: 4, y: 4, color: "#10b981", energized: false }],
+    grid: {
+      "7,0": { type: "mirror_slash", rotatable: true, angle: 0 },
+      "7,4": { type: "mirror_backslash", rotatable: true, angle: 0 }
+    }
+  },
+  {
+    id: 7,
+    name: "Hyper Optics Relay",
+    gridW: 9,
+    gridH: 9,
+    hint: "Synchronize 3 mirrors in sequence to navigate the laser through narrow energy slots.",
+    emitters: [{ x: 1, y: 1, dir: "down", color: "#38bdf8" }],
+    targets: [{ x: 7, y: 7, color: "#38bdf8", energized: false }],
+    grid: {
+      "1,4": { type: "mirror_backslash", rotatable: true, angle: 0 },
+      "5,4": { type: "mirror_slash", rotatable: true, angle: 0 },
+      "5,7": { type: "mirror_backslash", rotatable: true, angle: 0 }
+    }
+  },
+  {
+    id: 8,
+    name: "Apex Master Prism",
+    gridW: 10,
+    gridH: 10,
+    hint: "The ultimate optic challenge! Align all 5 optical elements to energize 3 targets at once.",
+    emitters: [
+      { x: 0, y: 2, dir: "right", color: "#a855f7" },
+      { x: 0, y: 7, dir: "right", color: "#eab308" }
+    ],
+    targets: [
+      { x: 9, y: 2, color: "#a855f7", energized: false },
+      { x: 9, y: 7, color: "#eab308", energized: false },
+      { x: 5, y: 5, color: "#10b981", energized: false }
+    ],
+    grid: {
+      "3,2": { type: "splitter", rotatable: true, angle: 0 },
+      "3,7": { type: "mirror_slash", rotatable: true, angle: 0 },
+      "5,2": { type: "mirror_backslash", rotatable: true, angle: 0 },
+      "8,7": { type: "mirror_slash", rotatable: true, angle: 0 }
     }
   }
 ];
@@ -203,6 +259,8 @@ export default function QuantumPrismGame() {
   const [currentLevelIdx, setCurrentLevelIdx] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [moves, setMoves] = useState(0);
+  const [showHint, setShowHint] = useState(false);
+  const [completedLevels, setCompletedLevels] = useState<Record<number, boolean>>({});
   const [levelGrid, setLevelGrid] = useState<Record<string, CellItem>>({});
 
   const toggleMute = () => {
@@ -216,6 +274,7 @@ export default function QuantumPrismGame() {
     const lvl = PUZZLE_LEVELS[idx];
     setLevelGrid({ ...lvl.grid });
     setMoves(0);
+    setShowHint(false);
     setGameState("playing");
   };
 
@@ -242,7 +301,9 @@ export default function QuantumPrismGame() {
     if (!ctx) return;
 
     const lvl = PUZZLE_LEVELS[currentLevelIdx];
-    const cellSize = 60;
+    const cellSize = 55;
+    const offsetX = (canvas.width - lvl.gridW * cellSize) / 2;
+    const offsetY = (canvas.height - lvl.gridH * cellSize) / 2;
 
     ctx.fillStyle = "#09090b";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -252,7 +313,7 @@ export default function QuantumPrismGame() {
       for (let c = 0; c < lvl.gridW; c++) {
         ctx.strokeStyle = "rgba(6, 182, 212, 0.15)";
         ctx.lineWidth = 1;
-        ctx.strokeRect(c * cellSize + 60, r * cellSize + 60, cellSize, cellSize);
+        ctx.strokeRect(c * cellSize + offsetX, r * cellSize + offsetY, cellSize, cellSize);
       }
     }
 
@@ -271,11 +332,11 @@ export default function QuantumPrismGame() {
       ctx.shadowBlur = 12;
       ctx.beginPath();
 
-      let startPx = currX * cellSize + 60 + cellSize / 2;
-      let startPy = currY * cellSize + 60 + cellSize / 2;
+      let startPx = currX * cellSize + offsetX + cellSize / 2;
+      let startPy = currY * cellSize + offsetY + cellSize / 2;
       ctx.moveTo(startPx, startPy);
 
-      while (steps < 20) {
+      while (steps < 25) {
         steps++;
         if (dir === "right") currX++;
         else if (dir === "left") currX--;
@@ -284,12 +345,12 @@ export default function QuantumPrismGame() {
 
         if (currX < 0 || currX >= lvl.gridW || currY < 0 || currY >= lvl.gridH) break;
 
-        const nextPx = currX * cellSize + 60 + cellSize / 2;
-        const nextPy = currY * cellSize + 60 + cellSize / 2;
+        const nextPx = currX * cellSize + offsetX + cellSize / 2;
+        const nextPy = currY * cellSize + offsetY + cellSize / 2;
         ctx.lineTo(nextPx, nextPy);
 
         // Check Target
-        lvl.targets.forEach((t, tIdx) => {
+        lvl.targets.forEach((t) => {
           if (t.x === currX && t.y === currY) {
             energizedTargets.add(`${t.x},${t.y}`);
           }
@@ -319,7 +380,7 @@ export default function QuantumPrismGame() {
     // Render Emitters & Targets
     lvl.emitters.forEach((em) => {
       ctx.fillStyle = em.color;
-      ctx.fillRect(em.x * cellSize + 60 + 15, em.y * cellSize + 60 + 15, 30, 30);
+      ctx.fillRect(em.x * cellSize + offsetX + 14, em.y * cellSize + offsetY + 14, 28, 28);
     });
 
     lvl.targets.forEach((t) => {
@@ -328,7 +389,7 @@ export default function QuantumPrismGame() {
       ctx.shadowColor = isEnergized ? "#10b981" : "#ef4444";
       ctx.shadowBlur = 15;
       ctx.beginPath();
-      ctx.arc(t.x * cellSize + 60 + cellSize / 2, t.y * cellSize + 60 + cellSize / 2, 16, 0, Math.PI * 2);
+      ctx.arc(t.x * cellSize + offsetX + cellSize / 2, t.y * cellSize + offsetY + cellSize / 2, 14, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
     });
@@ -336,8 +397,8 @@ export default function QuantumPrismGame() {
     // Render Mirrors
     Object.entries(levelGrid).forEach(([key, cell]) => {
       const [cx, cy] = key.split(",").map(Number);
-      const px = cx * cellSize + 60 + cellSize / 2;
-      const py = cy * cellSize + 60 + cellSize / 2;
+      const px = cx * cellSize + offsetX + cellSize / 2;
+      const py = cy * cellSize + offsetY + cellSize / 2;
 
       ctx.save();
       ctx.translate(px, py);
@@ -347,40 +408,45 @@ export default function QuantumPrismGame() {
       ctx.lineWidth = 5;
       ctx.beginPath();
       if (cell.type === "mirror_slash") {
-        ctx.moveTo(-18, 18); ctx.lineTo(18, -18);
+        ctx.moveTo(-16, 16); ctx.lineTo(16, -16);
       } else if (cell.type === "mirror_backslash") {
-        ctx.moveTo(-18, -18); ctx.lineTo(18, 18);
+        ctx.moveTo(-16, -16); ctx.lineTo(16, 16);
       }
       ctx.stroke();
       ctx.restore();
     });
 
     // Win condition check
-    if (energizedTargets.size === lvl.targets.length && lvl.targets.length > 0) {
+    if (energizedTargets.size >= lvl.targets.length && lvl.targets.length > 0) {
       audio.playSolve();
-      setTimeout(() => setGameState("solved"), 500);
+      setCompletedLevels((prev) => ({ ...prev, [lvl.id]: true }));
+      setTimeout(() => setGameState("solved"), 600);
     }
   }, [gameState, levelGrid, currentLevelIdx]);
 
   useEffect(() => {
     if (canvasRef.current) {
-      canvasRef.current.width = 600;
-      canvasRef.current.height = 550;
+      canvasRef.current.width = 640;
+      canvasRef.current.height = 580;
     }
   }, []);
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden select-none font-sans text-white flex flex-col items-center justify-center">
       {/* CANVAS CONTAINER */}
-      <div className="relative w-[600px] h-[550px] bg-zinc-950 border border-cyan-500/30 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(6,182,212,0.15)] flex flex-col justify-between">
+      <div className="relative w-[640px] h-[580px] bg-zinc-950 border border-cyan-500/30 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(6,182,212,0.15)] flex flex-col justify-between">
         <canvas
           ref={canvasRef}
           onClick={(e) => {
             const canvas = canvasRef.current;
             if (!canvas) return;
             const rect = canvas.getBoundingClientRect();
-            const gx = Math.floor((e.clientX - rect.left - 60) / 60);
-            const gy = Math.floor((e.clientY - rect.top - 60) / 60);
+            const lvl = PUZZLE_LEVELS[currentLevelIdx];
+            const cellSize = 55;
+            const offsetX = (canvas.width - lvl.gridW * cellSize) / 2;
+            const offsetY = (canvas.height - lvl.gridH * cellSize) / 2;
+            const gx = Math.floor((e.clientX - rect.left - offsetX) / cellSize);
+            const gy = Math.floor((e.clientY - rect.top - offsetY) / cellSize);
             rotateMirror(`${gx},${gy}`);
           }}
           className="w-full h-full block cursor-pointer"
@@ -399,10 +465,20 @@ export default function QuantumPrismGame() {
             </div>
 
             <div className="flex items-center gap-2 pointer-events-auto">
+              <button onClick={() => setShowHint(!showHint)} className="p-2.5 bg-black/50 hover:bg-black/80 border border-white/20 rounded-xl text-amber-400">
+                <HelpCircle className="w-4 h-4" />
+              </button>
               <button onClick={toggleMute} className="p-2.5 bg-black/50 hover:bg-black/80 border border-white/20 rounded-xl">
                 {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-cyan-400" />}
               </button>
             </div>
+          </div>
+        )}
+
+        {/* HINT BANNER */}
+        {showHint && gameState === "playing" && (
+          <div className="absolute bottom-4 left-6 right-6 bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl text-amber-300 text-xs font-bold text-center z-10 backdrop-blur-md">
+            HINT: {PUZZLE_LEVELS[currentLevelIdx].hint}
           </div>
         )}
       </div>
@@ -422,14 +498,14 @@ export default function QuantumPrismGame() {
               Quantum Prism Puzzles
             </h1>
             <p className="text-zinc-400 text-sm mb-8">
-              Optics physics laser grid puzzles. Rotate mirrors and beam splitters to energize target cores.
+              Optics physics laser grid puzzles. Rotate mirrors and beam splitters to energize target cores across 8 levels.
             </p>
             <div className="flex gap-4 w-full">
               <button
-                onClick={() => loadLevel(0)}
+                onClick={() => setGameState("levels")}
                 className="flex-1 py-4 bg-gradient-to-r from-cyan-500 to-teal-600 text-white font-black uppercase tracking-widest rounded-2xl hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(6,182,212,0.4)]"
               >
-                <Play className="w-5 h-5 fill-white" /> Start Puzzles
+                <Play className="w-5 h-5 fill-white" /> Level Select
               </button>
               <Link
                 href="/games"
@@ -439,6 +515,34 @@ export default function QuantumPrismGame() {
               </Link>
             </div>
           </motion.div>
+        </div>
+      )}
+
+      {/* LEVEL SELECT MENU */}
+      {gameState === "levels" && (
+        <div className="absolute inset-0 z-30 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-6">
+          <div className="max-w-2xl w-full bg-zinc-950 border border-cyan-500/30 rounded-3xl p-8">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/10">
+              <h2 className="text-2xl font-black uppercase tracking-wider text-cyan-400">Select Optic Puzzle</h2>
+              <button onClick={() => setGameState("menu")} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold uppercase">
+                Back to Menu
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              {PUZZLE_LEVELS.map((lvl, idx) => (
+                <button
+                  key={lvl.id}
+                  onClick={() => loadLevel(idx)}
+                  className="bg-white/5 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/40 p-4 rounded-2xl flex flex-col items-center transition-all group"
+                >
+                  <span className="text-xs font-bold text-zinc-500 group-hover:text-cyan-400">PUZZLE {lvl.id}</span>
+                  <span className="font-bold text-xs text-white my-1 text-center">{lvl.name}</span>
+                  {completedLevels[lvl.id] && <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-1" />}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -466,7 +570,7 @@ export default function QuantumPrismGame() {
                 </button>
               ) : (
                 <button
-                  onClick={() => setGameState("menu")}
+                  onClick={() => setGameState("levels")}
                   className="flex-1 py-4 bg-emerald-500 text-white font-black uppercase tracking-wider rounded-2xl hover:bg-emerald-400 transition-all"
                 >
                   All Puzzles Solved!
