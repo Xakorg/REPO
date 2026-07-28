@@ -364,7 +364,7 @@ export const LEVELS: LevelData[] = [
 export default function NeonAscentGame() {
   const [gameState, setGameState] = useState<"menu" | "select" | "playing" | "paused" | "complete">("menu");
   const [currentLevelIndex, setCurrentLevelIndex] = useState<number>(0);
-  const [unlockedLevels, setUnlockedLevels] = useState<number>([1]);
+  const [unlockedLevels, setUnlockedLevels] = useState<number[]>([1]);
   const [starsMap, setStarsMap] = useState<Record<number, number>>({});
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
