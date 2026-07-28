@@ -44,7 +44,7 @@ export default function AuthPage() {
   const [isPublic, setIsPublic] = useState(true);
   const [otpCode, setOtpCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
+
   
   const auth = useAuth();
   const firestore = useFirestore();
@@ -63,7 +63,7 @@ export default function AuthPage() {
   };
   
   useEffect(() => {
-    setMounted(true);
+
     const prefilledEmail = searchParams?.get('email');
     if (prefilledEmail) {
       setEmail(prefilledEmail);
@@ -341,7 +341,7 @@ export default function AuthPage() {
       });
   };
 
-  if (!mounted) return null;
+
 
   if (showAnimation) {
     return (

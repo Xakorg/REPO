@@ -220,7 +220,7 @@ export default function XakAIPage() {
   const [messages, setMessages] = useState<{ role: 'user' | 'model', content: string }[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [isListening, setIsListening] = useState(false);
@@ -239,7 +239,7 @@ export default function XakAIPage() {
   isGlowActiveRef.current = isGlowActive;
 
   useEffect(() => { 
-    setMounted(true); 
+
     
     // Listen for Electron global shortcut
     if (typeof window !== 'undefined' && (window as any).electron) {
@@ -429,7 +429,7 @@ export default function XakAIPage() {
     toast({ title: "Session Deleted" });
   };
 
-  if (!mounted) return null;
+
 
   return (
     <>

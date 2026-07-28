@@ -38,14 +38,7 @@ const JOKES = [
 ];
 
 export default function XakteirEntry() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
 
-  if (!mounted) return (
-    <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black">
-      <GlitchLogo className="scale-2" />
-    </div>
-  );
 
   return <XakteirDashboard />;
 }

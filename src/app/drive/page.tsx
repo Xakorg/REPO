@@ -100,7 +100,7 @@ export default function XakDrivePage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [mounted, setMounted] = useState(false);
+
   
   // Advanced States
   const [sortBy, setSortBy] = useState<SortBy>('date');
@@ -141,7 +141,7 @@ export default function XakDrivePage() {
   const [syncLogs, setSyncLogs] = useState<string[]>([]);
 
   useEffect(() => { 
-    setMounted(true); 
+
     
     // Load all synced folders on boot
     loadAllDirectoryHandles().then(handles => {
@@ -557,7 +557,7 @@ export default function XakDrivePage() {
     return <File className="w-8 h-8 text-zinc-500" />;
   };
 
-  if (!mounted || !user) return <div className="h-screen bg-zinc-950 flex flex-col items-center justify-center text-white"><Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" /><h1>Loading Drive...</h1></div>;
+  if (!user) return <div className="h-screen bg-zinc-950 flex flex-col items-center justify-center text-white"><Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" /><h1>Loading Drive...</h1></div>;
 
   const isBatchMode = selectedFiles.size > 1;
 

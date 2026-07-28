@@ -56,9 +56,6 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [inventoryTab, setInventoryTab] = useState("All");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -146,7 +143,7 @@ export default function ProfilePage() {
     triggerConfetti();
   };
 
-  if (!mounted) return null;
+
   if (isUserLoading || isDataLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin w-12 h-12 text-primary opacity-20" /></div>;
   if (!user) return <div className="p-32 text-center text-4xl font-black uppercase italic text-foreground">Sign in to view your profile.</div>;
 
