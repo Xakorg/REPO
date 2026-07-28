@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "stellar_overlord",
+    title: "Stellar Overlord 3D",
+    developer: "Xakteir Studios",
+    type: "3D",
+    genre: ["Sci-Fi", "3D", "Action", "Shooter", "Arcade"],
+    description: "Pilot your apex cyber starfighter through hostile armadas in 3D. Master Warp Speed, EMP Shockwaves, upgrade ship subsystems, and conquer Sector Overlord Bosses.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=stellaroverlord",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/stellar-overlord"
+  },
+  {
     id: "chronos_protocol",
     title: "Chronos Protocol 3D",
     developer: "Xakteir Studios",

@@ -69,15 +69,14 @@ function initGame() {
 }
 
 function startGame() {
-    gameMode = document.getElementById('game-mode-select').value;
-    mapSelection = document.getElementById('map-select').value;
-    
     // Hide UI, Show Game Overlay
-    document.getElementById('ui-container').classList.add('hidden');
+    document.getElementById('lobby-menu').classList.add('hidden');
     document.getElementById('game-overlay').classList.remove('hidden');
     document.getElementById('game-over-modal').classList.add('hidden');
 
-    p1Wins = 0; p2Wins = 0; survivalWave = 0;
+    const rules = document.getElementById('rules-mode').value;
+    maxWins = rules === 'bo3' ? 2 : 1;
+    p1Wins = 0; p2Wins = 0;
     
     resetRound();
     isPlaying = true;
@@ -90,35 +89,41 @@ function resetRound() {
     aiEnemies = [];
 
     // Load map
-    level = new Level(world, mapSelection);
+    
+    // Cleanup previous round
+    if (p1) Matter.Composite.remove(engine.world, p1.composite);
+    if (p2) Matter.Composite.remove(engine.world, p2.composite);
+    if (currentLevel) {
+        currentLevel.bodies.forEach(b => Matter.Composite.remove(engine.world, b));
+    }
+    
+    document.getElementById('hud-p1-health').style.width = '100%';
+    document.getElementById('hud-p2-health').style.width = '100%';
 
     // Get selected characters
-    const p1CharData = JSON.parse(JSON.stringify(CharacterDatabase[GM.p1.selected]));
-    const p2CharData = JSON.parse(JSON.stringify(CharacterDatabase[GM.p2.selected]));
+    const p1Char = CharacterDatabase[GM.p1.selected] || CharacterDatabase["stickman"];
+    const p2Char = CharacterDatabase[GM.p2.selected] || CharacterDatabase["stickman"];
+    
+    // Get map
+    const mapVal = maps[currentMapIdx];
+    currentLevel = new Level(engine.world, mapVal);
 
-    // Modifiers
-    if (gameMode === 'juggernaut') {
-        p1CharData.stats.hp *= 3;
-        p1CharData.stats.weight *= 2;
-        p1CharData.stats.speed *= 0.5;
-    }
-
-    // Spawn players
-    p1 = new Stickman(-200, 300, 'var(--p1-color)', { up: 'KeyW', left: 'KeyA', right: 'KeyD', attack: 'Space', super: 'KeyE' }, world, true, p1CharData);
-    p2 = new Stickman(200, 300, 'var(--p2-color)', { up: 'ArrowUp', left: 'ArrowLeft', right: 'ArrowRight', attack: 'Enter', super: 'ShiftRight' }, world, false, p2CharData);
+    // Instantiate players
+    p1 = new Stickman(-200, 300, '#00ffff', { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', super: 'Space' }, engine.world, true, p1Char);
+    p2 = new Stickman(200, 300, '#ff0055', { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', super: 'ShiftRight' }, engine.world, false, p2Char);
 
     camera = new Camera(render, p1, p2);
     
-    updateHUD();
-}
-
-function updateHUD() {
-    document.getElementById('hud-p1-name').innerText = CharacterDatabase[GM.p1.selected].name;
-    document.getElementById('hud-p2-name').innerText = CharacterDatabase[GM.p2.selected].name;
+    // UI Init
     p1.updateHealthUI();
     p1.updateSuperUI();
     p2.updateHealthUI();
     p2.updateSuperUI();
+}
+
+function updateHUD() {
+    p1.updateHealthUI();
+    p2.updateHealthUI();
 }
 
 function handleCollisions(event) {
@@ -128,7 +133,7 @@ function handleCollisions(event) {
         const a = pair.bodyA;
         const b = pair.bodyB;
         
-        // Lava instant death
+        // No more isGrounded logic needed, but lava still works
         if (a.label === 'lava' || b.label === 'lava') {
             if (a.label.includes('player_torso_1') || b.label.includes('player_torso_1')) p1.takeDamage(9999);
             if (a.label.includes('player_torso_2') || b.label.includes('player_torso_2')) p2.takeDamage(9999);
@@ -165,12 +170,12 @@ function handleActiveCollisions(event) {
 function checkDamage(attacker, defender, impact) {
     if (attacker.label.startsWith('weapon_')) {
         const isP1Weapon = attacker.label.includes('_1');
-        const target = isP1Weapon ? p2 : p1; // For now ignoring AI targets for simplicity
         
-        if (defender.label.includes(isP1Weapon ? '_2' : '_1')) {
-            let dmg = impact * 0.8;
-            if (defender.label.includes('head')) dmg *= 2;
-            target.takeDamage(dmg);
+        if (isP1Weapon && defender.label.includes('_2') && !defender.label.startsWith('weapon')) {
+            p2.takeDamage(impact);
+            checkWinCondition();
+        } else if (!isP1Weapon && defender.label.includes('_1') && !defender.label.startsWith('weapon')) {
+            p1.takeDamage(impact);
             checkWinCondition();
         }
     }
@@ -180,43 +185,36 @@ function checkWinCondition() {
     if (roundOver) return;
 
     if (p1.isDead || p2.isDead) {
-        roundOver = true;
-        
         let winner = null;
-        if (p1.isDead && p2.isDead) winner = 'draw';
-        else if (p1.isDead) { winner = 'p2'; p2Wins++; }
-        else { winner = 'p1'; p1Wins++; }
+        if (p1.isDead && p2.isDead) winner = 0; // Draw
+        else if (p1.isDead) winner = 2;
+        else winner = 1;
 
-        setTimeout(() => handleRoundEnd(winner), 2000); // 2 second delay to watch ragdoll
+        setTimeout(() => endRound(winner), 2000);
     }
 }
 
-function handleRoundEnd(winner) {
-    if (gameMode === 'bo3' && (p1Wins < 2 && p2Wins < 2)) {
-        resetRound();
-        return;
-    }
-
-    // Match Over
-    isPlaying = false;
-    const modal = document.getElementById('game-over-modal');
-    const winTxt = document.getElementById('winner-text');
-    const rewTxt = document.getElementById('reward-text');
+function endRound(winner) {
+    if (roundOver) return;
+    roundOver = true;
     
-    modal.classList.remove('hidden');
+    if (winner === 1) p1Wins++;
+    if (winner === 2) p2Wins++;
     
-    if (winner === 'draw') {
-        winTxt.innerText = "DRAW!";
-        rewTxt.innerText = "P1: +10 Gold | P2: +10 Gold";
-        GM.addGold('p1', 10);
-        GM.addGold('p2', 10);
-    } else {
-        winTxt.innerText = winner === 'p1' ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
-        winTxt.style.color = winner === 'p1' ? 'var(--p1-color)' : 'var(--p2-color)';
-        rewTxt.innerText = "Winner: +50 Gold | Loser: +10 Gold";
+    if (p1Wins >= maxWins || p2Wins >= maxWins) {
+        // Game Over
+        const modal = document.getElementById('game-over-modal');
+        const text = document.getElementById('winner-text');
         
-        if (winner === 'p1') { GM.addGold('p1', 50); GM.addGold('p2', 10); }
+        modal.classList.remove('hidden');
+        text.innerText = winner === 1 ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
+        text.style.color = winner === 1 ? "var(--p1-color)" : "var(--p2-color)";
+        
+        // Give Gold
+        if (winner === 1) { GM.addGold('p1', 50); GM.addGold('p2', 10); }
         else { GM.addGold('p2', 50); GM.addGold('p1', 10); }
+    } else {
+        setTimeout(startRound, 2000);
     }
 }
 
@@ -239,11 +237,20 @@ window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 
 // UI Buttons
-document.getElementById('start-btn').addEventListener('click', startGame);
+document.getElementById('btn-start-match').addEventListener('click', startGame);
+
 document.getElementById('return-menu-btn').addEventListener('click', () => {
     document.getElementById('game-overlay').classList.add('hidden');
-    document.getElementById('ui-container').classList.remove('hidden');
-    Matter.World.clear(world); // Clear game bodies so they don't render behind UI
+    document.getElementById('game-over-modal').classList.add('hidden');
+    showMenu('main-menu');
+    isPlaying = false;
+    
+    if (p1) { Matter.Composite.remove(engine.world, p1.composite); p1 = null; }
+    if (p2) { Matter.Composite.remove(engine.world, p2.composite); p2 = null; }
+    if (currentLevel) {
+        currentLevel.bodies.forEach(b => Matter.Composite.remove(engine.world, b));
+        currentLevel = null;
+    }
 });
 
 window.onload = initGame;
