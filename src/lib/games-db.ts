@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "quantum_helix_cyber_odyssey",
+    title: "Quantum Helix: Cyber Odyssey",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["2D", "Arcade", "Shooter", "Cyberpunk", "Space", "Action"],
+    description: "High-octane 2D cyberpunk space arcade combat. Command starfighters, upgrade plasma weapons, deploy automated defense drones, and conquer rogue AI armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumhelixcyberodyssey",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/quantum-helix-cyber-odyssey"
+  },
+  {
     id: "neon_ascent",
     title: "Neon Ascent 2D",
     developer: "Xakteir Studios",
