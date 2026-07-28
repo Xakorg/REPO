@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "aether_strike",
+    title: "Aether Strike 3D",
+    developer: "Xakteir Studios",
+    type: "3D",
+    genre: ["Sci-Fi", "3D", "Action", "Shooter", "Arcade"],
+    description: "Pilot your apex starfighter through hostile cyber armadas. Master EMP shockwaves, homing missiles, upgrade ship systems, and conquer sector dreadnoughts.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aetherstrike",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/aether-strike"
+  },
+  {
     id: "stellar_overlord",
     title: "Stellar Overlord 3D",
     developer: "Xakteir Studios",
