@@ -14,6 +14,32 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "cyber_nexus_survivor",
+    title: "Cyber Nexus Survivor 2D",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Survivor", "Bullet Hell"],
+    description: "Top-down 2D cyberpunk action survivor. Survive endless mech armadas, collect XP gems, unlock plasma katana perks, and defeat sector dreadnought bosses.",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cybernexussurvivor",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/cyber-nexus-survivor"
+  },
+  {
+    id: "neon_ronin",
+    title: "Neon Ronin 2099",
+    developer: "Xakteir Studios",
+    type: "2D Platformer",
+    genre: ["Action", "Cyberpunk", "2D", "Platformer", "Hack and Slash"],
+    description: "Slice through rogue cyber ninjas, deflect incoming plasma bursts, execute double jumps, and unleash Cyber Blitz in 2D platforming action.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neonronin",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/neon-ronin"
+  },
+  {
     id: "aether_strike",
     title: "Aether Strike 3D",
     developer: "Xakteir Studios",

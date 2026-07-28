@@ -60,7 +60,7 @@ export default function PlayStationGamesLibrary() {
     if (stored) {
       setLibraryIds(JSON.parse(stored));
     } else {
-      const defaultIds = ["aether_strike", "stellar_overlord", "chronos_protocol", "void_vanguard", "nexus_overdrive", "super_stick_battles", "aero_phantom", "solar_tempest", "hyper_horizon", "cyber_pulse", "xaksports", "retro_engine", "pixel_knight"];
+      const defaultIds = ["neon_ronin", "cyber_nexus_survivor", "aether_strike", "stellar_overlord", "chronos_protocol", "void_vanguard", "nexus_overdrive", "super_stick_battles", "aero_phantom", "solar_tempest", "hyper_horizon", "cyber_pulse", "xaksports", "retro_engine", "pixel_knight"];
       localStorage.setItem("xakteir_game_library", JSON.stringify(defaultIds));
       setLibraryIds(defaultIds);
     }
