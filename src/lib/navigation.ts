@@ -35,9 +35,13 @@ export function navigateTo(path: string, router: any) {
     // Strip domain and use pathname + search + hash for router
     const relativePath = targetObj.pathname + targetObj.search + targetObj.hash;
     
-    // Force a hard navigation to guarantee the screen updates.
-    // The previous router.push() in Next.js 15 app router causes frozen transitions.
-    window.location.href = relativePath;
+    // Use startTransition to prevent the UI from freezing during the push transition.
+    // This allows Next.js to show loading states and remain responsive.
+    import('react').then(({ startTransition }) => {
+      startTransition(() => {
+        router.push(relativePath);
+      });
+    });
   } catch (e) {
     window.location.href = targetUrl;
   }
