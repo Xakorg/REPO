@@ -15,6 +15,22 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "nebula_nexus_overdrive",
+    title: "Nebula Nexus Overdrive",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Survival", "Base Defense"],
+    description: "High-octane 2D space shooter and tactical nexus core defense. Command an apex starfighter, deploy EMP shockwaves and tachyon dashes, harvest plasma crystals, and defeat invading rogue AI armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=nebulanexusoverdrive",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "17:08", description: "Initial Game Launch" }
+    ],
+    route: "/game/nebula-nexus-overdrive"
+  },
+  {
     id: "chrono_vanguard_paradox_shift",
     title: "Chrono Vanguard: Paradox Shift",
     developer: "Xakteir Studios",
