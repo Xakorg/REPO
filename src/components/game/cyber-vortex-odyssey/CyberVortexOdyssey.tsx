@@ -1239,12 +1239,11 @@ export default function CyberVortexOdyssey() {
     ent.drops.forEach(d => {
       ctx.beginPath();
       ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
-      if (d.type === "xp") ctx.fillStyle = "#06b6d4";
-      else if (d.type === "credit") ctx.fillStyle = "#facc15";
-      else if (d.type === "health") ctx.fillStyle = "#22c55e";
+      const dropColor = d.type === "xp" ? "#06b6d4" : d.type === "credit" ? "#facc15" : "#22c55e";
+      ctx.fillStyle = dropColor;
       ctx.fill();
       ctx.shadowBlur = 8;
-      ctx.shadowColor = ctx.fillStyle;
+      ctx.shadowColor = dropColor;
     });
     ctx.shadowBlur = 0;
 
