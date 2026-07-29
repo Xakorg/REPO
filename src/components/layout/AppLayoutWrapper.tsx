@@ -64,6 +64,12 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      {altToggled && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          .mesh-background, .arcade-grid, svg.absolute { display: none !important; }
+          body { background: #05030d !important; }
+        `}} />
+      )}
       {isAppRoute && (
         /* Subtle tap/hover trigger tab at top center of screen */
         <div 
@@ -78,8 +84,8 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
       <div 
         className={isAppRoute ? `fixed top-0 left-0 right-0 z-[500] transition-all duration-300 transform ${
           (showOverlay || altToggled) ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
-        }` : `transition-all duration-300 transform ${
-          altToggled ? "-translate-y-full opacity-0 pointer-events-none absolute" : "translate-y-0 opacity-100"
+        }` : `transition-all duration-300 ${
+          altToggled ? "hidden" : "translate-y-0 opacity-100"
         }`}
         onMouseEnter={isAppRoute ? () => setShowOverlay(true) : undefined}
         onMouseLeave={isAppRoute ? () => setShowOverlay(false) : undefined}
@@ -94,10 +100,8 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
       <div 
         className={isAppRoute ? `fixed bottom-0 left-0 right-0 z-[500] transition-all duration-300 transform ${
           (showOverlay || altToggled) ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
-        }` : `transition-all duration-300 transform ${
-          isChatRoute ? "hidden" : ""
-        } ${
-          altToggled ? "translate-y-full opacity-0 pointer-events-none absolute" : "translate-y-0 opacity-100"
+        }` : `transition-all duration-300 ${
+          isChatRoute || altToggled ? "hidden" : "translate-y-0 opacity-100"
         }`}
         onMouseEnter={isAppRoute ? () => setShowOverlay(true) : undefined}
         onMouseLeave={isAppRoute ? () => setShowOverlay(false) : undefined}

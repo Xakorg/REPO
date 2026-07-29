@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "chronoshift_overdrive",
+    title: "Chronoshift Overdrive",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["2D Top-Down", "Action", "Cyberpunk", "Time-Warp", "Rogue-lite", "Shooter"],
+    description: "High-octane 2D cyberpunk survival shooter. Manipulate time, upgrade your mech with modular perks, and battle rogue AI armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=chronoshiftoverdrive",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/chronoshift-overdrive"
+  },
+  {
     id: "nexus_arena_online",
     title: "Nexus Arena: Cyber Strike Online",
     developer: "Xakteir Studios",
