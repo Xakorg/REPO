@@ -15,6 +15,22 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "cyber_vortex_odyssey",
+    title: "Cyber Vortex Odyssey",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Bullet Hell"],
+    description: "High-octane 2D cyberpunk rogue-lite space arcade shooter. Command apex starfighters, unlock tactical matrix perks, collect neon credits, and conquer alien rogue AI armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cybervortexodyssey",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "14:05", description: "Initial Game Launch" }
+    ],
+    route: "/game/cyber-vortex-odyssey"
+  },
+  {
     id: "shadow_shinobi_platformer",
     title: "Shadow Shinobi",
     developer: "Xakteir Studios",
@@ -22,22 +38,31 @@ const premiumGames: GameMeta[] = [
     genre: ["2D Platformer", "Action", "Cyberpunk", "Ninja", "Mobile Friendly"],
     description: "High-octane cyberpunk ninja platformer with wall-jumping, katana slicing, shuriken projectiles, and full mobile touch controls.",
     bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=shadowshinobi",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=shadowshinobiplatformer",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/shadow-shinobi-platformer"
   },
   {
     id: "frost_bound_odyssey",
-    title: "Frostbound Odyssey",
+    title: "Frostbound Quest",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["2D Platformer", "Precision", "Arctic", "Survival", "Mobile Friendly"],
     description: "Arctic ice precision platformer with slippery ice physics, falling icicle hazards, thermal warmth management, and mobile touch controls.",
-    bannerUrl: "https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=frostbound",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=frostboundodyssey",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/frost-bound-odyssey"
   },
   {
@@ -47,23 +72,31 @@ const premiumGames: GameMeta[] = [
     type: "2D Platformer",
     genre: ["2D Platformer", "Magma", "Action", "Jetpack", "Mobile Friendly"],
     description: "Vertical volcanic magma escape platformer with jetpack thrusting, crumbling platforms, rising lava, and mobile touch controls.",
-    bannerUrl: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=pyrocore",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=pyrocoreescape",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/pyro-core-escape"
   },
   {
     id: "zero_g_orbital_runner",
-    title: "Zero-G Orbital Runner",
+    title: "Zero-G Space Runner",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["2D Platformer", "Sci-Fi", "Gravity", "Space", "Mobile Friendly"],
     description: "Zero-gravity sci-fi space station platformer featuring instant gravity inversion, laser field obstacles, energy cells, and mobile touch controls.",
-    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=zerog",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=zerogorbitalrunner",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/zero-g-orbital-runner"
   },
   {
@@ -73,38 +106,8 @@ const premiumGames: GameMeta[] = [
     type: "2D Platformer",
     genre: ["2D Platformer", "Steampunk", "Mechanical", "Tower", "Mobile Friendly"],
     description: "Brass steampunk clocktower platformer with rotating gear platforms, swinging pendulum blades, steam burst double jumps, and mobile touch controls.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=steampunk",
-    releaseDate: "2026",
-    price: "Free",
-    route: "/game/steampunk-clockwork-climb"
-  },
-  {
-    id: "chronoshift_overdrive",
-    title: "Time Travel Playground",
-    developer: "Xakteir Studios",
-    type: "Arcade",
-    genre: ["2D Top-Down", "Action", "Cyberpunk", "Time-Warp", "Rogue-lite", "Shooter"],
-    description: "High-octane 2D cyberpunk survival shooter. Manipulate time, upgrade your mech with modular perks, and battle rogue AI armadas.",
-    bannerUrl: "/games/images/chronoshift_overdrive_banner.png",
-    iconUrl: "/games/images/chronoshift_overdrive_icon.png",
-    releaseDate: "2026",
-    price: "Free",
-    updates: [
-      { time: "14:20", description: "Added more fun levels!" },
-      { time: "12:50", description: "Initial Update" }
-    ],
-    route: "/game/chronoshift-overdrive"
-  },
-  {
-    id: "nexus_arena_online",
-    title: "Robot Park: Super Tag Online",
-    developer: "Xakteir Studios",
-    type: "Arcade",
-    genre: ["2D Top-Down", "Action", "Cyberpunk", "Multiplayer", "Online", "PvP"],
-    description: "High-octane cyberpunk arena combat featuring 1P Arcade vs AI, Local 2-Player Versus, and Real-time Online Room Matchmaking with P2P sync and live chat.",
-    bannerUrl: "/games/images/nexus_arena_online_banner.png",
-    iconUrl: "/games/images/nexus_arena_online_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=steampunkclockworkclimb",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -112,33 +115,69 @@ const premiumGames: GameMeta[] = [
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
+    route: "/game/steampunk-clockwork-climb"
+  },
+    {
+    id: "chronoshift_overdrive",
+    title: "Chrono Dash",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["2D Top-Down", "Action", "Cyberpunk", "Time-Warp", "Rogue-lite", "Shooter"],
+    description: "High-octane 2D cyberpunk survival shooter. Manipulate time, upgrade your mech with modular perks, and battle rogue AI armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=chronoshiftoverdrive",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
+    route: "/game/chronoshift-overdrive"
+  },
+  {
+    id: "nexus_arena_online",
+    title: "Cyber Arena: Cyber Strike Online",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["2D Top-Down", "Action", "Cyberpunk", "Multiplayer", "Online", "PvP"],
+    description: "High-octane cyberpunk arena combat featuring 1P Arcade vs AI, Local 2-Player Versus, and Real-time Online Room Matchmaking with P2P sync and live chat.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=nexusarenaonline",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/nexus-arena-online"
   },
   {
     id: "aether_mech_overdrive",
-    title: "Cloud Mech: Playground",
+    title: "Sky Mech: Dash",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["2D Top-Down", "Action", "Cyberpunk", "Mech", "Sci-Fi", "Shooter"],
     description: "High-octane tactical 2D cyber-mech arcade combat. Pilot customizable combat mechs, deploy time-warp matrix abilities, level up perks, and conquer rogue AI armadas.",
-    bannerUrl: "/games/images/aether_mech_overdrive_banner.png",
-    iconUrl: "/games/images/aether_mech_overdrive_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aethermechoverdrive",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/aether-mech-overdrive"
   },
   {
     id: "quantum_helix_cyber_odyssey",
-    title: "Magic Helix: Super Odyssey",
+    title: "Cyber Spin: Cyber Quest",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["2D", "Arcade", "Shooter", "Cyberpunk", "Space", "Action"],
     description: "High-octane 2D cyberpunk space arcade combat. Command starfighters, upgrade plasma weapons, deploy automated defense drones, and conquer rogue AI armadas.",
-    bannerUrl: "/games/images/quantum_helix_cyber_odyssey_banner.png",
-    iconUrl: "/games/images/quantum_helix_cyber_odyssey_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumhelixcyberodyssey",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -150,33 +189,33 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "neon_ascent",
-    title: "Colorful Ascent 2D",
+    title: "Neon Ascent 2D",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["2D", "Platformer", "Precision", "Cyberpunk", "Action"],
     description: "High-precision 2D cyberpunk platformer with wall jumping, air dashes, keycards, laser vaults, spikes, and 5 level stages.",
-    bannerUrl: "/games/images/neon_ascent_banner.png",
-    iconUrl: "/games/images/neon_ascent_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neonascent",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/neon-ascent"
   },
   {
     id: "quantum_tactics",
-    title: "Magic Tactics RPG",
+    title: "Cyber Tactics RPG",
     developer: "Xakteir Studios",
     type: "Strategy",
     genre: ["RPG", "Turn-Based", "Tactical", "Strategy", "Grid"],
     description: "Grid-based tactical cyberpunk turn-based RPG. Position cyber samurai, manage Action Points (AP), cast elemental spells, and defeat enemy mechs.",
-    bannerUrl: "/games/images/quantum_tactics_banner.png",
-    iconUrl: "/games/images/quantum_tactics_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumtactics",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
@@ -184,16 +223,17 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "orbital_puzzle",
-    title: "Orbital Laser Puzzle",
+    title: "Space Laser Puzzle",
     developer: "Xakteir Studios",
     type: "Puzzle",
     genre: ["Puzzle", "Logic", "Optics", "Laser", "Physics"],
     description: "Physics laser optics logic puzzle. Rotate precision 45-degree mirrors and beam splitters to power target cores across 5 stages.",
-    bannerUrl: "/games/images/orbital_puzzle_banner.png",
-    iconUrl: "/games/images/orbital_puzzle_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=orbitalpuzzle",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
@@ -201,13 +241,13 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "vector_dash",
-    title: "Vector Dash Synthwave",
+    title: "Vector Dash Retro",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["3D", "Runner", "Racing", "Synthwave", "Arcade"],
     description: "3D perspective synthwave cyber highway runner. Switch lanes, leap over plasma barriers, trigger nitro overdrive, and upgrade vehicle tech.",
-    bannerUrl: "/games/images/vector_dash_banner.png",
-    iconUrl: "/games/images/vector_dash_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=vectordash",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -224,26 +264,24 @@ const premiumGames: GameMeta[] = [
     type: "Arcade",
     genre: ["2D Top-Down", "Shooter", "Space", "Sci-Fi", "Arcade"],
     description: "Sci-Fi vertical space arcade shooter. Pilot your starfighter through hostile armadas, unlock plasma cannons, and defeat motherships.",
-    bannerUrl: "/games/images/starlight_commander_banner.png",
-    iconUrl: "/games/images/starlight_commander_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=starlightcommander",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "19:29", description: "Added new characters and outfits" },
-      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/starlight-commander"
   },
   {
     id: "cyber_quest_platformer",
-    title: "Super Quest Platformer 2D",
+    title: "Cyber Quest Platformer 2D",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["2D", "Platformer", "Action", "Cyberpunk", "Level-Based"],
     description: "5-level precision 2D platformer with double jump, wall slide, key-door puzzles, spike hazards, and checkpoint flags.",
-    bannerUrl: "/games/images/cyber_quest_platformer_banner.png",
-    iconUrl: "/games/images/cyber_quest_platformer_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberquestplatformer",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -255,13 +293,13 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "cyber_dungeon_rpg",
-    title: "Super Dungeon RPG 2D",
+    title: "Cyber Dungeon RPG 2D",
     developer: "Xakteir Studios",
     type: "Discovery",
     genre: ["2D", "RPG", "Retro", "Turn-Based", "Cyberpunk", "Strategy"],
     description: "Turn-based retro 2D grid dungeon RPG with character stat leveling, plasma spell casting, nanite healing, merchant shop, and floor boss encounters.",
-    bannerUrl: "/games/images/cyber_dungeon_rpg_banner.png",
-    iconUrl: "/games/images/cyber_dungeon_rpg_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberdungeonrpg",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -272,13 +310,13 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "quantum_laser_puzzle",
-    title: "Magic Laser Optics 2D",
+    title: "Cyber Laser Optics 2D",
     developer: "Xakteir Studios",
     type: "Puzzle",
     genre: ["2D", "Puzzle", "Logic", "Optics", "Laser", "Brain"],
     description: "Raycasting optics laser logic puzzle. Rotate double-sided mirrors and beam splitters to illuminate target sensors across 10 levels.",
-    bannerUrl: "/games/images/quantum_laser_puzzle_banner.png",
-    iconUrl: "/games/images/quantum_laser_puzzle_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumlaserpuzzle",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -290,17 +328,16 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "neon_core_defense",
-    title: "Colorful Core Defense 2D",
+    title: "Neon Core Defense 2D",
     developer: "Xakteir Studios",
     type: "Strategy",
     genre: ["2D", "Strategy", "Tower Defense", "Sci-Fi", "Tactical"],
     description: "Top-down tactical 2D tower defense. Deploy plasma cannons, EMP stunners, and heavy rockets to defend the reactor core from 10 enemy waves.",
-    bannerUrl: "/games/images/neon_core_defense_banner.png",
-    iconUrl: "/games/images/neon_core_defense_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neoncoredefense",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "19:29", description: "Added new characters and outfits" },
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
@@ -308,29 +345,31 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "cyber_drift_runner",
-    title: "Super Drift Runner 2D",
+    title: "Cyber Drift Runner 2D",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["2D", "Arcade", "Racing", "Drift", "Synthwave", "Time Trial"],
     description: "Top-down precision 2D synthwave drift racer. Master angular drift physics, set lap time records, and race through glowing neon circuits.",
-    bannerUrl: "/games/images/cyber_drift_runner_banner.png",
-    iconUrl: "/games/images/cyber_drift_runner_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberdriftrunner",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/cyber-drift-runner"
   },
   {
     id: "cyber_leap_odyssey",
-    title: "CyberLeap Odyssey",
+    title: "CyberLeap Quest",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["2D", "Platformer", "Action", "Cyberpunk", "Level-Based"],
     description: "8-level precision platformer with dash mechanics, wall sliding, laser hazards, particle trails, and procedural sound FX.",
-    bannerUrl: "/games/images/cyber_leap_odyssey_banner.png",
-    iconUrl: "/games/images/cyber_leap_odyssey_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberleapodyssey",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -342,29 +381,31 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "aetheria_realm_of_shadows",
-    title: "Aetheria: Realm of Shadows",
+    title: "Sky: Shadow Realm",
     developer: "Xakteir Studios",
     type: "2D Top-Down",
     genre: ["RPG", "Dungeon Crawler", "Turn-Based", "Fantasy", "Retro"],
     description: "Turn-based retro dungeon crawler RPG. Choose Paladin, Archmage, or Assassin, cast elemental spells, and slay the Shadow Oni.",
-    bannerUrl: "/games/images/aetheria_realm_of_shadows_banner.png",
-    iconUrl: "/games/images/aetheria_realm_of_shadows_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aetheriarealmofshadows",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/aetheria-realm-of-shadows"
   },
   {
     id: "aegis_protocol_td",
-    title: "Aegis Adventure TD",
+    title: "Shield Code TD",
     developer: "Xakteir Studios",
     type: "Strategy",
     genre: ["Strategy", "Tower Defense", "Grid", "Cyberpunk", "Tactical"],
     description: "Tactical grid tower defense strategy. Build Gatling cannons, Frost beams, Plasma mortars, and Nuke launchers to defend against creep waves.",
-    bannerUrl: "/games/images/aegis_protocol_td_banner.png",
-    iconUrl: "/games/images/aegis_protocol_td_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aegisprotocoltd",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -375,29 +416,30 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "quantum_prism_puzzle",
-    title: "Magic Prism Puzzles",
+    title: "Cyber Light Puzzles",
     developer: "Xakteir Studios",
     type: "Puzzle",
     genre: ["Puzzle", "Logic", "Optics", "Physics", "Laser"],
     description: "Optics physics laser grid puzzles. Rotate mirrors and beam splitters to energize target cores across 8 levels.",
-    bannerUrl: "/games/images/quantum_prism_puzzle_banner.png",
-    iconUrl: "/games/images/quantum_prism_puzzle_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumprismpuzzle",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/quantum-prism-puzzle"
   },
   {
     id: "synthwave_beat_rush",
-    title: "Synthwave Beat Rush",
+    title: "Retro Beat Rush",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["Arcade", "Rhythm", "Music", "Synthwave", "Neon"],
     description: "4-lane synthwave rhythm action game. Tap keys in perfect sync with electro synth beats across 3 original tracks.",
-    bannerUrl: "/games/images/synthwave_beat_rush_banner.png",
-    iconUrl: "/games/images/synthwave_beat_rush_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=synthwavebeatrush",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -409,17 +451,16 @@ const premiumGames: GameMeta[] = [
 
   {
     id: "cyber_runner_platformer",
-    title: "Super Runner 2D",
+    title: "Cyber Runner 2D",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["2D", "Platformer", "Precision", "Level-Based", "Action"],
     description: "Precision 2D cyberpunk level platformer. Master double jumps, air dashes, keycards, laser vaults, and energy orb collection.",
-    bannerUrl: "/games/images/cyber_runner_platformer_banner.png",
-    iconUrl: "/games/images/cyber_runner_platformer_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberrunnerplatformer",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "19:29", description: "Added new characters and outfits" },
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
@@ -427,47 +468,46 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "cyber_dungeon_rpg",
-    title: "Super Dungeon RPG",
+    title: "Cyber Dungeon RPG",
     developer: "Xakteir Studios",
     type: "Strategy",
     genre: ["2D", "RPG", "Dungeon Crawler", "Turn-Based", "Cyberpunk"],
     description: "Retro top-down grid cyberpunk RPG. Battle rogue mechs, collect credits, upgrade hero stats, and conquer sector floor bosses.",
-    bannerUrl: "/games/images/cyber_dungeon_rpg_banner.png",
-    iconUrl: "/games/images/cyber_dungeon_rpg_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberdungeonrpg",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/cyber-dungeon-rpg"
   },
   {
     id: "quantum_grid_puzzle",
-    title: "Magic Grid Puzzle",
+    title: "Cyber Grid Puzzle",
     developer: "Xakteir Studios",
     type: "Puzzle",
     genre: ["2D", "Puzzle", "Logic", "Laser", "Brain Teaser"],
     description: "Laser refraction logic puzzle. Rotate quantum mirrors, beam splitters, and energy filters to power target receptors.",
-    bannerUrl: "/games/images/quantum_grid_puzzle_banner.png",
-    iconUrl: "/games/images/quantum_grid_puzzle_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumgridpuzzle",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "19:29", description: "Added new characters and outfits" },
-      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/quantum-grid-puzzle"
   },
   {
     id: "synthwave_velocity_runner",
-    title: "Synthwave Velocity Runner",
+    title: "Retro Velocity Runner",
     developer: "Xakteir Studios",
     type: "Sports",
     genre: ["3D", "Racing", "Runner", "Synthwave", "Arcade"],
     description: "High-speed 3D perspective synthwave highway runner. Dodge barriers, collect energy rings, and trigger nitro overdrive.",
-    bannerUrl: "/games/images/synthwave_velocity_runner_banner.png",
-    iconUrl: "/games/images/synthwave_velocity_runner_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=synthwavevelocityrunner",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -477,17 +517,16 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "cyber_pinball_odyssey",
-    title: "Super Pinball Odyssey",
+    title: "Cyber Pinball Quest",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["2D", "Arcade", "Physics", "Pinball", "Retro"],
     description: "Cyberpunk 2D physics pinball arcade. Trigger neon bumpers, flipper combos, quantum multipliers, and multiballs.",
-    bannerUrl: "/games/images/cyber_pinball_odyssey_banner.png",
-    iconUrl: "/games/images/cyber_pinball_odyssey_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberpinballodyssey",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "19:29", description: "Added new characters and outfits" },
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
@@ -495,16 +534,17 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "aether_pulse_2d",
-    title: "Cloud Pulse 2D",
+    title: "Sky Pulse 2D",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["2D", "Platformer", "Puzzle", "Level-Based", "Gravity"],
     description: "Precision 2D level-based gravity puzzle explorer. Shift gravity directions to bypass energy grids and unlock 15 sector gates.",
-    bannerUrl: "/games/images/aether_pulse_2d_banner.png",
-    iconUrl: "/games/images/aether_pulse_2d_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aetherpulsed",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
@@ -512,16 +552,18 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "sector_9_rpg",
-    title: "Sector 9 Super RPG",
+    title: "Sector 9 Cyber RPG",
     developer: "Xakteir Studios",
     type: "2D Top-Down",
     genre: ["2D", "RPG", "Cyberpunk", "Turn-Based", "Tactical"],
     description: "Tactical cyberpunk turn-based RPG. Command Kai, Vex, and Lyra, hack enemy defense nodes, and conquer sector dungeons.",
-    bannerUrl: "/games/images/sector_9_rpg_banner.png",
-    iconUrl: "/games/images/sector_9_rpg_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=sectorrpg",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/sector-9-rpg"
@@ -533,45 +575,44 @@ const premiumGames: GameMeta[] = [
     type: "Arcade",
     genre: ["2D", "Racing", "Physics", "Stunt", "Arcade"],
     description: "2D physics hovercraft racing & stunt trials. Balance anti-gravity thrust, activate nitro boosts, and beat speed trial records.",
-    bannerUrl: "/games/images/gravity_racer_2d_banner.png",
-    iconUrl: "/games/images/gravity_racer_2d_icon.png",
-    releaseDate: "2026",
-    price: "Free",
-    updates: [
-      { time: "12:50", description: "Initial Update" }
-    ],
-    route: "/game/gravity-racer"
-  },
-  {
-    id: "nexus_grid_defense_2d",
-    title: "Robot Grid Defense",
-    developer: "Xakteir Studios",
-    type: "Strategy",
-    genre: ["2D", "Strategy", "Tower Defense", "Tactical"],
-    description: "Real-time tactical grid tower defense. Build plasma cannons, laser turrets, and defend the Nexus Core against corrupted AI node waves.",
-    bannerUrl: "/games/images/nexus_grid_defense_2d_banner.png",
-    iconUrl: "/games/images/nexus_grid_defense_2d_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=gravityracerd",
     releaseDate: "2026",
     price: "Free",
     updates: [
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
+    route: "/game/gravity-racer"
+  },
+  {
+    id: "nexus_grid_defense_2d",
+    title: "Cyber Grid Defense",
+    developer: "Xakteir Studios",
+    type: "Strategy",
+    genre: ["2D", "Strategy", "Tower Defense", "Tactical"],
+    description: "Real-time tactical grid tower defense. Build plasma cannons, laser turrets, and defend the Nexus Core against corrupted AI node waves.",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=nexusgriddefensed",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/nexus-grid-defense"
   },
   {
     id: "stellar_strike_2d",
-    title: "Stellar Tag 2D",
+    title: "Star Strike 2D",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["2D", "Shooter", "Arcade", "Space", "Bullet-Hell"],
     description: "Vertical arcade bullet-hell space shooter. Blast enemy interceptors, collect plasma upgrades, and defeat Dreadnought Boss Armadas.",
-    bannerUrl: "/games/images/stellar_strike_2d_banner.png",
-    iconUrl: "/games/images/stellar_strike_2d_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=stellarstriked",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "19:29", description: "Added new characters and outfits" },
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
@@ -579,29 +620,31 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "shadow_blade_2d",
-    title: "Star Wand 2D",
+    title: "Shadow Blade 2D",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["Action", "Cyberpunk", "2D", "Ninja", "Hack and Slash", "Canvas"],
     description: "High-octane 2D cyberpunk shinobi action. Slice rogue ninjas, deflect plasma bolts, execute cyber dashes, and battle Shadow Oni bosses.",
-    bannerUrl: "/games/images/shadow_blade_2d_banner.png",
-    iconUrl: "/games/images/shadow_blade_2d_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=shadowbladed",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/shadow-blade"
   },
   {
     id: "cyber_nexus_survivor",
-    title: "Super Robot Survivor 2D",
+    title: "Cyber Cyber Survivor 2D",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Survivor", "Bullet Hell"],
     description: "Top-down 2D cyberpunk action survivor. Survive endless mech armadas, collect XP gems, unlock plasma katana perks, and defeat sector dreadnought bosses.",
-    bannerUrl: "/games/images/cyber_nexus_survivor_banner.png",
-    iconUrl: "/games/images/cyber_nexus_survivor_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cybernexussurvivor",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -611,30 +654,29 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "neon_ronin",
-    title: "Colorful Hero 2099",
+    title: "Neon Ronin 2099",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["Action", "Cyberpunk", "2D", "Platformer", "Hack and Slash"],
     description: "Slice through rogue cyber ninjas, deflect incoming plasma bursts, execute double jumps, and unleash Cyber Blitz in 2D platforming action.",
-    bannerUrl: "/games/images/neon_ronin_banner.png",
-    iconUrl: "/games/images/neon_ronin_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neonronin",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/neon-ronin"
   },
   {
     id: "aether_strike",
-    title: "Cloud Tag 3D",
+    title: "Sky Strike 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Sci-Fi", "3D", "Action", "Shooter", "Arcade"],
     description: "Pilot your apex starfighter through hostile cyber armadas. Master EMP shockwaves, homing missiles, upgrade ship systems, and conquer sector dreadnoughts.",
-    bannerUrl: "/games/images/aether_strike_banner.png",
-    iconUrl: "/games/images/aether_strike_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aetherstrike",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -644,17 +686,16 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "stellar_overlord",
-    title: "Stellar King 3D",
+    title: "Star Boss 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Sci-Fi", "3D", "Action", "Shooter", "Arcade"],
     description: "Pilot your apex cyber starfighter through hostile armadas in 3D. Master Warp Speed, EMP Shockwaves, upgrade ship subsystems, and conquer Sector Overlord Bosses.",
-    bannerUrl: "/games/images/stellar_overlord_banner.png",
-    iconUrl: "/games/images/stellar_overlord_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=stellaroverlord",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "19:29", description: "Added new characters and outfits" },
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
@@ -662,13 +703,13 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "chronos_protocol",
-    title: "Chronos Adventure 3D",
+    title: "Chronos Code 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Sci-Fi", "3D", "Action", "Shooter", "Bullet Time"],
     description: "Control temporal mechanics, manipulate bullet-time time dilation, trigger tachyon shockwaves, and defeat endless synthwave armadas in 3D.",
-    bannerUrl: "/games/images/chronos_protocol_banner.png",
-    iconUrl: "/games/images/chronos_protocol_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=chronosprotocol",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -678,16 +719,17 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "nexus_overdrive",
-    title: "Robot Playground 3D",
+    title: "Cyber Dash 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Sci-Fi", "3D", "Action", "Shooter", "Space Fighter"],
     description: "Pilot your custom cyber starfighter through hostile armadas in 3D. Unleash homing missiles, activate hyper overdrive, upgrade weapons, and conquer the sector.",
-    bannerUrl: "/games/images/nexus_overdrive_banner.png",
-    iconUrl: "/games/images/nexus_overdrive_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=nexusoverdrive",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
@@ -700,8 +742,8 @@ const premiumGames: GameMeta[] = [
     type: "Arcade",
     genre: ["Action", "Fighting", "Arcade", "2D"],
     description: "High-octane stickman brawler featuring intense wave survival, 1v1 AI duels, customizable cyber skins, procedural synthwave weapons, and explosive rage ultimate abilities.",
-    bannerUrl: "/games/images/super_stick_battles_banner.png",
-    iconUrl: "/games/images/super_stick_battles_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=superstickbattles",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -711,17 +753,16 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "aero_phantom",
-    title: "Aero Ghost 3D",
+    title: "Aero Phantom 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Flight", "3D", "Action", "Dogfight", "Shooter"],
     description: "Pilot an apex supersonic jet fighter across futuristic synthwave canyons in 3D. Lock onto enemy stealth drones with heat-seeking missiles, fire plasma vulcan cannons, and deploy flare countermeasures.",
-    bannerUrl: "/games/images/aero_phantom_banner.png",
-    iconUrl: "/games/images/aero_phantom_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aerophantom",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/aero-phantom"
@@ -733,8 +774,8 @@ const premiumGames: GameMeta[] = [
     type: "3D",
     genre: ["Sci-Fi", "3D", "Action", "Shooter", "Arcade"],
     description: "Command your apex starfighter across an erupting solar flare sector in 3D. Destroy mech drones, harvest energy matrix crystals, dodge asteroids, and unleash seeker missiles.",
-    bannerUrl: "/games/images/solar_tempest_banner.png",
-    iconUrl: "/games/images/solar_tempest_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=solartempest",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -746,45 +787,49 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "hyper_horizon",
-    title: "Hyper Horizon 3D",
+    title: "Hyper Sky 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Racing", "Sci-Fi", "3D", "Action", "Arcade"],
     description: "Pilot your synthwave apex starfighter across a 3D procedural neon horizon. Shoot rogue pylons, trigger hyper boosts, collect quantum credits, and conquer lightspeed.",
-    bannerUrl: "/games/images/hyper_horizon_banner.png",
-    iconUrl: "/games/images/hyper_horizon_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=hyperhorizon",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/hyper-horizon"
   },
   {
     id: "quantum_surge",
-    title: "Magic Surge 3D",
+    title: "Cyber Surge 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Action", "Sci-Fi", "3D", "Arcade"],
     description: "Blast through infinite synthwave highways in 3D. Dodge quantum barriers, trigger hyper boosts, collect shields, and set new high scores.",
-    bannerUrl: "/games/images/quantum_surge_banner.png",
-    iconUrl: "/games/images/quantum_surge_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumsurge",
     releaseDate: "2026",
     price: "Free",
     updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/quantum-surge"
   },
   {
     id: "quantum_vanguard",
-    title: "Magic Guardians 2099",
+    title: "Cyber Guard 2099",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["Action", "Sci-Fi", "Shooter", "Arcade"],
     description: "Pilot your apex starfighter against infinite synthwave armadas. Master time dilation, EMP blasts, procedural Web Audio SFX, and quantum arsenal upgrades.",
-    bannerUrl: "/games/images/quantum_vanguard_banner.png",
-    iconUrl: "/games/images/quantum_vanguard_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumvanguard",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -795,13 +840,13 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "void_vanguard",
-    title: "Space Guardians 3D",
+    title: "Void Guard 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Sci-Fi", "3D", "Action", "Shooter", "Space Fighter"],
     description: "Apex sci-fi starfighter battle simulator. Unleash EMP shockwaves, homing missile swarms, quantum beams, upgrade ship subsystems, and conquer dreadnought bosses.",
-    bannerUrl: "/games/images/void_vanguard_banner.png",
-    iconUrl: "/games/images/void_vanguard_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=voidvanguard",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -813,13 +858,13 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "cyber_pulse",
-    title: "Super Pulse 2099",
+    title: "Cyber Pulse 2099",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["Action", "Sci-Fi", "Shooter", "Arcade"],
     description: "Pilot your high-tech starfighter against endless swarms of rogue mechs. Upgrade weapons, unleash EMP blasts, and dominate the galaxy.",
-    bannerUrl: "/games/images/cyber_pulse_banner.png",
-    iconUrl: "/games/images/cyber_pulse_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberpulse",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -830,31 +875,29 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "neon_velocity",
-    title: "Colorful Velocity 2099",
+    title: "Neon Velocity 2099",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Racing", "Sci-Fi", "Action", "Arcade"],
     description: "Blast through neon synthwave highways at breakneck speeds. Dodge obstacles, fire plasma cannons, collect credits, and upgrade your vehicle.",
-    bannerUrl: "/games/images/neon_velocity_banner.png",
-    iconUrl: "/games/images/neon_velocity_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neonvelocity",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "19:29", description: "Added new characters and outfits" },
-      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/game/neon-velocity"
   },
   {
     id: "code_arena",
-    title: "Code Park",
+    title: "Code Arena",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["Coding", "Multiplayer", "Competitive"],
     description: "Race against other developers to solve algorithmic challenges in real-time. The first to pass all test cases wins the battle.",
-    bannerUrl: "/games/images/code_arena_banner.png",
-    iconUrl: "/games/images/code_arena_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=codearena",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -869,12 +912,11 @@ const premiumGames: GameMeta[] = [
     type: "3D",
     genre: ["Sports", "Multiplayer", "Physics"],
     description: "The ultimate 3D local and online multiplayer sports arena. Play 1v1 splitscreen or 4-player chaos.",
-    bannerUrl: "/games/images/xaksports_banner.png",
-    iconUrl: "/games/images/xaksports_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=xaksports",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/xaksports"
@@ -886,11 +928,12 @@ const premiumGames: GameMeta[] = [
     type: "3D",
     genre: ["Shooter", "Action", "FPS"],
     description: "Fast-paced 3D arena shooter powered by WebGL. Lock and load.",
-    bannerUrl: "/games/images/xakarena_banner.png",
-    iconUrl: "/games/images/xakarena_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=xakarena",
     releaseDate: "Coming Soon",
     price: "Free",
     updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
@@ -903,11 +946,12 @@ const premiumGames: GameMeta[] = [
     type: "Retro Emulator",
     genre: ["Emulator", "Classic"],
     description: "Play your favorite classic console ROMs directly in the browser using WebAssembly. Drag, drop, and play.",
-    bannerUrl: "/games/images/retro_engine_banner.png",
-    iconUrl: "/games/images/retro_engine_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=retroengine",
     releaseDate: "Beta",
     price: "Free",
     updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
       { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
@@ -915,16 +959,17 @@ const premiumGames: GameMeta[] = [
   },
   {
     id: "neon_drift",
-    title: "Colorful Drift",
+    title: "Neon Drift",
     developer: "Xakteir Studios",
     type: "2D Top-Down",
     genre: ["Racing", "Arcade"],
     description: "Top-down cyber-racing with intense drift mechanics.",
-    bannerUrl: "/games/images/neon_drift_banner.png",
-    iconUrl: "/games/images/neon_drift_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neondrift",
     releaseDate: "2026",
     price: "$4.99",
     updates: [
+      { time: "14:20", description: "Added more fun levels!" },
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/games/play/neon_drift"
@@ -936,8 +981,8 @@ const premiumGames: GameMeta[] = [
     type: "2D Platformer",
     genre: ["Adventure", "Platformer"],
     description: "A classic 2D platforming adventure through dangerous dungeons.",
-    bannerUrl: "/games/images/pixel_knight_banner.png",
-    iconUrl: "/games/images/pixel_knight_icon.png",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=pixelknight",
     releaseDate: "2026",
     price: "Free",
     updates: [
@@ -950,669 +995,1332 @@ const premiumGames: GameMeta[] = [
 ];
 
 const legacyGamesData = [
-  { id: 'aim', name: 'Aim Trainer', type: 'Arcade' },
-  { id: 'balance', name: 'Balance Board', type: 'Puzzle' },
-  { id: 'basketball', name: 'Basketball Shoot', type: 'Sports' },
-  { id: 'breaker', name: 'Brick Breaker', type: 'Arcade' },
-  { id: 'bubble', name: 'Bubble Shooter', type: 'Puzzle' },
-  { id: 'clickSpeed', name: 'Click Speed', type: 'Arcade' },
-  { id: 'clicker', name: 'Idle Clicker', type: 'Strategy' },
-  { id: 'colorMatch', name: 'Color Match', type: 'Puzzle' },
-  { id: 'connectFour', name: 'Connect Four', type: 'Strategy' },
-  { id: 'dodge', name: 'Dodge Objects', type: 'Arcade' },
-  { id: 'drawing', name: 'Drawing Canvas', type: 'Discovery' },
-  { id: 'fishing', name: 'Fishing Game', type: 'Arcade' },
-  { id: 'flappy', name: 'Flappy Bird', type: 'Arcade' },
-  { id: 'football3D', name: 'Football 3D', type: '3D' },
-  { id: 'frogger', name: 'Frogger Cross', type: 'Arcade' },
-  { id: 'golf', name: 'Mini Golf', type: 'Sports' },
-  { id: 'gravity', name: 'Gravity Flip', type: 'Arcade' },
-  { id: 'invaders', name: 'Space Invaders', type: 'Arcade' },
-  { id: 'jump', name: 'Infinite Jump', type: 'Arcade' },
-  { id: 'knife', name: 'Knife Hit', type: 'Arcade' },
-  { id: 'match3', name: 'Match 3', type: 'Puzzle' },
-  { id: 'math', name: 'Math Quiz', type: 'Puzzle' },
-  { id: 'maze', name: 'Maze Solver', type: 'Puzzle' },
-  { id: 'memory', name: 'Memory Cards', type: 'Puzzle' },
-  { id: 'minesweeper', name: 'Minesweeper', type: 'Strategy' },
-  { id: 'paint', name: 'Paint & Draw', type: 'Discovery' },
-  { id: 'parking', name: 'Car Parking', type: 'Puzzle' },
-  { id: 'pinball', name: 'Pinball Classic', type: 'Arcade' },
-  { id: 'plinko', name: 'Plinko Drop', type: 'Arcade' },
-  { id: 'pong', name: 'Classic Pong', type: 'Arcade' },
-  { id: 'rps', name: 'Rock Paper Scissors', type: 'Strategy' },
-  { id: 'reaction', name: 'Reaction Time', type: 'Arcade' },
-  { id: 'sequence', name: 'Memory Sequence', type: 'Puzzle' },
-  { id: 'snake', name: 'Snake Game', type: 'Arcade' },
-  { id: 'spinWheel', name: 'Spin The Wheel', type: 'Discovery' },
-  { id: 'stack', name: 'Tower Stacker', type: 'Arcade' },
-  { id: 'sudoku', name: 'Sudoku Classic', type: 'Puzzle' },
-  { id: 'tictactoe', name: 'Tic Tac Toe', type: 'Strategy' },
-  { id: 'towerDefense', name: 'Tower Defense', type: 'Strategy' },
-  { id: 'trivia', name: 'Trivia Quiz', type: 'Discovery' },
-  { id: 'tunnel3D', name: 'Tunnel 3D', type: '3D' },
-  { id: 'twoZeroFourEight', name: '2048 Puzzle', type: 'Puzzle' },
-  { id: 'typing', name: 'Typing Test', type: 'Discovery' },
-  { id: 'whack', name: 'Whack-a-Mole', type: 'Arcade' },
-  { id: 'word', name: 'Word Search', type: 'Puzzle' },
-  { id: 'xbr', name: 'XBR Arena', type: '3D' },
-  { id: 'blockDrop', name: 'Block Drop', type: 'Arcade' },
-  { id: 'mazeMuncher', name: 'Maze Muncher', type: 'Arcade' },
-  { id: 'wordGuess', name: 'Word Guess', type: 'Puzzle' },
-  { id: 'spaceRocks', name: 'Space Rocks', type: 'Arcade' },
-  { id: 'rhythmTap', name: 'Rhythm Tap', type: 'Arcade' },
-  { id: 'aeroDrift', name: 'Aero Drift', type: 'Action' },
-  { id: 'aeroDrift2', name: 'Aero Drift2', type: 'Sports' },
-  { id: 'aeroMatch', name: 'Aero Match', type: 'Action' },
-  { id: 'aeroMatch2', name: 'Aero Match2', type: 'Arcade' },
-  { id: 'aeroSurfer', name: 'Aero Surfer', type: 'Puzzle' },
-  { id: 'aimTrainer', name: 'Aim Trainer', type: 'Sports' },
-  { id: 'aquaBlaster', name: 'Aqua Blaster', type: 'Sports' },
-  { id: 'aquaBlaster2', name: 'Aqua Blaster2', type: 'Puzzle' },
-  { id: 'aquaDrop', name: 'Aqua Drop', type: 'Action' },
-  { id: 'aquaDrop2', name: 'Aqua Drop2', type: 'Sports' },
-  { id: 'aquaMatch', name: 'Aqua Match', type: 'Puzzle' },
-  { id: 'astroDash', name: 'Astro Dash', type: 'Puzzle' },
-  { id: 'astroDash2', name: 'Astro Dash2', type: 'Arcade' },
-  { id: 'astroDrop', name: 'Astro Drop', type: 'Arcade' },
-  { id: 'astroLink', name: 'Astro Link', type: 'Puzzle' },
-  { id: 'astroSpin', name: 'Astro Spin', type: 'Strategy' },
-  { id: 'astroSpin2', name: 'Astro Spin2', type: 'Arcade' },
-  { id: 'balanceBoard', name: 'Balance Board', type: 'Action' },
-  { id: 'brickBreaker', name: 'Brick Breaker', type: 'Arcade' },
-  { id: 'bubbleShooter', name: 'Bubble Shooter', type: 'Strategy' },
-  { id: 'carParking', name: 'Car Parking', type: 'Puzzle' },
-  { id: 'chronoClash', name: 'Chrono Clash', type: 'Sports' },
-  { id: 'chronoClash2', name: 'Chrono Clash2', type: 'Action' },
-  { id: 'chronoDefender', name: 'Chrono Defender', type: 'Action' },
-  { id: 'chronoDefender2', name: 'Chrono Defender2', type: 'Sports' },
-  { id: 'chronoQuest', name: 'Chrono Quest', type: 'Sports' },
-  { id: 'cosmicBlaster', name: 'Cosmic Blaster', type: 'Sports' },
-  { id: 'cosmicBlaster2', name: 'Cosmic Blaster2', type: 'Sports' },
-  { id: 'cosmicBounce', name: 'Cosmic Bounce', type: 'Strategy' },
-  { id: 'cosmicDefender', name: 'Cosmic Defender', type: 'Puzzle' },
-  { id: 'cosmicDrop', name: 'Cosmic Drop', type: 'Strategy' },
-  { id: 'cosmicDrop2', name: 'Cosmic Drop2', type: 'Strategy' },
-  { id: 'cosmicMatch', name: 'Cosmic Match', type: 'Strategy' },
-  { id: 'crazyLink', name: 'Crazy Link', type: 'Arcade' },
-  { id: 'crazyNinja', name: 'Crazy Ninja', type: 'Arcade' },
-  { id: 'crazyNinja2', name: 'Crazy Ninja2', type: 'Puzzle' },
-  { id: 'crazyQuest', name: 'Crazy Quest', type: 'Action' },
-  { id: 'crazyQuest2', name: 'Crazy Quest2', type: 'Arcade' },
-  { id: 'crazySpin', name: 'Crazy Spin', type: 'Strategy' },
-  { id: 'crystalDrop', name: 'Crystal Drop', type: 'Puzzle' },
-  { id: 'crystalNinja', name: 'Crystal Ninja', type: 'Strategy' },
-  { id: 'crystalRacer', name: 'Crystal Racer', type: 'Action' },
-  { id: 'crystalRacer2', name: 'Crystal Racer2', type: 'Puzzle' },
-  { id: 'crystalStrike', name: 'Crystal Strike', type: 'Arcade' },
-  { id: 'crystalStrike2', name: 'Crystal Strike2', type: 'Sports' },
-  { id: 'cyberClash', name: 'Cyber Clash', type: 'Sports' },
-  { id: 'cyberDash', name: 'Cyber Dash', type: 'Action' },
-  { id: 'cyberDash2', name: 'Cyber Dash2', type: 'Action' },
-  { id: 'cyberPuzzle', name: 'Cyber Puzzle', type: 'Puzzle' },
-  { id: 'cyberSpin', name: 'Cyber Spin', type: 'Arcade' },
-  { id: 'cyberSpin2', name: 'Cyber Spin2', type: 'Sports' },
-  { id: 'cyberSpin3', name: 'Cyber Spin3', type: 'Action' },
-  { id: 'dodgeObjects', name: 'Dodge Objects', type: 'Arcade' },
-  { id: 'drawingCanvas', name: 'Drawing Canvas', type: 'Sports' },
-  { id: 'electroDash', name: 'Electro Dash', type: 'Sports' },
-  { id: 'electroRacer', name: 'Electro Racer', type: 'Arcade' },
-  { id: 'electroRacer2', name: 'Electro Racer2', type: 'Action' },
-  { id: 'electroStrike', name: 'Electro Strike', type: 'Sports' },
-  { id: 'electroStrike2', name: 'Electro Strike2', type: 'Sports' },
-  { id: 'epicClash', name: 'Epic Clash', type: 'Action' },
-  { id: 'epicDrift', name: 'Epic Drift', type: 'Sports' },
-  { id: 'epicDrift2', name: 'Epic Drift2', type: 'Puzzle' },
-  { id: 'epicMatch', name: 'Epic Match', type: 'Puzzle' },
-  { id: 'epicMatch2', name: 'Epic Match2', type: 'Action' },
-  { id: 'epicShooter', name: 'Epic Shooter', type: 'Strategy' },
-  { id: 'eternalRunner', name: 'Eternal Runner', type: 'Strategy' },
-  { id: 'finalBoss', name: 'Final Boss', type: 'Action' },
-  { id: 'fishingGame', name: 'Fishing Game', type: 'Arcade' },
-  { id: 'flappyBird', name: 'Flappy Bird', type: 'Action' },
-  { id: 'galaxyBlaster', name: 'Galaxy Blaster', type: 'Arcade' },
-  { id: 'game2048', name: 'Game2048', type: 'Puzzle' },
-  { id: 'grandStrategy', name: 'Grand Strategy', type: 'Strategy' },
-  { id: 'gravityFlip', name: 'Gravity Flip', type: 'Arcade' },
-  { id: 'hyperGlider', name: 'Hyper Glider', type: 'Strategy' },
-  { id: 'hyperGlider2', name: 'Hyper Glider2', type: 'Action' },
-  { id: 'hyperKnight', name: 'Hyper Knight', type: 'Puzzle' },
-  { id: 'hyperKnight2', name: 'Hyper Knight2', type: 'Action' },
-  { id: 'hyperLink', name: 'Hyper Link', type: 'Action' },
-  { id: 'hyperRacer', name: 'Hyper Racer', type: 'Strategy' },
-  { id: 'idleClicker', name: 'Idle Clicker', type: 'Puzzle' },
-  { id: 'infiniteJump', name: 'Infinite Jump', type: 'Strategy' },
-  { id: 'infinityMatch', name: 'Infinity Match', type: 'Puzzle' },
-  { id: 'ironBlaster', name: 'Iron Blaster', type: 'Action' },
-  { id: 'ironForce', name: 'Iron Force', type: 'Strategy' },
-  { id: 'ironRunner', name: 'Iron Runner', type: 'Action' },
-  { id: 'ironRunner2', name: 'Iron Runner2', type: 'Sports' },
-  { id: 'ironSurfer', name: 'Iron Surfer', type: 'Strategy' },
-  { id: 'ironSurfer2', name: 'Iron Surfer2', type: 'Strategy' },
-  { id: 'knifeHit', name: 'Knife Hit', type: 'Action' },
-  { id: 'legendQuest', name: 'Legend Quest', type: 'Strategy' },
-  { id: 'lunarDefender', name: 'Lunar Defender', type: 'Arcade' },
-  { id: 'lunarRacer', name: 'Lunar Racer', type: 'Action' },
-  { id: 'lunarRunner', name: 'Lunar Runner', type: 'Puzzle' },
-  { id: 'lunarRunner2', name: 'Lunar Runner2', type: 'Action' },
-  { id: 'lunarSurfer', name: 'Lunar Surfer', type: 'Strategy' },
-  { id: 'lunarSurfer2', name: 'Lunar Surfer2', type: 'Puzzle' },
-  { id: 'magicClash', name: 'Magic Clash', type: 'Puzzle' },
-  { id: 'magicClash2', name: 'Magic Clash2', type: 'Sports' },
-  { id: 'magicDefender', name: 'Magic Defender', type: 'Strategy' },
-  { id: 'magicDefender2', name: 'Magic Defender2', type: 'Strategy' },
-  { id: 'magicKnight', name: 'Magic Knight', type: 'Puzzle' },
-  { id: 'magicSpin', name: 'Magic Spin', type: 'Arcade' },
-  { id: 'masterArcade', name: 'Master Arcade', type: 'Arcade' },
-  { id: 'mathQuiz', name: 'Math Quiz', type: 'Strategy' },
-  { id: 'mazeSolver', name: 'Maze Solver', type: 'Strategy' },
-  { id: 'megaBounce', name: 'Mega Bounce', type: 'Puzzle' },
-  { id: 'megaGlider', name: 'Mega Glider', type: 'Strategy' },
-  { id: 'megaGlider2', name: 'Mega Glider2', type: 'Strategy' },
-  { id: 'megaKnight', name: 'Mega Knight', type: 'Sports' },
-  { id: 'megaKnight2', name: 'Mega Knight2', type: 'Sports' },
-  { id: 'megaSports', name: 'Mega Sports', type: 'Action' },
-  { id: 'megaSurfer', name: 'Mega Surfer', type: 'Strategy' },
-  { id: 'memoryCards', name: 'Memory Cards', type: 'Arcade' },
-  { id: 'memorySequence', name: 'Memory Sequence', type: 'Action' },
-  { id: 'miniGolf', name: 'Mini Golf', type: 'Sports' },
-  { id: 'mysticRunner', name: 'Mystic Runner', type: 'Strategy' },
-  { id: 'mysticRunner2', name: 'Mystic Runner2', type: 'Action' },
-  { id: 'mysticSurfer', name: 'Mystic Surfer', type: 'Puzzle' },
-  { id: 'mysticSurfer2', name: 'Mystic Surfer2', type: 'Sports' },
-  { id: 'mysticWizard', name: 'Mystic Wizard', type: 'Action' },
-  { id: 'mythicDefender', name: 'Mythic Defender', type: 'Puzzle' },
-  { id: 'neonBounce', name: 'Neon Bounce', type: 'Arcade' },
-  { id: 'neonBounce2', name: 'Neon Bounce2', type: 'Arcade' },
-  { id: 'neonDash', name: 'Neon Dash', type: 'Action' },
-  { id: 'neonDrift', name: 'Neon Drift', type: 'Strategy' },
-  { id: 'neonKnight', name: 'Neon Knight', type: 'Arcade' },
-  { id: 'neonRunner', name: 'Neon Runner', type: 'Puzzle' },
-  { id: 'neonShooter', name: 'Neon Shooter', type: 'Strategy' },
-  { id: 'neonShooter2', name: 'Neon Shooter2', type: 'Sports' },
-  { id: 'paintDraw', name: 'Paint Draw', type: 'Strategy' },
-  { id: 'pixelBlaster', name: 'Pixel Blaster', type: 'Sports' },
-  { id: 'pixelClash', name: 'Pixel Clash', type: 'Puzzle' },
-  { id: 'pixelClash2', name: 'Pixel Clash2', type: 'Action' },
-  { id: 'pixelDefender', name: 'Pixel Defender', type: 'Strategy' },
-  { id: 'pixelDefender2', name: 'Pixel Defender2', type: 'Action' },
-  { id: 'pixelDrift', name: 'Pixel Drift', type: 'Action' },
-  { id: 'pixelKnight', name: 'Pixel Knight', type: 'Action' },
-  { id: 'pixelQuest', name: 'Pixel Quest', type: 'Sports' },
-  { id: 'pyroForce', name: 'Pyro Force', type: 'Sports' },
-  { id: 'pyroForce2', name: 'Pyro Force2', type: 'Strategy' },
-  { id: 'pyroLink', name: 'Pyro Link', type: 'Action' },
-  { id: 'pyroLink2', name: 'Pyro Link2', type: 'Arcade' },
-  { id: 'pyroStrike', name: 'Pyro Strike', type: 'Action' },
-  { id: 'quantumBounce', name: 'Quantum Bounce', type: 'Puzzle' },
-  { id: 'quantumDrift', name: 'Quantum Drift', type: 'Arcade' },
-  { id: 'quantumDrift2', name: 'Quantum Drift2', type: 'Sports' },
-  { id: 'quantumMatch', name: 'Quantum Match', type: 'Sports' },
-  { id: 'quantumMatch2', name: 'Quantum Match2', type: 'Puzzle' },
-  { id: 'quantumShooter', name: 'Quantum Shooter', type: 'Arcade' },
-  { id: 'quantumStrike', name: 'Quantum Strike', type: 'Action' },
-  { id: 'reactionTime', name: 'Reaction Time', type: 'Action' },
-  { id: 'retroBlaster', name: 'Retro Blaster', type: 'Sports' },
-  { id: 'retroEngine', name: 'Retro Engine', type: 'Action' },
-  { id: 'retroForce', name: 'Retro Force', type: 'Action' },
-  { id: 'retroForce2', name: 'Retro Force2', type: 'Strategy' },
-  { id: 'retroLink', name: 'Retro Link', type: 'Puzzle' },
-  { id: 'retroLink2', name: 'Retro Link2', type: 'Puzzle' },
-  { id: 'retroRacer', name: 'Retro Racer', type: 'Puzzle' },
-  { id: 'rockPaperScissors', name: 'Rock Paper Scissors', type: 'Action' },
-  { id: 'shadowBlaster', name: 'Shadow Blaster', type: 'Sports' },
-  { id: 'shadowForce', name: 'Shadow Force', type: 'Strategy' },
-  { id: 'shadowForce2', name: 'Shadow Force2', type: 'Action' },
-  { id: 'shadowGlider', name: 'Shadow Glider', type: 'Puzzle' },
-  { id: 'shadowLink', name: 'Shadow Link', type: 'Sports' },
-  { id: 'shadowLink2', name: 'Shadow Link2', type: 'Arcade' },
-  { id: 'shadowNinja', name: 'Shadow Ninja', type: 'Arcade' },
-  { id: 'solarBounce', name: 'Solar Bounce', type: 'Puzzle' },
-  { id: 'solarBounce2', name: 'Solar Bounce2', type: 'Strategy' },
-  { id: 'solarGlider', name: 'Solar Glider', type: 'Arcade' },
-  { id: 'solarNinja', name: 'Solar Ninja', type: 'Arcade' },
-  { id: 'solarShooter', name: 'Solar Shooter', type: 'Arcade' },
-  { id: 'solarShooter2', name: 'Solar Shooter2', type: 'Action' },
-  { id: 'sonicDrop', name: 'Sonic Drop', type: 'Action' },
-  { id: 'sonicGlider2', name: 'Sonic Glider2', type: 'Puzzle' },
-  { id: 'sonicGlider3', name: 'Sonic Glider3', type: 'Sports' },
-  { id: 'sonicKnight', name: 'Sonic Knight', type: 'Sports' },
-  { id: 'sonicKnight2', name: 'Sonic Knight2', type: 'Action' },
-  { id: 'spaceInvaders', name: 'Space Invaders', type: 'Action' },
-  { id: 'steelBounce', name: 'Steel Bounce', type: 'Puzzle' },
-  { id: 'steelBounce2', name: 'Steel Bounce2', type: 'Action' },
-  { id: 'steelNinja', name: 'Steel Ninja', type: 'Strategy' },
-  { id: 'steelShooter', name: 'Steel Shooter', type: 'Strategy' },
-  { id: 'steelShooter2', name: 'Steel Shooter2', type: 'Arcade' },
-  { id: 'superBlaster', name: 'Super Blaster', type: 'Arcade' },
-  { id: 'superBlaster2', name: 'Super Blaster2', type: 'Arcade' },
-  { id: 'superDrop', name: 'Super Drop', type: 'Strategy' },
-  { id: 'superDrop2', name: 'Super Drop2', type: 'Strategy' },
-  { id: 'superKnight', name: 'Super Knight', type: 'Strategy' },
-  { id: 'superRunner', name: 'Super Runner', type: 'Sports' },
-  { id: 'terraBuilder', name: 'Terra Builder', type: 'Arcade' },
-  { id: 'terraNinja', name: 'Terra Ninja', type: 'Strategy' },
-  { id: 'terraNinja2', name: 'Terra Ninja2', type: 'Puzzle' },
-  { id: 'terraQuest', name: 'Terra Quest', type: 'Strategy' },
-  { id: 'terraQuest2', name: 'Terra Quest2', type: 'Action' },
-  { id: 'ticTacToe', name: 'Tic Tac Toe', type: 'Arcade' },
-  { id: 'towerStacker', name: 'Tower Stacker', type: 'Puzzle' },
-  { id: 'triviaQuiz', name: 'Trivia Quiz', type: 'Sports' },
-  { id: 'turboForce', name: 'Turbo Force', type: 'Sports' },
-  { id: 'turboMatch', name: 'Turbo Match', type: 'Arcade' },
-  { id: 'turboNinja', name: 'Turbo Ninja', type: 'Sports' },
-  { id: 'aimTrainer', name: 'Aim Trainer', type: 'Sports' },
-  { id: 'aquaBlaster', name: 'Aqua Blaster', type: 'Sports' },
-  { id: 'aquaBlaster2', name: 'Aqua Blaster2', type: 'Puzzle' },
-  { id: 'aquaDrop', name: 'Aqua Drop', type: 'Action' },
-  { id: 'aquaDrop2', name: 'Aqua Drop2', type: 'Sports' },
-  { id: 'aquaMatch', name: 'Aqua Match', type: 'Puzzle' },
-  { id: 'astroDash', name: 'Astro Dash', type: 'Puzzle' },
-  { id: 'astroDash2', name: 'Astro Dash2', type: 'Arcade' },
-  { id: 'astroDrop', name: 'Astro Drop', type: 'Arcade' },
-  { id: 'astroLink', name: 'Astro Link', type: 'Puzzle' },
-  { id: 'astroSpin', name: 'Astro Spin', type: 'Strategy' },
-  { id: 'astroSpin2', name: 'Astro Spin2', type: 'Arcade' },
-  { id: 'balanceBoard', name: 'Balance Board', type: 'Action' },
-  { id: 'brickBreaker', name: 'Brick Breaker', type: 'Arcade' },
-  { id: 'bubbleShooter', name: 'Bubble Shooter', type: 'Strategy' },
-  { id: 'carParking', name: 'Car Parking', type: 'Puzzle' },
-  { id: 'chronoClash', name: 'Chrono Clash', type: 'Sports' },
-  { id: 'chronoClash2', name: 'Chrono Clash2', type: 'Action' },
-  { id: 'chronoDefender', name: 'Chrono Defender', type: 'Action' },
-  { id: 'chronoDefender2', name: 'Chrono Defender2', type: 'Sports' },
-  { id: 'chronoQuest', name: 'Chrono Quest', type: 'Sports' },
-  { id: 'cosmicBlaster', name: 'Cosmic Blaster', type: 'Sports' },
-  { id: 'cosmicBlaster2', name: 'Cosmic Blaster2', type: 'Sports' },
-  { id: 'cosmicBounce', name: 'Cosmic Bounce', type: 'Strategy' },
-  { id: 'cosmicDefender', name: 'Cosmic Defender', type: 'Puzzle' },
-  { id: 'cosmicDrop', name: 'Cosmic Drop', type: 'Strategy' },
-  { id: 'cosmicDrop2', name: 'Cosmic Drop2', type: 'Strategy' },
-  { id: 'cosmicMatch', name: 'Cosmic Match', type: 'Strategy' },
-  { id: 'crazyLink', name: 'Crazy Link', type: 'Arcade' },
-  { id: 'crazyNinja', name: 'Crazy Ninja', type: 'Arcade' },
-  { id: 'crazyNinja2', name: 'Crazy Ninja2', type: 'Puzzle' },
-  { id: 'crazyQuest', name: 'Crazy Quest', type: 'Action' },
-  { id: 'crazyQuest2', name: 'Crazy Quest2', type: 'Arcade' },
-  { id: 'crazySpin', name: 'Crazy Spin', type: 'Strategy' },
-  { id: 'crystalDrop', name: 'Crystal Drop', type: 'Puzzle' },
-  { id: 'crystalNinja', name: 'Crystal Ninja', type: 'Strategy' },
-  { id: 'crystalRacer', name: 'Crystal Racer', type: 'Action' },
-  { id: 'crystalRacer2', name: 'Crystal Racer2', type: 'Puzzle' },
-  { id: 'crystalStrike', name: 'Crystal Strike', type: 'Arcade' },
-  { id: 'crystalStrike2', name: 'Crystal Strike2', type: 'Sports' },
-  { id: 'cyberClash', name: 'Cyber Clash', type: 'Sports' },
-  { id: 'cyberDash', name: 'Cyber Dash', type: 'Action' },
-  { id: 'cyberDash2', name: 'Cyber Dash2', type: 'Action' },
-  { id: 'cyberPuzzle', name: 'Cyber Puzzle', type: 'Puzzle' },
-  { id: 'cyberSpin', name: 'Cyber Spin', type: 'Arcade' },
-  { id: 'cyberSpin2', name: 'Cyber Spin2', type: 'Sports' },
-  { id: 'cyberSpin3', name: 'Cyber Spin3', type: 'Action' },
-  { id: 'dodgeObjects', name: 'Dodge Objects', type: 'Arcade' },
-  { id: 'drawingCanvas', name: 'Drawing Canvas', type: 'Sports' },
-  { id: 'electroDash', name: 'Electro Dash', type: 'Sports' },
-  { id: 'electroRacer', name: 'Electro Racer', type: 'Arcade' },
-  { id: 'electroRacer2', name: 'Electro Racer2', type: 'Action' },
-  { id: 'electroStrike', name: 'Electro Strike', type: 'Sports' },
-  { id: 'electroStrike2', name: 'Electro Strike2', type: 'Sports' },
-  { id: 'epicClash', name: 'Epic Clash', type: 'Action' },
-  { id: 'epicDrift', name: 'Epic Drift', type: 'Sports' },
-  { id: 'epicDrift2', name: 'Epic Drift2', type: 'Puzzle' },
-  { id: 'epicMatch', name: 'Epic Match', type: 'Puzzle' },
-  { id: 'epicMatch2', name: 'Epic Match2', type: 'Action' },
-  { id: 'epicShooter', name: 'Epic Shooter', type: 'Strategy' },
-  { id: 'eternalRunner', name: 'Eternal Runner', type: 'Strategy' },
-  { id: 'finalBoss', name: 'Final Boss', type: 'Action' },
-  { id: 'fishingGame', name: 'Fishing Game', type: 'Arcade' },
-  { id: 'flappyBird', name: 'Flappy Bird', type: 'Action' },
-  { id: 'galaxyBlaster', name: 'Galaxy Blaster', type: 'Arcade' },
-  { id: 'game2048', name: 'Game2048', type: 'Puzzle' },
-  { id: 'grandStrategy', name: 'Grand Strategy', type: 'Strategy' },
-  { id: 'gravityFlip', name: 'Gravity Flip', type: 'Arcade' },
-  { id: 'hyperGlider', name: 'Hyper Glider', type: 'Strategy' },
-  { id: 'hyperGlider2', name: 'Hyper Glider2', type: 'Action' },
-  { id: 'hyperKnight', name: 'Hyper Knight', type: 'Puzzle' },
-  { id: 'hyperKnight2', name: 'Hyper Knight2', type: 'Action' },
-  { id: 'hyperLink', name: 'Hyper Link', type: 'Action' },
-  { id: 'hyperRacer', name: 'Hyper Racer', type: 'Strategy' },
-  { id: 'idleClicker', name: 'Idle Clicker', type: 'Puzzle' },
-  { id: 'infiniteJump', name: 'Infinite Jump', type: 'Strategy' },
-  { id: 'infinityMatch', name: 'Infinity Match', type: 'Puzzle' },
-  { id: 'ironBlaster', name: 'Iron Blaster', type: 'Action' },
-  { id: 'ironForce', name: 'Iron Force', type: 'Strategy' },
-  { id: 'ironRunner', name: 'Iron Runner', type: 'Action' },
-  { id: 'ironRunner2', name: 'Iron Runner2', type: 'Sports' },
-  { id: 'ironSurfer', name: 'Iron Surfer', type: 'Strategy' },
-  { id: 'ironSurfer2', name: 'Iron Surfer2', type: 'Strategy' },
-  { id: 'knifeHit', name: 'Knife Hit', type: 'Action' },
-  { id: 'legendQuest', name: 'Legend Quest', type: 'Strategy' },
-  { id: 'lunarDefender', name: 'Lunar Defender', type: 'Arcade' },
-  { id: 'lunarRacer', name: 'Lunar Racer', type: 'Action' },
-  { id: 'lunarRunner', name: 'Lunar Runner', type: 'Puzzle' },
-  { id: 'lunarRunner2', name: 'Lunar Runner2', type: 'Action' },
-  { id: 'lunarSurfer', name: 'Lunar Surfer', type: 'Strategy' },
-  { id: 'lunarSurfer2', name: 'Lunar Surfer2', type: 'Puzzle' },
-  { id: 'magicClash', name: 'Magic Clash', type: 'Puzzle' },
-  { id: 'magicClash2', name: 'Magic Clash2', type: 'Sports' },
-  { id: 'magicDefender', name: 'Magic Defender', type: 'Strategy' },
-  { id: 'magicDefender2', name: 'Magic Defender2', type: 'Strategy' },
-  { id: 'magicKnight', name: 'Magic Knight', type: 'Puzzle' },
-  { id: 'magicSpin', name: 'Magic Spin', type: 'Arcade' },
-  { id: 'masterArcade', name: 'Master Arcade', type: 'Arcade' },
-  { id: 'mathQuiz', name: 'Math Quiz', type: 'Strategy' },
-  { id: 'mazeSolver', name: 'Maze Solver', type: 'Strategy' },
-  { id: 'megaBounce', name: 'Mega Bounce', type: 'Puzzle' },
-  { id: 'megaGlider', name: 'Mega Glider', type: 'Strategy' },
-  { id: 'megaGlider2', name: 'Mega Glider2', type: 'Strategy' },
-  { id: 'megaKnight', name: 'Mega Knight', type: 'Sports' },
-  { id: 'megaKnight2', name: 'Mega Knight2', type: 'Sports' },
-  { id: 'megaSports', name: 'Mega Sports', type: 'Action' },
-  { id: 'megaSurfer', name: 'Mega Surfer', type: 'Strategy' },
-  { id: 'memoryCards', name: 'Memory Cards', type: 'Arcade' },
-  { id: 'memorySequence', name: 'Memory Sequence', type: 'Action' },
-  { id: 'miniGolf', name: 'Mini Golf', type: 'Sports' },
-  { id: 'mysticRunner', name: 'Mystic Runner', type: 'Strategy' },
-  { id: 'mysticRunner2', name: 'Mystic Runner2', type: 'Action' },
-  { id: 'mysticSurfer', name: 'Mystic Surfer', type: 'Puzzle' },
-  { id: 'mysticSurfer2', name: 'Mystic Surfer2', type: 'Sports' },
-  { id: 'mysticWizard', name: 'Mystic Wizard', type: 'Action' },
-  { id: 'mythicDefender', name: 'Mythic Defender', type: 'Puzzle' },
-  { id: 'neonBounce', name: 'Neon Bounce', type: 'Arcade' },
-  { id: 'neonBounce2', name: 'Neon Bounce2', type: 'Arcade' },
-  { id: 'neonDash', name: 'Neon Dash', type: 'Action' },
-  { id: 'neonDrift', name: 'Neon Drift', type: 'Strategy' },
-  { id: 'neonKnight', name: 'Neon Knight', type: 'Arcade' },
-  { id: 'neonRunner', name: 'Neon Runner', type: 'Puzzle' },
-  { id: 'neonShooter', name: 'Neon Shooter', type: 'Strategy' },
-  { id: 'neonShooter2', name: 'Neon Shooter2', type: 'Sports' },
-  { id: 'paintDraw', name: 'Paint Draw', type: 'Strategy' },
-  { id: 'pixelBlaster', name: 'Pixel Blaster', type: 'Sports' },
-  { id: 'pixelClash', name: 'Pixel Clash', type: 'Puzzle' },
-  { id: 'pixelClash2', name: 'Pixel Clash2', type: 'Action' },
-  { id: 'pixelDefender', name: 'Pixel Defender', type: 'Strategy' },
-  { id: 'pixelDefender2', name: 'Pixel Defender2', type: 'Action' },
-  { id: 'pixelDrift', name: 'Pixel Drift', type: 'Action' },
-  { id: 'pixelKnight', name: 'Pixel Knight', type: 'Action' },
-  { id: 'pixelQuest', name: 'Pixel Quest', type: 'Sports' },
-  { id: 'pyroForce', name: 'Pyro Force', type: 'Sports' },
-  { id: 'pyroForce2', name: 'Pyro Force2', type: 'Strategy' },
-  { id: 'pyroLink', name: 'Pyro Link', type: 'Action' },
-  { id: 'pyroLink2', name: 'Pyro Link2', type: 'Arcade' },
-  { id: 'pyroStrike', name: 'Pyro Strike', type: 'Action' },
-  { id: 'quantumBounce', name: 'Quantum Bounce', type: 'Puzzle' },
-  { id: 'quantumDrift', name: 'Quantum Drift', type: 'Arcade' },
-  { id: 'quantumDrift2', name: 'Quantum Drift2', type: 'Sports' },
-  { id: 'quantumMatch', name: 'Quantum Match', type: 'Sports' },
-  { id: 'quantumMatch2', name: 'Quantum Match2', type: 'Puzzle' },
-  { id: 'quantumShooter', name: 'Quantum Shooter', type: 'Arcade' },
-  { id: 'quantumStrike', name: 'Quantum Strike', type: 'Action' },
-  { id: 'reactionTime', name: 'Reaction Time', type: 'Action' },
-  { id: 'retroBlaster', name: 'Retro Blaster', type: 'Sports' },
-  { id: 'retroEngine', name: 'Retro Engine', type: 'Action' },
-  { id: 'retroForce', name: 'Retro Force', type: 'Action' },
-  { id: 'retroForce2', name: 'Retro Force2', type: 'Strategy' },
-  { id: 'retroLink', name: 'Retro Link', type: 'Puzzle' },
-  { id: 'retroLink2', name: 'Retro Link2', type: 'Puzzle' },
-  { id: 'retroRacer', name: 'Retro Racer', type: 'Puzzle' },
-  { id: 'rockPaperScissors', name: 'Rock Paper Scissors', type: 'Action' },
-  { id: 'shadowBlaster', name: 'Shadow Blaster', type: 'Sports' },
-  { id: 'shadowForce', name: 'Shadow Force', type: 'Strategy' },
-  { id: 'shadowForce2', name: 'Shadow Force2', type: 'Action' },
-  { id: 'shadowGlider', name: 'Shadow Glider', type: 'Puzzle' },
-  { id: 'shadowLink', name: 'Shadow Link', type: 'Sports' },
-  { id: 'shadowLink2', name: 'Shadow Link2', type: 'Arcade' },
-  { id: 'shadowNinja', name: 'Shadow Ninja', type: 'Arcade' },
-  { id: 'solarBounce', name: 'Solar Bounce', type: 'Puzzle' },
-  { id: 'solarBounce2', name: 'Solar Bounce2', type: 'Strategy' },
-  { id: 'solarGlider', name: 'Solar Glider', type: 'Arcade' },
-  { id: 'solarNinja', name: 'Solar Ninja', type: 'Arcade' },
-  { id: 'solarShooter', name: 'Solar Shooter', type: 'Arcade' },
-  { id: 'solarShooter2', name: 'Solar Shooter2', type: 'Action' },
-  { id: 'sonicDrop', name: 'Sonic Drop', type: 'Action' },
-  { id: 'sonicGlider2', name: 'Sonic Glider2', type: 'Puzzle' },
-  { id: 'sonicGlider3', name: 'Sonic Glider3', type: 'Sports' },
-  { id: 'sonicKnight', name: 'Sonic Knight', type: 'Sports' },
-  { id: 'sonicKnight2', name: 'Sonic Knight2', type: 'Action' },
-  { id: 'spaceInvaders', name: 'Space Invaders', type: 'Action' },
-  { id: 'steelBounce', name: 'Steel Bounce', type: 'Puzzle' },
-  { id: 'steelBounce2', name: 'Steel Bounce2', type: 'Action' },
-  { id: 'steelNinja', name: 'Steel Ninja', type: 'Strategy' },
-  { id: 'steelShooter', name: 'Steel Shooter', type: 'Strategy' },
-  { id: 'steelShooter2', name: 'Steel Shooter2', type: 'Arcade' },
-  { id: 'superBlaster', name: 'Super Blaster', type: 'Arcade' },
-  { id: 'superBlaster2', name: 'Super Blaster2', type: 'Arcade' },
-  { id: 'superDrop', name: 'Super Drop', type: 'Strategy' },
-  { id: 'superDrop2', name: 'Super Drop2', type: 'Strategy' },
-  { id: 'superKnight', name: 'Super Knight', type: 'Strategy' },
-  { id: 'superRunner', name: 'Super Runner', type: 'Sports' },
-  { id: 'terraBuilder', name: 'Terra Builder', type: 'Arcade' },
-  { id: 'terraNinja', name: 'Terra Ninja', type: 'Strategy' },
-  { id: 'terraNinja2', name: 'Terra Ninja2', type: 'Puzzle' },
-  { id: 'terraQuest', name: 'Terra Quest', type: 'Strategy' },
-  { id: 'terraQuest2', name: 'Terra Quest2', type: 'Action' },
-  { id: 'ticTacToe', name: 'Tic Tac Toe', type: 'Arcade' },
-  { id: 'towerStacker', name: 'Tower Stacker', type: 'Puzzle' },
-  { id: 'triviaQuiz', name: 'Trivia Quiz', type: 'Sports' },
-  { id: 'turboForce', name: 'Turbo Force', type: 'Sports' },
-  { id: 'turboMatch', name: 'Turbo Match', type: 'Arcade' },
-  { id: 'turboNinja', name: 'Turbo Ninja', type: 'Sports' },
-  { id: 'turboNinja2', name: 'Turbo Ninja2', type: 'Strategy' },
-  { id: 'turboQuest', name: 'Turbo Quest', type: 'Strategy' },
-  { id: 'turboQuest2', name: 'Turbo Quest2', type: 'Strategy' },
-  { id: 'turboSurfer', name: 'Turbo Surfer', type: 'Arcade' },
-  { id: 'typingTest', name: 'Typing Test', type: 'Strategy' },
-  { id: 'ultimatePuzzle', name: 'Ultimate Puzzle', type: 'Arcade' },
-  { id: 'ultraDefender', name: 'Ultra Defender', type: 'Sports' },
-  { id: 'ultraDrift', name: 'Ultra Drift', type: 'Sports' },
-  { id: 'ultraRacer', name: 'Ultra Racer', type: 'Arcade' },
-  { id: 'ultraRacer2', name: 'Ultra Racer2', type: 'Sports' },
-  { id: 'ultraStrike', name: 'Ultra Strike', type: 'Strategy' },
-  { id: 'ultraStrike2', name: 'Ultra Strike2', type: 'Arcade' },
-  { id: 'voidDash', name: 'Void Dash', type: 'Strategy' },
-  { id: 'voidDash2', name: 'Void Dash2', type: 'Strategy' },
-  { id: 'voidShooter', name: 'Void Shooter', type: 'Action' },
-  { id: 'voidSpin', name: 'Void Spin', type: 'Action' },
-  { id: 'chronoClash', name: 'Chrono Clash', type: 'Sports' },
-  { id: 'chronoClash2', name: 'Chrono Clash2', type: 'Action' },
-  { id: 'chronoDefender', name: 'Chrono Defender', type: 'Action' },
-  { id: 'chronoDefender2', name: 'Chrono Defender2', type: 'Sports' },
-  { id: 'chronoQuest', name: 'Chrono Quest', type: 'Sports' },
-  { id: 'cosmicBlaster', name: 'Cosmic Blaster', type: 'Sports' },
-  { id: 'cosmicBlaster2', name: 'Cosmic Blaster2', type: 'Sports' },
-  { id: 'cosmicBounce', name: 'Cosmic Bounce', type: 'Strategy' },
-  { id: 'cosmicDefender', name: 'Cosmic Defender', type: 'Puzzle' },
-  { id: 'cosmicDrop', name: 'Cosmic Drop', type: 'Strategy' },
-  { id: 'cosmicDrop2', name: 'Cosmic Drop2', type: 'Strategy' },
-  { id: 'cosmicMatch', name: 'Cosmic Match', type: 'Strategy' },
-  { id: 'crazyLink', name: 'Crazy Link', type: 'Arcade' },
-  { id: 'crazyNinja', name: 'Crazy Ninja', type: 'Arcade' },
-  { id: 'crazyNinja2', name: 'Crazy Ninja2', type: 'Puzzle' },
-  { id: 'crazyQuest', name: 'Crazy Quest', type: 'Action' },
-  { id: 'crazyQuest2', name: 'Crazy Quest2', type: 'Arcade' },
-  { id: 'crazySpin', name: 'Crazy Spin', type: 'Strategy' },
-  { id: 'crystalDrop', name: 'Crystal Drop', type: 'Puzzle' },
-  { id: 'crystalNinja', name: 'Crystal Ninja', type: 'Strategy' },
-  { id: 'crystalRacer', name: 'Crystal Racer', type: 'Action' },
-  { id: 'crystalRacer2', name: 'Crystal Racer2', type: 'Puzzle' },
-  { id: 'crystalStrike', name: 'Crystal Strike', type: 'Arcade' },
-  { id: 'crystalStrike2', name: 'Crystal Strike2', type: 'Sports' },
-  { id: 'cyberClash', name: 'Cyber Clash', type: 'Sports' },
-  { id: 'cyberDash', name: 'Cyber Dash', type: 'Action' },
-  { id: 'cyberDash2', name: 'Cyber Dash2', type: 'Action' },
-  { id: 'cyberPuzzle', name: 'Cyber Puzzle', type: 'Puzzle' },
-  { id: 'cyberSpin', name: 'Cyber Spin', type: 'Arcade' },
-  { id: 'cyberSpin2', name: 'Cyber Spin2', type: 'Sports' },
-  { id: 'cyberSpin3', name: 'Cyber Spin3', type: 'Action' },
-  { id: 'dodgeObjects', name: 'Dodge Objects', type: 'Arcade' },
-  { id: 'drawingCanvas', name: 'Drawing Canvas', type: 'Sports' },
-  { id: 'electroDash', name: 'Electro Dash', type: 'Sports' },
-  { id: 'electroRacer', name: 'Electro Racer', type: 'Arcade' },
-  { id: 'electroRacer2', name: 'Electro Racer2', type: 'Action' },
-  { id: 'electroStrike', name: 'Electro Strike', type: 'Sports' },
-  { id: 'electroStrike2', name: 'Electro Strike2', type: 'Sports' },
-  { id: 'epicClash', name: 'Epic Clash', type: 'Action' },
-  { id: 'epicDrift', name: 'Epic Drift', type: 'Sports' },
-  { id: 'epicDrift2', name: 'Epic Drift2', type: 'Puzzle' },
-  { id: 'epicMatch', name: 'Epic Match', type: 'Puzzle' },
-  { id: 'epicMatch2', name: 'Epic Match2', type: 'Action' },
-  { id: 'epicShooter', name: 'Epic Shooter', type: 'Strategy' },
-  { id: 'eternalRunner', name: 'Eternal Runner', type: 'Strategy' },
-  { id: 'finalBoss', name: 'Final Boss', type: 'Action' },
-  { id: 'fishingGame', name: 'Fishing Game', type: 'Arcade' },
-  { id: 'flappyBird', name: 'Flappy Bird', type: 'Action' },
-  { id: 'galaxyBlaster', name: 'Galaxy Blaster', type: 'Arcade' },
-  { id: 'game2048', name: 'Game2048', type: 'Puzzle' },
-  { id: 'grandStrategy', name: 'Grand Strategy', type: 'Strategy' },
-  { id: 'gravityFlip', name: 'Gravity Flip', type: 'Arcade' },
-  { id: 'hyperGlider', name: 'Hyper Glider', type: 'Strategy' },
-  { id: 'hyperGlider2', name: 'Hyper Glider2', type: 'Action' },
-  { id: 'hyperKnight', name: 'Hyper Knight', type: 'Puzzle' },
-  { id: 'hyperKnight2', name: 'Hyper Knight2', type: 'Action' },
-  { id: 'hyperLink', name: 'Hyper Link', type: 'Action' },
-  { id: 'hyperRacer', name: 'Hyper Racer', type: 'Strategy' },
-  { id: 'idleClicker', name: 'Idle Clicker', type: 'Puzzle' },
-  { id: 'infiniteJump', name: 'Infinite Jump', type: 'Strategy' },
-  { id: 'infinityMatch', name: 'Infinity Match', type: 'Puzzle' },
-  { id: 'ironBlaster', name: 'Iron Blaster', type: 'Action' },
-  { id: 'ironForce', name: 'Iron Force', type: 'Strategy' },
-  { id: 'ironRunner', name: 'Iron Runner', type: 'Action' },
-  { id: 'ironRunner2', name: 'Iron Runner2', type: 'Sports' },
-  { id: 'ironSurfer', name: 'Iron Surfer', type: 'Strategy' },
-  { id: 'ironSurfer2', name: 'Iron Surfer2', type: 'Strategy' },
-  { id: 'knifeHit', name: 'Knife Hit', type: 'Action' },
-  { id: 'legendQuest', name: 'Legend Quest', type: 'Strategy' },
-  { id: 'lunarDefender', name: 'Lunar Defender', type: 'Arcade' },
-  { id: 'lunarRacer', name: 'Lunar Racer', type: 'Action' },
-  { id: 'lunarRunner', name: 'Lunar Runner', type: 'Puzzle' },
-  { id: 'lunarRunner2', name: 'Lunar Runner2', type: 'Action' },
-  { id: 'lunarSurfer', name: 'Lunar Surfer', type: 'Strategy' },
-  { id: 'lunarSurfer2', name: 'Lunar Surfer2', type: 'Puzzle' },
-  { id: 'magicClash', name: 'Magic Clash', type: 'Puzzle' },
-  { id: 'magicClash2', name: 'Magic Clash2', type: 'Sports' },
-  { id: 'magicDefender', name: 'Magic Defender', type: 'Strategy' },
-  { id: 'magicDefender2', name: 'Magic Defender2', type: 'Strategy' },
-  { id: 'magicKnight', name: 'Magic Knight', type: 'Puzzle' },
-  { id: 'magicSpin', name: 'Magic Spin', type: 'Arcade' },
-  { id: 'masterArcade', name: 'Master Arcade', type: 'Arcade' },
-  { id: 'mathQuiz', name: 'Math Quiz', type: 'Strategy' },
-  { id: 'mazeSolver', name: 'Maze Solver', type: 'Strategy' },
-  { id: 'megaBounce', name: 'Mega Bounce', type: 'Puzzle' },
-  { id: 'megaGlider', name: 'Mega Glider', type: 'Strategy' },
-  { id: 'megaGlider2', name: 'Mega Glider2', type: 'Strategy' },
-  { id: 'megaKnight', name: 'Mega Knight', type: 'Sports' },
-  { id: 'megaKnight2', name: 'Mega Knight2', type: 'Sports' },
-  { id: 'megaSports', name: 'Mega Sports', type: 'Action' },
-  { id: 'megaSurfer', name: 'Mega Surfer', type: 'Strategy' },
-  { id: 'memoryCards', name: 'Memory Cards', type: 'Arcade' },
-  { id: 'memorySequence', name: 'Memory Sequence', type: 'Action' },
-  { id: 'miniGolf', name: 'Mini Golf', type: 'Sports' },
-  { id: 'mysticRunner', name: 'Mystic Runner', type: 'Strategy' },
-  { id: 'mysticRunner2', name: 'Mystic Runner2', type: 'Action' },
-  { id: 'mysticSurfer', name: 'Mystic Surfer', type: 'Puzzle' },
-  { id: 'mysticSurfer2', name: 'Mystic Surfer2', type: 'Sports' },
-  { id: 'mysticWizard', name: 'Mystic Wizard', type: 'Action' },
-  { id: 'mythicDefender', name: 'Mythic Defender', type: 'Puzzle' },
-  { id: 'neonBounce', name: 'Neon Bounce', type: 'Arcade' },
-  { id: 'neonBounce2', name: 'Neon Bounce2', type: 'Arcade' },
-  { id: 'neonDash', name: 'Neon Dash', type: 'Action' },
-  { id: 'neonDrift', name: 'Neon Drift', type: 'Strategy' },
-  { id: 'neonKnight', name: 'Neon Knight', type: 'Arcade' },
-  { id: 'neonRunner', name: 'Neon Runner', type: 'Puzzle' },
-  { id: 'neonShooter', name: 'Neon Shooter', type: 'Strategy' },
-  { id: 'neonShooter2', name: 'Neon Shooter2', type: 'Sports' },
-  { id: 'paintDraw', name: 'Paint Draw', type: 'Strategy' },
-  { id: 'pixelBlaster', name: 'Pixel Blaster', type: 'Sports' },
-  { id: 'pixelClash', name: 'Pixel Clash', type: 'Puzzle' },
-  { id: 'pixelClash2', name: 'Pixel Clash2', type: 'Action' },
-  { id: 'pixelDefender', name: 'Pixel Defender', type: 'Strategy' },
-  { id: 'pixelDefender2', name: 'Pixel Defender2', type: 'Action' },
-  { id: 'pixelDrift', name: 'Pixel Drift', type: 'Action' },
-  { id: 'pixelKnight', name: 'Pixel Knight', type: 'Action' },
-  { id: 'pixelQuest', name: 'Pixel Quest', type: 'Sports' },
-  { id: 'pyroForce', name: 'Pyro Force', type: 'Sports' },
-  { id: 'pyroForce2', name: 'Pyro Force2', type: 'Strategy' },
-  { id: 'pyroLink', name: 'Pyro Link', type: 'Action' },
-  { id: 'pyroLink2', name: 'Pyro Link2', type: 'Arcade' },
-  { id: 'pyroStrike', name: 'Pyro Strike', type: 'Action' },
-  { id: 'quantumBounce', name: 'Quantum Bounce', type: 'Puzzle' },
-  { id: 'quantumDrift', name: 'Quantum Drift', type: 'Arcade' },
-  { id: 'quantumDrift2', name: 'Quantum Drift2', type: 'Sports' },
-  { id: 'quantumMatch', name: 'Quantum Match', type: 'Sports' },
-  { id: 'quantumMatch2', name: 'Quantum Match2', type: 'Puzzle' },
-  { id: 'quantumShooter', name: 'Quantum Shooter', type: 'Arcade' },
-  { id: 'quantumStrike', name: 'Quantum Strike', type: 'Action' },
-  { id: 'reactionTime', name: 'Reaction Time', type: 'Action' },
-  { id: 'retroBlaster', name: 'Retro Blaster', type: 'Sports' },
-  { id: 'retroEngine', name: 'Retro Engine', type: 'Action' },
-  { id: 'retroForce', name: 'Retro Force', type: 'Action' },
-  { id: 'retroForce2', name: 'Retro Force2', type: 'Strategy' },
-  { id: 'retroLink', name: 'Retro Link', type: 'Puzzle' },
-  { id: 'retroLink2', name: 'Retro Link2', type: 'Puzzle' },
-  { id: 'retroRacer', name: 'Retro Racer', type: 'Puzzle' },
-  { id: 'rockPaperScissors', name: 'Rock Paper Scissors', type: 'Action' },
-  { id: 'shadowBlaster', name: 'Shadow Blaster', type: 'Sports' },
-  { id: 'shadowForce', name: 'Shadow Force', type: 'Strategy' },
-  { id: 'shadowForce2', name: 'Shadow Force2', type: 'Action' },
-  { id: 'shadowGlider', name: 'Shadow Glider', type: 'Puzzle' },
-  { id: 'shadowLink', name: 'Shadow Link', type: 'Sports' },
-  { id: 'shadowLink2', name: 'Shadow Link2', type: 'Arcade' },
-  { id: 'shadowNinja', name: 'Shadow Ninja', type: 'Arcade' },
-  { id: 'solarBounce', name: 'Solar Bounce', type: 'Puzzle' },
-  { id: 'solarBounce2', name: 'Solar Bounce2', type: 'Strategy' },
-  { id: 'solarGlider', name: 'Solar Glider', type: 'Arcade' },
-  { id: 'solarNinja', name: 'Solar Ninja', type: 'Arcade' },
-  { id: 'solarShooter', name: 'Solar Shooter', type: 'Arcade' },
-  { id: 'solarShooter2', name: 'Solar Shooter2', type: 'Action' },
-  { id: 'sonicDrop', name: 'Sonic Drop', type: 'Action' },
-  { id: 'sonicGlider2', name: 'Sonic Glider2', type: 'Puzzle' },
-  { id: 'sonicGlider3', name: 'Sonic Glider3', type: 'Sports' },
-  { id: 'sonicKnight', name: 'Sonic Knight', type: 'Sports' },
-  { id: 'sonicKnight2', name: 'Sonic Knight2', type: 'Action' },
-  { id: 'spaceInvaders', name: 'Space Invaders', type: 'Action' },
-  { id: 'steelBounce', name: 'Steel Bounce', type: 'Puzzle' },
-  { id: 'steelBounce2', name: 'Steel Bounce2', type: 'Action' },
-  { id: 'steelNinja', name: 'Steel Ninja', type: 'Strategy' },
-  { id: 'steelShooter', name: 'Steel Shooter', type: 'Strategy' },
-  { id: 'steelShooter2', name: 'Steel Shooter2', type: 'Arcade' },
-  { id: 'superBlaster', name: 'Super Blaster', type: 'Arcade' },
-  { id: 'superBlaster2', name: 'Super Blaster2', type: 'Arcade' },
-  { id: 'superDrop', name: 'Super Drop', type: 'Strategy' },
-  { id: 'superDrop2', name: 'Super Drop2', type: 'Strategy' },
-  { id: 'superKnight', name: 'Super Knight', type: 'Strategy' },
-  { id: 'superRunner', name: 'Super Runner', type: 'Sports' },
-  { id: 'terraBuilder', name: 'Terra Builder', type: 'Arcade' },
-  { id: 'terraNinja', name: 'Terra Ninja', type: 'Strategy' },
-  { id: 'terraNinja2', name: 'Terra Ninja2', type: 'Puzzle' },
-  { id: 'terraQuest', name: 'Terra Quest', type: 'Strategy' },
-  { id: 'terraQuest2', name: 'Terra Quest2', type: 'Action' },
-  { id: 'ticTacToe', name: 'Tic Tac Toe', type: 'Arcade' },
-  { id: 'towerStacker', name: 'Tower Stacker', type: 'Puzzle' },
-  { id: 'triviaQuiz', name: 'Trivia Quiz', type: 'Sports' },
-  { id: 'turboForce', name: 'Turbo Force', type: 'Sports' },
-  { id: 'turboMatch', name: 'Turbo Match', type: 'Arcade' },
-  { id: 'turboNinja', name: 'Turbo Ninja', type: 'Sports' },
-  { id: 'turboNinja2', name: 'Turbo Ninja2', type: 'Strategy' },
-  { id: 'turboQuest', name: 'Turbo Quest', type: 'Strategy' },
-  { id: 'turboQuest2', name: 'Turbo Quest2', type: 'Strategy' },
-  { id: 'turboSurfer', name: 'Turbo Surfer', type: 'Arcade' },
-  { id: 'typingTest', name: 'Typing Test', type: 'Strategy' },
-  { id: 'ultimatePuzzle', name: 'Ultimate Puzzle', type: 'Arcade' },
-  { id: 'ultraDefender', name: 'Ultra Defender', type: 'Sports' },
-  { id: 'ultraDrift', name: 'Ultra Drift', type: 'Sports' },
-  { id: 'ultraRacer', name: 'Ultra Racer', type: 'Arcade' },
-  { id: 'ultraRacer2', name: 'Ultra Racer2', type: 'Sports' },
-  { id: 'ultraStrike', name: 'Ultra Strike', type: 'Strategy' },
-  { id: 'ultraStrike2', name: 'Ultra Strike2', type: 'Arcade' },
-  { id: 'voidDash', name: 'Void Dash', type: 'Strategy' },
-  { id: 'voidDash2', name: 'Void Dash2', type: 'Strategy' },
-  { id: 'voidShooter', name: 'Void Shooter', type: 'Action' },
-  { id: 'voidSpin', name: 'Void Spin', type: 'Action' },
-  { id: 'voidSpin2', name: 'Void Spin2', type: 'Strategy' },
-  { id: 'whackAMole', name: 'Whack A Mole', type: 'Strategy' },
-  { id: 'wordSearch', name: 'Word Search', type: 'Sports' },
-  { id: 'xakArena', name: 'Xak Arena', type: 'Strategy' },
-  { id: 'xakSports', name: 'Xak Sports', type: 'Arcade' },
-  { id: 'xBRArena', name: 'X B R Arena', type: 'Puzzle' }
+  {
+    id: "aim", name: 'Aim Trainer', type: 'Arcade' },
+  {
+    id: "balance", name: 'Balance Board', type: 'Puzzle' },
+  {
+    id: "basketball", name: 'Basketball Shoot', type: 'Sports' },
+  {
+    id: "breaker", name: 'Brick Breaker', type: 'Arcade' },
+  {
+    id: "bubble", name: 'Bubble Shooter', type: 'Puzzle' },
+  {
+    id: "clickSpeed", name: 'Click Speed', type: 'Arcade' },
+  {
+    id: "clicker", name: 'Idle Clicker', type: 'Strategy' },
+  {
+    id: "colorMatch", name: 'Color Match', type: 'Puzzle' },
+  {
+    id: "connectFour", name: 'Connect Four', type: 'Strategy' },
+  {
+    id: "dodge", name: 'Dodge Objects', type: 'Arcade' },
+  {
+    id: "drawing", name: 'Drawing Canvas', type: 'Discovery' },
+  {
+    id: "fishing", name: 'Fishing Game', type: 'Arcade' },
+  {
+    id: "flappy", name: 'Flappy Bird', type: 'Arcade' },
+  {
+    id: "football3D", name: 'Football 3D', type: '3D' },
+  {
+    id: "frogger", name: 'Frogger Cross', type: 'Arcade' },
+  {
+    id: "golf", name: 'Mini Golf', type: 'Sports' },
+  {
+    id: "gravity", name: 'Gravity Flip', type: 'Arcade' },
+  {
+    id: "invaders", name: 'Space Invaders', type: 'Arcade' },
+  {
+    id: "jump", name: 'Infinite Jump', type: 'Arcade' },
+  {
+    id: "knife", name: 'Knife Hit', type: 'Arcade' },
+  {
+    id: "match3", name: 'Match 3', type: 'Puzzle' },
+  {
+    id: "math", name: 'Math Quiz', type: 'Puzzle' },
+  {
+    id: "maze", name: 'Maze Solver', type: 'Puzzle' },
+  {
+    id: "memory", name: 'Memory Cards', type: 'Puzzle' },
+  {
+    id: "minesweeper", name: 'Minesweeper', type: 'Strategy' },
+  {
+    id: "paint", name: 'Paint & Draw', type: 'Discovery' },
+  {
+    id: "parking", name: 'Car Parking', type: 'Puzzle' },
+  {
+    id: "pinball", name: 'Pinball Classic', type: 'Arcade' },
+  {
+    id: "plinko", name: 'Plinko Drop', type: 'Arcade' },
+  {
+    id: "pong", name: 'Classic Pong', type: 'Arcade' },
+  {
+    id: "rps", name: 'Rock Paper Scissors', type: 'Strategy' },
+  {
+    id: "reaction", name: 'Reaction Time', type: 'Arcade' },
+  {
+    id: "sequence", name: 'Memory Sequence', type: 'Puzzle' },
+  {
+    id: "snake", name: 'Snake Game', type: 'Arcade' },
+  {
+    id: "spinWheel", name: 'Spin The Wheel', type: 'Discovery' },
+  {
+    id: "stack", name: 'Tower Stacker', type: 'Arcade' },
+  {
+    id: "sudoku", name: 'Sudoku Classic', type: 'Puzzle' },
+  {
+    id: "tictactoe", name: 'Tic Tac Toe', type: 'Strategy' },
+  {
+    id: "towerDefense", name: 'Tower Defense', type: 'Strategy' },
+  {
+    id: "trivia", name: 'Trivia Quiz', type: 'Discovery' },
+  {
+    id: "tunnel3D", name: 'Tunnel 3D', type: '3D' },
+  {
+    id: "twoZeroFourEight", name: '2048 Puzzle', type: 'Puzzle' },
+  {
+    id: "typing", name: 'Typing Test', type: 'Discovery' },
+  {
+    id: "whack", name: 'Whack-a-Mole', type: 'Arcade' },
+  {
+    id: "word", name: 'Word Search', type: 'Puzzle' },
+  {
+    id: "xbr", name: 'XBR Arena', type: '3D' },
+  {
+    id: "blockDrop", name: 'Block Drop', type: 'Arcade' },
+  {
+    id: "mazeMuncher", name: 'Maze Muncher', type: 'Arcade' },
+  {
+    id: "wordGuess", name: 'Word Guess', type: 'Puzzle' },
+  {
+    id: "spaceRocks", name: 'Space Rocks', type: 'Arcade' },
+  {
+    id: "rhythmTap", name: 'Rhythm Tap', type: 'Arcade' },
+  {
+    id: "aeroDrift", name: 'Aero Drift', type: 'Action' },
+  {
+    id: "aeroDrift2", name: 'Aero Drift2', type: 'Sports' },
+  {
+    id: "aeroMatch", name: 'Aero Match', type: 'Action' },
+  {
+    id: "aeroMatch2", name: 'Aero Match2', type: 'Arcade' },
+  {
+    id: "aeroSurfer", name: 'Aero Surfer', type: 'Puzzle' },
+  {
+    id: "aimTrainer", name: 'Aim Trainer', type: 'Sports' },
+  {
+    id: "aquaBlaster", name: 'Aqua Blaster', type: 'Sports' },
+  {
+    id: "aquaBlaster2", name: 'Aqua Blaster2', type: 'Puzzle' },
+  {
+    id: "aquaDrop", name: 'Aqua Drop', type: 'Action' },
+  {
+    id: "aquaDrop2", name: 'Aqua Drop2', type: 'Sports' },
+  {
+    id: "aquaMatch", name: 'Aqua Match', type: 'Puzzle' },
+  {
+    id: "astroDash", name: 'Astro Dash', type: 'Puzzle' },
+  {
+    id: "astroDash2", name: 'Astro Dash2', type: 'Arcade' },
+  {
+    id: "astroDrop", name: 'Astro Drop', type: 'Arcade' },
+  {
+    id: "astroLink", name: 'Astro Link', type: 'Puzzle' },
+  {
+    id: "astroSpin", name: 'Astro Spin', type: 'Strategy' },
+  {
+    id: "astroSpin2", name: 'Astro Spin2', type: 'Arcade' },
+  {
+    id: "balanceBoard", name: 'Balance Board', type: 'Action' },
+  {
+    id: "brickBreaker", name: 'Brick Breaker', type: 'Arcade' },
+  {
+    id: "bubbleShooter", name: 'Bubble Shooter', type: 'Strategy' },
+  {
+    id: "carParking", name: 'Car Parking', type: 'Puzzle' },
+  {
+    id: "chronoClash", name: 'Chrono Clash', type: 'Sports' },
+  {
+    id: "chronoClash2", name: 'Chrono Clash2', type: 'Action' },
+  {
+    id: "chronoDefender", name: 'Chrono Defender', type: 'Action' },
+  {
+    id: "chronoDefender2", name: 'Chrono Defender2', type: 'Sports' },
+  {
+    id: "chronoQuest", name: 'Chrono Quest', type: 'Sports' },
+  {
+    id: "cosmicBlaster", name: 'Cosmic Blaster', type: 'Sports' },
+  {
+    id: "cosmicBlaster2", name: 'Cosmic Blaster2', type: 'Sports' },
+  {
+    id: "cosmicBounce", name: 'Cosmic Bounce', type: 'Strategy' },
+  {
+    id: "cosmicDefender", name: 'Cosmic Defender', type: 'Puzzle' },
+  {
+    id: "cosmicDrop", name: 'Cosmic Drop', type: 'Strategy' },
+  {
+    id: "cosmicDrop2", name: 'Cosmic Drop2', type: 'Strategy' },
+  {
+    id: "cosmicMatch", name: 'Cosmic Match', type: 'Strategy' },
+  {
+    id: "crazyLink", name: 'Crazy Link', type: 'Arcade' },
+  {
+    id: "crazyNinja", name: 'Crazy Ninja', type: 'Arcade' },
+  {
+    id: "crazyNinja2", name: 'Crazy Ninja2', type: 'Puzzle' },
+  {
+    id: "crazyQuest", name: 'Crazy Quest', type: 'Action' },
+  {
+    id: "crazyQuest2", name: 'Crazy Quest2', type: 'Arcade' },
+  {
+    id: "crazySpin", name: 'Crazy Spin', type: 'Strategy' },
+  {
+    id: "crystalDrop", name: 'Crystal Drop', type: 'Puzzle' },
+  {
+    id: "crystalNinja", name: 'Crystal Ninja', type: 'Strategy' },
+  {
+    id: "crystalRacer", name: 'Crystal Racer', type: 'Action' },
+  {
+    id: "crystalRacer2", name: 'Crystal Racer2', type: 'Puzzle' },
+  {
+    id: "crystalStrike", name: 'Crystal Strike', type: 'Arcade' },
+  {
+    id: "crystalStrike2", name: 'Crystal Strike2', type: 'Sports' },
+  {
+    id: "cyberClash", name: 'Cyber Clash', type: 'Sports' },
+  {
+    id: "cyberDash", name: 'Cyber Dash', type: 'Action' },
+  {
+    id: "cyberDash2", name: 'Cyber Dash2', type: 'Action' },
+  {
+    id: "cyberPuzzle", name: 'Cyber Puzzle', type: 'Puzzle' },
+  {
+    id: "cyberSpin", name: 'Cyber Spin', type: 'Arcade' },
+  {
+    id: "cyberSpin2", name: 'Cyber Spin2', type: 'Sports' },
+  {
+    id: "cyberSpin3", name: 'Cyber Spin3', type: 'Action' },
+  {
+    id: "dodgeObjects", name: 'Dodge Objects', type: 'Arcade' },
+  {
+    id: "drawingCanvas", name: 'Drawing Canvas', type: 'Sports' },
+  {
+    id: "electroDash", name: 'Electro Dash', type: 'Sports' },
+  {
+    id: "electroRacer", name: 'Electro Racer', type: 'Arcade' },
+  {
+    id: "electroRacer2", name: 'Electro Racer2', type: 'Action' },
+  {
+    id: "electroStrike", name: 'Electro Strike', type: 'Sports' },
+  {
+    id: "electroStrike2", name: 'Electro Strike2', type: 'Sports' },
+  {
+    id: "epicClash", name: 'Epic Clash', type: 'Action' },
+  {
+    id: "epicDrift", name: 'Epic Drift', type: 'Sports' },
+  {
+    id: "epicDrift2", name: 'Epic Drift2', type: 'Puzzle' },
+  {
+    id: "epicMatch", name: 'Epic Match', type: 'Puzzle' },
+  {
+    id: "epicMatch2", name: 'Epic Match2', type: 'Action' },
+  {
+    id: "epicShooter", name: 'Epic Shooter', type: 'Strategy' },
+  {
+    id: "eternalRunner", name: 'Eternal Runner', type: 'Strategy' },
+  {
+    id: "finalBoss", name: 'Final Boss', type: 'Action' },
+  {
+    id: "fishingGame", name: 'Fishing Game', type: 'Arcade' },
+  {
+    id: "flappyBird", name: 'Flappy Bird', type: 'Action' },
+  {
+    id: "galaxyBlaster", name: 'Galaxy Blaster', type: 'Arcade' },
+  {
+    id: "game2048", name: 'Game2048', type: 'Puzzle' },
+  {
+    id: "grandStrategy", name: 'Grand Strategy', type: 'Strategy' },
+  {
+    id: "gravityFlip", name: 'Gravity Flip', type: 'Arcade' },
+  {
+    id: "hyperGlider", name: 'Hyper Glider', type: 'Strategy' },
+  {
+    id: "hyperGlider2", name: 'Hyper Glider2', type: 'Action' },
+  {
+    id: "hyperKnight", name: 'Hyper Knight', type: 'Puzzle' },
+  {
+    id: "hyperKnight2", name: 'Hyper Knight2', type: 'Action' },
+  {
+    id: "hyperLink", name: 'Hyper Link', type: 'Action' },
+  {
+    id: "hyperRacer", name: 'Hyper Racer', type: 'Strategy' },
+  {
+    id: "idleClicker", name: 'Idle Clicker', type: 'Puzzle' },
+  {
+    id: "infiniteJump", name: 'Infinite Jump', type: 'Strategy' },
+  {
+    id: "infinityMatch", name: 'Infinity Match', type: 'Puzzle' },
+  {
+    id: "ironBlaster", name: 'Iron Blaster', type: 'Action' },
+  {
+    id: "ironForce", name: 'Iron Force', type: 'Strategy' },
+  {
+    id: "ironRunner", name: 'Iron Runner', type: 'Action' },
+  {
+    id: "ironRunner2", name: 'Iron Runner2', type: 'Sports' },
+  {
+    id: "ironSurfer", name: 'Iron Surfer', type: 'Strategy' },
+  {
+    id: "ironSurfer2", name: 'Iron Surfer2', type: 'Strategy' },
+  {
+    id: "knifeHit", name: 'Knife Hit', type: 'Action' },
+  {
+    id: "legendQuest", name: 'Legend Quest', type: 'Strategy' },
+  {
+    id: "lunarDefender", name: 'Lunar Defender', type: 'Arcade' },
+  {
+    id: "lunarRacer", name: 'Lunar Racer', type: 'Action' },
+  {
+    id: "lunarRunner", name: 'Lunar Runner', type: 'Puzzle' },
+  {
+    id: "lunarRunner2", name: 'Lunar Runner2', type: 'Action' },
+  {
+    id: "lunarSurfer", name: 'Lunar Surfer', type: 'Strategy' },
+  {
+    id: "lunarSurfer2", name: 'Lunar Surfer2', type: 'Puzzle' },
+  {
+    id: "magicClash", name: 'Magic Clash', type: 'Puzzle' },
+  {
+    id: "magicClash2", name: 'Magic Clash2', type: 'Sports' },
+  {
+    id: "magicDefender", name: 'Magic Defender', type: 'Strategy' },
+  {
+    id: "magicDefender2", name: 'Magic Defender2', type: 'Strategy' },
+  {
+    id: "magicKnight", name: 'Magic Knight', type: 'Puzzle' },
+  {
+    id: "magicSpin", name: 'Magic Spin', type: 'Arcade' },
+  {
+    id: "masterArcade", name: 'Master Arcade', type: 'Arcade' },
+  {
+    id: "mathQuiz", name: 'Math Quiz', type: 'Strategy' },
+  {
+    id: "mazeSolver", name: 'Maze Solver', type: 'Strategy' },
+  {
+    id: "megaBounce", name: 'Mega Bounce', type: 'Puzzle' },
+  {
+    id: "megaGlider", name: 'Mega Glider', type: 'Strategy' },
+  {
+    id: "megaGlider2", name: 'Mega Glider2', type: 'Strategy' },
+  {
+    id: "megaKnight", name: 'Mega Knight', type: 'Sports' },
+  {
+    id: "megaKnight2", name: 'Mega Knight2', type: 'Sports' },
+  {
+    id: "megaSports", name: 'Mega Sports', type: 'Action' },
+  {
+    id: "megaSurfer", name: 'Mega Surfer', type: 'Strategy' },
+  {
+    id: "memoryCards", name: 'Memory Cards', type: 'Arcade' },
+  {
+    id: "memorySequence", name: 'Memory Sequence', type: 'Action' },
+  {
+    id: "miniGolf", name: 'Mini Golf', type: 'Sports' },
+  {
+    id: "mysticRunner", name: 'Mystic Runner', type: 'Strategy' },
+  {
+    id: "mysticRunner2", name: 'Mystic Runner2', type: 'Action' },
+  {
+    id: "mysticSurfer", name: 'Mystic Surfer', type: 'Puzzle' },
+  {
+    id: "mysticSurfer2", name: 'Mystic Surfer2', type: 'Sports' },
+  {
+    id: "mysticWizard", name: 'Mystic Wizard', type: 'Action' },
+  {
+    id: "mythicDefender", name: 'Mythic Defender', type: 'Puzzle' },
+  {
+    id: "neonBounce", name: 'Neon Bounce', type: 'Arcade' },
+  {
+    id: "neonBounce2", name: 'Neon Bounce2', type: 'Arcade' },
+  {
+    id: "neonDash", name: 'Neon Dash', type: 'Action' },
+  {
+    id: "neonDrift", name: 'Neon Drift', type: 'Strategy' },
+  {
+    id: "neonKnight", name: 'Neon Knight', type: 'Arcade' },
+  {
+    id: "neonRunner", name: 'Neon Runner', type: 'Puzzle' },
+  {
+    id: "neonShooter", name: 'Neon Shooter', type: 'Strategy' },
+  {
+    id: "neonShooter2", name: 'Neon Shooter2', type: 'Sports' },
+  {
+    id: "paintDraw", name: 'Paint Draw', type: 'Strategy' },
+  {
+    id: "pixelBlaster", name: 'Pixel Blaster', type: 'Sports' },
+  {
+    id: "pixelClash", name: 'Pixel Clash', type: 'Puzzle' },
+  {
+    id: "pixelClash2", name: 'Pixel Clash2', type: 'Action' },
+  {
+    id: "pixelDefender", name: 'Pixel Defender', type: 'Strategy' },
+  {
+    id: "pixelDefender2", name: 'Pixel Defender2', type: 'Action' },
+  {
+    id: "pixelDrift", name: 'Pixel Drift', type: 'Action' },
+  {
+    id: "pixelKnight", name: 'Pixel Knight', type: 'Action' },
+  {
+    id: "pixelQuest", name: 'Pixel Quest', type: 'Sports' },
+  {
+    id: "pyroForce", name: 'Pyro Force', type: 'Sports' },
+  {
+    id: "pyroForce2", name: 'Pyro Force2', type: 'Strategy' },
+  {
+    id: "pyroLink", name: 'Pyro Link', type: 'Action' },
+  {
+    id: "pyroLink2", name: 'Pyro Link2', type: 'Arcade' },
+  {
+    id: "pyroStrike", name: 'Pyro Strike', type: 'Action' },
+  {
+    id: "quantumBounce", name: 'Quantum Bounce', type: 'Puzzle' },
+  {
+    id: "quantumDrift", name: 'Quantum Drift', type: 'Arcade' },
+  {
+    id: "quantumDrift2", name: 'Quantum Drift2', type: 'Sports' },
+  {
+    id: "quantumMatch", name: 'Quantum Match', type: 'Sports' },
+  {
+    id: "quantumMatch2", name: 'Quantum Match2', type: 'Puzzle' },
+  {
+    id: "quantumShooter", name: 'Quantum Shooter', type: 'Arcade' },
+  {
+    id: "quantumStrike", name: 'Quantum Strike', type: 'Action' },
+  {
+    id: "reactionTime", name: 'Reaction Time', type: 'Action' },
+  {
+    id: "retroBlaster", name: 'Retro Blaster', type: 'Sports' },
+  {
+    id: "retroEngine", name: 'Retro Engine', type: 'Action' },
+  {
+    id: "retroForce", name: 'Retro Force', type: 'Action' },
+  {
+    id: "retroForce2", name: 'Retro Force2', type: 'Strategy' },
+  {
+    id: "retroLink", name: 'Retro Link', type: 'Puzzle' },
+  {
+    id: "retroLink2", name: 'Retro Link2', type: 'Puzzle' },
+  {
+    id: "retroRacer", name: 'Retro Racer', type: 'Puzzle' },
+  {
+    id: "rockPaperScissors", name: 'Rock Paper Scissors', type: 'Action' },
+  {
+    id: "shadowBlaster", name: 'Shadow Blaster', type: 'Sports' },
+  {
+    id: "shadowForce", name: 'Shadow Force', type: 'Strategy' },
+  {
+    id: "shadowForce2", name: 'Shadow Force2', type: 'Action' },
+  {
+    id: "shadowGlider", name: 'Shadow Glider', type: 'Puzzle' },
+  {
+    id: "shadowLink", name: 'Shadow Link', type: 'Sports' },
+  {
+    id: "shadowLink2", name: 'Shadow Link2', type: 'Arcade' },
+  {
+    id: "shadowNinja", name: 'Shadow Ninja', type: 'Arcade' },
+  {
+    id: "solarBounce", name: 'Solar Bounce', type: 'Puzzle' },
+  {
+    id: "solarBounce2", name: 'Solar Bounce2', type: 'Strategy' },
+  {
+    id: "solarGlider", name: 'Solar Glider', type: 'Arcade' },
+  {
+    id: "solarNinja", name: 'Solar Ninja', type: 'Arcade' },
+  {
+    id: "solarShooter", name: 'Solar Shooter', type: 'Arcade' },
+  {
+    id: "solarShooter2", name: 'Solar Shooter2', type: 'Action' },
+  {
+    id: "sonicDrop", name: 'Sonic Drop', type: 'Action' },
+  {
+    id: "sonicGlider2", name: 'Sonic Glider2', type: 'Puzzle' },
+  {
+    id: "sonicGlider3", name: 'Sonic Glider3', type: 'Sports' },
+  {
+    id: "sonicKnight", name: 'Sonic Knight', type: 'Sports' },
+  {
+    id: "sonicKnight2", name: 'Sonic Knight2', type: 'Action' },
+  {
+    id: "spaceInvaders", name: 'Space Invaders', type: 'Action' },
+  {
+    id: "steelBounce", name: 'Steel Bounce', type: 'Puzzle' },
+  {
+    id: "steelBounce2", name: 'Steel Bounce2', type: 'Action' },
+  {
+    id: "steelNinja", name: 'Steel Ninja', type: 'Strategy' },
+  {
+    id: "steelShooter", name: 'Steel Shooter', type: 'Strategy' },
+  {
+    id: "steelShooter2", name: 'Steel Shooter2', type: 'Arcade' },
+  {
+    id: "superBlaster", name: 'Super Blaster', type: 'Arcade' },
+  {
+    id: "superBlaster2", name: 'Super Blaster2', type: 'Arcade' },
+  {
+    id: "superDrop", name: 'Super Drop', type: 'Strategy' },
+  {
+    id: "superDrop2", name: 'Super Drop2', type: 'Strategy' },
+  {
+    id: "superKnight", name: 'Super Knight', type: 'Strategy' },
+  {
+    id: "superRunner", name: 'Super Runner', type: 'Sports' },
+  {
+    id: "terraBuilder", name: 'Terra Builder', type: 'Arcade' },
+  {
+    id: "terraNinja", name: 'Terra Ninja', type: 'Strategy' },
+  {
+    id: "terraNinja2", name: 'Terra Ninja2', type: 'Puzzle' },
+  {
+    id: "terraQuest", name: 'Terra Quest', type: 'Strategy' },
+  {
+    id: "terraQuest2", name: 'Terra Quest2', type: 'Action' },
+  {
+    id: "ticTacToe", name: 'Tic Tac Toe', type: 'Arcade' },
+  {
+    id: "towerStacker", name: 'Tower Stacker', type: 'Puzzle' },
+  {
+    id: "triviaQuiz", name: 'Trivia Quiz', type: 'Sports' },
+  {
+    id: "turboForce", name: 'Turbo Force', type: 'Sports' },
+  {
+    id: "turboMatch", name: 'Turbo Match', type: 'Arcade' },
+  {
+    id: "turboNinja", name: 'Turbo Ninja', type: 'Sports' },
+  {
+    id: "aimTrainer", name: 'Aim Trainer', type: 'Sports' },
+  {
+    id: "aquaBlaster", name: 'Aqua Blaster', type: 'Sports' },
+  {
+    id: "aquaBlaster2", name: 'Aqua Blaster2', type: 'Puzzle' },
+  {
+    id: "aquaDrop", name: 'Aqua Drop', type: 'Action' },
+  {
+    id: "aquaDrop2", name: 'Aqua Drop2', type: 'Sports' },
+  {
+    id: "aquaMatch", name: 'Aqua Match', type: 'Puzzle' },
+  {
+    id: "astroDash", name: 'Astro Dash', type: 'Puzzle' },
+  {
+    id: "astroDash2", name: 'Astro Dash2', type: 'Arcade' },
+  {
+    id: "astroDrop", name: 'Astro Drop', type: 'Arcade' },
+  {
+    id: "astroLink", name: 'Astro Link', type: 'Puzzle' },
+  {
+    id: "astroSpin", name: 'Astro Spin', type: 'Strategy' },
+  {
+    id: "astroSpin2", name: 'Astro Spin2', type: 'Arcade' },
+  {
+    id: "balanceBoard", name: 'Balance Board', type: 'Action' },
+  {
+    id: "brickBreaker", name: 'Brick Breaker', type: 'Arcade' },
+  {
+    id: "bubbleShooter", name: 'Bubble Shooter', type: 'Strategy' },
+  {
+    id: "carParking", name: 'Car Parking', type: 'Puzzle' },
+  {
+    id: "chronoClash", name: 'Chrono Clash', type: 'Sports' },
+  {
+    id: "chronoClash2", name: 'Chrono Clash2', type: 'Action' },
+  {
+    id: "chronoDefender", name: 'Chrono Defender', type: 'Action' },
+  {
+    id: "chronoDefender2", name: 'Chrono Defender2', type: 'Sports' },
+  {
+    id: "chronoQuest", name: 'Chrono Quest', type: 'Sports' },
+  {
+    id: "cosmicBlaster", name: 'Cosmic Blaster', type: 'Sports' },
+  {
+    id: "cosmicBlaster2", name: 'Cosmic Blaster2', type: 'Sports' },
+  {
+    id: "cosmicBounce", name: 'Cosmic Bounce', type: 'Strategy' },
+  {
+    id: "cosmicDefender", name: 'Cosmic Defender', type: 'Puzzle' },
+  {
+    id: "cosmicDrop", name: 'Cosmic Drop', type: 'Strategy' },
+  {
+    id: "cosmicDrop2", name: 'Cosmic Drop2', type: 'Strategy' },
+  {
+    id: "cosmicMatch", name: 'Cosmic Match', type: 'Strategy' },
+  {
+    id: "crazyLink", name: 'Crazy Link', type: 'Arcade' },
+  {
+    id: "crazyNinja", name: 'Crazy Ninja', type: 'Arcade' },
+  {
+    id: "crazyNinja2", name: 'Crazy Ninja2', type: 'Puzzle' },
+  {
+    id: "crazyQuest", name: 'Crazy Quest', type: 'Action' },
+  {
+    id: "crazyQuest2", name: 'Crazy Quest2', type: 'Arcade' },
+  {
+    id: "crazySpin", name: 'Crazy Spin', type: 'Strategy' },
+  {
+    id: "crystalDrop", name: 'Crystal Drop', type: 'Puzzle' },
+  {
+    id: "crystalNinja", name: 'Crystal Ninja', type: 'Strategy' },
+  {
+    id: "crystalRacer", name: 'Crystal Racer', type: 'Action' },
+  {
+    id: "crystalRacer2", name: 'Crystal Racer2', type: 'Puzzle' },
+  {
+    id: "crystalStrike", name: 'Crystal Strike', type: 'Arcade' },
+  {
+    id: "crystalStrike2", name: 'Crystal Strike2', type: 'Sports' },
+  {
+    id: "cyberClash", name: 'Cyber Clash', type: 'Sports' },
+  {
+    id: "cyberDash", name: 'Cyber Dash', type: 'Action' },
+  {
+    id: "cyberDash2", name: 'Cyber Dash2', type: 'Action' },
+  {
+    id: "cyberPuzzle", name: 'Cyber Puzzle', type: 'Puzzle' },
+  {
+    id: "cyberSpin", name: 'Cyber Spin', type: 'Arcade' },
+  {
+    id: "cyberSpin2", name: 'Cyber Spin2', type: 'Sports' },
+  {
+    id: "cyberSpin3", name: 'Cyber Spin3', type: 'Action' },
+  {
+    id: "dodgeObjects", name: 'Dodge Objects', type: 'Arcade' },
+  {
+    id: "drawingCanvas", name: 'Drawing Canvas', type: 'Sports' },
+  {
+    id: "electroDash", name: 'Electro Dash', type: 'Sports' },
+  {
+    id: "electroRacer", name: 'Electro Racer', type: 'Arcade' },
+  {
+    id: "electroRacer2", name: 'Electro Racer2', type: 'Action' },
+  {
+    id: "electroStrike", name: 'Electro Strike', type: 'Sports' },
+  {
+    id: "electroStrike2", name: 'Electro Strike2', type: 'Sports' },
+  {
+    id: "epicClash", name: 'Epic Clash', type: 'Action' },
+  {
+    id: "epicDrift", name: 'Epic Drift', type: 'Sports' },
+  {
+    id: "epicDrift2", name: 'Epic Drift2', type: 'Puzzle' },
+  {
+    id: "epicMatch", name: 'Epic Match', type: 'Puzzle' },
+  {
+    id: "epicMatch2", name: 'Epic Match2', type: 'Action' },
+  {
+    id: "epicShooter", name: 'Epic Shooter', type: 'Strategy' },
+  {
+    id: "eternalRunner", name: 'Eternal Runner', type: 'Strategy' },
+  {
+    id: "finalBoss", name: 'Final Boss', type: 'Action' },
+  {
+    id: "fishingGame", name: 'Fishing Game', type: 'Arcade' },
+  {
+    id: "flappyBird", name: 'Flappy Bird', type: 'Action' },
+  {
+    id: "galaxyBlaster", name: 'Galaxy Blaster', type: 'Arcade' },
+  {
+    id: "game2048", name: 'Game2048', type: 'Puzzle' },
+  {
+    id: "grandStrategy", name: 'Grand Strategy', type: 'Strategy' },
+  {
+    id: "gravityFlip", name: 'Gravity Flip', type: 'Arcade' },
+  {
+    id: "hyperGlider", name: 'Hyper Glider', type: 'Strategy' },
+  {
+    id: "hyperGlider2", name: 'Hyper Glider2', type: 'Action' },
+  {
+    id: "hyperKnight", name: 'Hyper Knight', type: 'Puzzle' },
+  {
+    id: "hyperKnight2", name: 'Hyper Knight2', type: 'Action' },
+  {
+    id: "hyperLink", name: 'Hyper Link', type: 'Action' },
+  {
+    id: "hyperRacer", name: 'Hyper Racer', type: 'Strategy' },
+  {
+    id: "idleClicker", name: 'Idle Clicker', type: 'Puzzle' },
+  {
+    id: "infiniteJump", name: 'Infinite Jump', type: 'Strategy' },
+  {
+    id: "infinityMatch", name: 'Infinity Match', type: 'Puzzle' },
+  {
+    id: "ironBlaster", name: 'Iron Blaster', type: 'Action' },
+  {
+    id: "ironForce", name: 'Iron Force', type: 'Strategy' },
+  {
+    id: "ironRunner", name: 'Iron Runner', type: 'Action' },
+  {
+    id: "ironRunner2", name: 'Iron Runner2', type: 'Sports' },
+  {
+    id: "ironSurfer", name: 'Iron Surfer', type: 'Strategy' },
+  {
+    id: "ironSurfer2", name: 'Iron Surfer2', type: 'Strategy' },
+  {
+    id: "knifeHit", name: 'Knife Hit', type: 'Action' },
+  {
+    id: "legendQuest", name: 'Legend Quest', type: 'Strategy' },
+  {
+    id: "lunarDefender", name: 'Lunar Defender', type: 'Arcade' },
+  {
+    id: "lunarRacer", name: 'Lunar Racer', type: 'Action' },
+  {
+    id: "lunarRunner", name: 'Lunar Runner', type: 'Puzzle' },
+  {
+    id: "lunarRunner2", name: 'Lunar Runner2', type: 'Action' },
+  {
+    id: "lunarSurfer", name: 'Lunar Surfer', type: 'Strategy' },
+  {
+    id: "lunarSurfer2", name: 'Lunar Surfer2', type: 'Puzzle' },
+  {
+    id: "magicClash", name: 'Magic Clash', type: 'Puzzle' },
+  {
+    id: "magicClash2", name: 'Magic Clash2', type: 'Sports' },
+  {
+    id: "magicDefender", name: 'Magic Defender', type: 'Strategy' },
+  {
+    id: "magicDefender2", name: 'Magic Defender2', type: 'Strategy' },
+  {
+    id: "magicKnight", name: 'Magic Knight', type: 'Puzzle' },
+  {
+    id: "magicSpin", name: 'Magic Spin', type: 'Arcade' },
+  {
+    id: "masterArcade", name: 'Master Arcade', type: 'Arcade' },
+  {
+    id: "mathQuiz", name: 'Math Quiz', type: 'Strategy' },
+  {
+    id: "mazeSolver", name: 'Maze Solver', type: 'Strategy' },
+  {
+    id: "megaBounce", name: 'Mega Bounce', type: 'Puzzle' },
+  {
+    id: "megaGlider", name: 'Mega Glider', type: 'Strategy' },
+  {
+    id: "megaGlider2", name: 'Mega Glider2', type: 'Strategy' },
+  {
+    id: "megaKnight", name: 'Mega Knight', type: 'Sports' },
+  {
+    id: "megaKnight2", name: 'Mega Knight2', type: 'Sports' },
+  {
+    id: "megaSports", name: 'Mega Sports', type: 'Action' },
+  {
+    id: "megaSurfer", name: 'Mega Surfer', type: 'Strategy' },
+  {
+    id: "memoryCards", name: 'Memory Cards', type: 'Arcade' },
+  {
+    id: "memorySequence", name: 'Memory Sequence', type: 'Action' },
+  {
+    id: "miniGolf", name: 'Mini Golf', type: 'Sports' },
+  {
+    id: "mysticRunner", name: 'Mystic Runner', type: 'Strategy' },
+  {
+    id: "mysticRunner2", name: 'Mystic Runner2', type: 'Action' },
+  {
+    id: "mysticSurfer", name: 'Mystic Surfer', type: 'Puzzle' },
+  {
+    id: "mysticSurfer2", name: 'Mystic Surfer2', type: 'Sports' },
+  {
+    id: "mysticWizard", name: 'Mystic Wizard', type: 'Action' },
+  {
+    id: "mythicDefender", name: 'Mythic Defender', type: 'Puzzle' },
+  {
+    id: "neonBounce", name: 'Neon Bounce', type: 'Arcade' },
+  {
+    id: "neonBounce2", name: 'Neon Bounce2', type: 'Arcade' },
+  {
+    id: "neonDash", name: 'Neon Dash', type: 'Action' },
+  {
+    id: "neonDrift", name: 'Neon Drift', type: 'Strategy' },
+  {
+    id: "neonKnight", name: 'Neon Knight', type: 'Arcade' },
+  {
+    id: "neonRunner", name: 'Neon Runner', type: 'Puzzle' },
+  {
+    id: "neonShooter", name: 'Neon Shooter', type: 'Strategy' },
+  {
+    id: "neonShooter2", name: 'Neon Shooter2', type: 'Sports' },
+  {
+    id: "paintDraw", name: 'Paint Draw', type: 'Strategy' },
+  {
+    id: "pixelBlaster", name: 'Pixel Blaster', type: 'Sports' },
+  {
+    id: "pixelClash", name: 'Pixel Clash', type: 'Puzzle' },
+  {
+    id: "pixelClash2", name: 'Pixel Clash2', type: 'Action' },
+  {
+    id: "pixelDefender", name: 'Pixel Defender', type: 'Strategy' },
+  {
+    id: "pixelDefender2", name: 'Pixel Defender2', type: 'Action' },
+  {
+    id: "pixelDrift", name: 'Pixel Drift', type: 'Action' },
+  {
+    id: "pixelKnight", name: 'Pixel Knight', type: 'Action' },
+  {
+    id: "pixelQuest", name: 'Pixel Quest', type: 'Sports' },
+  {
+    id: "pyroForce", name: 'Pyro Force', type: 'Sports' },
+  {
+    id: "pyroForce2", name: 'Pyro Force2', type: 'Strategy' },
+  {
+    id: "pyroLink", name: 'Pyro Link', type: 'Action' },
+  {
+    id: "pyroLink2", name: 'Pyro Link2', type: 'Arcade' },
+  {
+    id: "pyroStrike", name: 'Pyro Strike', type: 'Action' },
+  {
+    id: "quantumBounce", name: 'Quantum Bounce', type: 'Puzzle' },
+  {
+    id: "quantumDrift", name: 'Quantum Drift', type: 'Arcade' },
+  {
+    id: "quantumDrift2", name: 'Quantum Drift2', type: 'Sports' },
+  {
+    id: "quantumMatch", name: 'Quantum Match', type: 'Sports' },
+  {
+    id: "quantumMatch2", name: 'Quantum Match2', type: 'Puzzle' },
+  {
+    id: "quantumShooter", name: 'Quantum Shooter', type: 'Arcade' },
+  {
+    id: "quantumStrike", name: 'Quantum Strike', type: 'Action' },
+  {
+    id: "reactionTime", name: 'Reaction Time', type: 'Action' },
+  {
+    id: "retroBlaster", name: 'Retro Blaster', type: 'Sports' },
+  {
+    id: "retroEngine", name: 'Retro Engine', type: 'Action' },
+  {
+    id: "retroForce", name: 'Retro Force', type: 'Action' },
+  {
+    id: "retroForce2", name: 'Retro Force2', type: 'Strategy' },
+  {
+    id: "retroLink", name: 'Retro Link', type: 'Puzzle' },
+  {
+    id: "retroLink2", name: 'Retro Link2', type: 'Puzzle' },
+  {
+    id: "retroRacer", name: 'Retro Racer', type: 'Puzzle' },
+  {
+    id: "rockPaperScissors", name: 'Rock Paper Scissors', type: 'Action' },
+  {
+    id: "shadowBlaster", name: 'Shadow Blaster', type: 'Sports' },
+  {
+    id: "shadowForce", name: 'Shadow Force', type: 'Strategy' },
+  {
+    id: "shadowForce2", name: 'Shadow Force2', type: 'Action' },
+  {
+    id: "shadowGlider", name: 'Shadow Glider', type: 'Puzzle' },
+  {
+    id: "shadowLink", name: 'Shadow Link', type: 'Sports' },
+  {
+    id: "shadowLink2", name: 'Shadow Link2', type: 'Arcade' },
+  {
+    id: "shadowNinja", name: 'Shadow Ninja', type: 'Arcade' },
+  {
+    id: "solarBounce", name: 'Solar Bounce', type: 'Puzzle' },
+  {
+    id: "solarBounce2", name: 'Solar Bounce2', type: 'Strategy' },
+  {
+    id: "solarGlider", name: 'Solar Glider', type: 'Arcade' },
+  {
+    id: "solarNinja", name: 'Solar Ninja', type: 'Arcade' },
+  {
+    id: "solarShooter", name: 'Solar Shooter', type: 'Arcade' },
+  {
+    id: "solarShooter2", name: 'Solar Shooter2', type: 'Action' },
+  {
+    id: "sonicDrop", name: 'Sonic Drop', type: 'Action' },
+  {
+    id: "sonicGlider2", name: 'Sonic Glider2', type: 'Puzzle' },
+  {
+    id: "sonicGlider3", name: 'Sonic Glider3', type: 'Sports' },
+  {
+    id: "sonicKnight", name: 'Sonic Knight', type: 'Sports' },
+  {
+    id: "sonicKnight2", name: 'Sonic Knight2', type: 'Action' },
+  {
+    id: "spaceInvaders", name: 'Space Invaders', type: 'Action' },
+  {
+    id: "steelBounce", name: 'Steel Bounce', type: 'Puzzle' },
+  {
+    id: "steelBounce2", name: 'Steel Bounce2', type: 'Action' },
+  {
+    id: "steelNinja", name: 'Steel Ninja', type: 'Strategy' },
+  {
+    id: "steelShooter", name: 'Steel Shooter', type: 'Strategy' },
+  {
+    id: "steelShooter2", name: 'Steel Shooter2', type: 'Arcade' },
+  {
+    id: "superBlaster", name: 'Super Blaster', type: 'Arcade' },
+  {
+    id: "superBlaster2", name: 'Super Blaster2', type: 'Arcade' },
+  {
+    id: "superDrop", name: 'Super Drop', type: 'Strategy' },
+  {
+    id: "superDrop2", name: 'Super Drop2', type: 'Strategy' },
+  {
+    id: "superKnight", name: 'Super Knight', type: 'Strategy' },
+  {
+    id: "superRunner", name: 'Super Runner', type: 'Sports' },
+  {
+    id: "terraBuilder", name: 'Terra Builder', type: 'Arcade' },
+  {
+    id: "terraNinja", name: 'Terra Ninja', type: 'Strategy' },
+  {
+    id: "terraNinja2", name: 'Terra Ninja2', type: 'Puzzle' },
+  {
+    id: "terraQuest", name: 'Terra Quest', type: 'Strategy' },
+  {
+    id: "terraQuest2", name: 'Terra Quest2', type: 'Action' },
+  {
+    id: "ticTacToe", name: 'Tic Tac Toe', type: 'Arcade' },
+  {
+    id: "towerStacker", name: 'Tower Stacker', type: 'Puzzle' },
+  {
+    id: "triviaQuiz", name: 'Trivia Quiz', type: 'Sports' },
+  {
+    id: "turboForce", name: 'Turbo Force', type: 'Sports' },
+  {
+    id: "turboMatch", name: 'Turbo Match', type: 'Arcade' },
+  {
+    id: "turboNinja", name: 'Turbo Ninja', type: 'Sports' },
+  {
+    id: "turboNinja2", name: 'Turbo Ninja2', type: 'Strategy' },
+  {
+    id: "turboQuest", name: 'Turbo Quest', type: 'Strategy' },
+  {
+    id: "turboQuest2", name: 'Turbo Quest2', type: 'Strategy' },
+  {
+    id: "turboSurfer", name: 'Turbo Surfer', type: 'Arcade' },
+  {
+    id: "typingTest", name: 'Typing Test', type: 'Strategy' },
+  {
+    id: "ultimatePuzzle", name: 'Ultimate Puzzle', type: 'Arcade' },
+  {
+    id: "ultraDefender", name: 'Ultra Defender', type: 'Sports' },
+  {
+    id: "ultraDrift", name: 'Ultra Drift', type: 'Sports' },
+  {
+    id: "ultraRacer", name: 'Ultra Racer', type: 'Arcade' },
+  {
+    id: "ultraRacer2", name: 'Ultra Racer2', type: 'Sports' },
+  {
+    id: "ultraStrike", name: 'Ultra Strike', type: 'Strategy' },
+  {
+    id: "ultraStrike2", name: 'Ultra Strike2', type: 'Arcade' },
+  {
+    id: "voidDash", name: 'Void Dash', type: 'Strategy' },
+  {
+    id: "voidDash2", name: 'Void Dash2', type: 'Strategy' },
+  {
+    id: "voidShooter", name: 'Void Shooter', type: 'Action' },
+  {
+    id: "voidSpin", name: 'Void Spin', type: 'Action' },
+  {
+    id: "chronoClash", name: 'Chrono Clash', type: 'Sports' },
+  {
+    id: "chronoClash2", name: 'Chrono Clash2', type: 'Action' },
+  {
+    id: "chronoDefender", name: 'Chrono Defender', type: 'Action' },
+  {
+    id: "chronoDefender2", name: 'Chrono Defender2', type: 'Sports' },
+  {
+    id: "chronoQuest", name: 'Chrono Quest', type: 'Sports' },
+  {
+    id: "cosmicBlaster", name: 'Cosmic Blaster', type: 'Sports' },
+  {
+    id: "cosmicBlaster2", name: 'Cosmic Blaster2', type: 'Sports' },
+  {
+    id: "cosmicBounce", name: 'Cosmic Bounce', type: 'Strategy' },
+  {
+    id: "cosmicDefender", name: 'Cosmic Defender', type: 'Puzzle' },
+  {
+    id: "cosmicDrop", name: 'Cosmic Drop', type: 'Strategy' },
+  {
+    id: "cosmicDrop2", name: 'Cosmic Drop2', type: 'Strategy' },
+  {
+    id: "cosmicMatch", name: 'Cosmic Match', type: 'Strategy' },
+  {
+    id: "crazyLink", name: 'Crazy Link', type: 'Arcade' },
+  {
+    id: "crazyNinja", name: 'Crazy Ninja', type: 'Arcade' },
+  {
+    id: "crazyNinja2", name: 'Crazy Ninja2', type: 'Puzzle' },
+  {
+    id: "crazyQuest", name: 'Crazy Quest', type: 'Action' },
+  {
+    id: "crazyQuest2", name: 'Crazy Quest2', type: 'Arcade' },
+  {
+    id: "crazySpin", name: 'Crazy Spin', type: 'Strategy' },
+  {
+    id: "crystalDrop", name: 'Crystal Drop', type: 'Puzzle' },
+  {
+    id: "crystalNinja", name: 'Crystal Ninja', type: 'Strategy' },
+  {
+    id: "crystalRacer", name: 'Crystal Racer', type: 'Action' },
+  {
+    id: "crystalRacer2", name: 'Crystal Racer2', type: 'Puzzle' },
+  {
+    id: "crystalStrike", name: 'Crystal Strike', type: 'Arcade' },
+  {
+    id: "crystalStrike2", name: 'Crystal Strike2', type: 'Sports' },
+  {
+    id: "cyberClash", name: 'Cyber Clash', type: 'Sports' },
+  {
+    id: "cyberDash", name: 'Cyber Dash', type: 'Action' },
+  {
+    id: "cyberDash2", name: 'Cyber Dash2', type: 'Action' },
+  {
+    id: "cyberPuzzle", name: 'Cyber Puzzle', type: 'Puzzle' },
+  {
+    id: "cyberSpin", name: 'Cyber Spin', type: 'Arcade' },
+  {
+    id: "cyberSpin2", name: 'Cyber Spin2', type: 'Sports' },
+  {
+    id: "cyberSpin3", name: 'Cyber Spin3', type: 'Action' },
+  {
+    id: "dodgeObjects", name: 'Dodge Objects', type: 'Arcade' },
+  {
+    id: "drawingCanvas", name: 'Drawing Canvas', type: 'Sports' },
+  {
+    id: "electroDash", name: 'Electro Dash', type: 'Sports' },
+  {
+    id: "electroRacer", name: 'Electro Racer', type: 'Arcade' },
+  {
+    id: "electroRacer2", name: 'Electro Racer2', type: 'Action' },
+  {
+    id: "electroStrike", name: 'Electro Strike', type: 'Sports' },
+  {
+    id: "electroStrike2", name: 'Electro Strike2', type: 'Sports' },
+  {
+    id: "epicClash", name: 'Epic Clash', type: 'Action' },
+  {
+    id: "epicDrift", name: 'Epic Drift', type: 'Sports' },
+  {
+    id: "epicDrift2", name: 'Epic Drift2', type: 'Puzzle' },
+  {
+    id: "epicMatch", name: 'Epic Match', type: 'Puzzle' },
+  {
+    id: "epicMatch2", name: 'Epic Match2', type: 'Action' },
+  {
+    id: "epicShooter", name: 'Epic Shooter', type: 'Strategy' },
+  {
+    id: "eternalRunner", name: 'Eternal Runner', type: 'Strategy' },
+  {
+    id: "finalBoss", name: 'Final Boss', type: 'Action' },
+  {
+    id: "fishingGame", name: 'Fishing Game', type: 'Arcade' },
+  {
+    id: "flappyBird", name: 'Flappy Bird', type: 'Action' },
+  {
+    id: "galaxyBlaster", name: 'Galaxy Blaster', type: 'Arcade' },
+  {
+    id: "game2048", name: 'Game2048', type: 'Puzzle' },
+  {
+    id: "grandStrategy", name: 'Grand Strategy', type: 'Strategy' },
+  {
+    id: "gravityFlip", name: 'Gravity Flip', type: 'Arcade' },
+  {
+    id: "hyperGlider", name: 'Hyper Glider', type: 'Strategy' },
+  {
+    id: "hyperGlider2", name: 'Hyper Glider2', type: 'Action' },
+  {
+    id: "hyperKnight", name: 'Hyper Knight', type: 'Puzzle' },
+  {
+    id: "hyperKnight2", name: 'Hyper Knight2', type: 'Action' },
+  {
+    id: "hyperLink", name: 'Hyper Link', type: 'Action' },
+  {
+    id: "hyperRacer", name: 'Hyper Racer', type: 'Strategy' },
+  {
+    id: "idleClicker", name: 'Idle Clicker', type: 'Puzzle' },
+  {
+    id: "infiniteJump", name: 'Infinite Jump', type: 'Strategy' },
+  {
+    id: "infinityMatch", name: 'Infinity Match', type: 'Puzzle' },
+  {
+    id: "ironBlaster", name: 'Iron Blaster', type: 'Action' },
+  {
+    id: "ironForce", name: 'Iron Force', type: 'Strategy' },
+  {
+    id: "ironRunner", name: 'Iron Runner', type: 'Action' },
+  {
+    id: "ironRunner2", name: 'Iron Runner2', type: 'Sports' },
+  {
+    id: "ironSurfer", name: 'Iron Surfer', type: 'Strategy' },
+  {
+    id: "ironSurfer2", name: 'Iron Surfer2', type: 'Strategy' },
+  {
+    id: "knifeHit", name: 'Knife Hit', type: 'Action' },
+  {
+    id: "legendQuest", name: 'Legend Quest', type: 'Strategy' },
+  {
+    id: "lunarDefender", name: 'Lunar Defender', type: 'Arcade' },
+  {
+    id: "lunarRacer", name: 'Lunar Racer', type: 'Action' },
+  {
+    id: "lunarRunner", name: 'Lunar Runner', type: 'Puzzle' },
+  {
+    id: "lunarRunner2", name: 'Lunar Runner2', type: 'Action' },
+  {
+    id: "lunarSurfer", name: 'Lunar Surfer', type: 'Strategy' },
+  {
+    id: "lunarSurfer2", name: 'Lunar Surfer2', type: 'Puzzle' },
+  {
+    id: "magicClash", name: 'Magic Clash', type: 'Puzzle' },
+  {
+    id: "magicClash2", name: 'Magic Clash2', type: 'Sports' },
+  {
+    id: "magicDefender", name: 'Magic Defender', type: 'Strategy' },
+  {
+    id: "magicDefender2", name: 'Magic Defender2', type: 'Strategy' },
+  {
+    id: "magicKnight", name: 'Magic Knight', type: 'Puzzle' },
+  {
+    id: "magicSpin", name: 'Magic Spin', type: 'Arcade' },
+  {
+    id: "masterArcade", name: 'Master Arcade', type: 'Arcade' },
+  {
+    id: "mathQuiz", name: 'Math Quiz', type: 'Strategy' },
+  {
+    id: "mazeSolver", name: 'Maze Solver', type: 'Strategy' },
+  {
+    id: "megaBounce", name: 'Mega Bounce', type: 'Puzzle' },
+  {
+    id: "megaGlider", name: 'Mega Glider', type: 'Strategy' },
+  {
+    id: "megaGlider2", name: 'Mega Glider2', type: 'Strategy' },
+  {
+    id: "megaKnight", name: 'Mega Knight', type: 'Sports' },
+  {
+    id: "megaKnight2", name: 'Mega Knight2', type: 'Sports' },
+  {
+    id: "megaSports", name: 'Mega Sports', type: 'Action' },
+  {
+    id: "megaSurfer", name: 'Mega Surfer', type: 'Strategy' },
+  {
+    id: "memoryCards", name: 'Memory Cards', type: 'Arcade' },
+  {
+    id: "memorySequence", name: 'Memory Sequence', type: 'Action' },
+  {
+    id: "miniGolf", name: 'Mini Golf', type: 'Sports' },
+  {
+    id: "mysticRunner", name: 'Mystic Runner', type: 'Strategy' },
+  {
+    id: "mysticRunner2", name: 'Mystic Runner2', type: 'Action' },
+  {
+    id: "mysticSurfer", name: 'Mystic Surfer', type: 'Puzzle' },
+  {
+    id: "mysticSurfer2", name: 'Mystic Surfer2', type: 'Sports' },
+  {
+    id: "mysticWizard", name: 'Mystic Wizard', type: 'Action' },
+  {
+    id: "mythicDefender", name: 'Mythic Defender', type: 'Puzzle' },
+  {
+    id: "neonBounce", name: 'Neon Bounce', type: 'Arcade' },
+  {
+    id: "neonBounce2", name: 'Neon Bounce2', type: 'Arcade' },
+  {
+    id: "neonDash", name: 'Neon Dash', type: 'Action' },
+  {
+    id: "neonDrift", name: 'Neon Drift', type: 'Strategy' },
+  {
+    id: "neonKnight", name: 'Neon Knight', type: 'Arcade' },
+  {
+    id: "neonRunner", name: 'Neon Runner', type: 'Puzzle' },
+  {
+    id: "neonShooter", name: 'Neon Shooter', type: 'Strategy' },
+  {
+    id: "neonShooter2", name: 'Neon Shooter2', type: 'Sports' },
+  {
+    id: "paintDraw", name: 'Paint Draw', type: 'Strategy' },
+  {
+    id: "pixelBlaster", name: 'Pixel Blaster', type: 'Sports' },
+  {
+    id: "pixelClash", name: 'Pixel Clash', type: 'Puzzle' },
+  {
+    id: "pixelClash2", name: 'Pixel Clash2', type: 'Action' },
+  {
+    id: "pixelDefender", name: 'Pixel Defender', type: 'Strategy' },
+  {
+    id: "pixelDefender2", name: 'Pixel Defender2', type: 'Action' },
+  {
+    id: "pixelDrift", name: 'Pixel Drift', type: 'Action' },
+  {
+    id: "pixelKnight", name: 'Pixel Knight', type: 'Action' },
+  {
+    id: "pixelQuest", name: 'Pixel Quest', type: 'Sports' },
+  {
+    id: "pyroForce", name: 'Pyro Force', type: 'Sports' },
+  {
+    id: "pyroForce2", name: 'Pyro Force2', type: 'Strategy' },
+  {
+    id: "pyroLink", name: 'Pyro Link', type: 'Action' },
+  {
+    id: "pyroLink2", name: 'Pyro Link2', type: 'Arcade' },
+  {
+    id: "pyroStrike", name: 'Pyro Strike', type: 'Action' },
+  {
+    id: "quantumBounce", name: 'Quantum Bounce', type: 'Puzzle' },
+  {
+    id: "quantumDrift", name: 'Quantum Drift', type: 'Arcade' },
+  {
+    id: "quantumDrift2", name: 'Quantum Drift2', type: 'Sports' },
+  {
+    id: "quantumMatch", name: 'Quantum Match', type: 'Sports' },
+  {
+    id: "quantumMatch2", name: 'Quantum Match2', type: 'Puzzle' },
+  {
+    id: "quantumShooter", name: 'Quantum Shooter', type: 'Arcade' },
+  {
+    id: "quantumStrike", name: 'Quantum Strike', type: 'Action' },
+  {
+    id: "reactionTime", name: 'Reaction Time', type: 'Action' },
+  {
+    id: "retroBlaster", name: 'Retro Blaster', type: 'Sports' },
+  {
+    id: "retroEngine", name: 'Retro Engine', type: 'Action' },
+  {
+    id: "retroForce", name: 'Retro Force', type: 'Action' },
+  {
+    id: "retroForce2", name: 'Retro Force2', type: 'Strategy' },
+  {
+    id: "retroLink", name: 'Retro Link', type: 'Puzzle' },
+  {
+    id: "retroLink2", name: 'Retro Link2', type: 'Puzzle' },
+  {
+    id: "retroRacer", name: 'Retro Racer', type: 'Puzzle' },
+  {
+    id: "rockPaperScissors", name: 'Rock Paper Scissors', type: 'Action' },
+  {
+    id: "shadowBlaster", name: 'Shadow Blaster', type: 'Sports' },
+  {
+    id: "shadowForce", name: 'Shadow Force', type: 'Strategy' },
+  {
+    id: "shadowForce2", name: 'Shadow Force2', type: 'Action' },
+  {
+    id: "shadowGlider", name: 'Shadow Glider', type: 'Puzzle' },
+  {
+    id: "shadowLink", name: 'Shadow Link', type: 'Sports' },
+  {
+    id: "shadowLink2", name: 'Shadow Link2', type: 'Arcade' },
+  {
+    id: "shadowNinja", name: 'Shadow Ninja', type: 'Arcade' },
+  {
+    id: "solarBounce", name: 'Solar Bounce', type: 'Puzzle' },
+  {
+    id: "solarBounce2", name: 'Solar Bounce2', type: 'Strategy' },
+  {
+    id: "solarGlider", name: 'Solar Glider', type: 'Arcade' },
+  {
+    id: "solarNinja", name: 'Solar Ninja', type: 'Arcade' },
+  {
+    id: "solarShooter", name: 'Solar Shooter', type: 'Arcade' },
+  {
+    id: "solarShooter2", name: 'Solar Shooter2', type: 'Action' },
+  {
+    id: "sonicDrop", name: 'Sonic Drop', type: 'Action' },
+  {
+    id: "sonicGlider2", name: 'Sonic Glider2', type: 'Puzzle' },
+  {
+    id: "sonicGlider3", name: 'Sonic Glider3', type: 'Sports' },
+  {
+    id: "sonicKnight", name: 'Sonic Knight', type: 'Sports' },
+  {
+    id: "sonicKnight2", name: 'Sonic Knight2', type: 'Action' },
+  {
+    id: "spaceInvaders", name: 'Space Invaders', type: 'Action' },
+  {
+    id: "steelBounce", name: 'Steel Bounce', type: 'Puzzle' },
+  {
+    id: "steelBounce2", name: 'Steel Bounce2', type: 'Action' },
+  {
+    id: "steelNinja", name: 'Steel Ninja', type: 'Strategy' },
+  {
+    id: "steelShooter", name: 'Steel Shooter', type: 'Strategy' },
+  {
+    id: "steelShooter2", name: 'Steel Shooter2', type: 'Arcade' },
+  {
+    id: "superBlaster", name: 'Super Blaster', type: 'Arcade' },
+  {
+    id: "superBlaster2", name: 'Super Blaster2', type: 'Arcade' },
+  {
+    id: "superDrop", name: 'Super Drop', type: 'Strategy' },
+  {
+    id: "superDrop2", name: 'Super Drop2', type: 'Strategy' },
+  {
+    id: "superKnight", name: 'Super Knight', type: 'Strategy' },
+  {
+    id: "superRunner", name: 'Super Runner', type: 'Sports' },
+  {
+    id: "terraBuilder", name: 'Terra Builder', type: 'Arcade' },
+  {
+    id: "terraNinja", name: 'Terra Ninja', type: 'Strategy' },
+  {
+    id: "terraNinja2", name: 'Terra Ninja2', type: 'Puzzle' },
+  {
+    id: "terraQuest", name: 'Terra Quest', type: 'Strategy' },
+  {
+    id: "terraQuest2", name: 'Terra Quest2', type: 'Action' },
+  {
+    id: "ticTacToe", name: 'Tic Tac Toe', type: 'Arcade' },
+  {
+    id: "towerStacker", name: 'Tower Stacker', type: 'Puzzle' },
+  {
+    id: "triviaQuiz", name: 'Trivia Quiz', type: 'Sports' },
+  {
+    id: "turboForce", name: 'Turbo Force', type: 'Sports' },
+  {
+    id: "turboMatch", name: 'Turbo Match', type: 'Arcade' },
+  {
+    id: "turboNinja", name: 'Turbo Ninja', type: 'Sports' },
+  {
+    id: "turboNinja2", name: 'Turbo Ninja2', type: 'Strategy' },
+  {
+    id: "turboQuest", name: 'Turbo Quest', type: 'Strategy' },
+  {
+    id: "turboQuest2", name: 'Turbo Quest2', type: 'Strategy' },
+  {
+    id: "turboSurfer", name: 'Turbo Surfer', type: 'Arcade' },
+  {
+    id: "typingTest", name: 'Typing Test', type: 'Strategy' },
+  {
+    id: "ultimatePuzzle", name: 'Ultimate Puzzle', type: 'Arcade' },
+  {
+    id: "ultraDefender", name: 'Ultra Defender', type: 'Sports' },
+  {
+    id: "ultraDrift", name: 'Ultra Drift', type: 'Sports' },
+  {
+    id: "ultraRacer", name: 'Ultra Racer', type: 'Arcade' },
+  {
+    id: "ultraRacer2", name: 'Ultra Racer2', type: 'Sports' },
+  {
+    id: "ultraStrike", name: 'Ultra Strike', type: 'Strategy' },
+  {
+    id: "ultraStrike2", name: 'Ultra Strike2', type: 'Arcade' },
+  {
+    id: "voidDash", name: 'Void Dash', type: 'Strategy' },
+  {
+    id: "voidDash2", name: 'Void Dash2', type: 'Strategy' },
+  {
+    id: "voidShooter", name: 'Void Shooter', type: 'Action' },
+  {
+    id: "voidSpin", name: 'Void Spin', type: 'Action' },
+  {
+    id: "voidSpin2", name: 'Void Spin2', type: 'Strategy' },
+  {
+    id: "whackAMole", name: 'Whack A Mole', type: 'Strategy' },
+  {
+    id: "wordSearch", name: 'Word Search', type: 'Sports' },
+  {
+    id: "xakArena", name: 'Xak Arena', type: 'Strategy' },
+  {
+    id: "xakSports", name: 'Xak Sports', type: 'Arcade' },
+  {
+    id: "xBRArena", name: 'X B R Arena', type: 'Puzzle' }
 ];
 
 const legacyGames: GameMeta[] = legacyGamesData.map(g => ({

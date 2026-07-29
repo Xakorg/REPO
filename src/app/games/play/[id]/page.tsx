@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
  
 const GAME_MAP: Record<string, React.ComponentType<any>> = {
+  cyber_vortex_odyssey: dynamic(() => import("@/components/game/cyber-vortex-odyssey")),
+  cyberVortexOdyssey:  dynamic(() => import("@/components/game/cyber-vortex-odyssey")),
   solar_tempest: dynamic(() => import("@/components/game/solar-tempest")),
   solarTempest:  dynamic(() => import("@/components/game/solar-tempest")),
   hyper_horizon: dynamic(() => import("@/components/game/hyper-horizon")),
