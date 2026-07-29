@@ -194,12 +194,14 @@ export default function GamesCreatePage() {
         <div className="flex items-center gap-2 md:gap-3">
           <button 
             onClick={() => router.push('/games')}
+            onMouseEnter={() => router.prefetch('/games')}
             className="hidden md:flex px-4 py-2 bg-white/5 hover:bg-white/20 rounded-full border border-white/10 text-xs font-black uppercase tracking-widest backdrop-blur-md transition-colors items-center gap-2 text-white/70 hover:text-white"
           >
             <Play className="w-4 h-4" /> Play
           </button>
           <button 
             onClick={() => router.push('/games/store')}
+            onMouseEnter={() => router.prefetch('/games/store')}
             className="hidden md:flex px-4 py-2 bg-white/5 hover:bg-white/20 rounded-full border border-white/10 text-xs font-black uppercase tracking-widest backdrop-blur-md transition-colors items-center gap-2 text-white/70 hover:text-white"
           >
             <ShoppingBag className="w-4 h-4" /> Store

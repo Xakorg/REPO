@@ -107,7 +107,7 @@ export default function VoltraStoreAppPage() {
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center space-y-6">
         <div className="text-red-500 text-6xl font-black">404</div>
         <p className="text-xl font-bold text-zinc-400">{error || "Application not found."}</p>
-        <button onClick={() => router.push("/")} className="mt-8 bg-white/10 hover:bg-white/20 px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs transition-colors">
+        <button onClick={() => router.push("/")} onMouseEnter={() => router.prefetch("/")} className="mt-8 bg-white/10 hover:bg-white/20 px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs transition-colors">
           Return to Store
         </button>
       </div>
@@ -128,7 +128,7 @@ export default function VoltraStoreAppPage() {
       
       {/* Top Navigation */}
       <nav className="sticky top-0 z-50 bg-black/50 backdrop-blur-3xl border-b border-white/5 h-20 flex items-center px-8">
-        <button onClick={() => router.push("/")} className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors font-bold uppercase tracking-wider text-xs">
+        <button onClick={() => router.push("/")} onMouseEnter={() => router.prefetch("/")} className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors font-bold uppercase tracking-wider text-xs">
           <ArrowLeft className="w-4 h-4" /> Back to Store
         </button>
       </nav>

@@ -1432,7 +1432,7 @@ export default function MeetingRoomPage() {
             </Button>
           </div>
           
-          <Button variant="ghost" onClick={() => router.push("/meet")} className="text-xs font-black uppercase tracking-widest opacity-40 hover:opacity-100 text-white">
+          <Button variant="ghost" onClick={() => router.push("/meet")} onMouseEnter={() => router.prefetch("/meet")} className="text-xs font-black uppercase tracking-widest opacity-40 hover:opacity-100 text-white">
             Cancel
           </Button>
         </Card>

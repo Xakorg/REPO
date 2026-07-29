@@ -119,6 +119,7 @@ export default function ClassroomLayout({
             <button
               key={tab.href}
               onClick={() => router.push(tab.href)}
+              onMouseEnter={() => router.prefetch(tab.href)}
               className={cn(
                 "rounded-xl px-6 h-full font-black uppercase text-[9px] tracking-widest transition-all",
                 isActive ? "bg-primary text-white shadow-md" : "text-muted-foreground hover:bg-white/5 hover:text-white"
