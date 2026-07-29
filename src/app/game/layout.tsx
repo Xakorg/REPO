@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { GAMES_DB, GameMeta } from "@/lib/games-db";
-import { Maximize, ChevronLeft, Gamepad2, Info } from "lucide-react";
+import { Maximize, ChevronLeft, Gamepad2, Info, Clock } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 
@@ -117,6 +117,26 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
               ))}
             </div>
           </div>
+
+          {/* Updates Section */}
+          {currentGame.updates && currentGame.updates.length > 0 && (
+            <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8">
+              <h2 className="text-lg font-black tracking-widest uppercase flex items-center gap-2 mb-6 text-white/90">
+                <Clock className="w-5 h-5 text-indigo-400" /> Recent Updates
+              </h2>
+              <div className="space-y-4">
+                {currentGame.updates.map((update, idx) => (
+                  <div key={idx} className="flex gap-4 items-start relative before:absolute before:left-[3px] before:top-6 before:bottom-[-24px] last:before:hidden before:w-[2px] before:bg-white/10">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0 shadow-[0_0_10px_rgba(99,102,241,0.5)] z-10" />
+                    <div>
+                      <div className="text-xs font-black tracking-widest uppercase text-white/40 mb-1">{update.time}</div>
+                      <div className="text-sm font-medium text-white/80">{update.description}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar: Other Games */}

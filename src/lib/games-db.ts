@@ -1,4 +1,5 @@
 export interface GameMeta {
+  updates?: { time: string; description: string }[];
   id: string;
   title: string;
   developer: string;
@@ -14,81 +15,171 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "shadow_shinobi_platformer",
+    title: "Shadow Shinobi",
+    developer: "Xakteir Studios",
+    type: "2D Platformer",
+    genre: ["2D Platformer", "Action", "Cyberpunk", "Ninja", "Mobile Friendly"],
+    description: "High-octane cyberpunk ninja platformer with wall-jumping, katana slicing, shuriken projectiles, and full mobile touch controls.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=shadowshinobi",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/shadow-shinobi-platformer"
+  },
+  {
+    id: "frost_bound_odyssey",
+    title: "Frostbound Odyssey",
+    developer: "Xakteir Studios",
+    type: "2D Platformer",
+    genre: ["2D Platformer", "Precision", "Arctic", "Survival", "Mobile Friendly"],
+    description: "Arctic ice precision platformer with slippery ice physics, falling icicle hazards, thermal warmth management, and mobile touch controls.",
+    bannerUrl: "https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=frostbound",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/frost-bound-odyssey"
+  },
+  {
+    id: "pyro_core_escape",
+    title: "Pyro Core Escape",
+    developer: "Xakteir Studios",
+    type: "2D Platformer",
+    genre: ["2D Platformer", "Magma", "Action", "Jetpack", "Mobile Friendly"],
+    description: "Vertical volcanic magma escape platformer with jetpack thrusting, crumbling platforms, rising lava, and mobile touch controls.",
+    bannerUrl: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=pyrocore",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/pyro-core-escape"
+  },
+  {
+    id: "zero_g_orbital_runner",
+    title: "Zero-G Orbital Runner",
+    developer: "Xakteir Studios",
+    type: "2D Platformer",
+    genre: ["2D Platformer", "Sci-Fi", "Gravity", "Space", "Mobile Friendly"],
+    description: "Zero-gravity sci-fi space station platformer featuring instant gravity inversion, laser field obstacles, energy cells, and mobile touch controls.",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=zerog",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/zero-g-orbital-runner"
+  },
+  {
+    id: "steampunk_clockwork_climb",
+    title: "Steampunk Clockwork Climb",
+    developer: "Xakteir Studios",
+    type: "2D Platformer",
+    genre: ["2D Platformer", "Steampunk", "Mechanical", "Tower", "Mobile Friendly"],
+    description: "Brass steampunk clocktower platformer with rotating gear platforms, swinging pendulum blades, steam burst double jumps, and mobile touch controls.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=steampunk",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/steampunk-clockwork-climb"
+  },
+  {
     id: "chronoshift_overdrive",
-    title: "Chronoshift Overdrive",
+    title: "Time Travel Playground",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["2D Top-Down", "Action", "Cyberpunk", "Time-Warp", "Rogue-lite", "Shooter"],
     description: "High-octane 2D cyberpunk survival shooter. Manipulate time, upgrade your mech with modular perks, and battle rogue AI armadas.",
-    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=chronoshiftoverdrive",
+    bannerUrl: "/games/images/chronoshift_overdrive_banner.png",
+    iconUrl: "/games/images/chronoshift_overdrive_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/chronoshift-overdrive"
   },
   {
     id: "nexus_arena_online",
-    title: "Nexus Arena: Cyber Strike Online",
+    title: "Robot Park: Super Tag Online",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["2D Top-Down", "Action", "Cyberpunk", "Multiplayer", "Online", "PvP"],
     description: "High-octane cyberpunk arena combat featuring 1P Arcade vs AI, Local 2-Player Versus, and Real-time Online Room Matchmaking with P2P sync and live chat.",
-    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=nexusarenaonline",
+    bannerUrl: "/games/images/nexus_arena_online_banner.png",
+    iconUrl: "/games/images/nexus_arena_online_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/nexus-arena-online"
   },
   {
     id: "aether_mech_overdrive",
-    title: "Aether Mech: Overdrive",
+    title: "Cloud Mech: Playground",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["2D Top-Down", "Action", "Cyberpunk", "Mech", "Sci-Fi", "Shooter"],
     description: "High-octane tactical 2D cyber-mech arcade combat. Pilot customizable combat mechs, deploy time-warp matrix abilities, level up perks, and conquer rogue AI armadas.",
-    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aethermechoverdrive",
+    bannerUrl: "/games/images/aether_mech_overdrive_banner.png",
+    iconUrl: "/games/images/aether_mech_overdrive_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/aether-mech-overdrive"
   },
   {
     id: "quantum_helix_cyber_odyssey",
-    title: "Quantum Helix: Cyber Odyssey",
+    title: "Magic Helix: Super Odyssey",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["2D", "Arcade", "Shooter", "Cyberpunk", "Space", "Action"],
     description: "High-octane 2D cyberpunk space arcade combat. Command starfighters, upgrade plasma weapons, deploy automated defense drones, and conquer rogue AI armadas.",
-    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumhelixcyberodyssey",
+    bannerUrl: "/games/images/quantum_helix_cyber_odyssey_banner.png",
+    iconUrl: "/games/images/quantum_helix_cyber_odyssey_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/quantum-helix-cyber-odyssey"
   },
   {
     id: "neon_ascent",
-    title: "Neon Ascent 2D",
+    title: "Colorful Ascent 2D",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["2D", "Platformer", "Precision", "Cyberpunk", "Action"],
     description: "High-precision 2D cyberpunk platformer with wall jumping, air dashes, keycards, laser vaults, spikes, and 5 level stages.",
-    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neonascent",
+    bannerUrl: "/games/images/neon_ascent_banner.png",
+    iconUrl: "/games/images/neon_ascent_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/neon-ascent"
   },
   {
     id: "quantum_tactics",
-    title: "Quantum Tactics RPG",
+    title: "Magic Tactics RPG",
     developer: "Xakteir Studios",
     type: "Strategy",
     genre: ["RPG", "Turn-Based", "Tactical", "Strategy", "Grid"],
     description: "Grid-based tactical cyberpunk turn-based RPG. Position cyber samurai, manage Action Points (AP), cast elemental spells, and defeat enemy mechs.",
-    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumtactics",
+    bannerUrl: "/games/images/quantum_tactics_banner.png",
+    iconUrl: "/games/images/quantum_tactics_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/quantum-tactics"
   },
   {
@@ -98,10 +189,14 @@ const premiumGames: GameMeta[] = [
     type: "Puzzle",
     genre: ["Puzzle", "Logic", "Optics", "Laser", "Physics"],
     description: "Physics laser optics logic puzzle. Rotate precision 45-degree mirrors and beam splitters to power target cores across 5 stages.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=orbitalpuzzle",
+    bannerUrl: "/games/images/orbital_puzzle_banner.png",
+    iconUrl: "/games/images/orbital_puzzle_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/orbital-puzzle"
   },
   {
@@ -111,10 +206,15 @@ const premiumGames: GameMeta[] = [
     type: "Arcade",
     genre: ["3D", "Runner", "Racing", "Synthwave", "Arcade"],
     description: "3D perspective synthwave cyber highway runner. Switch lanes, leap over plasma barriers, trigger nitro overdrive, and upgrade vehicle tech.",
-    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=vectordash",
+    bannerUrl: "/games/images/vector_dash_banner.png",
+    iconUrl: "/games/images/vector_dash_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/vector-dash"
   },
   {
@@ -124,75 +224,102 @@ const premiumGames: GameMeta[] = [
     type: "Arcade",
     genre: ["2D Top-Down", "Shooter", "Space", "Sci-Fi", "Arcade"],
     description: "Sci-Fi vertical space arcade shooter. Pilot your starfighter through hostile armadas, unlock plasma cannons, and defeat motherships.",
-    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=starlightcommander",
+    bannerUrl: "/games/images/starlight_commander_banner.png",
+    iconUrl: "/games/images/starlight_commander_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/starlight-commander"
   },
   {
     id: "cyber_quest_platformer",
-    title: "Cyber Quest Platformer 2D",
+    title: "Super Quest Platformer 2D",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["2D", "Platformer", "Action", "Cyberpunk", "Level-Based"],
     description: "5-level precision 2D platformer with double jump, wall slide, key-door puzzles, spike hazards, and checkpoint flags.",
-    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberquestplatformer",
+    bannerUrl: "/games/images/cyber_quest_platformer_banner.png",
+    iconUrl: "/games/images/cyber_quest_platformer_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/cyber-quest-platformer"
   },
   {
     id: "cyber_dungeon_rpg",
-    title: "Cyber Dungeon RPG 2D",
+    title: "Super Dungeon RPG 2D",
     developer: "Xakteir Studios",
     type: "Discovery",
     genre: ["2D", "RPG", "Retro", "Turn-Based", "Cyberpunk", "Strategy"],
     description: "Turn-based retro 2D grid dungeon RPG with character stat leveling, plasma spell casting, nanite healing, merchant shop, and floor boss encounters.",
-    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberdungeonrpg",
+    bannerUrl: "/games/images/cyber_dungeon_rpg_banner.png",
+    iconUrl: "/games/images/cyber_dungeon_rpg_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/cyber-dungeon-rpg"
   },
   {
     id: "quantum_laser_puzzle",
-    title: "Quantum Laser Optics 2D",
+    title: "Magic Laser Optics 2D",
     developer: "Xakteir Studios",
     type: "Puzzle",
     genre: ["2D", "Puzzle", "Logic", "Optics", "Laser", "Brain"],
     description: "Raycasting optics laser logic puzzle. Rotate double-sided mirrors and beam splitters to illuminate target sensors across 10 levels.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumlaserpuzzle",
+    bannerUrl: "/games/images/quantum_laser_puzzle_banner.png",
+    iconUrl: "/games/images/quantum_laser_puzzle_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/quantum-laser-puzzle"
   },
   {
     id: "neon_core_defense",
-    title: "Neon Core Defense 2D",
+    title: "Colorful Core Defense 2D",
     developer: "Xakteir Studios",
     type: "Strategy",
     genre: ["2D", "Strategy", "Tower Defense", "Sci-Fi", "Tactical"],
     description: "Top-down tactical 2D tower defense. Deploy plasma cannons, EMP stunners, and heavy rockets to defend the reactor core from 10 enemy waves.",
-    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neoncoredefense",
+    bannerUrl: "/games/images/neon_core_defense_banner.png",
+    iconUrl: "/games/images/neon_core_defense_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/neon-core-defense"
   },
   {
     id: "cyber_drift_runner",
-    title: "Cyber Drift Runner 2D",
+    title: "Super Drift Runner 2D",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["2D", "Arcade", "Racing", "Drift", "Synthwave", "Time Trial"],
     description: "Top-down precision 2D synthwave drift racer. Master angular drift physics, set lap time records, and race through glowing neon circuits.",
-    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberdriftrunner",
+    bannerUrl: "/games/images/cyber_drift_runner_banner.png",
+    iconUrl: "/games/images/cyber_drift_runner_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/cyber-drift-runner"
   },
   {
@@ -202,10 +329,15 @@ const premiumGames: GameMeta[] = [
     type: "2D Platformer",
     genre: ["2D", "Platformer", "Action", "Cyberpunk", "Level-Based"],
     description: "8-level precision platformer with dash mechanics, wall sliding, laser hazards, particle trails, and procedural sound FX.",
-    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberleapodyssey",
+    bannerUrl: "/games/images/cyber_leap_odyssey_banner.png",
+    iconUrl: "/games/images/cyber_leap_odyssey_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/cyber-leap-odyssey"
   },
   {
@@ -215,36 +347,46 @@ const premiumGames: GameMeta[] = [
     type: "2D Top-Down",
     genre: ["RPG", "Dungeon Crawler", "Turn-Based", "Fantasy", "Retro"],
     description: "Turn-based retro dungeon crawler RPG. Choose Paladin, Archmage, or Assassin, cast elemental spells, and slay the Shadow Oni.",
-    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aetheriarealmofshadows",
+    bannerUrl: "/games/images/aetheria_realm_of_shadows_banner.png",
+    iconUrl: "/games/images/aetheria_realm_of_shadows_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/aetheria-realm-of-shadows"
   },
   {
     id: "aegis_protocol_td",
-    title: "Aegis Protocol TD",
+    title: "Aegis Adventure TD",
     developer: "Xakteir Studios",
     type: "Strategy",
     genre: ["Strategy", "Tower Defense", "Grid", "Cyberpunk", "Tactical"],
     description: "Tactical grid tower defense strategy. Build Gatling cannons, Frost beams, Plasma mortars, and Nuke launchers to defend against creep waves.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aegisprotocoltd",
+    bannerUrl: "/games/images/aegis_protocol_td_banner.png",
+    iconUrl: "/games/images/aegis_protocol_td_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/aegis-protocol-td"
   },
   {
     id: "quantum_prism_puzzle",
-    title: "Quantum Prism Puzzles",
+    title: "Magic Prism Puzzles",
     developer: "Xakteir Studios",
     type: "Puzzle",
     genre: ["Puzzle", "Logic", "Optics", "Physics", "Laser"],
     description: "Optics physics laser grid puzzles. Rotate mirrors and beam splitters to energize target cores across 8 levels.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumprismpuzzle",
+    bannerUrl: "/games/images/quantum_prism_puzzle_banner.png",
+    iconUrl: "/games/images/quantum_prism_puzzle_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/quantum-prism-puzzle"
   },
   {
@@ -254,50 +396,67 @@ const premiumGames: GameMeta[] = [
     type: "Arcade",
     genre: ["Arcade", "Rhythm", "Music", "Synthwave", "Neon"],
     description: "4-lane synthwave rhythm action game. Tap keys in perfect sync with electro synth beats across 3 original tracks.",
-    bannerUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=synthwavebeatrush",
+    bannerUrl: "/games/images/synthwave_beat_rush_banner.png",
+    iconUrl: "/games/images/synthwave_beat_rush_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/synthwave-beat-rush"
   },
 
   {
     id: "cyber_runner_platformer",
-    title: "Cyber Runner 2D",
+    title: "Super Runner 2D",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["2D", "Platformer", "Precision", "Level-Based", "Action"],
     description: "Precision 2D cyberpunk level platformer. Master double jumps, air dashes, keycards, laser vaults, and energy orb collection.",
-    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberrunnerplatformer",
+    bannerUrl: "/games/images/cyber_runner_platformer_banner.png",
+    iconUrl: "/games/images/cyber_runner_platformer_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/cyber-runner-platformer"
   },
   {
     id: "cyber_dungeon_rpg",
-    title: "Cyber Dungeon RPG",
+    title: "Super Dungeon RPG",
     developer: "Xakteir Studios",
     type: "Strategy",
     genre: ["2D", "RPG", "Dungeon Crawler", "Turn-Based", "Cyberpunk"],
     description: "Retro top-down grid cyberpunk RPG. Battle rogue mechs, collect credits, upgrade hero stats, and conquer sector floor bosses.",
-    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberdungeonrpg",
+    bannerUrl: "/games/images/cyber_dungeon_rpg_banner.png",
+    iconUrl: "/games/images/cyber_dungeon_rpg_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/cyber-dungeon-rpg"
   },
   {
     id: "quantum_grid_puzzle",
-    title: "Quantum Grid Puzzle",
+    title: "Magic Grid Puzzle",
     developer: "Xakteir Studios",
     type: "Puzzle",
     genre: ["2D", "Puzzle", "Logic", "Laser", "Brain Teaser"],
     description: "Laser refraction logic puzzle. Rotate quantum mirrors, beam splitters, and energy filters to power target receptors.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumgridpuzzle",
+    bannerUrl: "/games/images/quantum_grid_puzzle_banner.png",
+    iconUrl: "/games/images/quantum_grid_puzzle_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/quantum-grid-puzzle"
   },
   {
@@ -307,49 +466,64 @@ const premiumGames: GameMeta[] = [
     type: "Sports",
     genre: ["3D", "Racing", "Runner", "Synthwave", "Arcade"],
     description: "High-speed 3D perspective synthwave highway runner. Dodge barriers, collect energy rings, and trigger nitro overdrive.",
-    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=synthwavevelocityrunner",
+    bannerUrl: "/games/images/synthwave_velocity_runner_banner.png",
+    iconUrl: "/games/images/synthwave_velocity_runner_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/synthwave-velocity-runner"
   },
   {
     id: "cyber_pinball_odyssey",
-    title: "Cyber Pinball Odyssey",
+    title: "Super Pinball Odyssey",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["2D", "Arcade", "Physics", "Pinball", "Retro"],
     description: "Cyberpunk 2D physics pinball arcade. Trigger neon bumpers, flipper combos, quantum multipliers, and multiballs.",
-    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberpinballodyssey",
+    bannerUrl: "/games/images/cyber_pinball_odyssey_banner.png",
+    iconUrl: "/games/images/cyber_pinball_odyssey_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/cyber-pinball-odyssey"
   },
   {
     id: "aether_pulse_2d",
-    title: "Aether Pulse 2D",
+    title: "Cloud Pulse 2D",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["2D", "Platformer", "Puzzle", "Level-Based", "Gravity"],
     description: "Precision 2D level-based gravity puzzle explorer. Shift gravity directions to bypass energy grids and unlock 15 sector gates.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aetherpulse2d",
+    bannerUrl: "/games/images/aether_pulse_2d_banner.png",
+    iconUrl: "/games/images/aether_pulse_2d_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/aether-pulse"
   },
   {
     id: "sector_9_rpg",
-    title: "Sector 9 Cyber RPG",
+    title: "Sector 9 Super RPG",
     developer: "Xakteir Studios",
     type: "2D Top-Down",
     genre: ["2D", "RPG", "Cyberpunk", "Turn-Based", "Tactical"],
     description: "Tactical cyberpunk turn-based RPG. Command Kai, Vex, and Lyra, hack enemy defense nodes, and conquer sector dungeons.",
-    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=sector9rpg",
+    bannerUrl: "/games/images/sector_9_rpg_banner.png",
+    iconUrl: "/games/images/sector_9_rpg_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/sector-9-rpg"
   },
   {
@@ -359,127 +533,164 @@ const premiumGames: GameMeta[] = [
     type: "Arcade",
     genre: ["2D", "Racing", "Physics", "Stunt", "Arcade"],
     description: "2D physics hovercraft racing & stunt trials. Balance anti-gravity thrust, activate nitro boosts, and beat speed trial records.",
-    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=gravityracer2d",
+    bannerUrl: "/games/images/gravity_racer_2d_banner.png",
+    iconUrl: "/games/images/gravity_racer_2d_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/gravity-racer"
   },
   {
     id: "nexus_grid_defense_2d",
-    title: "Nexus Grid Defense",
+    title: "Robot Grid Defense",
     developer: "Xakteir Studios",
     type: "Strategy",
     genre: ["2D", "Strategy", "Tower Defense", "Tactical"],
     description: "Real-time tactical grid tower defense. Build plasma cannons, laser turrets, and defend the Nexus Core against corrupted AI node waves.",
-    bannerUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=nexusgriddefense2d",
+    bannerUrl: "/games/images/nexus_grid_defense_2d_banner.png",
+    iconUrl: "/games/images/nexus_grid_defense_2d_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/nexus-grid-defense"
   },
   {
     id: "stellar_strike_2d",
-    title: "Stellar Strike 2D",
+    title: "Stellar Tag 2D",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["2D", "Shooter", "Arcade", "Space", "Bullet-Hell"],
     description: "Vertical arcade bullet-hell space shooter. Blast enemy interceptors, collect plasma upgrades, and defeat Dreadnought Boss Armadas.",
-    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=stellarstrike2d",
+    bannerUrl: "/games/images/stellar_strike_2d_banner.png",
+    iconUrl: "/games/images/stellar_strike_2d_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/stellar-strike-2d"
   },
   {
     id: "shadow_blade_2d",
-    title: "Shadow Blade 2D",
+    title: "Star Wand 2D",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["Action", "Cyberpunk", "2D", "Ninja", "Hack and Slash", "Canvas"],
     description: "High-octane 2D cyberpunk shinobi action. Slice rogue ninjas, deflect plasma bolts, execute cyber dashes, and battle Shadow Oni bosses.",
-    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=shadowblade2d",
+    bannerUrl: "/games/images/shadow_blade_2d_banner.png",
+    iconUrl: "/games/images/shadow_blade_2d_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/shadow-blade"
   },
   {
     id: "cyber_nexus_survivor",
-    title: "Cyber Nexus Survivor 2D",
+    title: "Super Robot Survivor 2D",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Survivor", "Bullet Hell"],
     description: "Top-down 2D cyberpunk action survivor. Survive endless mech armadas, collect XP gems, unlock plasma katana perks, and defeat sector dreadnought bosses.",
-    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cybernexussurvivor",
+    bannerUrl: "/games/images/cyber_nexus_survivor_banner.png",
+    iconUrl: "/games/images/cyber_nexus_survivor_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/cyber-nexus-survivor"
   },
   {
     id: "neon_ronin",
-    title: "Neon Ronin 2099",
+    title: "Colorful Hero 2099",
     developer: "Xakteir Studios",
     type: "2D Platformer",
     genre: ["Action", "Cyberpunk", "2D", "Platformer", "Hack and Slash"],
     description: "Slice through rogue cyber ninjas, deflect incoming plasma bursts, execute double jumps, and unleash Cyber Blitz in 2D platforming action.",
-    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neonronin",
+    bannerUrl: "/games/images/neon_ronin_banner.png",
+    iconUrl: "/games/images/neon_ronin_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/neon-ronin"
   },
   {
     id: "aether_strike",
-    title: "Aether Strike 3D",
+    title: "Cloud Tag 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Sci-Fi", "3D", "Action", "Shooter", "Arcade"],
     description: "Pilot your apex starfighter through hostile cyber armadas. Master EMP shockwaves, homing missiles, upgrade ship systems, and conquer sector dreadnoughts.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aetherstrike",
+    bannerUrl: "/games/images/aether_strike_banner.png",
+    iconUrl: "/games/images/aether_strike_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/aether-strike"
   },
   {
     id: "stellar_overlord",
-    title: "Stellar Overlord 3D",
+    title: "Stellar King 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Sci-Fi", "3D", "Action", "Shooter", "Arcade"],
     description: "Pilot your apex cyber starfighter through hostile armadas in 3D. Master Warp Speed, EMP Shockwaves, upgrade ship subsystems, and conquer Sector Overlord Bosses.",
-    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=stellaroverlord",
+    bannerUrl: "/games/images/stellar_overlord_banner.png",
+    iconUrl: "/games/images/stellar_overlord_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/stellar-overlord"
   },
   {
     id: "chronos_protocol",
-    title: "Chronos Protocol 3D",
+    title: "Chronos Adventure 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Sci-Fi", "3D", "Action", "Shooter", "Bullet Time"],
     description: "Control temporal mechanics, manipulate bullet-time time dilation, trigger tachyon shockwaves, and defeat endless synthwave armadas in 3D.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=chronosprotocol",
+    bannerUrl: "/games/images/chronos_protocol_banner.png",
+    iconUrl: "/games/images/chronos_protocol_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/chronos-protocol"
   },
   {
     id: "nexus_overdrive",
-    title: "Nexus Overdrive 3D",
+    title: "Robot Playground 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Sci-Fi", "3D", "Action", "Shooter", "Space Fighter"],
     description: "Pilot your custom cyber starfighter through hostile armadas in 3D. Unleash homing missiles, activate hyper overdrive, upgrade weapons, and conquer the sector.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=nexusoverdrive",
+    bannerUrl: "/games/images/nexus_overdrive_banner.png",
+    iconUrl: "/games/images/nexus_overdrive_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/nexus-overdrive"
   },
   {
@@ -489,36 +700,48 @@ const premiumGames: GameMeta[] = [
     type: "Arcade",
     genre: ["Action", "Fighting", "Arcade", "2D"],
     description: "High-octane stickman brawler featuring intense wave survival, 1v1 AI duels, customizable cyber skins, procedural synthwave weapons, and explosive rage ultimate abilities.",
-    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=superstickbattles",
+    bannerUrl: "/games/images/super_stick_battles_banner.png",
+    iconUrl: "/games/images/super_stick_battles_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/super-stick-battles"
   },
   {
     id: "aero_phantom",
-    title: "Aero Phantom 3D",
+    title: "Aero Ghost 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Flight", "3D", "Action", "Dogfight", "Shooter"],
     description: "Pilot an apex supersonic jet fighter across futuristic synthwave canyons in 3D. Lock onto enemy stealth drones with heat-seeking missiles, fire plasma vulcan cannons, and deploy flare countermeasures.",
-    bannerUrl: "https://images.unsplash.com/photo-1517976487492-5750f3195933?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aerophantom",
+    bannerUrl: "/games/images/aero_phantom_banner.png",
+    iconUrl: "/games/images/aero_phantom_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/aero-phantom"
   },
   {
     id: "solar_tempest",
-    title: "Solar Tempest 3D",
+    title: "Solar Storm 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Sci-Fi", "3D", "Action", "Shooter", "Arcade"],
     description: "Command your apex starfighter across an erupting solar flare sector in 3D. Destroy mech drones, harvest energy matrix crystals, dodge asteroids, and unleash seeker missiles.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=solartempest",
+    bannerUrl: "/games/images/solar_tempest_banner.png",
+    iconUrl: "/games/images/solar_tempest_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/solar-tempest"
   },
   {
@@ -528,88 +751,115 @@ const premiumGames: GameMeta[] = [
     type: "3D",
     genre: ["Racing", "Sci-Fi", "3D", "Action", "Arcade"],
     description: "Pilot your synthwave apex starfighter across a 3D procedural neon horizon. Shoot rogue pylons, trigger hyper boosts, collect quantum credits, and conquer lightspeed.",
-    bannerUrl: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=hyperhorizon",
+    bannerUrl: "/games/images/hyper_horizon_banner.png",
+    iconUrl: "/games/images/hyper_horizon_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/hyper-horizon"
   },
   {
     id: "quantum_surge",
-    title: "Quantum Surge 3D",
+    title: "Magic Surge 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Action", "Sci-Fi", "3D", "Arcade"],
     description: "Blast through infinite synthwave highways in 3D. Dodge quantum barriers, trigger hyper boosts, collect shields, and set new high scores.",
-    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumsurge",
+    bannerUrl: "/games/images/quantum_surge_banner.png",
+    iconUrl: "/games/images/quantum_surge_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/quantum-surge"
   },
   {
     id: "quantum_vanguard",
-    title: "Quantum Vanguard 2099",
+    title: "Magic Guardians 2099",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["Action", "Sci-Fi", "Shooter", "Arcade"],
     description: "Pilot your apex starfighter against infinite synthwave armadas. Master time dilation, EMP blasts, procedural Web Audio SFX, and quantum arsenal upgrades.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumvanguard",
+    bannerUrl: "/games/images/quantum_vanguard_banner.png",
+    iconUrl: "/games/images/quantum_vanguard_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/quantum-vanguard"
   },
   {
     id: "void_vanguard",
-    title: "Void Vanguard 3D",
+    title: "Space Guardians 3D",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Sci-Fi", "3D", "Action", "Shooter", "Space Fighter"],
     description: "Apex sci-fi starfighter battle simulator. Unleash EMP shockwaves, homing missile swarms, quantum beams, upgrade ship subsystems, and conquer dreadnought bosses.",
-    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=voidvanguard",
+    bannerUrl: "/games/images/void_vanguard_banner.png",
+    iconUrl: "/games/images/void_vanguard_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/void-vanguard"
   },
   {
     id: "cyber_pulse",
-    title: "Cyber Pulse 2099",
+    title: "Super Pulse 2099",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["Action", "Sci-Fi", "Shooter", "Arcade"],
     description: "Pilot your high-tech starfighter against endless swarms of rogue mechs. Upgrade weapons, unleash EMP blasts, and dominate the galaxy.",
-    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberpulse",
+    bannerUrl: "/games/images/cyber_pulse_banner.png",
+    iconUrl: "/games/images/cyber_pulse_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/games/cyber-pulse"
   },
   {
     id: "neon_velocity",
-    title: "Neon Velocity 2099",
+    title: "Colorful Velocity 2099",
     developer: "Xakteir Studios",
     type: "3D",
     genre: ["Racing", "Sci-Fi", "Action", "Arcade"],
     description: "Blast through neon synthwave highways at breakneck speeds. Dodge obstacles, fire plasma cannons, collect credits, and upgrade your vehicle.",
-    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neonvelocity",
+    bannerUrl: "/games/images/neon_velocity_banner.png",
+    iconUrl: "/games/images/neon_velocity_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/game/neon-velocity"
   },
   {
     id: "code_arena",
-    title: "Code Arena",
+    title: "Code Park",
     developer: "Xakteir Studios",
     type: "Arcade",
     genre: ["Coding", "Multiplayer", "Competitive"],
     description: "Race against other developers to solve algorithmic challenges in real-time. The first to pass all test cases wins the battle.",
-    bannerUrl: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=codearena",
+    bannerUrl: "/games/images/code_arena_banner.png",
+    iconUrl: "/games/images/code_arena_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/games/code-arena"
   },
   {
@@ -619,10 +869,14 @@ const premiumGames: GameMeta[] = [
     type: "3D",
     genre: ["Sports", "Multiplayer", "Physics"],
     description: "The ultimate 3D local and online multiplayer sports arena. Play 1v1 splitscreen or 4-player chaos.",
-    bannerUrl: "https://images.unsplash.com/photo-1518605368461-1e1e11407e3c?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=xaksports",
+    bannerUrl: "/games/images/xaksports_banner.png",
+    iconUrl: "/games/images/xaksports_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/xaksports"
   },
   {
@@ -632,10 +886,14 @@ const premiumGames: GameMeta[] = [
     type: "3D",
     genre: ["Shooter", "Action", "FPS"],
     description: "Fast-paced 3D arena shooter powered by WebGL. Lock and load.",
-    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=xakarena",
+    bannerUrl: "/games/images/xakarena_banner.png",
+    iconUrl: "/games/images/xakarena_icon.png",
     releaseDate: "Coming Soon",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/xakarena"
   },
   {
@@ -645,23 +903,30 @@ const premiumGames: GameMeta[] = [
     type: "Retro Emulator",
     genre: ["Emulator", "Classic"],
     description: "Play your favorite classic console ROMs directly in the browser using WebAssembly. Drag, drop, and play.",
-    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=retro",
+    bannerUrl: "/games/images/retro_engine_banner.png",
+    iconUrl: "/games/images/retro_engine_icon.png",
     releaseDate: "Beta",
     price: "Free",
+    updates: [
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/games/retro"
   },
   {
     id: "neon_drift",
-    title: "Neon Drift",
+    title: "Colorful Drift",
     developer: "Xakteir Studios",
     type: "2D Top-Down",
     genre: ["Racing", "Arcade"],
     description: "Top-down cyber-racing with intense drift mechanics.",
-    bannerUrl: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neondrift",
+    bannerUrl: "/games/images/neon_drift_banner.png",
+    iconUrl: "/games/images/neon_drift_icon.png",
     releaseDate: "2026",
     price: "$4.99",
+    updates: [
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/games/play/neon_drift"
   },
   {
@@ -671,10 +936,15 @@ const premiumGames: GameMeta[] = [
     type: "2D Platformer",
     genre: ["Adventure", "Platformer"],
     description: "A classic 2D platforming adventure through dangerous dungeons.",
-    bannerUrl: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&w=1200&q=80",
-    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=pixelknight",
+    bannerUrl: "/games/images/pixel_knight_banner.png",
+    iconUrl: "/games/images/pixel_knight_icon.png",
     releaseDate: "2026",
     price: "Free",
+    updates: [
+      { time: "19:29", description: "Added new characters and outfits" },
+      { time: "14:20", description: "Added more fun levels!" },
+      { time: "12:50", description: "Initial Update" }
+    ],
     route: "/games/play/pixel_knight"
   }
 ];
