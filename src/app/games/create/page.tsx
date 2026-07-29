@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Play, ShoppingBag, Sparkles, UploadCloud, FolderUp, CheckCircle, FileArchive, Code, Link2 } from "lucide-react";
 import { useFirestore, useFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { upload } from "@vercel/blob/client";
 import JSZip from "jszip";
 
 type Step = "UPLOAD" | "PROCESSING" | "DETAILS" | "SUCCESS";
@@ -56,7 +56,7 @@ export default function GamesCreatePage() {
   };
 
   const processFiles = async (files: FileList) => {
-    if (!storage || !firestore || !user) {
+    if (!firestore || !user) {
       alert("Please sign in to publish games.");
       return;
     }
@@ -117,15 +117,19 @@ export default function GamesCreatePage() {
       let indexUrl = "";
       
       for (const item of filesToUpload) {
-        // Create a storage ref. Structure: user-games/{uid}/{gameId}/{path}
-        const fileRef = ref(storage, `user-games/${user.uid}/${gameId}/${item.path}`);
-        await uploadBytes(fileRef, item.file);
+        // Vercel Blob structure: user-games/{uid}/{gameId}/{path}
+        const blobPath = `user-games/${user.uid}/${gameId}/${item.path}`;
+        
+        const newBlob = await upload(blobPath, item.file, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+        });
         
         uploadedCount++;
         setProcessingProgress(40 + Math.floor((uploadedCount / filesToUpload.length) * 50));
         
         if (item.path.endsWith('index.html')) {
-          indexUrl = await getDownloadURL(fileRef);
+          indexUrl = newBlob.url;
         }
       }
       
