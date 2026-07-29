@@ -15,6 +15,22 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "apex_valkyrie_overdrive",
+    title: "Apex Valkyrie Overdrive",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Survival", "Bullet Hell"],
+    description: "High-octane cybernetic space shooter. Command your Apex Valkyrie interceptor, unleash EMP shockwaves, activate tachyon time shifts, upgrade plasma cannons, and destroy alien dreadnought armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=apexvalkyrieoverdrive",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "19:04", description: "Initial Game Launch" }
+    ],
+    route: "/game/apex-valkyrie-overdrive"
+  },
+  {
     id: "astral_pulse_overdrive",
     title: "Astral Pulse Overdrive",
     developer: "Xakteir Studios",
