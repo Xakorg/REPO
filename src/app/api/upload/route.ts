@@ -6,6 +6,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   try {
     const jsonResponse = await handleUpload({
+      token: process.env.XktrBlb_READ_WRITE_TOKEN,
       body,
       request,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
