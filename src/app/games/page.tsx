@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { GAMES_DB, GameMeta } from "@/lib/games-db";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, ShoppingBag, Settings, Sparkles, Gamepad2, Trophy, Sun, Moon, Search, Heart } from "lucide-react";
@@ -219,24 +218,24 @@ export default function PlayStationGamesLibrary() {
         </div>
         
         <div className="flex items-center gap-2 md:gap-3 ml-auto md:ml-0 mr-2 md:mr-4">
-          <Link 
-            href="/games"
+          <button 
+            onClick={() => router.push('/games')}
             className="hidden md:flex px-4 py-2 bg-white/20 rounded-full border border-white/20 text-xs font-black uppercase tracking-widest backdrop-blur-md transition-colors items-center gap-2"
           >
             <Play className="w-4 h-4" /> Play
-          </Link>
-          <Link 
-            href="/games/store"
+          </button>
+          <button 
+            onClick={() => router.push('/games/store')}
             className="hidden md:flex px-4 py-2 bg-white/5 hover:bg-white/20 rounded-full border border-white/10 text-xs font-black uppercase tracking-widest backdrop-blur-md transition-colors items-center gap-2 text-white/70 hover:text-white"
           >
             <ShoppingBag className="w-4 h-4" /> Store
-          </Link>
-          <Link 
-            href="/games/create"
+          </button>
+          <button 
+            onClick={() => router.push('/games/create')}
             className="hidden md:flex px-4 py-2 bg-white/5 hover:bg-white/20 rounded-full border border-white/10 text-xs font-black uppercase tracking-widest backdrop-blur-md transition-colors items-center gap-2 text-white/70 hover:text-white"
           >
             <Sparkles className="w-4 h-4 text-amber-400" /> Create
-          </Link>
+          </button>
         </div>
         
         <div className="flex items-center gap-3 md:gap-4">

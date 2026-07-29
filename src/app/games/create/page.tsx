@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Play, ShoppingBag, Sparkles, UploadCloud, FolderUp, CheckCircle, FileArchive, Code, Link2 } from "lucide-react";
 import { useFirestore, useFirebase } from "@/firebase";
@@ -181,30 +180,30 @@ export default function GamesCreatePage() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-10 py-6 bg-gradient-to-b from-black/90 to-transparent backdrop-blur-md">
         <div className="flex items-center gap-6">
-          <Link 
-            href="/games"
+          <button 
+            onClick={() => router.push('/games')}
             className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-          </Link>
+          </button>
           <h1 className="text-2xl font-black tracking-tighter italic flex items-center gap-2">
             XAKTEIR<span className="text-amber-500">STUDIO</span>
           </h1>
         </div>
         
         <div className="flex items-center gap-2 md:gap-3">
-          <Link 
-            href="/games"
+          <button 
+            onClick={() => router.push('/games')}
             className="hidden md:flex px-4 py-2 bg-white/5 hover:bg-white/20 rounded-full border border-white/10 text-xs font-black uppercase tracking-widest backdrop-blur-md transition-colors items-center gap-2 text-white/70 hover:text-white"
           >
             <Play className="w-4 h-4" /> Play
-          </Link>
-          <Link 
-            href="/games/store"
+          </button>
+          <button 
+            onClick={() => router.push('/games/store')}
             className="hidden md:flex px-4 py-2 bg-white/5 hover:bg-white/20 rounded-full border border-white/10 text-xs font-black uppercase tracking-widest backdrop-blur-md transition-colors items-center gap-2 text-white/70 hover:text-white"
           >
             <ShoppingBag className="w-4 h-4" /> Store
-          </Link>
+          </button>
           <button 
             className="hidden md:flex px-4 py-2 bg-white/20 rounded-full border border-white/20 text-xs font-black uppercase tracking-widest backdrop-blur-md transition-colors items-center gap-2"
           >
