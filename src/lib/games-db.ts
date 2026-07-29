@@ -15,6 +15,22 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "astral_pulse_overdrive",
+    title: "Astral Pulse Overdrive",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Survival", "Bullet Hell"],
+    description: "High-octane space survival arcade shooter. Command your Astral Vanguard, unleash devastating EMP shockwaves, deploy orbital defense drones, and conquer rogue cosmic armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=astralpulseoverdrive",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "18:04", description: "Initial Game Launch" }
+    ],
+    route: "/game/astral-pulse-overdrive"
+  },
+  {
     id: "nebula_nexus_overdrive",
     title: "Nebula Nexus Overdrive",
     developer: "Xakteir Studios",
