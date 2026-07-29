@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
  
 const GAME_MAP: Record<string, React.ComponentType<any>> = {
+  chrono_vanguard_paradox_shift: dynamic(() => import("@/components/game/chrono-vanguard-paradox-shift")),
+  chronoVanguardParadoxShift: dynamic(() => import("@/components/game/chrono-vanguard-paradox-shift")),
   cyber_vortex_odyssey: dynamic(() => import("@/components/game/cyber-vortex-odyssey")),
   cyberVortexOdyssey:  dynamic(() => import("@/components/game/cyber-vortex-odyssey")),
   solar_tempest: dynamic(() => import("@/components/game/solar-tempest")),
@@ -241,7 +243,7 @@ export default function GamePlayerPage() {
   };
  
   return (
-    <div className="w-full h-screen bg-black overflow-hidden relative font-sans text-white">
+    <div className="w-full h-full bg-black overflow-hidden relative font-sans text-white">
       {loading && (
         <div className="absolute inset-0 z-50 bg-zinc-900 flex flex-col items-center justify-center">
           <div className="w-20 h-20 rounded-2xl bg-black border border-white/10 mb-8 overflow-hidden">
@@ -253,20 +255,13 @@ export default function GamePlayerPage() {
         </div>
       )}
  
-      <div className="absolute top-0 left-0 right-0 p-4 flex justify-between z-10 bg-gradient-to-b from-black/80 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300">
-        <button onClick={() => router.push('/games')} className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full font-bold hover:bg-white hover:text-black transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Exit
-        </button>
-        <h1 className="text-xl font-black italic tracking-widest uppercase">{game.title}</h1>
-      </div>
- 
       <div className="w-full h-full">
         {!loading && GameComponent && <GameComponent />}
       </div>
  
       {/* Mobile Virtual Gamepad */}
       {!loading && (
-        <div className="md:hidden fixed inset-x-0 bottom-0 p-6 flex justify-between items-end pointer-events-none z-30 select-none">
+        <div className="md:hidden absolute inset-x-0 bottom-0 p-6 flex justify-between items-end pointer-events-none z-30 select-none">
           {/* D-Pad on Left */}
           <div className="relative w-36 h-36 flex items-center justify-center pointer-events-auto bg-black/40 backdrop-blur-md rounded-full border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
             <button

@@ -3,7 +3,7 @@ export interface GameMeta {
   id: string;
   title: string;
   developer: string;
-  type: "3D" | "2D Top-Down" | "2D Platformer" | "Retro Emulator" | "Arcade" | "Sports" | "Puzzle" | "Strategy" | "Discovery";
+  type: "3D" | "2.5D" | "2D Top-Down" | "2D Platformer" | "Retro Emulator" | "Arcade" | "Sports" | "Puzzle" | "Strategy" | "Discovery";
   genre: string[];
   description: string;
   bannerUrl: string;
@@ -14,6 +14,22 @@ export interface GameMeta {
 }
 
 const premiumGames: GameMeta[] = [
+  {
+    id: "chrono_vanguard_paradox_shift",
+    title: "Chrono Vanguard: Paradox Shift",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Survival"],
+    description: "Pilot your apex Tachyon Vanguard starfighter in a high-octane 2D arena survival shooter. Deploy time-dilation fields, tactical dashes, plasma cannons, and conquer rogue temporal paradox armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=chronovanguard",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "16:05", description: "Initial Game Release" }
+    ],
+    route: "/game/chrono-vanguard-paradox-shift"
+  },
   {
     id: "cyber_vortex_odyssey",
     title: "Cyber Vortex Odyssey",
