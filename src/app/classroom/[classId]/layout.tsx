@@ -116,16 +116,16 @@ export default function ClassroomLayout({
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
           return (
-            <Link
+            <button
               key={tab.href}
-              href={tab.href}
+              onClick={() => router.push(tab.href)}
               className={cn(
-                "rounded-xl px-6 h-full flex items-center justify-center font-black uppercase text-[9px] tracking-widest transition-all",
+                "rounded-xl px-6 h-full font-black uppercase text-[9px] tracking-widest transition-all",
                 isActive ? "bg-primary text-white shadow-md" : "text-muted-foreground hover:bg-white/5 hover:text-white"
               )}
             >
               {tab.name}
-            </Link>
+            </button>
           );
         })}
       </div>

@@ -1432,8 +1432,8 @@ export default function MeetingRoomPage() {
             </Button>
           </div>
           
-          <Button variant="ghost" asChild className="text-xs font-black uppercase tracking-widest opacity-40 hover:opacity-100 text-white">
-            <Link href="/meet">Cancel</Link>
+          <Button variant="ghost" onClick={() => router.push("/meet")} className="text-xs font-black uppercase tracking-widest opacity-40 hover:opacity-100 text-white">
+            Cancel
           </Button>
         </Card>
       </div>
