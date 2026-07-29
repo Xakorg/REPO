@@ -14,6 +14,19 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "nexus_arena_online",
+    title: "Nexus Arena: Cyber Strike Online",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["2D Top-Down", "Action", "Cyberpunk", "Multiplayer", "Online", "PvP"],
+    description: "High-octane cyberpunk arena combat featuring 1P Arcade vs AI, Local 2-Player Versus, and Real-time Online Room Matchmaking with P2P sync and live chat.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=nexusarenaonline",
+    releaseDate: "2026",
+    price: "Free",
+    route: "/game/nexus-arena-online"
+  },
+  {
     id: "aether_mech_overdrive",
     title: "Aether Mech: Overdrive",
     developer: "Xakteir Studios",
