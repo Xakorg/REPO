@@ -958,6 +958,22 @@ const premiumGames: GameMeta[] = [
     route: "/games/retro"
   },
   {
+    id: "titan_mech_survival",
+    title: "Titan Mech Survival",
+    developer: "Xakteir Studios",
+    type: "2.5D",
+    genre: ["Action", "Sci-Fi", "Shooter", "Survival", "Roguelike"],
+    description: "Pilot apex combat titan mechs against endless rogue cyber armadas. Upgrade weapon systems, harvest energy crystals, harness quantum EMP blasts, and survive hostile sector waves.",
+    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=titanmechsurvival",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "15:00", description: "Initial Titan Mech Survival Launch" }
+    ],
+    route: "/game/titan-mech-survival"
+  },
+  {
     id: "neon_drift",
     title: "Neon Drift",
     developer: "Xakteir Studios",
@@ -1002,79 +1018,79 @@ const legacyGamesData = [
   {
     id: "basketball", name: 'Basketball Shoot', type: 'Sports' },
   {
-    id: "breaker", name: 'Brick Breaker', type: 'Arcade' },
+    id: "breaker", name: 'Neon Breaker', type: 'Arcade' },
   {
-    id: "bubble", name: 'Bubble Shooter', type: 'Puzzle' },
+    id: "bubble", name: 'Plasma Burst', type: 'Puzzle' },
   {
     id: "clickSpeed", name: 'Click Speed', type: 'Arcade' },
   {
-    id: "clicker", name: 'Idle Clicker', type: 'Strategy' },
+    id: "clicker", name: 'Idle Core', type: 'Strategy' },
   {
     id: "colorMatch", name: 'Color Match', type: 'Puzzle' },
   {
-    id: "connectFour", name: 'Connect Four', type: 'Strategy' },
+    id: "connectFour", name: 'Grid Connect', type: 'Strategy' },
   {
-    id: "dodge", name: 'Dodge Objects', type: 'Arcade' },
+    id: "dodge", name: 'Neon Dodge', type: 'Arcade' },
   {
-    id: "drawing", name: 'Drawing Canvas', type: 'Discovery' },
+    id: "drawing", name: 'Pixel Canvas', type: 'Discovery' },
   {
-    id: "fishing", name: 'Fishing Game', type: 'Arcade' },
+    id: "fishing", name: 'Deep Sea Fisher', type: 'Arcade' },
   {
-    id: "flappy", name: 'Flappy Bird', type: 'Arcade' },
+    id: "flappy", name: 'Aero Dash', type: 'Arcade' },
   {
     id: "football3D", name: 'Football 3D', type: '3D' },
   {
-    id: "frogger", name: 'Frogger Cross', type: 'Arcade' },
+    id: "frogger", name: 'Neon Cross', type: 'Arcade' },
   {
-    id: "golf", name: 'Mini Golf', type: 'Sports' },
+    id: "golf", name: 'Cyber Golf', type: 'Sports' },
   {
     id: "gravity", name: 'Gravity Flip', type: 'Arcade' },
   {
-    id: "invaders", name: 'Space Invaders', type: 'Arcade' },
+    id: "invaders", name: 'Star Invaders', type: 'Arcade' },
   {
     id: "jump", name: 'Infinite Jump', type: 'Arcade' },
   {
     id: "knife", name: 'Knife Hit', type: 'Arcade' },
   {
-    id: "match3", name: 'Match 3', type: 'Puzzle' },
+    id: "match3", name: 'Cyber Match', type: 'Puzzle' },
   {
-    id: "math", name: 'Math Quiz', type: 'Puzzle' },
+    id: "math", name: 'Neural Quiz', type: 'Puzzle' },
   {
     id: "maze", name: 'Maze Solver', type: 'Puzzle' },
   {
-    id: "memory", name: 'Memory Cards', type: 'Puzzle' },
+    id: "memory", name: 'Neural Memory', type: 'Puzzle' },
   {
     id: "minesweeper", name: 'Minesweeper', type: 'Strategy' },
   {
-    id: "paint", name: 'Paint & Draw', type: 'Discovery' },
+    id: "paint", name: 'Neon Canvas', type: 'Discovery' },
   {
-    id: "parking", name: 'Car Parking', type: 'Puzzle' },
+    id: "parking", name: 'Hover Parking', type: 'Puzzle' },
   {
-    id: "pinball", name: 'Pinball Classic', type: 'Arcade' },
+    id: "pinball", name: 'Neon Pinball', type: 'Arcade' },
   {
     id: "plinko", name: 'Plinko Drop', type: 'Arcade' },
   {
-    id: "pong", name: 'Classic Pong', type: 'Arcade' },
+    id: "pong", name: 'Neon Pong', type: 'Arcade' },
   {
-    id: "rps", name: 'Rock Paper Scissors', type: 'Strategy' },
+    id: "rps", name: 'Cyber RPS', type: 'Strategy' },
   {
-    id: "reaction", name: 'Reaction Time', type: 'Arcade' },
+    id: "reaction", name: 'Neural Reaction', type: 'Arcade' },
   {
-    id: "sequence", name: 'Memory Sequence', type: 'Puzzle' },
+    id: "sequence", name: 'Neural Sequence', type: 'Puzzle' },
   {
     id: "snake", name: 'Snake Game', type: 'Arcade' },
   {
-    id: "spinWheel", name: 'Spin The Wheel', type: 'Discovery' },
+    id: "spinWheel", name: 'Roulette Rush', type: 'Discovery' },
   {
-    id: "stack", name: 'Tower Stacker', type: 'Arcade' },
+    id: "stack", name: 'Sky Stacker', type: 'Arcade' },
   {
-    id: "sudoku", name: 'Sudoku Classic', type: 'Puzzle' },
+    id: "sudoku", name: 'Grid Sudoku', type: 'Puzzle' },
   {
-    id: "tictactoe", name: 'Tic Tac Toe', type: 'Strategy' },
+    id: "tictactoe", name: 'Grid Tactics', type: 'Strategy' },
   {
     id: "towerDefense", name: 'Tower Defense', type: 'Strategy' },
   {
-    id: "trivia", name: 'Trivia Quiz', type: 'Discovery' },
+    id: "trivia", name: 'Data Quiz', type: 'Discovery' },
   {
     id: "tunnel3D", name: 'Tunnel 3D', type: '3D' },
   {
@@ -1082,17 +1098,17 @@ const legacyGamesData = [
   {
     id: "typing", name: 'Typing Test', type: 'Discovery' },
   {
-    id: "whack", name: 'Whack-a-Mole', type: 'Arcade' },
+    id: "whack", name: 'Whack-A-Bot', type: 'Arcade' },
   {
-    id: "word", name: 'Word Search', type: 'Puzzle' },
+    id: "word", name: 'Data Search', type: 'Puzzle' },
   {
     id: "xbr", name: 'XBR Arena', type: '3D' },
   {
     id: "blockDrop", name: 'Block Drop', type: 'Arcade' },
   {
-    id: "mazeMuncher", name: 'Maze Muncher', type: 'Arcade' },
+    id: "mazeMuncher", name: 'Maze Runner', type: 'Arcade' },
   {
-    id: "wordGuess", name: 'Word Guess', type: 'Puzzle' },
+    id: "wordGuess", name: 'Cipher Guess', type: 'Puzzle' },
   {
     id: "spaceRocks", name: 'Space Rocks', type: 'Arcade' },
   {
@@ -1134,11 +1150,11 @@ const legacyGamesData = [
   {
     id: "balanceBoard", name: 'Balance Board', type: 'Action' },
   {
-    id: "brickBreaker", name: 'Brick Breaker', type: 'Arcade' },
+    id: "brickBreaker", name: 'Neon Breaker', type: 'Arcade' },
   {
-    id: "bubbleShooter", name: 'Bubble Shooter', type: 'Strategy' },
+    id: "bubbleShooter", name: 'Plasma Burst', type: 'Strategy' },
   {
-    id: "carParking", name: 'Car Parking', type: 'Puzzle' },
+    id: "carParking", name: 'Hover Parking', type: 'Puzzle' },
   {
     id: "chronoClash", name: 'Chrono Clash', type: 'Sports' },
   {
@@ -1202,9 +1218,9 @@ const legacyGamesData = [
   {
     id: "cyberSpin3", name: 'Cyber Spin3', type: 'Action' },
   {
-    id: "dodgeObjects", name: 'Dodge Objects', type: 'Arcade' },
+    id: "dodgeObjects", name: 'Neon Dodge', type: 'Arcade' },
   {
-    id: "drawingCanvas", name: 'Drawing Canvas', type: 'Sports' },
+    id: "drawingCanvas", name: 'Pixel Canvas', type: 'Sports' },
   {
     id: "electroDash", name: 'Electro Dash', type: 'Sports' },
   {
@@ -1232,9 +1248,9 @@ const legacyGamesData = [
   {
     id: "finalBoss", name: 'Final Boss', type: 'Action' },
   {
-    id: "fishingGame", name: 'Fishing Game', type: 'Arcade' },
+    id: "fishingGame", name: 'Deep Sea Fisher', type: 'Arcade' },
   {
-    id: "flappyBird", name: 'Flappy Bird', type: 'Action' },
+    id: "flappyBird", name: 'Aero Dash', type: 'Action' },
   {
     id: "galaxyBlaster", name: 'Galaxy Blaster', type: 'Arcade' },
   {
@@ -1256,7 +1272,7 @@ const legacyGamesData = [
   {
     id: "hyperRacer", name: 'Hyper Racer', type: 'Strategy' },
   {
-    id: "idleClicker", name: 'Idle Clicker', type: 'Puzzle' },
+    id: "idleClicker", name: 'Idle Core', type: 'Puzzle' },
   {
     id: "infiniteJump", name: 'Infinite Jump', type: 'Strategy' },
   {
@@ -1304,7 +1320,7 @@ const legacyGamesData = [
   {
     id: "masterArcade", name: 'Master Arcade', type: 'Arcade' },
   {
-    id: "mathQuiz", name: 'Math Quiz', type: 'Strategy' },
+    id: "mathQuiz", name: 'Neural Quiz', type: 'Strategy' },
   {
     id: "mazeSolver", name: 'Maze Solver', type: 'Strategy' },
   {
@@ -1322,11 +1338,11 @@ const legacyGamesData = [
   {
     id: "megaSurfer", name: 'Mega Surfer', type: 'Strategy' },
   {
-    id: "memoryCards", name: 'Memory Cards', type: 'Arcade' },
+    id: "memoryCards", name: 'Neural Memory', type: 'Arcade' },
   {
-    id: "memorySequence", name: 'Memory Sequence', type: 'Action' },
+    id: "memorySequence", name: 'Neural Sequence', type: 'Action' },
   {
-    id: "miniGolf", name: 'Mini Golf', type: 'Sports' },
+    id: "miniGolf", name: 'Cyber Golf', type: 'Sports' },
   {
     id: "mysticRunner", name: 'Mystic Runner', type: 'Strategy' },
   {
@@ -1398,7 +1414,7 @@ const legacyGamesData = [
   {
     id: "quantumStrike", name: 'Quantum Strike', type: 'Action' },
   {
-    id: "reactionTime", name: 'Reaction Time', type: 'Action' },
+    id: "reactionTime", name: 'Neural Reaction', type: 'Action' },
   {
     id: "retroBlaster", name: 'Retro Blaster', type: 'Sports' },
   {
@@ -1414,7 +1430,7 @@ const legacyGamesData = [
   {
     id: "retroRacer", name: 'Retro Racer', type: 'Puzzle' },
   {
-    id: "rockPaperScissors", name: 'Rock Paper Scissors', type: 'Action' },
+    id: "rockPaperScissors", name: 'Cyber RPS', type: 'Action' },
   {
     id: "shadowBlaster", name: 'Shadow Blaster', type: 'Sports' },
   {
@@ -1452,7 +1468,7 @@ const legacyGamesData = [
   {
     id: "sonicKnight2", name: 'Sonic Knight2', type: 'Action' },
   {
-    id: "spaceInvaders", name: 'Space Invaders', type: 'Action' },
+    id: "spaceInvaders", name: 'Star Invaders', type: 'Action' },
   {
     id: "steelBounce", name: 'Steel Bounce', type: 'Puzzle' },
   {
@@ -1486,11 +1502,11 @@ const legacyGamesData = [
   {
     id: "terraQuest2", name: 'Terra Quest2', type: 'Action' },
   {
-    id: "ticTacToe", name: 'Tic Tac Toe', type: 'Arcade' },
+    id: "ticTacToe", name: 'Grid Tactics', type: 'Arcade' },
   {
-    id: "towerStacker", name: 'Tower Stacker', type: 'Puzzle' },
+    id: "towerStacker", name: 'Sky Stacker', type: 'Puzzle' },
   {
-    id: "triviaQuiz", name: 'Trivia Quiz', type: 'Sports' },
+    id: "triviaQuiz", name: 'Data Quiz', type: 'Sports' },
   {
     id: "turboForce", name: 'Turbo Force', type: 'Sports' },
   {
@@ -1524,11 +1540,11 @@ const legacyGamesData = [
   {
     id: "balanceBoard", name: 'Balance Board', type: 'Action' },
   {
-    id: "brickBreaker", name: 'Brick Breaker', type: 'Arcade' },
+    id: "brickBreaker", name: 'Neon Breaker', type: 'Arcade' },
   {
-    id: "bubbleShooter", name: 'Bubble Shooter', type: 'Strategy' },
+    id: "bubbleShooter", name: 'Plasma Burst', type: 'Strategy' },
   {
-    id: "carParking", name: 'Car Parking', type: 'Puzzle' },
+    id: "carParking", name: 'Hover Parking', type: 'Puzzle' },
   {
     id: "chronoClash", name: 'Chrono Clash', type: 'Sports' },
   {
@@ -1592,9 +1608,9 @@ const legacyGamesData = [
   {
     id: "cyberSpin3", name: 'Cyber Spin3', type: 'Action' },
   {
-    id: "dodgeObjects", name: 'Dodge Objects', type: 'Arcade' },
+    id: "dodgeObjects", name: 'Neon Dodge', type: 'Arcade' },
   {
-    id: "drawingCanvas", name: 'Drawing Canvas', type: 'Sports' },
+    id: "drawingCanvas", name: 'Pixel Canvas', type: 'Sports' },
   {
     id: "electroDash", name: 'Electro Dash', type: 'Sports' },
   {
@@ -1622,9 +1638,9 @@ const legacyGamesData = [
   {
     id: "finalBoss", name: 'Final Boss', type: 'Action' },
   {
-    id: "fishingGame", name: 'Fishing Game', type: 'Arcade' },
+    id: "fishingGame", name: 'Deep Sea Fisher', type: 'Arcade' },
   {
-    id: "flappyBird", name: 'Flappy Bird', type: 'Action' },
+    id: "flappyBird", name: 'Aero Dash', type: 'Action' },
   {
     id: "galaxyBlaster", name: 'Galaxy Blaster', type: 'Arcade' },
   {
@@ -1646,7 +1662,7 @@ const legacyGamesData = [
   {
     id: "hyperRacer", name: 'Hyper Racer', type: 'Strategy' },
   {
-    id: "idleClicker", name: 'Idle Clicker', type: 'Puzzle' },
+    id: "idleClicker", name: 'Idle Core', type: 'Puzzle' },
   {
     id: "infiniteJump", name: 'Infinite Jump', type: 'Strategy' },
   {
@@ -1694,7 +1710,7 @@ const legacyGamesData = [
   {
     id: "masterArcade", name: 'Master Arcade', type: 'Arcade' },
   {
-    id: "mathQuiz", name: 'Math Quiz', type: 'Strategy' },
+    id: "mathQuiz", name: 'Neural Quiz', type: 'Strategy' },
   {
     id: "mazeSolver", name: 'Maze Solver', type: 'Strategy' },
   {
@@ -1712,11 +1728,11 @@ const legacyGamesData = [
   {
     id: "megaSurfer", name: 'Mega Surfer', type: 'Strategy' },
   {
-    id: "memoryCards", name: 'Memory Cards', type: 'Arcade' },
+    id: "memoryCards", name: 'Neural Memory', type: 'Arcade' },
   {
-    id: "memorySequence", name: 'Memory Sequence', type: 'Action' },
+    id: "memorySequence", name: 'Neural Sequence', type: 'Action' },
   {
-    id: "miniGolf", name: 'Mini Golf', type: 'Sports' },
+    id: "miniGolf", name: 'Cyber Golf', type: 'Sports' },
   {
     id: "mysticRunner", name: 'Mystic Runner', type: 'Strategy' },
   {
@@ -1788,7 +1804,7 @@ const legacyGamesData = [
   {
     id: "quantumStrike", name: 'Quantum Strike', type: 'Action' },
   {
-    id: "reactionTime", name: 'Reaction Time', type: 'Action' },
+    id: "reactionTime", name: 'Neural Reaction', type: 'Action' },
   {
     id: "retroBlaster", name: 'Retro Blaster', type: 'Sports' },
   {
@@ -1804,7 +1820,7 @@ const legacyGamesData = [
   {
     id: "retroRacer", name: 'Retro Racer', type: 'Puzzle' },
   {
-    id: "rockPaperScissors", name: 'Rock Paper Scissors', type: 'Action' },
+    id: "rockPaperScissors", name: 'Cyber RPS', type: 'Action' },
   {
     id: "shadowBlaster", name: 'Shadow Blaster', type: 'Sports' },
   {
@@ -1842,7 +1858,7 @@ const legacyGamesData = [
   {
     id: "sonicKnight2", name: 'Sonic Knight2', type: 'Action' },
   {
-    id: "spaceInvaders", name: 'Space Invaders', type: 'Action' },
+    id: "spaceInvaders", name: 'Star Invaders', type: 'Action' },
   {
     id: "steelBounce", name: 'Steel Bounce', type: 'Puzzle' },
   {
@@ -1876,11 +1892,11 @@ const legacyGamesData = [
   {
     id: "terraQuest2", name: 'Terra Quest2', type: 'Action' },
   {
-    id: "ticTacToe", name: 'Tic Tac Toe', type: 'Arcade' },
+    id: "ticTacToe", name: 'Grid Tactics', type: 'Arcade' },
   {
-    id: "towerStacker", name: 'Tower Stacker', type: 'Puzzle' },
+    id: "towerStacker", name: 'Sky Stacker', type: 'Puzzle' },
   {
-    id: "triviaQuiz", name: 'Trivia Quiz', type: 'Sports' },
+    id: "triviaQuiz", name: 'Data Quiz', type: 'Sports' },
   {
     id: "turboForce", name: 'Turbo Force', type: 'Sports' },
   {
@@ -1982,9 +1998,9 @@ const legacyGamesData = [
   {
     id: "cyberSpin3", name: 'Cyber Spin3', type: 'Action' },
   {
-    id: "dodgeObjects", name: 'Dodge Objects', type: 'Arcade' },
+    id: "dodgeObjects", name: 'Neon Dodge', type: 'Arcade' },
   {
-    id: "drawingCanvas", name: 'Drawing Canvas', type: 'Sports' },
+    id: "drawingCanvas", name: 'Pixel Canvas', type: 'Sports' },
   {
     id: "electroDash", name: 'Electro Dash', type: 'Sports' },
   {
@@ -2012,9 +2028,9 @@ const legacyGamesData = [
   {
     id: "finalBoss", name: 'Final Boss', type: 'Action' },
   {
-    id: "fishingGame", name: 'Fishing Game', type: 'Arcade' },
+    id: "fishingGame", name: 'Deep Sea Fisher', type: 'Arcade' },
   {
-    id: "flappyBird", name: 'Flappy Bird', type: 'Action' },
+    id: "flappyBird", name: 'Aero Dash', type: 'Action' },
   {
     id: "galaxyBlaster", name: 'Galaxy Blaster', type: 'Arcade' },
   {
@@ -2036,7 +2052,7 @@ const legacyGamesData = [
   {
     id: "hyperRacer", name: 'Hyper Racer', type: 'Strategy' },
   {
-    id: "idleClicker", name: 'Idle Clicker', type: 'Puzzle' },
+    id: "idleClicker", name: 'Idle Core', type: 'Puzzle' },
   {
     id: "infiniteJump", name: 'Infinite Jump', type: 'Strategy' },
   {
@@ -2084,7 +2100,7 @@ const legacyGamesData = [
   {
     id: "masterArcade", name: 'Master Arcade', type: 'Arcade' },
   {
-    id: "mathQuiz", name: 'Math Quiz', type: 'Strategy' },
+    id: "mathQuiz", name: 'Neural Quiz', type: 'Strategy' },
   {
     id: "mazeSolver", name: 'Maze Solver', type: 'Strategy' },
   {
@@ -2102,11 +2118,11 @@ const legacyGamesData = [
   {
     id: "megaSurfer", name: 'Mega Surfer', type: 'Strategy' },
   {
-    id: "memoryCards", name: 'Memory Cards', type: 'Arcade' },
+    id: "memoryCards", name: 'Neural Memory', type: 'Arcade' },
   {
-    id: "memorySequence", name: 'Memory Sequence', type: 'Action' },
+    id: "memorySequence", name: 'Neural Sequence', type: 'Action' },
   {
-    id: "miniGolf", name: 'Mini Golf', type: 'Sports' },
+    id: "miniGolf", name: 'Cyber Golf', type: 'Sports' },
   {
     id: "mysticRunner", name: 'Mystic Runner', type: 'Strategy' },
   {
@@ -2178,7 +2194,7 @@ const legacyGamesData = [
   {
     id: "quantumStrike", name: 'Quantum Strike', type: 'Action' },
   {
-    id: "reactionTime", name: 'Reaction Time', type: 'Action' },
+    id: "reactionTime", name: 'Neural Reaction', type: 'Action' },
   {
     id: "retroBlaster", name: 'Retro Blaster', type: 'Sports' },
   {
@@ -2194,7 +2210,7 @@ const legacyGamesData = [
   {
     id: "retroRacer", name: 'Retro Racer', type: 'Puzzle' },
   {
-    id: "rockPaperScissors", name: 'Rock Paper Scissors', type: 'Action' },
+    id: "rockPaperScissors", name: 'Cyber RPS', type: 'Action' },
   {
     id: "shadowBlaster", name: 'Shadow Blaster', type: 'Sports' },
   {
@@ -2232,7 +2248,7 @@ const legacyGamesData = [
   {
     id: "sonicKnight2", name: 'Sonic Knight2', type: 'Action' },
   {
-    id: "spaceInvaders", name: 'Space Invaders', type: 'Action' },
+    id: "spaceInvaders", name: 'Star Invaders', type: 'Action' },
   {
     id: "steelBounce", name: 'Steel Bounce', type: 'Puzzle' },
   {
@@ -2266,11 +2282,11 @@ const legacyGamesData = [
   {
     id: "terraQuest2", name: 'Terra Quest2', type: 'Action' },
   {
-    id: "ticTacToe", name: 'Tic Tac Toe', type: 'Arcade' },
+    id: "ticTacToe", name: 'Grid Tactics', type: 'Arcade' },
   {
-    id: "towerStacker", name: 'Tower Stacker', type: 'Puzzle' },
+    id: "towerStacker", name: 'Sky Stacker', type: 'Puzzle' },
   {
-    id: "triviaQuiz", name: 'Trivia Quiz', type: 'Sports' },
+    id: "triviaQuiz", name: 'Data Quiz', type: 'Sports' },
   {
     id: "turboForce", name: 'Turbo Force', type: 'Sports' },
   {
@@ -2312,9 +2328,9 @@ const legacyGamesData = [
   {
     id: "voidSpin2", name: 'Void Spin2', type: 'Strategy' },
   {
-    id: "whackAMole", name: 'Whack A Mole', type: 'Strategy' },
+    id: "whackAMole", name: 'Whack-A-Bot', type: 'Strategy' },
   {
-    id: "wordSearch", name: 'Word Search', type: 'Sports' },
+    id: "wordSearch", name: 'Data Search', type: 'Sports' },
   {
     id: "xakArena", name: 'Xak Arena', type: 'Strategy' },
   {
