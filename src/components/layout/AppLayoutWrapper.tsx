@@ -22,6 +22,7 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
                             pathname?.startsWith("/xakarena-creator");
 
   const [showOverlay, setShowOverlay] = useState(false);
+  const [altToggled, setAltToggled] = useState(false);
 
   // If it's a standalone route, render nothing but the children in a full screen container
   if (isStandaloneRoute) {
@@ -48,6 +49,19 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [isAppRoute]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Alt") {
+        // Prevent default browser menu focus if possible
+        e.preventDefault();
+        setAltToggled(prev => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <>
       {isAppRoute && (
@@ -63,8 +77,10 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
       
       <div 
         className={isAppRoute ? `fixed top-0 left-0 right-0 z-[500] transition-all duration-300 transform ${
-          showOverlay ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
-        }` : ""}
+          (showOverlay || altToggled) ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
+        }` : `transition-all duration-300 transform ${
+          altToggled ? "-translate-y-full opacity-0 pointer-events-none absolute" : "translate-y-0 opacity-100"
+        }`}
         onMouseEnter={isAppRoute ? () => setShowOverlay(true) : undefined}
         onMouseLeave={isAppRoute ? () => setShowOverlay(false) : undefined}
       >
@@ -77,8 +93,12 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
 
       <div 
         className={isAppRoute ? `fixed bottom-0 left-0 right-0 z-[500] transition-all duration-300 transform ${
-          showOverlay ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
-        }` : (isChatRoute ? "hidden" : "")}
+          (showOverlay || altToggled) ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
+        }` : `transition-all duration-300 transform ${
+          isChatRoute ? "hidden" : ""
+        } ${
+          altToggled ? "translate-y-full opacity-0 pointer-events-none absolute" : "translate-y-0 opacity-100"
+        }`}
         onMouseEnter={isAppRoute ? () => setShowOverlay(true) : undefined}
         onMouseLeave={isAppRoute ? () => setShowOverlay(false) : undefined}
       >

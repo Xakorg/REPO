@@ -4,23 +4,25 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { GAMES_DB, GameMeta } from "@/lib/games-db";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, ShoppingBag, Settings, Sparkles, Gamepad2, Trophy, Sun, Moon } from "lucide-react";
+import { Play, ShoppingBag, Settings, Sparkles, Gamepad2, Trophy, Sun, Moon, Search, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit } from "firebase/firestore";
-// Removed DynamicFavicon import
 
 export default function PlayStationGamesLibrary() {
   const router = useRouter();
   const [libraryIds, setLibraryIds] = useState<string[]>([]);
-  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [recentIds, setRecentIds] = useState<string[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  const [activeItem, setActiveItem] = useState<GameMeta | null>(null);
   const [launchingGame, setLaunchingGame] = useState<string | null>(null);
   const [isLightMode, setIsLightMode] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   
   const firestore = useFirestore();
-  const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -43,9 +45,22 @@ export default function PlayStationGamesLibrary() {
   const { data: topPlayers, isLoading: leaderboardLoading } = useCollection(leaderboardQuery);
 
   useEffect(() => {
-    const stored = localStorage.getItem("games_theme");
-    if (stored === "light") {
-      setIsLightMode(true);
+    const storedTheme = localStorage.getItem("games_theme");
+    if (storedTheme === "light") setIsLightMode(true);
+
+    const storedFavs = localStorage.getItem("xakteir_favorite_games");
+    if (storedFavs) setFavoriteIds(JSON.parse(storedFavs));
+
+    const storedRecent = localStorage.getItem("xakteir_recent_games");
+    if (storedRecent) setRecentIds(JSON.parse(storedRecent));
+
+    const storedLibs = localStorage.getItem("xakteir_game_library");
+    if (storedLibs) {
+      setLibraryIds(JSON.parse(storedLibs));
+    } else {
+      const defaultIds = ["cyber_quest_platformer", "cyber_dungeon_rpg", "quantum_laser_puzzle", "neon_core_defense", "cyber_drift_runner", "cyber_leap_odyssey", "aetheria_realm_of_shadows", "aegis_protocol_td", "quantum_prism_puzzle", "synthwave_beat_rush", "cyber_runner_platformer", "synthwave_velocity_runner", "cyber_pinball_odyssey", "aether_pulse_2d", "sector_9_rpg", "gravity_racer_2d", "nexus_grid_defense_2d", "stellar_strike_2d", "shadow_blade_2d", "neon_ronin", "cyber_nexus_survivor", "aether_strike", "stellar_overlord", "chronos_protocol", "void_vanguard", "nexus_overdrive", "super_stick_battles", "aero_phantom", "solar_tempest", "hyper_horizon", "cyber_pulse", "xaksports", "retro_engine", "pixel_knight"];
+      localStorage.setItem("xakteir_game_library", JSON.stringify(defaultIds));
+      setLibraryIds(defaultIds);
     }
   }, []);
 
@@ -55,67 +70,42 @@ export default function PlayStationGamesLibrary() {
     localStorage.setItem("games_theme", nextMode ? "light" : "dark");
   };
 
-  useEffect(() => {
-    const stored = localStorage.getItem("xakteir_game_library");
-    if (stored) {
-      setLibraryIds(JSON.parse(stored));
-    } else {
-      const defaultIds = ["cyber_quest_platformer", "cyber_dungeon_rpg", "quantum_laser_puzzle", "neon_core_defense", "cyber_drift_runner", "cyber_leap_odyssey", "aetheria_realm_of_shadows", "aegis_protocol_td", "quantum_prism_puzzle", "synthwave_beat_rush", "cyber_runner_platformer", "synthwave_velocity_runner", "cyber_pinball_odyssey", "aether_pulse_2d", "sector_9_rpg", "gravity_racer_2d", "nexus_grid_defense_2d", "stellar_strike_2d", "shadow_blade_2d", "neon_ronin", "cyber_nexus_survivor", "aether_strike", "stellar_overlord", "chronos_protocol", "void_vanguard", "nexus_overdrive", "super_stick_battles", "aero_phantom", "solar_tempest", "hyper_horizon", "cyber_pulse", "xaksports", "retro_engine", "pixel_knight"];
-      localStorage.setItem("xakteir_game_library", JSON.stringify(defaultIds));
-      setLibraryIds(defaultIds);
+  const toggleFavorite = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setFavoriteIds(prev => {
+      const next = prev.includes(id) ? prev.filter(f => f !== id) : [id, ...prev];
+      localStorage.setItem("xakteir_favorite_games", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const handleLaunch = (game: GameMeta | null) => {
+    if (!game) {
+      window.location.href = '/games/store';
+      return;
     }
-  }, []);
+    
+    // Add to recent
+    setRecentIds(prev => {
+      const next = [game.id, ...prev.filter(id => id !== game.id)].slice(0, 10);
+      localStorage.setItem("xakteir_recent_games", JSON.stringify(next));
+      return next;
+    });
 
-  // Make sure 'store' card is always at the end of the library array
-  const libraryGames = GAMES_DB.filter(g => libraryIds.includes(g.id));
-  const activeItem = focusedIndex < libraryGames.length ? libraryGames[focusedIndex] : null;
-
-  // Handle keyboard navigation for that authentic console feel
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (launchingGame) return;
-      
-      if (e.key === "ArrowRight") {
-        setFocusedIndex(prev => Math.min(prev + 1, libraryGames.length));
-      } else if (e.key === "ArrowLeft") {
-        setFocusedIndex(prev => Math.max(prev - 1, 0));
-      } else if (e.key === "Enter" && activeItem) {
-        handleLaunch(activeItem);
-      } else if (e.key === "Enter" && !activeItem) {
-        window.location.href = '/games/store';
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [libraryGames.length, activeItem, launchingGame, router]);
-
-  // Center the focused item in the carousel
-  useEffect(() => {
-    if (carouselRef.current) {
-      const container = carouselRef.current;
-      const focusedElement = container.children[focusedIndex] as HTMLElement;
-      if (focusedElement) {
-        const containerWidth = container.offsetWidth;
-        const elementOffset = focusedElement.offsetLeft;
-        const elementWidth = focusedElement.offsetWidth;
-        
-        container.scrollTo({
-          left: elementOffset - (containerWidth / 2) + (elementWidth / 2),
-          behavior: "smooth"
-        });
-      }
-    }
-  }, [focusedIndex]);
-
-  const handleLaunch = (game: GameMeta) => {
     setLaunchingGame(game.id);
     setTimeout(() => {
       window.location.href = game.route;
     }, 2000);
   };
 
-  // Generate a dynamic gradient based on the active item
-  const getGradient = (index: number) => {
+  const libraryGames = GAMES_DB.filter(g => libraryIds.includes(g.id));
+  const recentGames = recentIds.map(id => GAMES_DB.find(g => g.id === id)).filter(Boolean) as GameMeta[];
+  const favoriteGames = favoriteIds.map(id => GAMES_DB.find(g => g.id === id)).filter(Boolean) as GameMeta[];
+  
+  const filteredGames = libraryGames.filter(g => g.title.toLowerCase().includes(searchQuery.toLowerCase()) || g.genre.some(genre => genre.toLowerCase().includes(searchQuery.toLowerCase())));
+
+  // Generate a dynamic gradient based on the active item ID length as a pseudo-random seed
+  const getGradient = (id: string = "") => {
     const colors = [
       "from-blue-600 via-indigo-900",
       "from-rose-600 via-red-900",
@@ -123,8 +113,56 @@ export default function PlayStationGamesLibrary() {
       "from-amber-500 via-orange-900",
       "from-purple-600 via-fuchsia-900"
     ];
-    return colors[index % colors.length];
+    return colors[id.length % colors.length];
   };
+
+  useEffect(() => {
+    // If no active item, default to first filtered game or null
+    if (!activeItem && filteredGames.length > 0) {
+      setActiveItem(filteredGames[0]);
+    }
+  }, [filteredGames, activeItem]);
+
+  const GameCard = ({ game }: { game: GameMeta }) => (
+    <div
+      onClick={() => setActiveItem(game)}
+      className="shrink-0 relative group outline-none"
+    >
+      <motion.div
+        animate={{
+          width: activeItem?.id === game.id ? (isMobile ? 180 : 220) : (isMobile ? 100 : 140),
+          height: activeItem?.id === game.id ? (isMobile ? 180 : 220) : (isMobile ? 100 : 140),
+          y: activeItem?.id === game.id ? -10 : 0
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className={cn(
+          "rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer shadow-xl transition-colors duration-300",
+          activeItem?.id === game.id ? "border-2 md:border-4 border-white z-10 shadow-[0_0_30px_rgba(255,255,255,0.2)]" : "border border-white/20 bg-white/5 hover:bg-white/20 hover:border-white/40"
+        )}
+      >
+        <img 
+          src={game.iconUrl} 
+          alt={game.title} 
+          className={cn(
+            "w-full h-full object-cover transition-opacity duration-300",
+            activeItem?.id === game.id ? "opacity-100" : "opacity-60 group-hover:opacity-100"
+          )} 
+        />
+        <button 
+          onClick={(e) => toggleFavorite(e, game.id)}
+          className={cn(
+            "absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md bg-black/40 border border-white/10 hover:scale-110 transition-transform z-20",
+            favoriteIds.includes(game.id) ? "text-rose-500" : "text-white/50 hover:text-white"
+          )}
+        >
+          <Heart className="w-4 h-4" fill={favoriteIds.includes(game.id) ? "currentColor" : "none"} />
+        </button>
+      </motion.div>
+      <div className="absolute -bottom-6 left-0 right-0 text-center text-[10px] md:text-xs font-bold tracking-widest uppercase text-white/70 opacity-0 group-hover:opacity-100 transition-opacity truncate px-1">
+        {game.title}
+      </div>
+    </div>
+  );
 
   return (
     <div className={cn(
@@ -135,14 +173,14 @@ export default function PlayStationGamesLibrary() {
       {/* 1. Dynamic Fullscreen Background (PS5 Style) */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={focusedIndex}
+          key={activeItem?.id || "empty"}
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           className={cn(
             "absolute inset-0 bg-gradient-to-br to-black pointer-events-none transition-colors duration-1000",
-            getGradient(focusedIndex)
+            getGradient(activeItem?.id)
           )}
         >
           {activeItem && (
@@ -150,39 +188,43 @@ export default function PlayStationGamesLibrary() {
               <img 
                 src={activeItem.bannerUrl} 
                 alt="bg" 
-                className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60"
+                className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-50 md:opacity-60"
               />
-              {/* Vignette & Fade to Black at bottom */}
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent" />
             </>
           )}
         </motion.div>
       </AnimatePresence>
 
-      {/* Floating Particles/UI Elements */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.1),transparent_50%)] pointer-events-none" />
 
-      {/* 2. Top Status Bar */}
-      <header className="absolute top-0 left-0 right-0 p-4 md:p-8 flex justify-between items-center z-50 bg-gradient-to-b from-black/50 to-transparent">
-        <div className="flex items-center gap-4 md:gap-6">
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-            <Gamepad2 
-              className="w-5 h-5 md:w-6 md:h-6" 
-              style={{
-                stroke: "url(#mesh-gradient)",
-                fill: "url(#mesh-gradient)",
-                fillOpacity: 0.2
-              }} 
+      {/* 2. Top Status Bar & Search */}
+      <header className="absolute top-0 left-0 right-0 p-4 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4 z-50 bg-gradient-to-b from-black/80 to-transparent">
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shrink-0">
+            <Gamepad2 className="w-5 h-5 md:w-6 md:h-6 text-white" />
+          </div>
+          <div className="relative flex-1 md:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
+            <input 
+              type="text" 
+              placeholder="Search Games..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white/10 border border-white/10 rounded-full py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all backdrop-blur-md font-medium tracking-wide"
             />
           </div>
-          <div className="flex gap-4 md:gap-8 text-xs md:text-sm font-black uppercase tracking-widest text-white/50">
-            <span className="text-white">Games</span>
-            <span className="hover:text-white transition-colors cursor-pointer" onClick={() => window.location.href = '/games/store'}>Store</span>
-          </div>
         </div>
-        <div className="flex items-center gap-2 md:gap-4">
-          {/* Global Leaderboard Trigger */}
+        
+        <div className="flex items-center gap-3 md:gap-4 ml-auto md:ml-0">
+          <button 
+            onClick={() => { setActiveItem(null); handleLaunch(null); }}
+            className="hidden md:flex px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full border border-white/10 text-xs font-black uppercase tracking-widest backdrop-blur-md transition-colors items-center gap-2"
+          >
+            <ShoppingBag className="w-4 h-4" /> Store
+          </button>
+          
           <Sheet>
             <SheetTrigger asChild>
               <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors border border-white/20">
@@ -195,7 +237,6 @@ export default function PlayStationGamesLibrary() {
                   <Trophy className="w-6 h-6 text-amber-400 animate-pulse" /> Global Rankings
                 </SheetTitle>
               </SheetHeader>
-              
               <div className="py-6 space-y-4">
                 {leaderboardLoading ? (
                   <div className="text-center py-12 text-white/40 font-bold uppercase tracking-widest text-xs">Loading scoreboard...</div>
@@ -204,34 +245,15 @@ export default function PlayStationGamesLibrary() {
                 ) : (
                   <div className="space-y-3">
                     {topPlayers.map((player: any, idx: number) => (
-                      <div 
-                        key={player.id || idx}
-                        className={cn(
-                          "p-4 rounded-2xl flex items-center justify-between border transition-all",
-                          idx === 0 ? "bg-amber-500/10 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.15)]" :
-                          idx === 1 ? "bg-slate-400/10 border-slate-400/30" :
-                          idx === 2 ? "bg-amber-700/10 border-amber-700/30" :
-                          "bg-white/5 border-white/10"
-                        )}
-                      >
+                      <div key={player.id || idx} className="p-4 rounded-2xl flex items-center justify-between border bg-white/5 border-white/10">
                         <div className="flex items-center gap-3">
-                          <span className={cn(
-                            "text-base font-black w-5 text-center",
-                            idx === 0 ? "text-amber-400" :
-                            idx === 1 ? "text-slate-300" :
-                            idx === 2 ? "text-amber-600" :
-                            "text-white/40"
-                          )}>
-                            {idx + 1}
-                          </span>
+                          <span className="text-base font-black w-5 text-center text-white/40">{idx + 1}</span>
                           <div>
                             <div className="font-bold text-xs text-white uppercase tracking-wider">{player.displayName}</div>
-                            <div className="text-[9px] text-white/30 uppercase tracking-widest mt-0.5">ID: {player.uid?.slice(0, 6)}...</div>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <span className="font-black text-emerald-400 text-base">{player.points || 0}</span>
-                          <span className="text-[8px] font-black uppercase tracking-wider text-white/30">PTS</span>
                         </div>
                       </div>
                     ))}
@@ -240,142 +262,87 @@ export default function PlayStationGamesLibrary() {
               </div>
             </SheetContent>
           </Sheet>
-
-          {/* Theme Toggle Button */}
-          <button 
-            onClick={toggleTheme}
-            className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors border border-white/20 text-white"
-          >
+          <button onClick={toggleTheme} className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors border border-white/20 text-white">
             {isLightMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
           </button>
-
-          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer border border-white/20 text-white">
-            <Settings className="w-5 h-5" />
-          </div>
         </div>
       </header>
 
-      {/* 3. Game Info */}
-      <div className="absolute top-28 md:top-40 left-6 md:left-16 right-6 md:right-auto z-40 max-w-2xl text-left">
+      {/* 3. Game Info Overlay */}
+      <div className="absolute top-28 md:top-32 left-6 md:left-12 z-40 max-w-[90vw] md:max-w-xl text-left pointer-events-none">
         <AnimatePresence mode="wait">
-          {activeItem ? (
+          {activeItem && (
             <motion.div
               key={activeItem.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.4 }}
+              className="pointer-events-auto"
             >
-              <img src={activeItem.iconUrl} alt="logo" className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl bg-zinc-900 border-2 border-white/10 mb-4 md:mb-6 shadow-2xl" />
-              <h1 className="text-3xl md:text-6xl font-black tracking-tighter mb-2 md:mb-4">{activeItem.title}</h1>
-              <p className="text-sm md:text-lg text-white/70 font-medium mb-6 md:mb-8 leading-relaxed line-clamp-3 md:line-clamp-none">{activeItem.description}</p>
-              <div className="flex items-center gap-3 md:gap-4">
+              <img src={activeItem.iconUrl} alt="logo" className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl bg-zinc-900 border-2 border-white/10 mb-4 shadow-2xl" />
+              <h1 className="text-3xl md:text-5xl font-black tracking-tighter mb-3 leading-tight">{activeItem.title}</h1>
+              <p className="text-sm md:text-base text-white/70 font-medium mb-6 leading-relaxed line-clamp-3">{activeItem.description}</p>
+              <div className="flex items-center gap-3">
                 <button 
                   onClick={() => handleLaunch(activeItem)}
-                  className="px-8 py-3.5 md:px-10 md:py-4 bg-white text-black rounded-full font-black tracking-widest uppercase hover:scale-105 transition-all flex items-center gap-2.5 md:gap-3 shadow-[0_0_40px_rgba(255,255,255,0.3)] text-xs md:text-sm"
+                  className="px-8 py-3 bg-white text-black rounded-full font-black tracking-widest uppercase hover:scale-105 transition-all flex items-center gap-2 shadow-[0_0_40px_rgba(255,255,255,0.3)] text-xs md:text-sm"
                 >
-                  <Play className="w-4 h-4 md:w-5 md:h-5 fill-black" /> Play
+                  <Play className="w-4 h-4 fill-black" /> Play
                 </button>
-                <div className="text-[10px] md:text-xs font-bold tracking-widest uppercase text-white/50 bg-white/10 px-4 py-3 md:py-4 rounded-full backdrop-blur-md border border-white/10">
+                <div className="text-[10px] md:text-xs font-bold tracking-widest uppercase text-white/60 bg-white/10 px-4 py-3 rounded-full backdrop-blur-md border border-white/10">
                   {activeItem.type}
                 </div>
               </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="store-info"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-            >
-              <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl bg-indigo-600 flex items-center justify-center mb-4 md:mb-6 shadow-[0_0_30px_rgba(79,70,229,0.5)]">
-                <ShoppingBag className="w-8 h-8 md:w-10 md:h-10 text-white" />
-              </div>
-              <h1 className="text-3xl md:text-6xl font-black tracking-tighter mb-2 md:mb-4">Store</h1>
-              <p className="text-sm md:text-lg text-white/70 font-medium mb-6 md:mb-8 leading-relaxed">Discover your next favorite game. Expand your library with native 3D, retro emulators, and top-down adventures.</p>
-              <button 
-                onClick={() => window.location.href = '/games/store'}
-                className="px-8 py-3.5 md:px-10 md:py-4 bg-indigo-600 text-white rounded-full font-black tracking-widest uppercase hover:scale-105 transition-all flex items-center gap-2.5 md:gap-3 shadow-[0_0_40px_rgba(79,70,229,0.4)] text-xs md:text-sm"
-              >
-                Browse Catalog
-              </button>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* 4. The 1-Line Carousel (Bottom) */}
-      <div className="absolute bottom-6 md:bottom-20 left-0 right-0 z-40">
-        <div 
-          ref={carouselRef}
-          className="flex items-end gap-3 md:gap-4 px-[8vw] md:px-[10vw] overflow-x-auto no-scrollbar scroll-smooth pb-8 pt-4"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {libraryGames.map((game, idx) => (
-            <div
-              key={game.id}
-              onClick={() => setFocusedIndex(idx)}
-              className="shrink-0 relative group outline-none"
-            >
-              <motion.div
-                animate={{
-                  width: focusedIndex === idx ? (isMobile ? 180 : 280) : (isMobile ? 80 : 120),
-                  height: focusedIndex === idx ? (isMobile ? 180 : 280) : (isMobile ? 80 : 120),
-                  y: focusedIndex === idx ? -10 : 0
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className={cn(
-                  "rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer shadow-2xl transition-colors duration-300",
-                  focusedIndex === idx ? "border-2 md:border-4 border-white" : "border border-white/20 bg-white/5 hover:bg-white/20 hover:border-white/40"
-                )}
-              >
-                <img 
-                  src={game.iconUrl} 
-                  alt={game.title} 
-                  className={cn(
-                    "w-full h-full object-cover transition-opacity duration-300",
-                    focusedIndex === idx ? "opacity-100" : "opacity-50 group-hover:opacity-100"
-                  )} 
-                />
-              </motion.div>
-              {/* Label underneath small icons */}
-              {focusedIndex !== idx && (
-                <div className="absolute -bottom-6 left-0 right-0 text-center text-[10px] font-bold tracking-widest uppercase text-white/50 opacity-0 group-hover:opacity-100 transition-opacity truncate px-1">
-                  {game.title}
-                </div>
+      {/* 4. Scrollable Multi-Row Library */}
+      <div className="absolute top-[45vh] md:top-[50vh] bottom-0 left-0 right-0 z-40 overflow-y-auto pb-12 overflow-x-hidden no-scrollbar">
+        <div className="flex flex-col gap-10 md:gap-14 pt-8 md:pt-12">
+          
+          {/* Favorites Row */}
+          {favoriteGames.length > 0 && !searchQuery && (
+            <div className="pl-6 md:pl-12">
+              <h3 className="text-sm md:text-base font-black tracking-widest uppercase text-white/70 mb-4 md:mb-6 flex items-center gap-2">
+                <Heart className="w-4 h-4 text-rose-500 fill-rose-500" /> Favorites
+              </h3>
+              <div className="flex gap-4 md:gap-6 overflow-x-auto pb-8 pr-12 no-scrollbar" style={{ scrollbarWidth: "none" }}>
+                {favoriteGames.map(game => (
+                  <GameCard key={`fav-${game.id}`} game={game} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recent Row */}
+          {recentGames.length > 0 && !searchQuery && (
+            <div className="pl-6 md:pl-12">
+              <h3 className="text-sm md:text-base font-black tracking-widest uppercase text-white/70 mb-4 md:mb-6">Recently Played</h3>
+              <div className="flex gap-4 md:gap-6 overflow-x-auto pb-8 pr-12 no-scrollbar" style={{ scrollbarWidth: "none" }}>
+                {recentGames.map(game => (
+                  <GameCard key={`rec-${game.id}`} game={game} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* All Games Row */}
+          <div className="pl-6 md:pl-12">
+            <h3 className="text-sm md:text-base font-black tracking-widest uppercase text-white/70 mb-4 md:mb-6">
+              {searchQuery ? "Search Results" : "All Games"}
+            </h3>
+            <div className="flex flex-wrap gap-4 md:gap-8 pb-12 pr-6">
+              {filteredGames.length > 0 ? filteredGames.map(game => (
+                <GameCard key={`all-${game.id}`} game={game} />
+              )) : (
+                <div className="text-white/40 text-sm font-bold uppercase tracking-widest py-8">No games found.</div>
               )}
             </div>
-          ))}
-
-          {/* "Store" Card at the end of the line */}
-          <div
-            onClick={() => setFocusedIndex(libraryGames.length)}
-            className="shrink-0 relative group outline-none ml-2 md:ml-4"
-          >
-            <motion.div
-              animate={{
-                width: focusedIndex === libraryGames.length ? (isMobile ? 180 : 280) : (isMobile ? 80 : 120),
-                height: focusedIndex === libraryGames.length ? (isMobile ? 180 : 280) : (isMobile ? 80 : 120),
-                y: focusedIndex === libraryGames.length ? -10 : 0
-              }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className={cn(
-                "rounded-2xl md:rounded-3xl cursor-pointer shadow-2xl flex items-center justify-center transition-colors duration-300",
-                focusedIndex === libraryGames.length ? "bg-indigo-600 border-2 md:border-4 border-white" : "bg-white/5 border border-white/20 hover:bg-white/20 hover:border-white/40"
-              )}
-            >
-              <ShoppingBag className={cn(
-                "transition-all duration-300",
-                focusedIndex === libraryGames.length ? (isMobile ? "w-12 h-12 text-white" : "w-20 h-20 text-white") : (isMobile ? "w-6 h-6 text-white/50" : "w-10 h-10 text-white/50 group-hover:text-white")
-              )} />
-            </motion.div>
-            {focusedIndex !== libraryGames.length && (
-              <div className="absolute -bottom-6 left-0 right-0 text-center text-[10px] font-bold tracking-widest uppercase text-white/50 opacity-0 group-hover:opacity-100 transition-opacity truncate px-1">
-                Store
-              </div>
-            )}
           </div>
+          
         </div>
       </div>
 
@@ -396,10 +363,9 @@ export default function PlayStationGamesLibrary() {
               <div className="w-32 h-32 rounded-[2rem] bg-zinc-900 border-2 border-white/10 mb-8 overflow-hidden shadow-[0_0_100px_rgba(255,255,255,0.1)]">
                 <img src={GAMES_DB.find(g => g.id === launchingGame)?.iconUrl} alt="Icon" className="w-full h-full object-cover" />
               </div>
-              <h2 className="text-4xl font-black tracking-widest uppercase text-white mb-12">
+              <h2 className="text-4xl font-black tracking-widest uppercase text-white mb-12 text-center px-4">
                 {GAMES_DB.find(g => g.id === launchingGame)?.title}
               </h2>
-              {/* PlayStation style pulsing loader */}
               <div className="flex gap-4">
                 <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0 }} className="w-3 h-3 rounded-full bg-blue-500" />
                 <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-3 h-3 rounded-full bg-rose-500" />
