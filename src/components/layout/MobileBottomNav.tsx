@@ -159,7 +159,7 @@ export function MobileBottomNav() {
     { name: "Home", href: "/", icon: Home },
     { name: "Games", href: "/games", icon: Gamepad2 },
     { name: "Chat", href: "/chat", icon: MessageCircle },
-    { name: "Profile", href: "https://account.xakteir.com", icon: User },
+    { name: "Profile", href: "https://account.xakteir.com", icon: UserIcon },
   ];
 
   return (
