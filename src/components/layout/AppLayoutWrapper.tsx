@@ -8,12 +8,9 @@ import { Footer } from "./Footer";
 export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // App routes include code, and game pages where we want a full-screen experience with an auto-hide header
+  // App routes include code where we want a full-screen experience with an auto-hide header
   const isAppRoute = pathname?.startsWith("/xakcode") ||
-                     pathname?.startsWith("/xaksports") || 
-                     pathname?.startsWith("/games/play/") ||
-                     pathname?.startsWith("/games/retro") ||
-                     pathname?.startsWith("/games/neural_defense");
+                     pathname?.startsWith("/xaksports");
                      
   const isChatRoute = pathname?.startsWith("/chat");
 
