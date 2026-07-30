@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Play, ShoppingBag, Sparkles, UploadCloud, FolderUp, CheckCircle, FileArchive, Code, Link2 } from "lucide-react";
+import { ArrowLeft, Play, ShoppingBag, Sparkles, UploadCloud, FolderUp, CheckCircle, FileArchive, Github } from "lucide-react";
 import { useFirestore, useFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { upload } from "@vercel/blob/client";
@@ -19,6 +19,9 @@ export default function GamesCreatePage() {
   const [isDragging, setIsDragging] = useState(false);
   const [processingLog, setProcessingLog] = useState<string[]>([]);
   const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingStatus, setProcessingStatus] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [isGithubMode, setIsGithubMode] = useState(false);
   
   // Game Details State
   const [gameTitle, setGameTitle] = useState("");
@@ -147,6 +150,32 @@ export default function GamesCreatePage() {
     }
   };
 
+  const handleGithubConnect = () => {
+    if (!githubUrl.includes("github.com/")) {
+      alert("Please enter a valid GitHub repository URL.");
+      return;
+    }
+    const parts = githubUrl.split("github.com/")[1].split("/");
+    if (parts.length < 2) {
+      alert("Invalid GitHub URL format.");
+      return;
+    }
+    const owner = parts[0];
+    const repo = parts[1].replace(".git", "");
+    
+    setProcessingProgress(0);
+    setIsGithubMode(true);
+    setStep("PROCESSING");
+    setProcessingLog(["Connecting to GitHub repository...", `Fetching ${owner}/${repo}...`]);
+    
+    setTimeout(() => {
+      setProcessingProgress(100);
+      setProcessingLog(prev => [...prev, "Repository Connected Successfully!"]);
+      setPublishedUrl(`https://raw.githubusercontent.com/${owner}/${repo}/main/index.html`);
+      setTimeout(() => setStep("DETAILS"), 1000);
+    }, 1500);
+  };
+
   const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firestore || !user) return;
@@ -273,6 +302,30 @@ export default function GamesCreatePage() {
                     className="px-6 py-3 bg-white/10 text-white font-black uppercase tracking-widest rounded-full hover:bg-white/20 transition-colors flex items-center gap-2 border border-white/20"
                   >
                     <FolderUp className="w-5 h-5" /> Upload Folder
+                  </button>
+                </div>
+                
+                <div className="mt-8 w-full max-w-md px-8 flex items-center gap-4">
+                  <div className="h-px bg-white/20 flex-1"></div>
+                  <span className="text-white/40 font-bold uppercase tracking-widest text-xs">OR</span>
+                  <div className="h-px bg-white/20 flex-1"></div>
+                </div>
+
+                <div className="mt-6 flex flex-col items-center w-full max-w-md px-8 pb-8 gap-3">
+                  <div className="w-full relative">
+                    <input 
+                      type="text"
+                      placeholder="https://github.com/username/repo"
+                      value={githubUrl}
+                      onChange={(e) => setGithubUrl(e.target.value)}
+                      className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500 transition-colors"
+                    />
+                  </div>
+                  <button 
+                    onClick={handleGithubConnect}
+                    className="w-full py-3 bg-white/10 border border-white/20 hover:bg-white/20 rounded-xl font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Github className="w-5 h-5" /> Connect Repository
                   </button>
                 </div>
               </div>

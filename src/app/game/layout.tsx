@@ -5,6 +5,8 @@ import { GAMES_DB, GameMeta } from "@/lib/games-db";
 import { Maximize, ChevronLeft, Gamepad2, Info, Clock } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection } from "firebase/firestore";
 
 export default function GameLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -12,19 +14,42 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
   const [otherGames, setOtherGames] = useState<GameMeta[]>([]);
   const gameContainerRef = useRef<HTMLDivElement>(null);
 
+  const firestore = useFirestore();
+
+  const publishedProjectsQuery = useMemoFirebase(() => {
+    return firestore ? collection(firestore, "publishedProjects") : null;
+  }, [firestore]);
+  const { data: publishedGamesRaw } = useCollection(publishedProjectsQuery);
+
   useEffect(() => {
+    // Generate custom games list
+    const customGames: GameMeta[] = publishedGamesRaw?.map(g => ({
+      id: g.id,
+      title: g.name,
+      description: g.description,
+      developer: "Community",
+      genre: ["Web", "Custom"],
+      type: "App",
+      price: "Free",
+      route: `/game/${g.id}`,
+      bannerUrl: g.thumbnailUrl || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80",
+      iconUrl: g.thumbnailUrl || "",
+    })) || [];
+
+    const ALL_GAMES = [...GAMES_DB, ...customGames];
+
     // Determine which game we are currently playing based on the route
     if (pathname) {
-      const found = GAMES_DB.find(g => g.route === pathname || pathname.startsWith(g.route));
+      const found = ALL_GAMES.find(g => g.route === pathname || pathname.startsWith(g.route));
       if (found) {
         setCurrentGame(found);
       }
       
       // Get some random "other games" for the sidebar
-      const others = GAMES_DB.filter(g => g.route !== pathname).sort(() => 0.5 - Math.random()).slice(0, 10);
+      const others = ALL_GAMES.filter(g => g.route !== pathname).sort(() => 0.5 - Math.random()).slice(0, 10);
       setOtherGames(others);
     }
-  }, [pathname]);
+  }, [pathname, publishedGamesRaw]);
 
   const toggleFullscreen = () => {
     if (!gameContainerRef.current) return;
