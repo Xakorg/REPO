@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSuiteStore } from '@/lib/store';
 import { Settings, Share, MessageSquare, History, Wand2, Plus, FileText, ArrowLeft, Printer, Download, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { collection, doc, getDoc, getDocs, setDoc, query, where, orderBy, server
 import { motion, AnimatePresence } from 'framer-motion';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
-export default function XakteirWrite() {
+function WriteApp() {
   const { isFocusMode, toggleFocusMode } = useSuiteStore();
   const { user } = useUser();
   const firestore = useFirestore();
@@ -400,5 +400,13 @@ export default function XakteirWrite() {
          )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function XakteirWrite() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center text-white"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+      <WriteApp />
+    </Suspense>
   );
 }

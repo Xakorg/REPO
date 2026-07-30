@@ -67,7 +67,7 @@ export function useControllerInput(playerIndex: 1 | 2 | 3 | 4 = 1) {
         if (Math.abs(stickY) > 0.1) y = stickY;
         
         // A / Cross button
-        kick = gp.buttons[0]?.pressed;
+        kick = Boolean(gp.buttons[0]?.pressed);
       }
       
       // Fallback/override to keyboard if P1 or P2 is actively typing

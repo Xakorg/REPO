@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Bot, Bug, ShieldAlert, Cpu, Sparkles, CheckCircle2 } from "lucide-react";
 
-export default function XakCaptchaChallenge() {
+function ChallengeContent() {
   const searchParams = useSearchParams();
   const sitekey = searchParams.get("sitekey");
   const [icons, setIcons] = useState<any[]>([]);
@@ -94,5 +94,13 @@ export default function XakCaptchaChallenge() {
         <span className="text-[10px] font-black uppercase tracking-widest">Protected by Xakteir</span>
       </div>
     </div>
+  );
+}
+
+export default function XakCaptchaChallenge() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0a15] text-white flex items-center justify-center">Loading...</div>}>
+      <ChallengeContent />
+    </Suspense>
   );
 }

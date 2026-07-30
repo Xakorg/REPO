@@ -15,7 +15,9 @@ export default function GamesStorePage() {
 
   useEffect(() => {
     const stored = localStorage.getItem("xakteir_game_library");
-    if (stored) setLibraryIds(JSON.parse(stored));
+    if (stored) {
+      try { setLibraryIds(JSON.parse(stored)); } catch (e) {}
+    }
   }, []);
 
   const addToLibrary = (e: React.MouseEvent, id: string) => {

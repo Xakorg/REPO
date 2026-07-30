@@ -2,7 +2,7 @@
 
 import * as OTPAuth from "otpauth";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ import { isOffensive } from "@/lib/username";
 
 type AuthStep = 'email' | 'password' | 'verify-2fa' | 'forgot' | 'terms' | 'google-username';
 
-export default function AuthPage() {
+function AuthContent() {
   const { user: existingUser } = useUser();
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
   const [step, setStep] = useState<AuthStep>('email');
@@ -616,5 +616,13 @@ export default function AuthPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#06060c] flex items-center justify-center text-white font-bold"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+      <AuthContent />
+    </Suspense>
   );
 }

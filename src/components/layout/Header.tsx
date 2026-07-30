@@ -185,7 +185,13 @@ export function Header() {
     const updateAccounts = () => {
       const accs = localStorage.getItem("xakteir_accounts");
       const activeId = localStorage.getItem("xakteir_active_account_id");
-      if (accs) setAccounts(JSON.parse(accs));
+      if (accs) {
+        try {
+          setAccounts(JSON.parse(accs));
+        } catch (e) {
+          console.error("Error parsing accounts JSON", e);
+        }
+      }
       if (activeId) setActiveAccountId(activeId);
     };
     updateAccounts();
@@ -207,7 +213,12 @@ export function Header() {
       return;
     }
     
-    const vault = JSON.parse(vaultStr);
+    let vault: any = {};
+    try {
+      vault = JSON.parse(vaultStr);
+    } catch (e) {
+      console.error("Error parsing vault JSON", e);
+    }
     const savedCreds = vault[acc.uid];
     
     if (savedCreds) {

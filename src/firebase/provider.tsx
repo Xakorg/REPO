@@ -235,11 +235,17 @@ export const useUser = (): UserHookResult => {
       const accountsJson = localStorage.getItem('xakteir_accounts');
       const activeId = localStorage.getItem('xakteir_active_account_id');
       if (accountsJson && activeId) {
-        const accounts = JSON.parse(accountsJson);
-        const active = accounts.find((a: any) => a.uid === activeId);
-        if (active) {
-          setActiveAccount(active);
-          return;
+        try {
+          const accounts = JSON.parse(accountsJson);
+          if (Array.isArray(accounts)) {
+            const active = accounts.find((a: any) => a.uid === activeId);
+            if (active) {
+              setActiveAccount(active);
+              return;
+            }
+          }
+        } catch (e) {
+          console.error("Error parsing accounts JSON in firebase provider", e);
         }
       }
       setActiveAccount(null);

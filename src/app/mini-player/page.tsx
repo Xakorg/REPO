@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff, Maximize2 } from "lucide-react";
 
-export default function MiniPlayerPage() {
+function MiniPlayerContent() {
   const searchParams = useSearchParams();
   const type = searchParams.get("type");
   const id = searchParams.get("id");
@@ -80,5 +80,13 @@ export default function MiniPlayerPage() {
         <Maximize2 className="w-3.5 h-3.5" />
       </button>
     </div>
+  );
+}
+
+export default function MiniPlayerPage() {
+  return (
+    <Suspense fallback={<div className="w-full h-full bg-zinc-900 flex items-center justify-center text-white">Loading...</div>}>
+      <MiniPlayerContent />
+    </Suspense>
   );
 }
