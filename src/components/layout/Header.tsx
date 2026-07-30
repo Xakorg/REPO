@@ -144,17 +144,30 @@ function AppLauncherContent({ router }: { router: any }) {
           <Input autoFocus value={appSearch} onChange={(e) => setAppSearch(e.target.value)} placeholder="Search apps..." className="h-9 w-36 rounded-xl bg-secondary/30 border-white/10 pl-9 text-[9px] font-black italic" />
         </div>
       </div>
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-3 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {filteredApps.map(app => (
+      <div className="flex-1 max-h-[380px] overflow-y-auto pr-1">
+        <div className="p-5 grid grid-cols-3 gap-3">
+          {filteredApps.map(app => {
+            return (
               <button 
                 key={app.name}
-                onClick={() => navigateTo(app.href, router)} 
-                className="flex flex-col items-center gap-2 group p-2 hover:bg-white/5 rounded-2xl transition-all"
+                onClick={() => { 
+                  navigateTo(app.href, router);
+                }} 
+                className={cn(
+                  "p-3 rounded-2xl flex flex-col items-center gap-2 transition-all hover:bg-white/5 hover:scale-105 group/btn border-2 border-transparent hover:border-white/5 shadow-md", 
+                  app.bg
+                )}
               >
-                <AnimatedAppIcon iconName={app.iconName} className="w-12 h-12 bg-white rounded-xl shadow-lg shadow-white/20" size={48} />
-                <span className="text-[10px] font-medium text-white/70 group-hover:text-white text-center leading-tight">{app.name}</span>
+                <AnimatedAppIcon 
+                  iconName={app.iconName} 
+                  className="w-10 h-10 bg-white rounded-xl shadow-sm transition-transform group-hover/btn:scale-110 duration-300" 
+                  size={40} 
+                />
+                <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover/btn:text-white truncate w-full text-center">{app.name}</span>
               </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
