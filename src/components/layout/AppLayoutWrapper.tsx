@@ -12,7 +12,6 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const isAppRoute = pathname?.startsWith("/xakcode") ||
                      pathname?.startsWith("/xaksports") || 
                      pathname?.startsWith("/games/play/") ||
-                     pathname?.startsWith("/game/") ||
                      pathname?.startsWith("/games/retro") ||
                      pathname?.startsWith("/games/neural_defense");
                      
