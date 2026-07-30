@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
  
 const GAME_MAP: Record<string, React.ComponentType<any>> = {
+  chronos_nexus_overdrive: dynamic(() => import("@/components/game/chronos-nexus-overdrive")),
+  chronosNexusOverdrive: dynamic(() => import("@/components/game/chronos-nexus-overdrive")),
   chrono_vanguard_paradox_shift: dynamic(() => import("@/components/game/chrono-vanguard-paradox-shift")),
   chronoVanguardParadoxShift: dynamic(() => import("@/components/game/chrono-vanguard-paradox-shift")),
   cyber_vortex_odyssey: dynamic(() => import("@/components/game/cyber-vortex-odyssey")),

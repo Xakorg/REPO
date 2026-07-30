@@ -15,6 +15,22 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "chronos_nexus_overdrive",
+    title: "Chronos Nexus Overdrive",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Survival", "Base Defense"],
+    description: "High-octane 2D cyberpunk space shooter and tactical Nexus Core defense. Command your interceptor mech, deploy time-dilation fields, execute tachyon dashes, unlock matrix upgrades, and eliminate invading AI dreadnought armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=chronosnexusoverdrive",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "14:30", description: "Initial Game Release" }
+    ],
+    route: "/game/chronos-nexus-overdrive"
+  },
+  {
     id: "apex_valkyrie_overdrive",
     title: "Apex Valkyrie Overdrive",
     developer: "Xakteir Studios",
