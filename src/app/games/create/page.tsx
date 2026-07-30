@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Play, ShoppingBag, Sparkles, UploadCloud, FolderUp, CheckCircle, FileArchive, Github, Link2 } from "lucide-react";
+import { ArrowLeft, Play, ShoppingBag, Sparkles, UploadCloud, FolderUp, CheckCircle, FileArchive, Github, Link2, Code } from "lucide-react";
 import { useFirestore, useFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { upload } from "@vercel/blob/client";
