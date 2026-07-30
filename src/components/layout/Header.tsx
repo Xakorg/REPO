@@ -78,55 +78,57 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/co
 import { RenderHat } from "@/components/RenderHat";
 import { useSuiteStore } from "@/lib/store";
 
+import { AnimatedAppIcon } from "@/components/ui/AnimatedAppIcon";
+
 const APPS = [
   // Main Apps
-  { name: "Mail", icon: Mail, href: "/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
-  { name: "Chat", icon: MessageCircle, href: "/chat", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-  { name: "Xak AI", icon: Bot, href: "/ai-chat", color: "text-primary", bg: "bg-primary/10" },
-  { name: "Drive", icon: HardDrive, href: "https://drive.xakteir.com", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Games", icon: Gamepad2, href: "/games", color: "text-purple-400", bg: "bg-purple-400/10" },
-  { name: "Maps", icon: Map, href: "/map", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-  { name: "Apps", icon: LayoutGrid, href: "/apps", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "Mail", iconName: "mail", href: "/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
+  { name: "Chat", iconName: "chat", href: "/chat", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { name: "Xak AI", iconName: "ai-chat", href: "/ai-chat", color: "text-primary", bg: "bg-primary/10" },
+  { name: "Drive", iconName: "drive", href: "https://drive.xakteir.com", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "Games", iconName: "games", href: "/games", color: "text-purple-400", bg: "bg-purple-400/10" },
+  { name: "Maps", iconName: "map", href: "/map", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { name: "Apps", iconName: "apps", href: "/apps", color: "text-indigo-400", bg: "bg-indigo-400/10" },
   
   // Other Apps
-  { name: "Search", icon: SearchIcon, href: "/search", color: "text-blue-400", bg: "bg-blue-400/10" },
-  { name: "Whiteboard", icon: Presentation, href: "/whiteboard", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Studio", icon: Sparkles, href: "/studio", color: "text-purple-500", bg: "bg-purple-500/10" },
-  { name: "Premium", icon: Award, href: "/premium", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Settings", icon: Settings, href: "/settings", color: "text-zinc-500", bg: "bg-zinc-500/10" },
-  { name: "XakSports", icon: Gamepad2, href: "/xaksports", color: "text-orange-400", bg: "bg-orange-400/10" },
-  { name: "XakArena", icon: Swords, href: "/xakarena", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "XakCode", icon: Code2, href: "/xakcode", color: "text-sky-400", bg: "bg-sky-500/10" },
-  { name: "XakView", icon: Video, href: "/xakview", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "Xakteir Plan", icon: CalendarIcon, href: "/calendar", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "XakPicks", icon: ImageIcon, href: "/pics", color: "text-pink-500", bg: "bg-pink-500/10" },
-  { name: "Classroom", icon: GraduationCap, href: "/classroom", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "Meet", icon: VideoIcon, href: "https://meet.xakteir.com", color: "text-rose-400", bg: "bg-rose-400/10" },
-  { name: "Translate", icon: Zap, href: "/translate", color: "text-blue-300", bg: "bg-blue-300/10" },
-  { name: "Calculator", icon: Calculator, href: "/calculator", color: "text-zinc-400", bg: "bg-zinc-400/10" },
-  { name: "Notes", icon: Code2, href: "/notes", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "Social", icon: Users, href: "/social", color: "text-pink-500", bg: "bg-pink-500/10" },
-  { name: "Shop", icon: ShoppingBag, href: "/shop", color: "text-emerald-500", bg: "bg-emerald-500/10" },
-  { name: "Dev Centre", icon: Code2, href: "https://dev.xakteir.com", color: "text-blue-500", bg: "bg-blue-500/10" },
-  { name: "Art Studio", icon: Palette, href: "/art", color: "text-pink-400", bg: "bg-pink-400/10" },
-  { name: "Archive", icon: Archive, href: "/archive", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Authenticator", icon: ShieldCheck, href: "/authenticator", color: "text-teal-400", bg: "bg-teal-400/10" },
-  { name: "XakBuddy", icon: Heart, href: "/buddy", color: "text-rose-400", bg: "bg-rose-400/10" },
-  { name: "XakInstaller", icon: Download, href: "/installer", color: "text-sky-500", bg: "bg-sky-500/10" },
-  { name: "Forms", icon: FileText, href: "/forms", color: "text-purple-400", bg: "bg-purple-400/10" },
-  { name: "Write", icon: PenTool, href: "/write", color: "text-blue-400", bg: "bg-blue-400/10" },
-  { name: "Slides", icon: Presentation, href: "/slides", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Voltra", icon: Zap, href: "/voltra", color: "text-yellow-400", bg: "bg-yellow-400/10" },
-  { name: "VoltraMax", icon: Zap, href: "/voltramax", color: "text-orange-500", bg: "bg-orange-500/10" },
-  { name: "News", icon: Newspaper, href: "/news", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "Search Console", icon: SearchIcon, href: "/search-console", color: "text-teal-400", bg: "bg-teal-400/10" },
-  { name: "XakSign", icon: CheckSquare, href: "/sign", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Stream Feed", icon: Radio, href: "/stream", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "Tasks Tracker", icon: CheckSquare, href: "/tasks", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-  { name: "Weather", icon: Sun, href: "/weather", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Support", icon: HelpCircle, href: "/contact", color: "text-zinc-400", bg: "bg-zinc-400/10" },
-  { name: "Profile", icon: UserIcon, href: "https://account.xakteir.com", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "About", icon: Info, href: "/about", color: "text-zinc-400", bg: "bg-zinc-400/10" }
+  { name: "Search", iconName: "search", href: "/search", color: "text-blue-400", bg: "bg-blue-400/10" },
+  { name: "Whiteboard", iconName: "whiteboard", href: "/whiteboard", color: "text-amber-400", bg: "bg-amber-400/10" },
+  { name: "Studio", iconName: "default", href: "/studio", color: "text-purple-500", bg: "bg-purple-500/10" },
+  { name: "Premium", iconName: "default", href: "/premium", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "Settings", iconName: "settings", href: "/settings", color: "text-zinc-500", bg: "bg-zinc-500/10" },
+  { name: "XakSports", iconName: "xaksports", href: "/xaksports", color: "text-orange-400", bg: "bg-orange-400/10" },
+  { name: "XakArena", iconName: "default", href: "/xakarena", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "XakCode", iconName: "code", href: "/xakcode", color: "text-sky-400", bg: "bg-sky-500/10" },
+  { name: "XakView", iconName: "default", href: "/xakview", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Xakteir Plan", iconName: "default", href: "/calendar", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "XakPicks", iconName: "default", href: "/pics", color: "text-pink-500", bg: "bg-pink-500/10" },
+  { name: "Classroom", iconName: "classroom", href: "/classroom", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "Meet", iconName: "meet", href: "https://meet.xakteir.com", color: "text-rose-400", bg: "bg-rose-400/10" },
+  { name: "Translate", iconName: "default", href: "/translate", color: "text-blue-300", bg: "bg-blue-300/10" },
+  { name: "Calculator", iconName: "calculator", href: "/calculator", color: "text-zinc-400", bg: "bg-zinc-400/10" },
+  { name: "Notes", iconName: "notes", href: "/notes", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "Social", iconName: "social", href: "/social", color: "text-pink-500", bg: "bg-pink-500/10" },
+  { name: "Shop", iconName: "shop", href: "/shop", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  { name: "Dev Centre", iconName: "dev-centre", href: "https://dev.xakteir.com", color: "text-blue-500", bg: "bg-blue-500/10" },
+  { name: "Art Studio", iconName: "art", href: "/art", color: "text-pink-400", bg: "bg-pink-400/10" },
+  { name: "Archive", iconName: "archive", href: "/archive", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { name: "Authenticator", iconName: "authenticator", href: "/authenticator", color: "text-teal-400", bg: "bg-teal-400/10" },
+  { name: "XakBuddy", iconName: "buddy", href: "/buddy", color: "text-rose-400", bg: "bg-rose-400/10" },
+  { name: "XakInstaller", iconName: "installer", href: "/installer", color: "text-sky-500", bg: "bg-sky-500/10" },
+  { name: "Forms", iconName: "suite", href: "/forms", color: "text-purple-400", bg: "bg-purple-400/10" },
+  { name: "Write", iconName: "suite", href: "/write", color: "text-blue-400", bg: "bg-blue-400/10" },
+  { name: "Slides", iconName: "suite", href: "/slides", color: "text-amber-400", bg: "bg-amber-400/10" },
+  { name: "Voltra", iconName: "default", href: "/voltra", color: "text-yellow-400", bg: "bg-yellow-400/10" },
+  { name: "VoltraMax", iconName: "default", href: "/voltramax", color: "text-orange-500", bg: "bg-orange-500/10" },
+  { name: "News", iconName: "news", href: "/news", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Search Console", iconName: "search-console", href: "/search-console", color: "text-teal-400", bg: "bg-teal-400/10" },
+  { name: "XakSign", iconName: "sign", href: "/sign", color: "text-amber-400", bg: "bg-amber-400/10" },
+  { name: "Stream Feed", iconName: "stream", href: "/stream", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { name: "Tasks Tracker", iconName: "tasks", href: "/tasks", color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  { name: "Weather", iconName: "weather", href: "/weather", color: "text-amber-400", bg: "bg-amber-400/10" },
+  { name: "Support", iconName: "support", href: "/contact", color: "text-zinc-400", bg: "bg-zinc-400/10" },
+  { name: "Profile", iconName: "profile", href: "https://account.xakteir.com", color: "text-indigo-400", bg: "bg-indigo-400/10" },
+  { name: "About", iconName: "about", href: "/about", color: "text-zinc-400", bg: "bg-zinc-400/10" }
 ];
 
 function AppLauncherContent({ router }: { router: any }) {
@@ -142,26 +144,17 @@ function AppLauncherContent({ router }: { router: any }) {
           <Input autoFocus value={appSearch} onChange={(e) => setAppSearch(e.target.value)} placeholder="Search apps..." className="h-9 w-36 rounded-xl bg-secondary/30 border-white/10 pl-9 text-[9px] font-black italic" />
         </div>
       </div>
-      <div className="flex-1 max-h-[380px] overflow-y-auto pr-1">
-        <div className="p-5 grid grid-cols-3 gap-3">
-          {filteredApps.map(app => {
-            return (
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-3 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {filteredApps.map(app => (
               <button 
                 key={app.name}
-                onClick={() => { 
-                  navigateTo(app.href, router);
-                }} 
-                className={cn(
-                  "p-3 rounded-2xl flex flex-col items-center gap-2 transition-all hover:bg-white/5 hover:scale-105 group/btn border-2 border-transparent hover:border-white/5 shadow-md", 
-                  app.bg
-                )}
+                onClick={() => navigateTo(app.href, router)} 
+                className="flex flex-col items-center gap-2 group p-2 hover:bg-white/5 rounded-2xl transition-all"
               >
-                <app.icon className={cn("w-6 h-6 transition-transform group-hover/btn:scale-110 duration-300", app.color)} />
-                <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover/btn:text-white truncate w-full text-center">{app.name}</span>
+                <AnimatedAppIcon iconName={app.iconName} className="w-12 h-12 bg-white rounded-xl shadow-lg shadow-white/20" size={48} />
+                <span className="text-[10px] font-medium text-white/70 group-hover:text-white text-center leading-tight">{app.name}</span>
               </button>
-            );
-          })}
-        </div>
       </div>
     </div>
   );
