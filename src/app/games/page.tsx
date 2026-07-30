@@ -181,12 +181,11 @@ export default function PlayStationGamesLibrary() {
     )}>
       
       {/* 1. Dynamic Fullscreen Background (PS5 Style) */}
-      <AnimatePresence mode="wait">
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <motion.div
           key={activeItem?.id || "empty"}
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           className={cn(
             "absolute inset-0 bg-gradient-to-br to-black pointer-events-none transition-colors duration-1000",
@@ -205,7 +204,7 @@ export default function PlayStationGamesLibrary() {
             </>
           )}
         </motion.div>
-      </AnimatePresence>
+      </div>
 
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.1),transparent_50%)] pointer-events-none" />
 
@@ -297,15 +296,14 @@ export default function PlayStationGamesLibrary() {
 
       {/* 3. Game Info Overlay */}
       <div className="absolute top-28 md:top-32 left-6 md:left-12 z-40 max-w-[90vw] md:max-w-xl text-left pointer-events-none">
-        <AnimatePresence mode="wait">
+        <div className="relative w-full min-h-[300px]">
           {activeItem && (
             <motion.div
               key={activeItem.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.4 }}
-              className="pointer-events-auto"
+              className="absolute inset-0 pointer-events-auto"
             >
               <img src={activeItem.iconUrl} alt="logo" className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl bg-zinc-900 border-2 border-white/10 mb-4 shadow-2xl" />
               <h1 className="text-3xl md:text-5xl font-black tracking-tighter mb-3 leading-tight">{activeItem.title}</h1>
@@ -323,7 +321,7 @@ export default function PlayStationGamesLibrary() {
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
+        </div>
       </div>
 
       {/* 4. Scrollable Multi-Row Library */}

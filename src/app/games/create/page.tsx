@@ -152,16 +152,19 @@ export default function GamesCreatePage() {
     if (!firestore || !user) return;
     
     try {
-      await addDoc(collection(firestore, "publishedProjects"), {
+      const docRef = await addDoc(collection(firestore, "publishedProjects"), {
         name: gameTitle,
         description: gameDescription,
         tags: gameTags.split(",").map(t => t.trim()),
         controls: gameControls,
         thumbnailUrl: thumbnailUrl,
-        url: publishedUrl,
+        url: publishedUrl, // Raw Vercel Blob HTML game URL
         developerId: user.uid,
         createdAt: serverTimestamp(),
       });
+      // Set the publishedUrl to the internal route to play it instead of the raw Vercel URL
+      const internalPlayUrl = window.location.origin + `/game/${docRef.id}`;
+      setPublishedUrl(internalPlayUrl);
       setStep("SUCCESS");
     } catch (error) {
       alert("Failed to save project details.");
