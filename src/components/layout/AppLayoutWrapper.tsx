@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
+import { MobileBottomNav } from "./MobileBottomNav";
 
 export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -79,9 +80,9 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
       )}
       
       <div 
-        className={isAppRoute ? `fixed top-0 left-0 right-0 z-[500] transition-all duration-300 transform ${
+        className={isAppRoute ? `hidden md:block fixed top-0 left-0 right-0 z-[500] transition-all duration-300 transform ${
           (showOverlay || altToggled) ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
-        }` : `transition-all duration-300 ${
+        }` : `hidden md:block transition-all duration-300 ${
           altToggled ? "hidden" : "translate-y-0 opacity-100"
         }`}
         onMouseEnter={isAppRoute ? () => setShowOverlay(true) : undefined}
@@ -105,6 +106,8 @@ export function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
       >
         <Footer />
       </div>
+
+      <MobileBottomNav />
     </>
   );
 }

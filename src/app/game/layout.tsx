@@ -165,19 +165,19 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* Sidebar: Other Games */}
-        <div className="w-full lg:w-80 flex flex-col shrink-0 gap-4 mt-8 lg:mt-0">
-          <h3 className="text-sm font-black tracking-widest uppercase text-white/40 flex items-center gap-2 px-2">
+        <div className="w-full lg:w-80 flex flex-col shrink-0 gap-4 mt-8 lg:mt-0 overflow-hidden">
+          <h3 className="text-sm font-black tracking-widest uppercase text-white/40 flex items-center gap-2 px-2 shrink-0">
             <Gamepad2 className="w-4 h-4" /> Recommended
           </h3>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 snap-x snap-mandatory hide-scrollbar">
             {otherGames.map(game => (
               <div 
                 key={game.id}
                 onClick={() => window.location.href = game.route}
-                className="flex items-center gap-4 p-3 bg-white/5 border border-white/10 hover:border-white/30 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group"
+                className="flex flex-col lg:flex-row items-center lg:items-center gap-2 lg:gap-4 p-3 bg-white/5 border border-white/10 hover:border-white/30 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group shrink-0 w-[140px] lg:w-auto snap-start"
               >
-                <img src={game.iconUrl} alt="icon" className="w-16 h-16 rounded-xl object-cover bg-black" />
-                <div className="flex-1 min-w-0">
+                <img src={game.iconUrl} alt="icon" className="w-16 h-16 rounded-xl object-cover bg-black shrink-0" />
+                <div className="flex-1 min-w-0 text-center lg:text-left">
                   <div className="text-sm font-black tracking-tight truncate group-hover:text-primary transition-colors">
                     {game.title}
                   </div>
