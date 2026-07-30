@@ -41,7 +41,7 @@ export default function GamesStorePage() {
     genre: ["Web", "Custom"],
     type: "App",
     price: "Free",
-    route: `/projects/${g.id}`,
+    route: `/game/${g.id}`,
     bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80",
     iconUrl: "",
     videoUrl: ""

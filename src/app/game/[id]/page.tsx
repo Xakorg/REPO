@@ -98,6 +98,7 @@ export default function GamePlayerPage() {
   
   const [loading, setLoading] = useState(true);
   const [communityGameData, setCommunityGameData] = useState<any | null>(null);
+  const [communityHtml, setCommunityHtml] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [reward, setReward] = useState<{
     show: boolean;
@@ -122,7 +123,31 @@ export default function GamePlayerPage() {
         const docRef = doc(firestore, "publishedProjects", rawGameId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setCommunityGameData(docSnap.data());
+          const data = docSnap.data();
+          setCommunityGameData(data);
+          
+          // Fetch the raw HTML to prevent forced download by Vercel Blob
+          try {
+            const res = await fetch(data.url);
+            let htmlText = await res.text();
+            
+            // Inject <base> tag so relative paths work
+            const baseUrl = data.url.substring(0, data.url.lastIndexOf('/') + 1);
+            const baseTag = `<base href="${baseUrl}" />`;
+            
+            if (htmlText.includes('<head>')) {
+              htmlText = htmlText.replace('<head>', '<head>' + baseTag);
+            } else if (htmlText.includes('<html>')) {
+              htmlText = htmlText.replace('<html>', '<html><head>' + baseTag + '</head>');
+            } else {
+              htmlText = '<head>' + baseTag + '</head>' + htmlText;
+            }
+            
+            setCommunityHtml(htmlText);
+          } catch (fetchErr) {
+            console.error("Failed to fetch HTML content for iframe rendering", fetchErr);
+          }
+          
           setTimeout(() => setLoading(false), 1200);
         } else {
           setNotFound(true);
@@ -286,11 +311,12 @@ export default function GamePlayerPage() {
  
       <div className="w-full h-full">
         {!loading && game && GameComponent && <GameComponent />}
-        {!loading && !game && communityGameData && (
+        {!loading && !game && communityHtml && (
           <iframe 
-            src={communityGameData.url}
+            srcDoc={communityHtml}
             className="w-full h-full border-0 bg-white"
-            title={communityGameData.name}
+            title={communityGameData?.name || "Community Game"}
+            sandbox="allow-scripts allow-same-origin allow-downloads allow-forms allow-modals allow-pointer-lock allow-popups"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; game-pad; keyboard-map"
           />
         )}
