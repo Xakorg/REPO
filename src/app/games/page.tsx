@@ -44,6 +44,26 @@ export default function PlayStationGamesLibrary() {
 
   const { data: topPlayers, isLoading: leaderboardLoading } = useCollection(leaderboardQuery);
 
+  const publishedProjectsQuery = useMemoFirebase(() => {
+    return firestore ? collection(firestore, "publishedProjects") : null;
+  }, [firestore]);
+  const { data: publishedGamesRaw } = useCollection(publishedProjectsQuery);
+
+  const customGames: GameMeta[] = publishedGamesRaw?.map(g => ({
+    id: g.id,
+    title: g.name,
+    description: g.description,
+    developer: "Community",
+    genre: ["Web", "Custom"],
+    type: "App",
+    price: "Free",
+    route: `/game/${g.id}`,
+    bannerUrl: g.thumbnailUrl || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80",
+    iconUrl: g.thumbnailUrl || "",
+  })) || [];
+
+  const ALL_GAMES = [...GAMES_DB, ...customGames];
+
   useEffect(() => {
     const storedTheme = localStorage.getItem("games_theme");
     if (storedTheme === "light") setIsLightMode(true);
@@ -105,15 +125,19 @@ export default function PlayStationGamesLibrary() {
     setLaunchingGame(game.id);
     setTimeout(() => {
       window.location.href = game.route;
-    }, 2000);
+    }, 800);
   };
 
-  const libraryGames = GAMES_DB.filter(g => libraryIds.includes(g.id));
-  const recentGames = recentIds.map(id => GAMES_DB.find(g => g.id === id)).filter(Boolean) as GameMeta[];
-  const favoriteGames = favoriteIds.map(id => GAMES_DB.find(g => g.id === id)).filter(Boolean) as GameMeta[];
-  
-  const filteredGames = libraryGames.filter(g => g.title.toLowerCase().includes(searchQuery.toLowerCase()) || g.genre.some(genre => genre.toLowerCase().includes(searchQuery.toLowerCase())));
+  const filteredGames = ALL_GAMES.filter(g => 
+    g.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    g.genre.some(genre => genre.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    g.developer.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
+  const libraryGames = ALL_GAMES.filter(g => libraryIds.includes(g.id));
+  const recentGames = recentIds.map(id => ALL_GAMES.find(g => g.id === id)).filter(Boolean) as GameMeta[];
+  const favoriteGames = favoriteIds.map(id => ALL_GAMES.find(g => g.id === id)).filter(Boolean) as GameMeta[];
+  
   // Generate a dynamic gradient based on the active item ID length as a pseudo-random seed
   const getGradient = (id: string = "") => {
     const colors = [

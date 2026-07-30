@@ -42,8 +42,8 @@ export default function GamesStorePage() {
     type: "App",
     price: "Free",
     route: `/game/${g.id}`,
-    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80",
-    iconUrl: "",
+    bannerUrl: g.thumbnailUrl || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80",
+    iconUrl: g.thumbnailUrl || "",
     videoUrl: ""
   })) || [];
 
