@@ -15,6 +15,22 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "hyperion_void_surge",
+    title: "Hyperion Void Surge",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Survival", "Bullet Hell"],
+    description: "Tactical space combat survival game. Command the Hyperion interceptor, unleash Graviton Nova EMPs, switch between 5 plasma weapon arrays, defeat void dreadnoughts, and master the orbital battlefield.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=hyperionvoidsurge",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "13:15", description: "Initial Game Release" }
+    ],
+    route: "/game/hyperion-void-surge"
+  },
+  {
     id: "solaris_valkyrie_odyssey",
     title: "Solaris Valkyrie Odyssey",
     developer: "Xakteir Studios",
