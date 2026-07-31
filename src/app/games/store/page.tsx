@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { GAMES_DB, GameMeta } from "@/lib/games-db";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Sparkles, Download, Check, Play, Globe } from "lucide-react";
+import { ArrowLeft, Sparkles, Download, Check, Play, Globe, Flame } from "lucide-react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
+import { XakchatSidebar } from "@/components/game/XakchatSidebar";
 
 export default function GamesStorePage() {
   const router = useRouter();
@@ -89,6 +90,10 @@ export default function GamesStorePage() {
           >
             <Sparkles className="w-4 h-4 text-amber-400" /> Create
           </button>
+          
+          <div className="ml-2">
+            <XakchatSidebar />
+          </div>
         </div>
       </header>
 
@@ -130,9 +135,11 @@ export default function GamesStorePage() {
         </div>
       </div>
 
-      {/* Store Grid */}
+      {/* Trending / Store Grid */}
       <div className="px-10 py-20 max-w-[1800px] mx-auto">
-        <h3 className="text-3xl font-black tracking-tighter mb-8">Discover More</h3>
+        <h3 className="text-3xl font-black tracking-tighter mb-8 flex items-center gap-3">
+          <Flame className="w-8 h-8 text-orange-500" /> Trending Now
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {otherGames.map((game) => {
             const isOwned = libraryIds.includes(game.id);

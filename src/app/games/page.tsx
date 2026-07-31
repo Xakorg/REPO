@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit } from "firebase/firestore";
+import { XakchatSidebar } from "@/components/game/XakchatSidebar";
 
 export default function PlayStationGamesLibrary() {
   const router = useRouter();
@@ -313,6 +314,9 @@ export default function PlayStationGamesLibrary() {
               </div>
             </SheetContent>
           </Sheet>
+          
+          <XakchatSidebar activeGameId={activeItem?.id} activeGameTitle={activeItem?.title} />
+
           <button onClick={toggleTheme} className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors border border-white/20 text-white">
             {isLightMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
           </button>
