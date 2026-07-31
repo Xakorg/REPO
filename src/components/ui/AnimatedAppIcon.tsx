@@ -13,7 +13,15 @@ export function AnimatedAppIcon({
   size?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [hueOffset, setHueOffset] = useState(0);
+  const [hueOffset, setHueOffset] = useState(() => {
+    // Generate a consistent starting offset based on the icon name
+    // so they animate independently and are not synced
+    let hash = 0;
+    for (let i = 0; i < iconName.length; i++) {
+      hash = iconName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash) % 360;
+  });
 
   // Animation loop
   useEffect(() => {
