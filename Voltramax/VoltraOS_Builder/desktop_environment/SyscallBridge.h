@@ -6,56 +6,31 @@
 
 /**
  * ============================================================================
- * VOLTRA OS ENTERPRISE - RING 3 SYSCALL BRIDGE
+ * VOLTRA OS ENTERPRISE - NATIVE LINUX SYSCALL BRIDGE
  * ============================================================================
  * 
- * This library bridges the C++ User Space applications (Volt Shell, OOBE) 
- * directly to the VoltraOS C Kernel running in Ring 0.
- * 
- * It uses inline assembly `int 0x80` to trigger the hardware interrupt 
- * vector, passing the syscall number in EAX and arguments in EBX, ECX, EDX.
+ * VoltraOS is built natively on top of the Linux Kernel.
+ * This class abstracts raw POSIX System Calls (syscalls) to interact
+ * directly with the Linux Kernel running in Ring 0, bypassing bloated libc
+ * wrappers where maximum performance is required.
  * ============================================================================
  */
 
-// VoltraOS Syscall Numbers
-#define SYS_WRITE   4
-#define SYS_OPEN    5
-#define SYS_CLOSE   6
-#define SYS_SOCKET  359
-#define SYS_BIND    360
-#define SYS_CONNECT 362
-
 class SyscallBridge {
 public:
-    // File System (VFS) Syscalls
+    // Core POSIX Filesystem Syscalls via Linux Kernel
     static int open(const char* path, int flags);
     static int write(int fd, const void* buf, size_t count);
     static int close(int fd);
-    
-    // Network (TCP/IP) Syscalls
+
+    // Advanced Networking Syscalls via Linux Kernel
     static int socket();
     static int bind(int sockfd, uint32_t ip, uint16_t port);
     static int connect(int sockfd, uint32_t ip, uint16_t port);
-    
+
 private:
-    // The raw hardware interrupt wrapper
-    static inline int syscall3(uint32_t syscall_num, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
-        int ret;
-        // In a real VoltraOS environment (not a Windows host mock), this triggers Ring 0.
-        // We use preprocessor checks to prevent this from crashing the mock environment.
-#ifdef __VOLTRA_OS__
-        asm volatile (
-            "int $0x80"
-            : "=a" (ret)
-            : "a" (syscall_num), "b" (arg1), "c" (arg2), "d" (arg3)
-            : "memory"
-        );
-#else
-        // Mock return for Windows/Linux host compilation
-        ret = 0; 
-#endif
-        return ret;
-    }
+    // Internal wrapper to trigger the native Linux `syscall()` instruction
+    static int execute_linux_syscall(long sys_num, long arg1 = 0, long arg2 = 0, long arg3 = 0);
 };
 
 #endif // SYSCALL_BRIDGE_H

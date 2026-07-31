@@ -174,7 +174,7 @@ QStringList BrowserEngine::getBookmarks() {
 }
 
 void BrowserEngine::persistBookmarksToDisk() {
-    qDebug() << "[BrowserEngine] Persisting bookmarks to VFS via int 0x80 Syscall...";
+    qDebug() << "[BrowserEngine] Persisting bookmarks to VFS via Native Linux Syscall...";
     int fd = SyscallBridge::open("/home/voltra/.config/browser_bookmarks.dat", 2);
     QString data = m_bookmarks.join("\n");
     SyscallBridge::write(fd, data.toStdString().c_str(), data.length());

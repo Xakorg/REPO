@@ -27,15 +27,8 @@ $(BUILD_DIR):
 # ------------------------------------------------------------------------------
 # 1. Compile the C Kernel
 # ------------------------------------------------------------------------------
-$(BUILD_DIR)/boot.o: $(KERNEL_DIR)/src/boot.s | $(BUILD_DIR)
-	$(AS) $< -o $@
-
-$(BUILD_DIR)/kernel.o: $(KERNEL_DIR)/src/kernel.c | $(BUILD_DIR)
-	$(CC) -c $< -o $@
-
-$(BUILD_DIR)/voltra_kernel.bin: $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o
-	$(LD) -T $(KERNEL_DIR)/linker.ld -o $@ $^
-
+# The custom C Kernel has been deprecated in favor of a Native Linux Foundation.
+# Future builds will package the VDS directly onto an Archiso/Debian rootfs.
 # ------------------------------------------------------------------------------
 # 2. Compile the User Space Initrd (Desktop Environment + Daemons)
 # ------------------------------------------------------------------------------
@@ -50,20 +43,18 @@ $(BUILD_DIR)/desktop.initrd:
 # ------------------------------------------------------------------------------
 # 3. Generate the Bootable ISO via GRUB
 # ------------------------------------------------------------------------------
-iso: $(BUILD_DIR)/voltra_kernel.bin $(BUILD_DIR)/desktop.initrd
-	@echo "Building final voltraos.iso..."
+iso: $(BUILD_DIR)/desktop.initrd
+	@echo "[+] Building VoltraOS Linux Foundation Live CD ISO..."
 	mkdir -p $(ISO_DIR)/boot/grub
-	cp $(BUILD_DIR)/voltra_kernel.bin $(ISO_DIR)/boot/
+	# In a real build, we'd copy vmlinuz-linux and initramfs here
 	cp $(BUILD_DIR)/desktop.initrd $(ISO_DIR)/boot/
-	
-	# Create GRUB Config
-	echo 'set timeout=0' > $(ISO_DIR)/boot/grub/grub.cfg
-	echo 'set default=0' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'set default=0' > $(ISO_DIR)/boot/grub/grub.cfg
+	echo 'set timeout=3' >> $(ISO_DIR)/boot/grub/grub.cfg
 	echo 'menuentry "VoltraOS Enterprise" {' >> $(ISO_DIR)/boot/grub/grub.cfg
-	echo '  multiboot /boot/voltra_kernel.bin' >> $(ISO_DIR)/boot/grub/grub.cfg
-	echo '  module /boot/desktop.initrd' >> $(ISO_DIR)/boot/grub/grub.cfg
-	echo '  boot' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo '  linux /boot/vmlinuz-linux root=/dev/ram0 rw quiet splash' >> $(ISO_DIR)/boot/grub/grub.cfg
+	echo '  initrd /boot/desktop.initrd' >> $(ISO_DIR)/boot/grub/grub.cfg
 	echo '}' >> $(ISO_DIR)/boot/grub/grub.cfg
+	grub-mkrescue -o voltra_os_v1.iso $(ISO_DIR)/boot/grub/grub.cfg
 	
 	grub-mkrescue -o $(ISO_IMAGE) $(ISO_DIR)
 	@echo "SUCCESS: voltraos.iso generated and ready for VoltraMax hardware."

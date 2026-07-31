@@ -51,7 +51,7 @@ void OOBEManager::connectToNetwork(const QString& ssid, const QString& password)
     emit networkChanged();
     emit connectingChanged();
     
-    // Hardware integration: Open an AF_INET socket via VoltraOS Kernel Syscall
+    // Hardware integration: Open an AF_INET socket via Native Linux Syscall
     int sockfd = SyscallBridge::socket();
     SyscallBridge::connect(sockfd, 0, 8080); // Connect to mock IP
     
@@ -80,7 +80,7 @@ void OOBEManager::evaluatePassword(const QString& password) {
 
 void OOBEManager::createUserAccount(const QString& username, const QString& password) {
     qDebug() << "[OOBE] Creating secure user account for:" << username;
-    // Hardware integration: Write profile securely to VoltraOS VFS via Syscall
+    // Hardware integration: Write profile securely to VoltraOS VFS via Native Linux Syscall
     int fd = SyscallBridge::open("/usr/local/profiles.dat", 2); // O_RDWR
     QString profileData = username + ":" + password;
     SyscallBridge::write(fd, profileData.toStdString().c_str(), profileData.length());

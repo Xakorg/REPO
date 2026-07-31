@@ -6,12 +6,11 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   try {
     const jsonResponse = await handleUpload({
-      token: process.env.XktrBlb_READ_WRITE_TOKEN,
+      token: process.env.BLOB_READ_WRITE_TOKEN || process.env.XktrBlb_READ_WRITE_TOKEN,
       body,
       request,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         return {
-          allowedContentTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'application/pdf', 'text/plain', 'text/html', 'application/javascript', 'text/css', 'font/woff', 'font/woff2', 'font/ttf', 'application/zip', 'application/x-zip-compressed', 'video/mp4', 'audio/mpeg', 'audio/wav', 'application/json', 'application/octet-stream'],
           maximumSizeInBytes: 500 * 1024 * 1024, // 500MB limit
         };
       },

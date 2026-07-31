@@ -39,7 +39,7 @@ void SettingsEngine::loadFromVirtualDisk() {
 
 void SettingsEngine::saveToVirtualDisk() {
     // In a real C++ app, this parses JSON and writes to disk.
-    qDebug() << "[SettingsEngine] Synchronizing config to Kernel Space /etc/voltra/system.conf...";
+    qDebug() << "[SettingsEngine] Synchronizing config to Linux Sysfs /etc/voltra/system.conf...";
     emit settingsSavedToDisk();
 }
 
@@ -143,13 +143,13 @@ void SettingsEngine::setCameraAccessEnabled(bool enabled) {
 }
 
 // ----------------------------------------------------------------------------
-// KERNEL TUNING (Ring 0 Schedulers)
+// LINUX KERNEL TUNING (Schedulers)
 // ----------------------------------------------------------------------------
 QString SettingsEngine::cpuScheduler() const { return m_cpuScheduler; }
 void SettingsEngine::setCpuScheduler(const QString& scheduler) {
     if (m_cpuScheduler != scheduler) {
         m_cpuScheduler = scheduler;
-        qDebug() << "[SettingsEngine] ALERT: CFS Kernel Scheduler updated to:" << scheduler;
+        qDebug() << "[SettingsEngine] ALERT: CFS Linux Scheduler updated to:" << scheduler;
         emit kernelSettingsChanged();
         saveToVirtualDisk();
     }
@@ -159,7 +159,7 @@ bool SettingsEngine::hyperThreadingEnabled() const { return m_hyperThreading; }
 void SettingsEngine::setHyperThreadingEnabled(bool enabled) {
     if (m_hyperThreading != enabled) {
         m_hyperThreading = enabled;
-        qDebug() << "[SettingsEngine] ALERT: SMT/HyperThreading Kernel Flag ->" << enabled;
+        qDebug() << "[SettingsEngine] ALERT: SMT/HyperThreading Linux Flag ->" << enabled;
         emit kernelSettingsChanged();
         saveToVirtualDisk();
     }

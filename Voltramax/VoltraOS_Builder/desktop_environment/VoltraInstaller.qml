@@ -51,7 +51,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
         }
         Text {
-            text: "This application will write the Voltra C Kernel to bare metal hardware.\nProceed with extreme caution."
+            text: "This application will write the VoltraOS Linux Foundation to bare metal hardware.\nProceed with extreme caution."
             color: "#AAAAAA"
             font.pixelSize: 18
             horizontalAlignment: Text.AlignHCenter
@@ -202,7 +202,7 @@ Item {
         width: 800
         spacing: 20
 
-        Text { text: "Writing C Kernel to Bare Metal..."; color: "white"; font.pixelSize: 32; font.family: "Syne"; font.bold: true }
+        Text { text: "Writing Linux Kernel to Bare Metal..."; color: "white"; font.pixelSize: 32; font.family: "Syne"; font.bold: true }
         
         Rectangle {
             Layout.fillWidth: true
@@ -254,7 +254,7 @@ Item {
         spacing: 20
 
         Text { text: "VOLTRA OS INSTALLED."; color: "#00FFCC"; font.pixelSize: 48; font.family: "Syne"; font.bold: true; Layout.alignment: Qt.AlignHCenter }
-        Text { text: "The C Kernel has been successfully grafted to " + selectedDiskPath; color: "white"; font.pixelSize: 18; Layout.alignment: Qt.AlignHCenter }
+        Text { text: "The Linux Kernel Foundation has been successfully grafted to " + selectedDiskPath; color: "white"; font.pixelSize: 18; Layout.alignment: Qt.AlignHCenter }
         
         Rectangle {
             Layout.alignment: Qt.AlignHCenter

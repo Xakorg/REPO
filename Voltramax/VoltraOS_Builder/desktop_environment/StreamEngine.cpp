@@ -27,7 +27,7 @@ QString StreamEngine::currentTrack() const { return m_currentTrack; }
 void StreamEngine::play(const QString& filepath) {
     QMutexLocker locker(&m_audioMutex);
     
-    qDebug() << "[StreamEngine] Hooking into Kernel DRM buffer via int 0x80 to decode:" << filepath;
+    qDebug() << "[StreamEngine] Hooking into Linux DRM buffer via Native Syscall to decode:" << filepath;
     
     // Simulate VFS syscall
     int fd = SyscallBridge::open(filepath.toStdString().c_str(), 0);

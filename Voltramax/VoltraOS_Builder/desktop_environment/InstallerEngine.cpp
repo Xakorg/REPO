@@ -66,7 +66,7 @@ void InstallerWorker::run() {
 
     // In a real Live CD, the payload is in /run/archiso/bootmnt or similar.
     // For this build, we execute the tar extraction natively.
-    emit progressUpdated(80, "Extracting VoltraOS Core Kernel & User Space (tar -xpf)...");
+    emit progressUpdated(80, "Extracting VoltraOS Linux Foundation & User Space (tar -xpf)...");
     // This command takes time. If we had a real .vxar file, we'd pipe it through a reader to emit exact file progress.
     executeCommand("tar -xpf /opt/voltra_payload.tar.gz -C /mnt/voltra_install/", out);
 

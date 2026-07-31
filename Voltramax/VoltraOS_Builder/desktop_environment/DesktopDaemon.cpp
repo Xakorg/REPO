@@ -73,7 +73,7 @@ QString DesktopDaemon::processXakCommand(const QString &command)
         return "Executing neural app routing protocol...";
     }
     
-    return "I am deeply integrated into the Voltra Kernel. How may I assist you further?";
+    return "I am deeply integrated into the Linux Kernel Foundation. How may I assist you further?";
 }
 
 // ----------------------------------------------------------------------------
@@ -87,7 +87,7 @@ void DesktopDaemon::initializeIPCServer()
 
 void DesktopDaemon::mapKernelSharedMemory()
 {
-    qInfo() << "[VDS-DAEMON] [SYS] Mapping Kernel Framebuffer via mmap()...";
+    qInfo() << "[VDS-DAEMON] [SYS] Mapping Linux Framebuffer via mmap()...";
 }
 
 void DesktopDaemon::pollHardwareStats()
