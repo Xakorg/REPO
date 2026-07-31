@@ -15,6 +15,22 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "neon_vanguard_overdrive",
+    title: "Neon Vanguard Overdrive",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Survival", "Bullet Hell", "Cyberpunk"],
+    description: "High-octane cybernetic rogue-lite space shooter. Command the Neon Vanguard interceptor, unleash EMP shockwaves, level up matrix upgrades, deploy autonomous laser drones, switch between 5 plasma weapons, and defeat alien dreadnought armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neonvanguardoverdrive",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "17:00", description: "Initial Game Launch" }
+    ],
+    route: "/game/neon-vanguard-overdrive"
+  },
+  {
     id: "cyber_phantom_odyssey",
     title: "Cyber Phantom Odyssey",
     developer: "Xakteir Studios",
