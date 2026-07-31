@@ -15,6 +15,22 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "void_sentinel_overdrive",
+    title: "Void Sentinel Overdrive",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Survival", "Bullet Hell"],
+    description: "Tactical cybernetic space survival. Command your Sentinel, unleash graviton shockwaves, unlock piercing quantum hyper-railguns, deploy orbital drones, and conquer alien dreadnought armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=voidsentineloverdrive",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "15:00", description: "Initial Game Launch" }
+    ],
+    route: "/game/void-sentinel-overdrive"
+  },
+  {
     id: "hyperion_void_surge",
     title: "Hyperion Void Surge",
     developer: "Xakteir Studios",
