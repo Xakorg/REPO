@@ -15,6 +15,22 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "aether_zenith_cyber_horizon",
+    title: "Aether Zenith: Cyber Horizon",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Survival", "Bullet Hell", "Cyberpunk"],
+    description: "High-octane next-gen cybernetic rogue-lite space shooter. Command apex space interceptors, unleash tachyon matrix augmentations, engage in multistage dreadnought boss fights, and dominate the cosmic arena.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aetherzenithcyberhorizon",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "18:05", description: "Official Game Release" }
+    ],
+    route: "/game/aether-zenith-cyber-horizon"
+  },
+  {
     id: "neon_vanguard_overdrive",
     title: "Neon Vanguard Overdrive",
     developer: "Xakteir Studios",
