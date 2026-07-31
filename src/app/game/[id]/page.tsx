@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
  
 const GAME_MAP: Record<string, React.ComponentType<any>> = {
+  starlight_valkyrie_horizon: dynamic(() => import("@/components/game/starlight-valkyrie-horizon")),
+  starlightValkyrieHorizon: dynamic(() => import("@/components/game/starlight-valkyrie-horizon")),
   aether_zenith_cyber_horizon: dynamic(() => import("@/components/game/aether-zenith-cyber-horizon")),
   aetherZenithCyberHorizon: dynamic(() => import("@/components/game/aether-zenith-cyber-horizon")),
   void_sentinel_overdrive: dynamic(() => import("@/components/game/void-sentinel-overdrive")),
