@@ -895,7 +895,6 @@ export default function AetherZenithCyberHorizon() {
 
         if (e.type === "boss") {
           ctx.beginPath();
-          ctx.polygon = (ctx as any).polygon;
           ctx.fillRect(-e.radius, -e.radius, e.radius * 2, e.radius * 2);
         } else {
           ctx.beginPath();
