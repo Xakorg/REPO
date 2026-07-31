@@ -44,14 +44,6 @@
 // ----------------------------------------------------------------------------
 
 /**
- * CPU Registers saved during a context switch.
- */
-typedef struct registers {
-    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha
-    uint32_t eip, cs, eflags, useresp, ss;           // Pushed by the processor automatically
-} registers_t;
-
-/**
  * The Task Control Block (TCB).
  */
 typedef struct task_struct {

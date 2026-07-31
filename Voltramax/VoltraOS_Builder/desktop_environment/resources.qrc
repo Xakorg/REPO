@@ -1,0 +1,41 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="/">
+    <file>BootSplash.qml</file>
+    <file>Desktop.qml</file>
+    <file>GameHub.qml</file>
+    <file>SystemSettings.qml</file>
+    <file>Terminal.qml</file>
+    <file>VoltMaster.qml</file>
+    <file>VoltTerm.qml</file>
+    <file>VoltraBrowser.qml</file>
+    <file>VoltraCamera.qml</file>
+    <file>VoltraFiles.qml</file>
+    <file>VoltraInstaller.qml</file>
+    <file>VoltraStore.qml</file>
+    <file>VoltraStudio.qml</file>
+    <file>VoltraWeather.qml</file>
+    <file>WTLOverlay.qml</file>
+    <file>XakChat.qml</file>
+    <file>XakPlayground.qml</file>
+    <file>XakteirDrive.qml</file>
+    <file>XakteirStream.qml</file>
+</qresource>
+<qresource prefix="/OOBE">
+    <file alias="Main.qml">../OOBE_Native/Main.qml</file>
+    <file alias="AccountPage.qml">../OOBE_Native/AccountPage.qml</file>
+    <file alias="BiometricPage.qml">../OOBE_Native/BiometricPage.qml</file>
+    <file alias="CompletePage.qml">../OOBE_Native/CompletePage.qml</file>
+    <file alias="CustomizationPage.qml">../OOBE_Native/CustomizationPage.qml</file>
+    <file alias="LanguagePage.qml">../OOBE_Native/LanguagePage.qml</file>
+    <file alias="MultiUserPage.qml">../OOBE_Native/MultiUserPage.qml</file>
+    <file alias="NetworkPage.qml">../OOBE_Native/NetworkPage.qml</file>
+    <file alias="ParentalControlsPage.qml">../OOBE_Native/ParentalControlsPage.qml</file>
+    <file alias="PrivacyPage.qml">../OOBE_Native/PrivacyPage.qml</file>
+    <file alias="SecurityPage.qml">../OOBE_Native/SecurityPage.qml</file>
+    <file alias="ThemePage.qml">../OOBE_Native/ThemePage.qml</file>
+    <file alias="WelcomePage.qml">../OOBE_Native/WelcomePage.qml</file>
+    <file alias="XakAIOptInPage.qml">../OOBE_Native/XakAIOptInPage.qml</file>
+    <file alias="XakAIPage.qml">../OOBE_Native/XakAIPage.qml</file>
+    <file alias="XakteirAccountPage.qml">../OOBE_Native/XakteirAccountPage.qml</file>
+</qresource>
+</RCC>

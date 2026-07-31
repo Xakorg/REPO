@@ -70,13 +70,13 @@ void kernel_main(uint32_t magic, multiboot_info_t* mbd) {
     pic_remap();
     draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
     
-    pmm_init(512 * 1024, 0x100000); 
+    pmm_init(512 * 1024, 0x100000, 0); 
     draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
     
     vmm_init();
     draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
     
-    heap_init();
+    kmem_init();
     draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
     
     init_timer(1000); 
@@ -101,7 +101,7 @@ void kernel_main(uint32_t magic, multiboot_info_t* mbd) {
     
     if (ata_identify_device()) {
         fat32_init();
-        vfs_root = fat32_mount();
+        inode_t* vfs_root = fat32_mount();
     } 
     draw_string_scaled(".", boot_x, boot_y, COLOR_WHITE, 0, 2); boot_x += 16;
     

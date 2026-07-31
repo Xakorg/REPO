@@ -169,7 +169,9 @@ static void pci_check_function(uint8_t bus, uint8_t slot, uint8_t func) {
     total_devices_found++;
     
     // Print Discovery
-    printf("  [PCI] Discovered: %s | Ven: ", pci_get_class_name(class_code, subclass));
+    printf("  [PCI] Discovered: ");
+    printf(pci_get_class_name(class_code, subclass));
+    printf(" | Ven: ");
     print_hex(vendor_id); printf(" Dev: "); print_hex(device_id);
     printf(" | IRQ: "); char ibuf[4]; itoa(dev->irq_line, ibuf, 10); printf(ibuf);
     printf("\n");
@@ -178,6 +180,7 @@ static void pci_check_function(uint8_t bus, uint8_t slot, uint8_t func) {
     uint8_t header_type = pci_read_byte(bus, slot, func, PCI_HEADER_TYPE);
     if ((header_type & ~PCI_HEADER_TYPE_MFD) == PCI_HEADER_TYPE_BRIDGE) {
         uint8_t secondary_bus = pci_read_byte(bus, slot, func, 0x19);
+        (void)secondary_bus;
         // Recursive scan omitted here for brevity, but would scan secondary_bus
     }
 }

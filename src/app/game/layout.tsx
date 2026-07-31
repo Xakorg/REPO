@@ -34,6 +34,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
       route: `/game/${g.id}`,
       bannerUrl: g.thumbnailUrl || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80",
       iconUrl: g.thumbnailUrl || "",
+      releaseDate: "TBA",
     })) || [];
 
     const ALL_GAMES = [...GAMES_DB, ...customGames];

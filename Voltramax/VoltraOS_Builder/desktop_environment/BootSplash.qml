@@ -75,13 +75,14 @@ Window {
     }
 
     function loadDesktop() {
-        var component = Qt.createComponent("Desktop.qml");
+        // Route to OOBE first since this is the first boot
+        var component = Qt.createComponent("qrc:/OOBE/Main.qml");
         if (component.status === Component.Ready) {
             var desktopWindow = component.createObject(null);
-            desktopWindow.showFullScreen(); // Launch desktop
+            desktopWindow.showFullScreen(); // Launch OOBE
             bootSplash.destroy(); // Destroy the boot screen to free memory
         } else {
-            console.error("Kernel Panic: Failed to load Desktop Environment ->", component.errorString());
+            console.error("Kernel Panic: Failed to load OOBE Environment ->", component.errorString());
         }
     }
 }

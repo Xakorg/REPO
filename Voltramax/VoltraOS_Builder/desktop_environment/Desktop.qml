@@ -238,6 +238,12 @@ Window {
         }
     }
 
+    // Windows Translation Layer UI (Renders over everything when an .exe is launched)
+    WTLOverlay {
+        id: wtlOverlayUI
+        z: 1000 // Ensure it sits on top of all native apps
+    }
+
     // =========================================================================
     // XAK AI SIDEBAR (Right Side)
     // =========================================================================

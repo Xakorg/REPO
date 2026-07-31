@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface SuiteState {
   isFocusMode: boolean;
@@ -25,3 +26,22 @@ export const useSuiteStore = create<SuiteState>((set) => ({
   toggleRightPanel: () => set((state) => ({ isRightPanelOpen: !state.isRightPanelOpen })),
   setRightPanelOpen: (value) => set({ isRightPanelOpen: value }),
 }));
+
+export type HeaderStyle = 'default' | 'google' | 'right' | 'left' | 'hamburger';
+
+interface UIState {
+  headerStyle: HeaderStyle;
+  setHeaderStyle: (style: HeaderStyle) => void;
+}
+
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      headerStyle: 'default',
+      setHeaderStyle: (style) => set({ headerStyle: style }),
+    }),
+    {
+      name: 'xakteir-ui-storage',
+    }
+  )
+);

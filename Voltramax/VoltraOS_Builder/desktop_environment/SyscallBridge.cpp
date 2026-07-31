@@ -1,33 +1,48 @@
 #include "SyscallBridge.h"
 #include <QDebug>
+#include <errno.h>
 
 #ifdef Q_OS_LINUX
 #include <unistd.h>
 #include <sys/syscall.h>
 #endif
 
-// Internal execution wrapper
-int SyscallBridge::execute_linux_syscall(long sys_num, long arg1, long arg2, long arg3) {
+// The ultimate, raw execution pipeline directly into the Linux Kernel
+long SyscallBridge::execute_linux_syscall(long sys_num, long a1, long a2, long a3, long a4, long a5, long a6) {
 #ifdef Q_OS_LINUX
-    // Execute true raw Linux syscall directly to Ring 0
-    return syscall(sys_num, arg1, arg2, arg3);
+    long ret = syscall(sys_num, a1, a2, a3, a4, a5, a6);
+    if (ret < 0) {
+        qCritical() << "[SyscallBridge] KERNEL PANIC / ERROR. Syscall" << sys_num << "failed with errno:" << errno;
+    }
+    return ret;
 #else
-    // Fallback for Windows IDE development simulation
-    return 0;
+    return 0; // Windows IDE stub
 #endif
 }
 
-int SyscallBridge::open(const char* path, int flags) {
-    qDebug() << "[SyscallBridge] Native Linux Syscall -> SYS_OPEN:" << path;
+// ----------------------------------------------------------------------------
+// FILESYSTEM SYSCALLS
+// ----------------------------------------------------------------------------
+int SyscallBridge::open(const char* path, int flags, int mode) {
+    qDebug() << "[SyscallBridge] Executing SYS_open for path:" << path;
 #ifdef Q_OS_LINUX
-    return execute_linux_syscall(SYS_open, (long)path, (long)flags);
+    return execute_linux_syscall(SYS_open, (long)path, (long)flags, (long)mode);
 #else
-    return 3; // Mock FD
+    return 3; 
+#endif
+}
+
+int SyscallBridge::read(int fd, void* buf, size_t count) {
+    qDebug() << "[SyscallBridge] Executing SYS_read on fd:" << fd << "size:" << count;
+#ifdef Q_OS_LINUX
+    return execute_linux_syscall(SYS_read, (long)fd, (long)buf, (long)count);
+#else
+    return count;
 #endif
 }
 
 int SyscallBridge::write(int fd, const void* buf, size_t count) {
-    qDebug() << "[SyscallBridge] Native Linux Syscall -> SYS_WRITE: fd" << fd << count << "bytes";
+    qDebug() << "[SyscallBridge] Executing SYS_write on fd:" << fd << "size:" << count;
 #ifdef Q_OS_LINUX
     return execute_linux_syscall(SYS_write, (long)fd, (long)buf, (long)count);
 #else
@@ -36,7 +51,7 @@ int SyscallBridge::write(int fd, const void* buf, size_t count) {
 }
 
 int SyscallBridge::close(int fd) {
-    qDebug() << "[SyscallBridge] Native Linux Syscall -> SYS_CLOSE: fd" << fd;
+    qDebug() << "[SyscallBridge] Executing SYS_close on fd:" << fd;
 #ifdef Q_OS_LINUX
     return execute_linux_syscall(SYS_close, (long)fd);
 #else
@@ -44,31 +59,110 @@ int SyscallBridge::close(int fd) {
 #endif
 }
 
-int SyscallBridge::socket() {
-    qDebug() << "[SyscallBridge] Native Linux Syscall -> SYS_SOCKET";
+off_t SyscallBridge::lseek(int fd, off_t offset, int whence) {
+    qDebug() << "[SyscallBridge] Executing SYS_lseek on fd:" << fd;
 #ifdef Q_OS_LINUX
-    // 2 = AF_INET, 1 = SOCK_STREAM, 0 = IPPROTO_IP
-    return execute_linux_syscall(SYS_socket, 2, 1, 0); 
+    return execute_linux_syscall(SYS_lseek, (long)fd, (long)offset, (long)whence);
 #else
-    return 4; // Mock SockFD
+    return offset;
 #endif
 }
 
-int SyscallBridge::bind(int sockfd, uint32_t ip, uint16_t port) {
-    qDebug() << "[SyscallBridge] Native Linux Syscall -> SYS_BIND: sockfd" << sockfd << "port" << port;
+// ----------------------------------------------------------------------------
+// MEMORY MANAGEMENT SYSCALLS
+// ----------------------------------------------------------------------------
+void* SyscallBridge::mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset) {
+    qDebug() << "[SyscallBridge] Executing SYS_mmap length:" << length;
 #ifdef Q_OS_LINUX
-    // Normally requires a sockaddr struct pointer, simulating raw call
-    return execute_linux_syscall(SYS_bind, (long)sockfd, (long)ip, (long)port);
+    return (void*)execute_linux_syscall(SYS_mmap, (long)addr, (long)length, (long)prot, (long)flags, (long)fd, (long)offset);
+#else
+    return nullptr;
+#endif
+}
+
+int SyscallBridge::munmap(void* addr, size_t length) {
+#ifdef Q_OS_LINUX
+    return execute_linux_syscall(SYS_munmap, (long)addr, (long)length);
 #else
     return 0;
 #endif
 }
 
-int SyscallBridge::connect(int sockfd, uint32_t ip, uint16_t port) {
-    qDebug() << "[SyscallBridge] Native Linux Syscall -> SYS_CONNECT: sockfd" << sockfd << "port" << port;
+int SyscallBridge::mprotect(void* addr, size_t len, int prot) {
 #ifdef Q_OS_LINUX
-    return execute_linux_syscall(SYS_connect, (long)sockfd, (long)ip, (long)port);
+    return execute_linux_syscall(SYS_mprotect, (long)addr, (long)len, (long)prot);
 #else
     return 0;
+#endif
+}
+
+// ----------------------------------------------------------------------------
+// NETWORKING SYSCALLS
+// ----------------------------------------------------------------------------
+int SyscallBridge::socket(int domain, int type, int protocol) {
+    qDebug() << "[SyscallBridge] Executing SYS_socket";
+#ifdef Q_OS_LINUX
+    return execute_linux_syscall(SYS_socket, (long)domain, (long)type, (long)protocol);
+#else
+    return 4;
+#endif
+}
+
+int SyscallBridge::bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+#ifdef Q_OS_LINUX
+    return execute_linux_syscall(SYS_bind, (long)sockfd, (long)addr, (long)addrlen);
+#else
+    return 0;
+#endif
+}
+
+int SyscallBridge::connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+#ifdef Q_OS_LINUX
+    return execute_linux_syscall(SYS_connect, (long)sockfd, (long)addr, (long)addrlen);
+#else
+    return 0;
+#endif
+}
+
+int SyscallBridge::listen(int sockfd, int backlog) {
+#ifdef Q_OS_LINUX
+    return execute_linux_syscall(SYS_listen, (long)sockfd, (long)backlog);
+#else
+    return 0;
+#endif
+}
+
+int SyscallBridge::accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+#ifdef Q_OS_LINUX
+    return execute_linux_syscall(SYS_accept, (long)sockfd, (long)addr, (long)addrlen);
+#else
+    return 5;
+#endif
+}
+
+// ----------------------------------------------------------------------------
+// PROCESS & THREADING SYSCALLS
+// ----------------------------------------------------------------------------
+pid_t SyscallBridge::clone(int flags, void* child_stack) {
+#ifdef Q_OS_LINUX
+    return execute_linux_syscall(SYS_clone, (long)flags, (long)child_stack);
+#else
+    return 9999;
+#endif
+}
+
+int SyscallBridge::futex(int *uaddr, int futex_op, int val, const struct timespec *timeout, int *uaddr2, int val3) {
+#ifdef Q_OS_LINUX
+    return execute_linux_syscall(SYS_futex, (long)uaddr, (long)futex_op, (long)val, (long)timeout, (long)uaddr2, (long)val3);
+#else
+    return 0;
+#endif
+}
+
+int SyscallBridge::epoll_create1(int flags) {
+#ifdef Q_OS_LINUX
+    return execute_linux_syscall(SYS_epoll_create1, (long)flags);
+#else
+    return 6;
 #endif
 }

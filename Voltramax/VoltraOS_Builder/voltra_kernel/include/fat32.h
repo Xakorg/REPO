@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "vfs.h"
+#include "vfs.h"
 
 // FAT32 Extended BIOS Parameter Block (BPB)
 // This is exactly how Microsoft engineered Windows to read hard drives!
@@ -55,6 +56,6 @@ typedef struct {
 
 // Initialize the FAT32 driver and link it to the VFS
 void fat32_init(void);
-vfs_node_t* fat32_mount(void);
+inode_t* fat32_mount(void);
 
 #endif

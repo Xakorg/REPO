@@ -47,17 +47,17 @@ pml4_t* kernel_pml4 = NULL;
 // HARDWARE REGISTERS
 // ----------------------------------------------------------------------------
 static inline void load_cr3(uint64_t phys_addr) {
-    asm volatile("mov %0, %%cr3" :: "r"(phys_addr) : "memory");
+    asm volatile("mov %0, %%cr3" :: "r"((uint32_t)phys_addr) : "memory");
 }
 
 static inline uint64_t read_cr2() {
-    uint64_t val;
+    uint32_t val;
     asm volatile("mov %%cr2, %0" : "=r"(val));
     return val;
 }
 
 void vmm_flush_tlb(uint64_t virt) {
-    asm volatile("invlpg (%0)" :: "r"(virt) : "memory");
+    asm volatile("invlpg (%0)" :: "r"((uint32_t)virt) : "memory");
 }
 
 void vmm_tlb_shootdown(uint64_t virt) {
@@ -169,6 +169,7 @@ void vmm_switch_pml4(pml4_t* pml4) {
 // ----------------------------------------------------------------------------
 
 void vmm_page_fault_handler(void* registers) {
+    (void)registers;
     // registers is a struct pushed by the IDT containing CPU state and the Error Code
     uint64_t faulting_address = read_cr2();
     uint32_t err_code = 0; // [STUB] Extracted from registers struct

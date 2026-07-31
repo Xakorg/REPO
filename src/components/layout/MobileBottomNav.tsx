@@ -66,6 +66,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { navigateTo } from "@/lib/navigation";
 import { AnimatedAppIcon } from "@/components/ui/AnimatedAppIcon";
+import { Input } from "@/components/ui/input";
 
 // Define the apps specifically for the mobile app launcher sheet
 const APPS = [
@@ -119,7 +120,7 @@ const APPS = [
   { name: "About", iconName: "about", href: "/about", color: "text-zinc-400", bg: "bg-zinc-400/10" }
 ];
 
-function MobileAppLauncher({ router }: { router: any }) {
+function MobileAppLauncher({ router, setIsSheetOpen }: { router: any, setIsSheetOpen: (open: boolean) => void }) {
   const [appSearch, setAppSearch] = useState("");
   // In a real scenario we'd import APPS from a shared config, but keeping it simple here
   const filteredApps = APPS.filter(app => app.name.toLowerCase().includes(appSearch.toLowerCase()));
@@ -130,7 +131,7 @@ function MobileAppLauncher({ router }: { router: any }) {
         <h3 className="text-lg font-black uppercase italic tracking-tighter text-primary leading-none">Apps</h3>
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <Input autoFocus value={appSearch} onChange={(e) => setAppSearch(e.target.value)} placeholder="Search..." className="h-9 w-32 rounded-xl bg-secondary/30 border-white/10 pl-9 text-[9px] font-black italic" />
+          <Input autoFocus value={appSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAppSearch(e.target.value)} placeholder="Search..." className="h-9 w-32 rounded-xl bg-secondary/30 border-white/10 pl-9 text-[9px] font-black italic" />
         </div>
       </div>
       <div className="flex-1 overflow-y-auto">
@@ -159,6 +160,7 @@ function MobileAppLauncher({ router }: { router: any }) {
 export function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const navItems = [
     { name: "Home", href: "/", icon: Home },
@@ -181,7 +183,7 @@ export function MobileBottomNav() {
         })}
 
         {/* Center App Launcher Button */}
-        <Sheet>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
             <button className="flex flex-col items-center justify-center w-full h-full gap-1 relative -top-3">
               <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(var(--primary),0.5)] border-4 border-[#05030d]">
@@ -190,7 +192,7 @@ export function MobileBottomNav() {
             </button>
           </SheetTrigger>
           <SheetContent side="bottom" className="h-[80vh] bg-[#0a0a15] border-t border-white/10 p-0 shadow-[0_-20px_100px_rgba(0,0,0,0.8)]">
-            <MobileAppLauncher router={router} />
+            <MobileAppLauncher router={router} setIsSheetOpen={setIsSheetOpen} />
           </SheetContent>
         </Sheet>
 

@@ -11,6 +11,7 @@
 #include "InstallerEngine.h"
 #include "DriveEngine.h"
 #include "WTLManager.h"
+#include "../OOBE_Native/OOBEManager.h"
 #include <QtWebEngineQuick>
 
 // ----------------------------------------------------------------------------
@@ -72,25 +73,23 @@ int main(int argc, char *argv[])
     DriveEngine driveEngine;
     engine.rootContext()->setContextProperty("DriveEngine", &driveEngine);
     
-    // Inject Windows Translation Layer (WTL)
-    WTLManager wtlManager;
-    engine.rootContext()->setContextProperty("WTLManager", &wtlManager);
+    // Inject OOBE Manager (Setup Engine)
+    OOBEManager oobeManager;
+    engine.rootContext()->setContextProperty("OOBE", &oobeManager);
 
-    // 5. Load the Boot Splash Screen
-    const QUrl url(QStringLiteral("qrc:/BootSplash.qml")); // Assuming qrc, but for now we'll load raw path
-    // Since we aren't using a qrc file in this scaffold, load the local file directly:
-    const QUrl localUrl = QUrl::fromLocalFile("BootSplash.qml");
+    // 5. Load the Boot Splash Screen natively from QRC
+    const QUrl url(QStringLiteral("qrc:/BootSplash.qml"));
 
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [localUrl](QObject *obj, const QUrl &objUrl) {
-        if (!obj && localUrl == objUrl) {
-            qCritical() << "[FATAL] Failed to load BootSplash.qml! VDS Panic.";
+                     &app, [url](QObject *obj, const QUrl &objUrl) {
+        if (!obj && url == objUrl) {
+            qCritical() << "[FATAL] Failed to load BootSplash.qml from QRC! VDS Panic.";
             QCoreApplication::exit(-1);
         }
     }, Qt::QueuedConnection);
 
     qInfo() << "[VDS] Loading BootSplash.qml Sequence...";
-    engine.load(localUrl);
+    engine.load(url);
 
     // 6. Enter the main event loop
     qInfo() << "[VDS] UI loaded. Handing over thread execution to OS...";

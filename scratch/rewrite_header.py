@@ -1,306 +1,23 @@
-"use client";
+import re
+import os
 
-import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-import { navigateTo } from "@/lib/navigation";
-import { 
-  LayoutGrid, 
-  Bot,
-  Mail,
-  Gamepad2,
-  Video,
-  Code2,
-  Users,
-  VideoIcon,
-  Layers,
-  Search as SearchIcon,
-  Command as CommandIcon,
-  ShoppingBag,
-  MessageCircle,
-  LogOut,
-  User as UserIcon,
-  HardDrive,
-  ClipboardList,
-  Calculator,
-  GraduationCap,
-  Zap,
-  Swords,
-  Bell,
-  CheckCircle2,
-  Presentation,
-  Menu,
-  Maximize,
-  Minimize,
-  Calendar as CalendarIcon,
-  Image as ImageIcon,
-  Info,
-  TrendingUp,
-  Archive,
-  Palette,
-  ShieldCheck,
-  Heart,
-  Hammer,
-  Globe,
-  HelpCircle,
-  Download,
-  Coins,
-  Dumbbell,
-  Award,
-  Link2,
-  Map,
-  Newspaper,
-  FileText,
-  Music,
-  Radio,
-  CheckSquare,
-  Lock,
-  Sun,
-  PenTool,
-  PlaySquare,
-  Settings,
-  Sparkles,
-  Loader2
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useUser, useAuth, useMemoFirebase, useFirestore, useCollection, useDoc } from "@/firebase";
-import { useToast } from "@/hooks/use-toast";
-import { Plus, Check } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { signOut, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { collection, query, where, doc } from "firebase/firestore";
-import { triggerCommandCenter } from "@/components/CommandCenter";
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { RenderHat } from "@/components/RenderHat";
-import { useSuiteStore, useUIStore } from "@/lib/store";
+with open('src/components/layout/Header.tsx', 'r', encoding='utf-8') as f:
+    content = f.read()
 
-import { AnimatedAppIcon } from "@/components/ui/AnimatedAppIcon";
+# 1. Update imports
+if 'useUIStore' not in content:
+    content = content.replace('import { useSuiteStore } from "@/lib/store";', 'import { useSuiteStore, useUIStore } from "@/lib/store";')
 
-const APPS = [
-  // Main Apps
-  { name: "Mail", iconName: "mail", href: "/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
-  { name: "Chat", iconName: "chat", href: "/chat", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-  { name: "Xak AI", iconName: "ai-chat", href: "/ai-chat", color: "text-primary", bg: "bg-primary/10" },
-  { name: "Drive", iconName: "drive", href: "https://drive.xakteir.com", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Games", iconName: "games", href: "/games", color: "text-purple-400", bg: "bg-purple-400/10" },
-  { name: "Maps", iconName: "map", href: "/map", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-  { name: "Apps", iconName: "apps", href: "/apps", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  
-  // Other Apps
-  { name: "Search", iconName: "search", href: "/search", color: "text-blue-400", bg: "bg-blue-400/10" },
-  { name: "Whiteboard", iconName: "whiteboard", href: "/whiteboard", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Studio", iconName: "default", href: "/studio", color: "text-purple-500", bg: "bg-purple-500/10" },
-  { name: "Premium", iconName: "default", href: "/premium", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Settings", iconName: "settings", href: "/settings", color: "text-zinc-500", bg: "bg-zinc-500/10" },
-  { name: "XakSports", iconName: "xaksports", href: "/xaksports", color: "text-orange-400", bg: "bg-orange-400/10" },
-  { name: "XakArena", iconName: "default", href: "/xakarena", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "XakCode", iconName: "code", href: "/xakcode", color: "text-sky-400", bg: "bg-sky-500/10" },
-  { name: "XakView", iconName: "default", href: "/xakview", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "Xakteir Plan", iconName: "default", href: "/calendar", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "XakPicks", iconName: "default", href: "/pics", color: "text-pink-500", bg: "bg-pink-500/10" },
-  { name: "Classroom", iconName: "classroom", href: "/classroom", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "Meet", iconName: "meet", href: "https://meet.xakteir.com", color: "text-rose-400", bg: "bg-rose-400/10" },
-  { name: "Translate", iconName: "default", href: "/translate", color: "text-blue-300", bg: "bg-blue-300/10" },
-  { name: "Calculator", iconName: "calculator", href: "/calculator", color: "text-zinc-400", bg: "bg-zinc-400/10" },
-  { name: "Notes", iconName: "notes", href: "/notes", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "Social", iconName: "social", href: "/social", color: "text-pink-500", bg: "bg-pink-500/10" },
-  { name: "Shop", iconName: "shop", href: "/shop", color: "text-emerald-500", bg: "bg-emerald-500/10" },
-  { name: "Dev Centre", iconName: "dev-centre", href: "https://dev.xakteir.com", color: "text-blue-500", bg: "bg-blue-500/10" },
-  { name: "Art Studio", iconName: "art", href: "/art", color: "text-pink-400", bg: "bg-pink-400/10" },
-  { name: "Archive", iconName: "archive", href: "/archive", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { name: "Authenticator", iconName: "authenticator", href: "/authenticator", color: "text-teal-400", bg: "bg-teal-400/10" },
-  { name: "XakBuddy", iconName: "buddy", href: "/buddy", color: "text-rose-400", bg: "bg-rose-400/10" },
-  { name: "XakInstaller", iconName: "installer", href: "/installer", color: "text-sky-500", bg: "bg-sky-500/10" },
-  { name: "Forms", iconName: "suite", href: "/forms", color: "text-purple-400", bg: "bg-purple-400/10" },
-  { name: "Write", iconName: "suite", href: "/write", color: "text-blue-400", bg: "bg-blue-400/10" },
-  { name: "Slides", iconName: "suite", href: "/slides", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Voltra", iconName: "default", href: "/voltra", color: "text-yellow-400", bg: "bg-yellow-400/10" },
-  { name: "VoltraMax", iconName: "default", href: "/voltramax", color: "text-orange-500", bg: "bg-orange-500/10" },
-  { name: "News", iconName: "news", href: "/news", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "Search Console", iconName: "search-console", href: "/search-console", color: "text-teal-400", bg: "bg-teal-400/10" },
-  { name: "XakSign", iconName: "sign", href: "/sign", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Stream Feed", iconName: "stream", href: "/stream", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { name: "Tasks Tracker", iconName: "tasks", href: "/tasks", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-  { name: "Weather", iconName: "weather", href: "/weather", color: "text-amber-400", bg: "bg-amber-400/10" },
-  { name: "Support", iconName: "support", href: "/contact", color: "text-zinc-400", bg: "bg-zinc-400/10" },
-  { name: "Profile", iconName: "profile", href: "https://account.xakteir.com", color: "text-indigo-400", bg: "bg-indigo-400/10" },
-  { name: "About", iconName: "about", href: "/about", color: "text-zinc-400", bg: "bg-zinc-400/10" }
-];
+# 2. Add headerStyle destructuring
+if 'const { headerStyle } = useUIStore();' not in content:
+    content = content.replace('const { isFocusMode } = useSuiteStore();', 'const { isFocusMode } = useSuiteStore();\n  const { headerStyle } = useUIStore();')
 
-function AppLauncherContent({ router }: { router: any }) {
-  const [appSearch, setAppSearch] = useState("");
-  const filteredApps = APPS.filter(app => app.name.toLowerCase().includes(appSearch.toLowerCase()));
-
-  return (
-    <div className="flex flex-col h-full bg-[#0a0a15] text-white">
-      <div className="p-5 border-b-2 border-white/10 flex items-center justify-between bg-black/40">
-        <h3 className="text-lg font-black uppercase italic tracking-tighter text-primary leading-none">Apps</h3>
-        <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <Input autoFocus value={appSearch} onChange={(e) => setAppSearch(e.target.value)} placeholder="Search apps..." className="h-9 w-36 rounded-xl bg-secondary/30 border-white/10 pl-9 text-[9px] font-black italic" />
-        </div>
-      </div>
-      <div className="flex-1 max-h-[380px] overflow-y-auto pr-1">
-        <div className="p-5 grid grid-cols-3 gap-3">
-          {filteredApps.map(app => {
-            return (
-              <button 
-                key={app.name}
-                onClick={() => { 
-                  navigateTo(app.href, router);
-                }} 
-                className={cn(
-                  "p-3 rounded-2xl flex flex-col items-center gap-2 transition-all hover:bg-white/5 hover:scale-105 group/btn border-2 border-transparent hover:border-white/5 shadow-md", 
-                  app.bg
-                )}
-              >
-                <AnimatedAppIcon 
-                  iconName={app.iconName} 
-                  className="w-10 h-10 bg-white rounded-xl shadow-sm transition-transform group-hover/btn:scale-110 duration-300" 
-                  size={40} 
-                />
-                <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground group-hover/btn:text-white truncate w-full text-center">{app.name}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function Header() {
-  const { user } = useUser();
-  const auth = useAuth();
-  const firestore = useFirestore();
-  const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const { isFocusMode } = useSuiteStore();
-  const { headerStyle } = useUIStore();
-  const { toast } = useToast();
-
-  // Multi-account switcher state
-  const [accounts, setAccounts] = useState<any[]>([]);
-  const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const updateAccounts = () => {
-      const accs = localStorage.getItem("xakteir_accounts");
-      const activeId = localStorage.getItem("xakteir_active_account_id");
-      if (accs) {
-        try {
-          setAccounts(JSON.parse(accs));
-        } catch (e) {
-          console.error("Error parsing accounts JSON", e);
-        }
-      }
-      if (activeId) setActiveAccountId(activeId);
-    };
-    updateAccounts();
-    window.addEventListener("xakteir-accounts-changed", updateAccounts);
-    return () => window.removeEventListener("xakteir-accounts-changed", updateAccounts);
-  }, []);
-
-
-  const [isSwitching, setIsSwitching] = useState(false);
-
-  const handleSwitchAccount = async (acc: any) => {
-    if (user && user.uid === acc.uid) return;
+# 3. Replace the return statement
+return_index = content.find('  return (\n    <header')
+if return_index != -1:
+    before_return = content[:return_index]
     
-    setIsSwitching(true);
-    const vaultStr = localStorage.getItem('xakteir_vault');
-    if (!vaultStr) {
-      setIsSwitching(false);
-      navigateTo(`/auth?email=${encodeURIComponent(acc.email)}`, router);
-      return;
-    }
-    
-    let vault: any = {};
-    try {
-      vault = JSON.parse(vaultStr);
-    } catch (e) {
-      console.error("Error parsing vault JSON", e);
-    }
-    const savedCreds = vault[acc.uid];
-    
-    if (savedCreds) {
-      toast({ title: "Switching Profiles...", description: `Logging in to ${acc.displayName}` });
-      
-      try {
-        if (savedCreds.provider === 'password' && savedCreds.password) {
-          await signInWithEmailAndPassword(auth, savedCreds.email, savedCreds.password);
-          toast({ title: "Account Switched", description: `Welcome back, ${acc.displayName}` });
-        } else if (savedCreds.provider === 'google') {
-          const provider = new GoogleAuthProvider();
-          provider.setCustomParameters({ login_hint: savedCreds.email });
-          await signInWithPopup(auth, provider);
-          toast({ title: "Account Switched", description: `Welcome back, ${acc.displayName}` });
-        }
-      } catch (e: any) {
-        toast({ variant: "destructive", title: "Switch Failed", description: "Session expired. Please sign in again." });
-        navigateTo(`/auth?email=${encodeURIComponent(acc.email)}`, router);
-      }
-    } else {
-      navigateTo(`/auth?email=${encodeURIComponent(acc.email)}`, router);
-    }
-    setIsSwitching(false);
-  };
-
-  useEffect(() => { 
-    setMounted(true); 
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
-  }, []);
-
-  const unreadCountQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, "users", user.uid, "notifications"), where("read", "==", false));
-  }, [firestore, user]);
-
-  const { data: unreadNotifs } = useCollection(unreadCountQuery);
-  const totalUnreadCount = unreadNotifs?.length || 0;
-
-  const cleanDisplayName = user?.displayName?.replace(/^@+/, "") || "User";
-
-  const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
-
-  const adminRoleRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return doc(firestore, "admins", user.uid);
-  }, [firestore, user]);
-
-  const { data: adminRole } = useDoc(adminRoleRef);
-  const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(user?.email?.toLowerCase() || "");
-  const isAdmin = isSuperAdmin || !!adminRole;
-
-  const userRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return doc(firestore, "users", user.uid);
-  }, [firestore, user]);
-  const { data: userData } = useDoc(userRef);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
-      }
-    }
-  };
-
-  const pathname = usePathname();
-
-  if (!mounted) return null;
-  if (isFocusMode || pathname?.startsWith('/xaksports') || pathname?.startsWith('/xakarena')) return null;
-
-
+    new_return = '''
   const renderAppsLauncher = () => (
     <>
       <div className="hidden lg:block">
@@ -483,9 +200,6 @@ export function Header() {
            <button onClick={() => navigateTo('https://account.xakteir.com', router)} className="w-full flex items-center gap-4 p-3.5 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all text-left">
               <UserIcon className="w-4 h-4 text-primary" /> Profile
            </button>
-           <button onClick={() => navigateTo('/settings', router)} className="w-full flex items-center gap-4 p-3.5 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-all text-left">
-              <Settings className="w-4 h-4 text-primary" /> Settings
-           </button>
            <button onClick={() => { auth && signOut(auth); localStorage.removeItem("xakteir_accounts"); localStorage.removeItem("xakteir_active_account_id"); window.dispatchEvent(new Event("xakteir-accounts-changed")); navigateTo('/', router); }} className="w-full flex items-center gap-4 p-3.5 rounded-2xl hover:bg-rose-500/10 text-[10px] font-black uppercase tracking-widest text-rose-500 transition-all text-left">
               <LogOut className="w-4 h-4" /> Sign Out
            </button>
@@ -620,3 +334,11 @@ export function Header() {
     </header>
   );
 }
+'''
+    
+    new_content = before_return + new_return
+    with open('src/components/layout/Header.tsx', 'w', encoding='utf-8') as f:
+        f.write(new_content)
+    print("Successfully rewrote Header.tsx")
+else:
+    print("Could not find the return statement in Header.tsx")

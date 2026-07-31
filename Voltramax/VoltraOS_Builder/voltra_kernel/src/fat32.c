@@ -41,18 +41,18 @@ void fat32_init() {
 
 // In a real implementation, this would read the Root Directory clusters.
 // For now, we mock the mount point for the VFS.
-vfs_node_t* fat32_mount() {
-    vfs_node_t* root = (vfs_node_t*)kmalloc(sizeof(vfs_node_t));
-    if (!root) return NULL;
+inode_t* fat32_mount() {
+    inode_t* root = (inode_t*)kmalloc(sizeof(inode_t));
+    if (!root) return 0;
     
-    memset(root, 0, sizeof(vfs_node_t));
+    memset(root, 0, sizeof(inode_t));
     
-    // Name the root folder "/"
-    root->name[0] = '/';
-    root->name[1] = '\0';
+    // Names are now handled by the Dentry Cache (dentry_t) in the new VFS
+    // root->name[0] = '/';
+    // root->name[1] = '\0';
     
-    root->flags = FS_DIRECTORY;
-    root->inode = bpb.root_cluster;
+    root->mode = 0x4000; // FS_DIRECTORY equivalent
+    root->inode_no = bpb.root_cluster;
     
     // Link the FAT32 algorithm to the Virtual File System!
     // (Here we would link root->readdir = fat32_readdir, etc.)

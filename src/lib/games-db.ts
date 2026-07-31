@@ -15,6 +15,22 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "cyber_phantom_odyssey",
+    title: "Cyber Phantom Odyssey",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Survival", "Bullet Hell"],
+    description: "Tactical cybernetic space shooter. Command your Cyber Phantom interceptor, unleash EMP shockwaves, activate phase dashes, upgrade quantum railguns, and conquer invading dreadnought armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyberphantomodyssey",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "16:10", description: "Initial Game Release" }
+    ],
+    route: "/game/cyber-phantom-odyssey"
+  },
+  {
     id: "void_sentinel_overdrive",
     title: "Void Sentinel Overdrive",
     developer: "Xakteir Studios",
