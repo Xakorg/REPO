@@ -15,6 +15,22 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "solaris_valkyrie_odyssey",
+    title: "Solaris Valkyrie Odyssey",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Survival", "Bullet Hell"],
+    description: "High-octane cybernetic space shooter. Command your Solaris Valkyrie interceptor, unleash EMP shockwaves, activate tachyon time shifts, upgrade plasma cannons, and destroy alien dreadnought armadas.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=solarisvalkyrieodyssey",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "12:00", description: "Initial Game Release" }
+    ],
+    route: "/game/solaris-valkyrie-odyssey"
+  },
+  {
     id: "chronos_nexus_overdrive",
     title: "Chronos Nexus Overdrive",
     developer: "Xakteir Studios",
