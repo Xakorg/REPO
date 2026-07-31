@@ -450,7 +450,7 @@ export default function HyperionVoidSurgeGame() {
       powerups: [],
       floatingTexts: [],
       keys: {},
-      mouse: { x: width / 2, y: height / 2 },
+      mouse: { x: width / 2, y: height / 2, isDown: false },
       lastShotTime: 0,
       waveEnemiesToSpawn: 12,
       spawnTimer: 0,

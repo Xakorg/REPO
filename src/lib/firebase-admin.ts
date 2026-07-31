@@ -21,7 +21,7 @@ function getServiceAccountFromEnv(): ServiceAccountShape | null {
     return {
       projectId: parsed.projectId || parsed.project_id,
       clientEmail: parsed.clientEmail || parsed.client_email,
-      privateKey: (parsed.privateKey || parsed.private_key).replace(/\\n/g, '\n'),
+      privateKey: (parsed.privateKey || parsed.private_key || '').replace(/\\n/g, '\n'),
     };
   } catch (error) {
     console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY:', error);
