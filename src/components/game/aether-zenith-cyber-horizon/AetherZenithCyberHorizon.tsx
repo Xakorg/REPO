@@ -642,13 +642,15 @@ export default function AetherZenithCyberHorizon() {
       // Shield regen
       if (p.shield < p.maxShield) {
         p.shield = Math.min(p.maxShield, p.shield + 0.08 * (1 + activePerks.maxShield * 0.2));
-        setPlayerShield(Math.floor(p.shield));
+        const val = Math.floor(p.shield);
+        setPlayerShield((prev) => (prev !== val ? val : prev));
       }
 
       // Energy regen
       if (p.energy < p.maxEnergy) {
         p.energy = Math.min(p.maxEnergy, p.energy + 0.15 * selectedShip.energyRegen);
-        setPlayerEnergy(Math.floor(p.energy));
+        const val = Math.floor(p.energy);
+        setPlayerEnergy((prev) => (prev !== val ? val : prev));
       }
 
       // Thruster trail particles

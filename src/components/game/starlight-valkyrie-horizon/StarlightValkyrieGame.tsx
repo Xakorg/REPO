@@ -1007,29 +1007,38 @@ export default function StarlightValkyrieGame() {
       setGameState("LEVEL_UP");
     }
 
-    // UI React Sync
-    setScore(g.score);
-    setKillsCount(g.kills);
-    setPlayerLevel(g.player.level);
-    setPlayerHp(g.player.hp);
-    setPlayerMaxHp(g.player.maxHp);
-    setPlayerShield(g.player.shield);
-    setPlayerMaxShield(g.player.maxShield);
+    // UI React Sync - Only update state when values actually change
+    setScore((prev) => (prev !== g.score ? g.score : prev));
+    setKillsCount((prev) => (prev !== g.kills ? g.kills : prev));
+    setPlayerLevel((prev) => (prev !== g.player.level ? g.player.level : prev));
+    setPlayerHp((prev) => {
+      const val = Math.floor(g.player.hp);
+      return prev !== val ? val : prev;
+    });
+    setPlayerMaxHp((prev) => (prev !== g.player.maxHp ? g.player.maxHp : prev));
+    setPlayerShield((prev) => {
+      const val = Math.floor(g.player.shield);
+      return prev !== val ? val : prev;
+    });
+    setPlayerMaxShield((prev) => (prev !== g.player.maxShield ? g.player.maxShield : prev));
 
     // EMP Progress
     const empElapsed = now - g.player.lastEmp;
     const empPct = Math.min(100, Math.floor((empElapsed / g.player.empMaxCooldown) * 100));
-    setEmpProgress(empPct);
-    setEmpReady(empPct >= 100);
+    setEmpProgress((prev) => (prev !== empPct ? empPct : prev));
+    const isEmpReady = empPct >= 100;
+    setEmpReady((prev) => (prev !== isEmpReady ? isEmpReady : prev));
 
     // Boss Bar
     const currentBoss = gameRef.current.enemies.find((e) => e.type === "boss");
     if (currentBoss) {
-      setBossActive(true);
-      setBossName(currentBoss.bossTitle || "Apex Dreadnought");
-      setBossHpPercent(Math.max(0, Math.floor((currentBoss.hp / currentBoss.maxHp) * 100)));
+      const bossTitleStr = currentBoss.bossTitle || "Apex Dreadnought";
+      const bossHpPct = Math.max(0, Math.floor((currentBoss.hp / currentBoss.maxHp) * 100));
+      setBossActive((prev) => (!prev ? true : prev));
+      setBossName((prev) => (prev !== bossTitleStr ? bossTitleStr : prev));
+      setBossHpPercent((prev) => (prev !== bossHpPct ? bossHpPct : prev));
     } else {
-      setBossActive(false);
+      setBossActive((prev) => (prev ? false : prev));
     }
   };
 
