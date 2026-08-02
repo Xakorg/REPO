@@ -15,6 +15,34 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "cyber-helix-quantum-siege",
+    title: "Cyber Helix: Quantum Siege",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "Action", "Bullet Hell", "Arcade", "Cyberpunk", "Rogue-lite"],
+    description: "High-octane 2D cyberpunk Rogue-lite space interceptor shooter. Pilot apex starfighters, trigger EMP shockwaves, level up matrix perks, collect plasma energy cores, and obliterate multi-stage Helix Core boss dreadnoughts.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyber-helix-quantum-siege",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:00", description: "Official Release" }],
+    route: "/game/cyber-helix-quantum-siege"
+  },
+  {
+    id: "cyber_helix_quantum_siege",
+    title: "Cyber Helix: Quantum Siege",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "Action", "Bullet Hell", "Arcade", "Cyberpunk", "Rogue-lite"],
+    description: "High-octane 2D cyberpunk Rogue-lite space interceptor shooter. Pilot apex starfighters, trigger EMP shockwaves, level up matrix perks, collect plasma energy cores, and obliterate multi-stage Helix Core boss dreadnoughts.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cyber-helix-quantum-siege",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:00", description: "Official Release" }],
+    route: "/game/cyber-helix-quantum-siege"
+  },
+  {
     id: "plasma-strike-cyber-overdrive",
     title: "Plasma Strike: Cyber Overdrive",
     developer: "Xakteir Studios",

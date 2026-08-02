@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
  
 const GAME_MAP: Record<string, React.ComponentType<any>> = {
+  cyber_helix_quantum_siege: dynamic(() => import("@/components/game/cyber-helix-quantum-siege")),
+  "cyber-helix-quantum-siege": dynamic(() => import("@/components/game/cyber-helix-quantum-siege")),
   apex: dynamic(() => import("@/components/game/apex")),
   rift: dynamic(() => import("@/components/game/rift")),
   sovereign: dynamic(() => import("@/components/game/sovereign")),
