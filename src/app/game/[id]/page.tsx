@@ -12,6 +12,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
  
 const GAME_MAP: Record<string, React.ComponentType<any>> = {
+  apex: dynamic(() => import("@/components/game/apex")),
+  rift: dynamic(() => import("@/components/game/rift")),
+  sovereign: dynamic(() => import("@/components/game/sovereign")),
   stasis: dynamic(() => import("@/components/game/stasis")),
   vanguard: dynamic(() => import("@/components/game/vanguard")),
   gridiron: dynamic(() => import("@/components/game/gridiron")),

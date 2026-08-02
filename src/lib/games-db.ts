@@ -15,6 +15,48 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "apex",
+    title: "Apex",
+    developer: "Xakteir Studios",
+    type: "Tactical Grid",
+    genre: ["Sci-Fi", "Strategy", "Tactical", "Turn-Based", "2-Player", "Arcade", "Cyberpunk"],
+    description: "Cyberpunk turn-based grid tactics. Deploy AP action point commands, leverage barrier cover, and eliminate rival squad commanders in 1P campaign or 2P local duel.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=apex",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "22:30", description: "Official Launch" }],
+    route: "/game/apex"
+  },
+  {
+    id: "rift",
+    title: "Rift",
+    developer: "Xakteir Studios",
+    type: "2.5D Fighter",
+    genre: ["Sci-Fi", "Action", "Gravity", "2-Player", "Portal", "Arcade", "Combat"],
+    description: "High-speed spatial gravity & portal fighter. Step through teleport rifts, invert gravity fields, and discharge kinetic blasts in 1P spatial trials or 2P head-to-head duels.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=rift",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "22:30", description: "Official Launch" }],
+    route: "/game/rift"
+  },
+  {
+    id: "sovereign",
+    title: "Sovereign",
+    developer: "Xakteir Studios",
+    type: "2D RTS",
+    genre: ["Strategy", "RTS", "Fleet", "2-Player", "Sci-Fi", "Multiplayer", "Space Conquest"],
+    description: "Orbital node space RTS. Launch starship armadas, capture planetary energy nodes, and command galactic fleet sectors in 1P galaxy conquest or 2P local fleet warfare.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=sovereign",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "22:30", description: "Official Launch" }],
+    route: "/game/sovereign"
+  },
+  {
     id: "stasis",
     title: "Stasis",
     developer: "Xakteir Studios",

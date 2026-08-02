@@ -1984,7 +1984,7 @@ export default function ServerChatPage() {
                             </div>
                           )}
                        </div>
-                    </div>
+                    </motion.div>
                   );
                 })
               )}
