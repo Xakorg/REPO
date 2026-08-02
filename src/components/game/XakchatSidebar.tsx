@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MessageSquare, Users, Send, Search, Swords } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useUser } from "@/lib/auth";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit, addDoc, serverTimestamp, setDoc, doc, getDoc } from "firebase/firestore";
 
 export function XakchatSidebar({ activeGameId, activeGameTitle }: { activeGameId?: string; activeGameTitle?: string }) {
@@ -80,7 +79,7 @@ export function XakchatSidebar({ activeGameId, activeGameTitle }: { activeGameId
       await addDoc(collection(firestore, "chats", dmChatId, "messages"), {
         text,
         senderId: user.uid,
-        senderName: user.displayName || user.username || "Unknown",
+        senderName: user.displayName || user.email?.split("@")[0] || "Unknown",
         timestamp: serverTimestamp(),
         type: "text"
       });
@@ -96,7 +95,7 @@ export function XakchatSidebar({ activeGameId, activeGameTitle }: { activeGameId
       await addDoc(collection(firestore, "chats", dmChatId, "messages"), {
         text: `Invited you to play ${activeGameTitle || activeGameId}`,
         senderId: user.uid,
-        senderName: user.displayName || user.username || "Unknown",
+        senderName: user.displayName || user.email?.split("@")[0] || "Unknown",
         timestamp: serverTimestamp(),
         type: "invite",
         gameId: activeGameId
