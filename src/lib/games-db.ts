@@ -15,6 +15,20 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "plasma-strike-cyber-overdrive",
+    title: "Plasma Strike: Cyber Overdrive",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "Action", "Bullet Hell", "Arcade", "Cyberpunk", "Space"],
+    description: "Ultra-kinetic arcade space shooter featuring dynamic boss battles, wave survival, procedural retro WebAudio synthesis, companion drones, and super nuke abilities.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=plasma-strike",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "17:00", description: "Cyber Overdrive Update" }],
+    route: "/game/plasma-strike-cyber-overdrive"
+  },
+  {
     id: "apex",
     title: "Apex",
     developer: "Xakteir Studios",
