@@ -113,25 +113,25 @@ function FormattedContent({
             try {
               const cfg = JSON.parse(code.trim());
               return <ProceduralVideoPlayer key={i} config={cfg} />;
-            } catch (e) {}
+            } catch (e) { console.error(e); }
           }
           if (lang === "3d-config") {
             try {
               const cfg = JSON.parse(code.trim());
               return <ThreeViewer key={i} config={cfg} />;
-            } catch (e) {}
+            } catch (e) { console.error(e); }
           }
           if (lang === "multi-file") {
             try {
               const cfg = JSON.parse(code.trim());
               return <MultiFileExplorer key={i} files={cfg.files} />;
-            } catch (e) {}
+            } catch (e) { console.error(e); }
           }
           if (lang === "rpg-config") {
             try {
               const cfg = JSON.parse(code.trim());
               return <RpgConsole key={i} config={cfg} onSelectChoice={onSelectChoice || (() => {})} />;
-            } catch (e) {}
+            } catch (e) { console.error(e); }
           }
           if (lang === "html") {
             return <IframeSandbox key={i} code={code} />;
@@ -140,19 +140,19 @@ function FormattedContent({
             try {
               const cfg = JSON.parse(code.trim());
               return <IpcFileOpRunner key={i} config={cfg} />;
-            } catch(e) {}
+            } catch (e) { console.error(e); }
           }
           if (lang === "ipc-terminal-op") {
             try {
               const cfg = JSON.parse(code.trim());
               return <IpcTerminalRunner key={i} config={cfg} />;
-            } catch(e) {}
+            } catch (e) { console.error(e); }
           }
           if (lang === "3d-model") {
             try {
               const cfg = JSON.parse(code.trim());
               return <ThreeDViewer key={i} data={cfg} />;
-            } catch(e) {}
+            } catch (e) { console.error(e); }
           }
 
           return (

@@ -606,7 +606,7 @@ function SearchContent() {
               });
             }
           });
-        } catch(e) {}
+        } catch (e) { console.error(e); }
         
         try {
           // Xakteir Write
@@ -625,7 +625,7 @@ function SearchContent() {
               });
             }
           });
-        } catch(e) {}
+        } catch (e) { console.error(e); }
 
         try {
           const qProj = query(collection(firestore, "users", user.uid, "studio_projects"), orderBy("updatedAt", "desc"), limit(20));
@@ -643,7 +643,7 @@ function SearchContent() {
               });
             }
           });
-        } catch(e) {}
+        } catch (e) { console.error(e); }
       }
       setInternalResults(internal.slice(0, 5));
 
@@ -1136,7 +1136,7 @@ function SearchContent() {
               osc.connect(audioCtx.destination);
               osc.start();
               osc.stop(audioCtx.currentTime + 1);
-            } catch (err) {}
+            } catch (err) { console.error(err); }
             toast({ title: "Timer Alarm!", description: "Time is up!" });
             return 0;
           }

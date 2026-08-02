@@ -72,12 +72,12 @@ export default function PlayStationGamesLibrary() {
 
     const storedFavs = localStorage.getItem("xakteir_favorite_games");
     if (storedFavs) {
-      try { setFavoriteIds(JSON.parse(storedFavs)); } catch (e) {}
+      try { setFavoriteIds(JSON.parse(storedFavs)); } catch (e) { console.error(e); }
     }
 
     const storedRecent = localStorage.getItem("xakteir_recent_games");
     if (storedRecent) {
-      try { setRecentIds(JSON.parse(storedRecent)); } catch (e) {}
+      try { setRecentIds(JSON.parse(storedRecent)); } catch (e) { console.error(e); }
     }
 
     const storedLibs = localStorage.getItem("xakteir_game_library");

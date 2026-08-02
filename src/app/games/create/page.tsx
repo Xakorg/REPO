@@ -8,11 +8,13 @@ import { useFirestore, useFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { upload } from "@vercel/blob/client";
 import JSZip from "jszip";
+import { useToast } from "@/hooks/use-toast";
 
 type Step = "UPLOAD" | "PROCESSING" | "DETAILS" | "SUCCESS";
 
 export default function GamesCreatePage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [step, setStep] = useState<Step>("UPLOAD");
   
   // Upload State
@@ -60,7 +62,7 @@ export default function GamesCreatePage() {
 
   const processFiles = async (files: FileList) => {
     if (!firestore || !user) {
-      alert("Please sign in to publish games.");
+      toast({ variant: "destructive", title: "Please sign in to publish games." });
       return;
     }
     
@@ -152,12 +154,12 @@ export default function GamesCreatePage() {
 
   const handleGithubConnect = () => {
     if (!githubUrl.includes("github.com/")) {
-      alert("Please enter a valid GitHub repository URL.");
+      toast({ variant: "destructive", title: "Please enter a valid GitHub repository URL." });
       return;
     }
     const parts = githubUrl.split("github.com/")[1].split("/");
     if (parts.length < 2) {
-      alert("Invalid GitHub URL format.");
+      toast({ variant: "destructive", title: "Invalid GitHub URL format." });
       return;
     }
     const owner = parts[0];
@@ -196,14 +198,14 @@ export default function GamesCreatePage() {
       setPublishedUrl(internalPlayUrl);
       setStep("SUCCESS");
     } catch (error) {
-      alert("Failed to save project details.");
+      toast({ variant: "destructive", title: "Failed to save project details." });
       console.error(error);
     }
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("Copied to clipboard!");
+    toast({ title: "Copied to clipboard!" });
   };
 
   return (

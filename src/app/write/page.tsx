@@ -10,8 +10,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { collection, doc, getDoc, getDocs, setDoc, query, where, orderBy, serverTimestamp, addDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { useToast } from "@/hooks/use-toast";
 
 function WriteApp() {
+  const { toast } = useToast();
   const { isFocusMode, toggleFocusMode } = useSuiteStore();
   const { user } = useUser();
   const firestore = useFirestore();
@@ -331,7 +333,7 @@ function WriteApp() {
                    </div>
                    <Button onClick={() => {
                       navigator.clipboard.writeText(`https://write.suite.xakteir.com/p/${docId}`);
-                      alert('Link copied to clipboard!');
+                      toast({ title: 'Link copied to clipboard!' });
                    }} className="bg-white/10 hover:bg-white/20 text-white rounded-xl h-10 px-4 flex-shrink-0">
                       Copy Link
                    </Button>

@@ -8,6 +8,7 @@ import { Download, Star, ShieldCheck, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import React from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const SafeHTML = React.memo(({ html }: { html: string }) => (
   <div 
@@ -33,6 +34,7 @@ function getDeviceIcon(device: string) {
 }
 
 export default function VoltraStoreAppPage() {
+  const { toast } = useToast();
   const { source, appId } = useParams() as { source: string; appId: string };
   const router = useRouter();
   const firestore = useFirestore();
@@ -90,7 +92,7 @@ export default function VoltraStoreAppPage() {
   }, [source, appId, isNative, firestore]);
 
   const handleInstall = () => {
-    alert("Voltra OS required for installation. Please wait for device release.");
+    toast({ variant: "destructive", title: "Voltra OS required for installation. Please wait for device release." });
   };
 
   if (isLoading) {

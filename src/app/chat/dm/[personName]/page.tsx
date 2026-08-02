@@ -267,7 +267,7 @@ export default function DirectMessagePage() {
   useEffect(() => {
     if (messages && messages.length > prevMsgCount) {
       if (prevMsgCount > 0 && messages[messages.length - 1]?.senderId !== user?.uid) {
-         try { new Audio("/ping.mp3").play(); } catch(e) {}
+         try { new Audio("/ping.mp3").play(); } catch (e) { console.error(e); }
       }
       setPrevMsgCount(messages.length);
     }
@@ -473,7 +473,7 @@ export default function DirectMessagePage() {
           channelId: dmChatId,
           timestamp: serverTimestamp()
         });
-      } catch(e) {}
+      } catch (e) { console.error(e); }
     }
   };
 
@@ -515,7 +515,7 @@ export default function DirectMessagePage() {
         read: false,
         timestamp: serverTimestamp()
       });
-    } catch(e) {}
+    } catch (e) { console.error(e); }
   };
 
   // Resolve @mentions and dispatch notifications
@@ -540,7 +540,7 @@ export default function DirectMessagePage() {
             `@${senderName}: ${content.slice(0, 80)}${content.length > 80 ? "…" : ""}`
           );
         }
-      } catch(e) {}
+      } catch (e) { console.error(e); }
     }
   };
 
@@ -748,7 +748,7 @@ export default function DirectMessagePage() {
         }
       }
       setReactionTooltip({ msgId, emoji, names });
-    } catch(e) {}
+    } catch (e) { console.error(e); }
   };
 
   const handleSend = async (e?: React.FormEvent) => {
@@ -901,7 +901,7 @@ export default function DirectMessagePage() {
           lastReadAt: serverTimestamp(),
           lastReadBy: user.uid
         });
-      } catch(e) {}
+      } catch (e) { console.error(e); }
 
       // Notify the recipient that a friend sent them a DM
       if (friendUser?.id) {

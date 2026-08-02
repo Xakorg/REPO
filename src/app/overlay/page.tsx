@@ -32,7 +32,7 @@ export default function OverlayPage() {
           setIsListening(false);
           // Always restart for global background listening
           setTimeout(() => {
-            try { rec.start(); } catch(e) {}
+            try { rec.start(); } catch (e) { console.error(e); }
           }, 300);
         };
         
@@ -95,7 +95,7 @@ export default function OverlayPage() {
         };
         
         recognitionRef.current = rec;
-        try { rec.start(); } catch(e) {}
+        try { rec.start(); } catch (e) { console.error(e); }
       }
 
       // Listen for explicit IPC state sets if needed

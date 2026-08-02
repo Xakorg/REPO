@@ -93,7 +93,7 @@ export default function ProfilePage() {
       try {
         updateProfile(auth.currentUser!, { displayName });
         updateDocumentNonBlocking(doc(firestore, "users", user.uid), { displayName });
-      } catch (e) {}
+      } catch (e) { console.error(e); }
     }
     triggerConfetti();
     toast({ title: "Profile Synced", description: "Your identity has been updated in the multiverse." });

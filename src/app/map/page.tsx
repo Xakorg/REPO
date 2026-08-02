@@ -439,7 +439,7 @@ export default function XakteirMapsPage() {
       try {
         document.head.removeChild(link);
         document.head.removeChild(script);
-      } catch (e) {}
+      } catch (e) { console.error(e); }
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
@@ -548,7 +548,7 @@ export default function XakteirMapsPage() {
         location: { lat, lon },
         lastActiveMap: serverTimestamp()
       });
-    } catch (e) {}
+    } catch (e) { console.error(e); }
   };
 
   // Fetch all users
@@ -1094,7 +1094,7 @@ export default function XakteirMapsPage() {
             sharingLocation: true,
             location: { lat: location.lat, lon: location.lon, timestamp: serverTimestamp() }
           });
-        } catch (e) {}
+        } catch (e) { console.error(e); }
       };
       shareNow();
       locationShareIntervalRef.current = setInterval(shareNow, 30000);
@@ -1490,7 +1490,7 @@ export default function XakteirMapsPage() {
       if (Array.isArray(data) && data.length > 0) {
         return data.map((item: any) => ({ name: item.display_name, lat: parseFloat(item.lat), lon: parseFloat(item.lon) }));
       }
-    } catch (e) {}
+    } catch (e) { console.error(e); }
 
     try {
       const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(trimmed)}&limit=5`;
@@ -1506,7 +1506,7 @@ export default function XakteirMapsPage() {
           };
         });
       }
-    } catch (e) {}
+    } catch (e) { console.error(e); }
 
     return [];
   };

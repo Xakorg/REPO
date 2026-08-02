@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download, Monitor, Sparkles, FolderDown, Loader2, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function DownloadDesktopPage() {
+  const { toast } = useToast();
   const [downloading, setDownloading] = useState(false);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
@@ -23,16 +25,16 @@ export default function DownloadDesktopPage() {
         if (res.success) {
           setSuccess(true);
         } else {
-          alert("Error creating shortcuts: " + res.error);
+          toast({ variant: "destructive", title: "Error creating shortcuts: " + res.error });
         }
       } catch (e) {
         console.error(e);
-        alert("Failed to communicate with desktop app.");
+        toast({ variant: "destructive", title: "Failed to communicate with desktop app." });
       }
     } else {
       // In a regular browser, we can't create desktop shortcuts natively.
       // But we can trigger the download of the actual Setup.exe if it's hosted, or notify them.
-      alert("You are currently viewing this in a browser. To install the apps, please download the Xak AI Setup first.");
+      toast({ variant: "destructive", title: "You are currently viewing this in a browser. To install the apps, please download the Xak AI Setup first." });
     }
     
     setDownloading(false);

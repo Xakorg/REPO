@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Zap, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export function ReactionGame({ onExit }: { onExit: () => void }) {
+  const { toast } = useToast();
   const [state, setState] = useState<'idle' | 'waiting' | 'ready' | 'result'>('idle');
   const [startTime, setStartTime] = useState(0);
   const [reactionTime, setReactionTime] = useState(0);
@@ -22,7 +24,7 @@ export function ReactionGame({ onExit }: { onExit: () => void }) {
   const handleClick = () => {
     if (state === 'waiting') {
       setState('idle');
-      alert("Too early! Protocol aborted.");
+      toast({ variant: "destructive", title: "Too early! Protocol aborted." });
     } else if (state === 'ready') {
       setReactionTime(Date.now() - startTime);
       setState('result');

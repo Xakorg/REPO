@@ -848,7 +848,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     playPing();
     try {
       await deleteDoc(doc(firestore, "voice_status", `${activeServer}_${activeVoiceChannel}_${user.uid}`));
-    } catch(e){}
+    } catch (e) { console.error(e); }
     cleanupVoiceWebRTC();
     setActiveVoiceChannel(null);
     setVoiceConnectedMsg(false);
@@ -985,7 +985,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         status: "declined"
       });
       setIncomingCall(null);
-    } catch(e){}
+    } catch (e) { console.error(e); }
   };
 
   const handleEndDirectCall = async () => {
@@ -998,9 +998,9 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         setTimeout(async () => {
           try {
             await deleteDoc(doc(firestore!, "calls", sessionChatId));
-          } catch(e){}
+          } catch (e) { console.error(e); }
         }, 1500);
-      } catch(e){}
+      } catch (e) { console.error(e); }
     }
     cleanupDirectCallWebRTC();
     setActiveCallSession(null);

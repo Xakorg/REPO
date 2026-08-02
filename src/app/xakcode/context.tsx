@@ -442,7 +442,7 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
             domain: domain,
             isVerified: true
           }, { merge: true });
-        } catch(e) {}
+        } catch (e) { console.error(e); }
 
         toast({ title: "DNS Match Successful!", description: `Linked custom domain ${domain} to this project.` });
       } else {

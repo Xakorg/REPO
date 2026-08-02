@@ -30,7 +30,7 @@ export default function FeedbackPage() {
         const q = query(collection(firestore, 'feedback'), orderBy('createdAt', 'desc'));
         const snap = await getDocs(q);
         setReviews(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      } catch (e) {}
+      } catch (e) { console.error(e); }
     };
     fetchReviews();
   }, [firestore]);

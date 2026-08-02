@@ -6,8 +6,10 @@ import { useFirestore } from "@/firebase";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, Monitor, Gamepad2, TabletSmartphone, Star, ArrowRight, Search, LayoutGrid, Loader2, X, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 
 export default function VoltraStorePage() {
+  const { toast } = useToast();
   const firestore = useFirestore();
   const [nativeApps, setNativeApps] = useState<any[]>([]);
   
@@ -95,7 +97,7 @@ export default function VoltraStorePage() {
   const handleInstall = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    alert("Voltra OS devices are not yet globally available. Installation will be supported upon physical release of VoltraMax, VoltraPlay, and VoltraTab.");
+    toast({ variant: "destructive", title: "Voltra OS devices are not yet globally available. Installation will be supported upon physical release of VoltraMax, VoltraPlay, and VoltraTab." });
   };
 
   // =========================================================================

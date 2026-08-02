@@ -40,7 +40,7 @@ export default function CalculatorPage() {
     try {
       const { doc, setDoc } = await import('firebase/firestore');
       await setDoc(doc(firestore, 'users', user.uid, 'calculator', 'history'), { history: newHistory });
-    } catch (e) {}
+    } catch (e) { console.error(e); }
   };
 
   const handleInput = (val: string) => {
@@ -93,7 +93,7 @@ export default function CalculatorPage() {
           const res = Function(`'use strict'; return (${sanitized})`)();
           setResult(res.toString());
         }
-      } catch (e) {}
+      } catch (e) { console.error(e); }
     } else {
       setResult("");
     }

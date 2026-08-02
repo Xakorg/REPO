@@ -59,7 +59,7 @@ function AuthContent() {
       const vault = JSON.parse(localStorage.getItem('xakteir_vault') || '{}');
       vault[uid] = { provider, email: userEmail, password: userPassword };
       localStorage.setItem('xakteir_vault', JSON.stringify(vault));
-    } catch (e) {}
+    } catch (e) { console.error(e); }
   };
   
   useEffect(() => {
@@ -159,7 +159,7 @@ function AuthContent() {
         toast({ variant: "destructive", title: "Username Taken", description: "That username is already in use." });
         return;
       }
-    } catch (e) {}
+    } catch (e) { console.error(e); }
 
     const finalEmail = `${chosen}@mail.xakteir.com`;
     const finalUsername = chosen;
@@ -291,7 +291,7 @@ function AuthContent() {
         toast({ variant: "destructive", title: "Username Taken", description: "That username is already in use." });
         return;
       }
-    } catch (e) {}
+    } catch (e) { console.error(e); }
 
     const finalEmail = `${chosen}@mail.xakteir.com`;
 

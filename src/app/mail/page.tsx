@@ -768,7 +768,7 @@ export default function MailPage() {
           { readAt: new Date().toISOString(), readBy: user.email }
         );
         setReadReceiptBanner(true);
-      } catch {}
+      } catch (e) { console.error(e); }
     }
     // Feature 14: Vacation responder
     if (vacationEnabled && firestore && user) {
@@ -926,7 +926,7 @@ export default function MailPage() {
           },
           body: JSON.stringify({ to: toAddr, subject, body: personalizedBody, senderAddress, senderName: user?.displayName || "Xakteir Member" }),
         });
-      } catch {}
+      } catch (e) { console.error(e); }
       setMergeProgress(Math.round(((i + 1) / recipients.length) * 100));
       await new Promise(r => setTimeout(r, 300));
     }

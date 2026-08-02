@@ -17,7 +17,7 @@ export default function GamesStorePage() {
   useEffect(() => {
     const stored = localStorage.getItem("xakteir_game_library");
     if (stored) {
-      try { setLibraryIds(JSON.parse(stored)); } catch (e) {}
+      try { setLibraryIds(JSON.parse(stored)); } catch (e) { console.error(e); }
     }
   }, []);
 

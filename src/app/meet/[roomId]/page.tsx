@@ -245,7 +245,7 @@ export default function MeetingRoomPage() {
         osc.start();
         osc.stop(audioCtx.currentTime + 0.1);
       }
-    } catch (e) {}
+    } catch (e) { console.error(e); }
   }, []);
 
   // Stopwatch visual meeting counter
@@ -330,15 +330,15 @@ export default function MeetingRoomPage() {
     Object.values(iceBuffers.current).forEach((b) => b.reset());
     
     if (pc.current) {
-      try { pc.current.close(); } catch (e) {}
+      try { pc.current.close(); } catch (e) { console.error(e); }
       pc.current = null;
     }
     if (iceBuffer.current) {
-      try { iceBuffer.current.reset(); } catch (e) {}
+      try { iceBuffer.current.reset(); } catch (e) { console.error(e); }
       iceBuffer.current = null;
     }
     if (remoteStream.current) {
-      try { remoteStream.current.getTracks().forEach((t) => t.stop()); } catch (e) {}
+      try { remoteStream.current.getTracks().forEach((t) => t.stop()); } catch (e) { console.error(e); }
       remoteStream.current = null;
     }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {

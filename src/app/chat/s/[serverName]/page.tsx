@@ -382,7 +382,7 @@ export default function ServerChatPage() {
           channelId,
           timestamp: serverTimestamp()
         });
-      } catch(e) {}
+      } catch (e) { console.error(e); }
     }
   };
 
@@ -422,7 +422,7 @@ export default function ServerChatPage() {
         read: false,
         timestamp: serverTimestamp()
       });
-    } catch(e) {}
+    } catch (e) { console.error(e); }
   };
 
   // Resolve @mentions in a message text and dispatch notifications
@@ -447,7 +447,7 @@ export default function ServerChatPage() {
             `@${senderName}: ${content.slice(0, 80)}${content.length > 80 ? "…" : ""}`
           );
         }
-      } catch(e) {}
+      } catch (e) { console.error(e); }
     }
   };
 
@@ -465,7 +465,7 @@ export default function ServerChatPage() {
           read: false,
           timestamp: serverTimestamp()
         });
-      } catch(e) {}
+      } catch (e) { console.error(e); }
     }
   };
 
