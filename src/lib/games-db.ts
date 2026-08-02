@@ -15,6 +15,48 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "stasis",
+    title: "Stasis",
+    developer: "Xakteir Studios",
+    type: "3D",
+    genre: ["Sci-Fi", "3D", "Action", "Tactical", "Multiplayer", "2-Player", "Arcade", "Time Dilation"],
+    description: "Tactical time-dilation arena combat. Freeze enemy fire, deploy localized stasis pulses, and outmaneuver combat droids in 1P survival or 2-Player head-to-head duels.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=stasis",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "22:00", description: "Official Launch" }],
+    route: "/game/stasis"
+  },
+  {
+    id: "vanguard",
+    title: "Vanguard",
+    developer: "Xakteir Studios",
+    type: "2D Top-Down",
+    genre: ["Sci-Fi", "Action", "Mech", "2-Player", "Arcade", "Cyberpunk", "Combat"],
+    description: "Next-gen cybernetic mech brawler. Execute frame-perfect plasma blade parries, vent reactor core heat, and trigger homing missile barrages in intense 1v1 duels.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=vanguard",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "22:00", description: "Official Launch" }],
+    route: "/game/vanguard"
+  },
+  {
+    id: "gridiron",
+    title: "Gridiron",
+    developer: "Xakteir Studios",
+    type: "2.5D",
+    genre: ["Sports", "Action", "Arcade", "2-Player", "Physics", "Multiplayer", "Hover Sports"],
+    description: "High-velocity cybernetic hover hockey. Utilize impulse thrusters and magnetic tractor beams to slam plasma pucks into goal nets in 1P league or 2P versus matches.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=gridiron",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "22:00", description: "Official Launch" }],
+    route: "/game/gridiron"
+  },
+  {
     id: "aetheris_astral_eclipse",
     title: "Aetheris: Astral Eclipse",
     developer: "Xakteir Studios",

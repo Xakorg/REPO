@@ -1235,7 +1235,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
       <div className="md:hidden absolute bottom-6 left-6 z-40">
         <Sheet>
           <SheetTrigger asChild>
-            <Button className="w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-2xl border-4 border-[#05030d] active:scale-95 transition-all">
+            <Button className="w-14 h-14 rounded-full glass-button bg-emerald-600/80 hover:bg-emerald-500/90 text-white flex items-center justify-center shadow-[0_8px_32px_rgba(16,185,129,0.4)] border border-white/20 active:scale-95 transition-all">
               <Menu className="w-6 h-6 text-white" />
             </Button>
           </SheetTrigger>
@@ -1325,8 +1325,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         </Sheet>
       </div>
 
-      <aside className="hidden md:flex w-80 bg-[#0a0a15] border-r border-white/5 flex-col z-30 shrink-0">
-        <header className="h-16 border-b border-white/5 px-6 flex items-center justify-between shadow-xl shrink-0">
+      <aside className="hidden md:flex w-80 glass-panel m-4 rounded-[2rem] flex-col z-30 shrink-0 overflow-hidden shadow-2xl border border-white/5">
+        <header className="h-16 border-b border-white/5 px-6 flex items-center justify-between bg-white/5 shrink-0">
           <h2 className="text-sm font-black uppercase italic tracking-tighter text-white truncate">
             {activeServer === 'home' ? 'Direct Messages' : serverHeaderTitle}
           </h2>
@@ -1340,7 +1340,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         </header>
 
         {/* Horizontal Server Rail */}
-        <div className="py-3 px-2 border-b border-white/5 bg-black/40 shrink-0">
+        <div className="py-3 px-2 border-b border-white/5 bg-black/20 shrink-0 backdrop-blur-md">
           <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex items-center gap-2.5 w-max px-2">
               {allServers.map(s => (
@@ -1348,8 +1348,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                   key={s.id}
                   onClick={() => navigateTo(s.href, router)}
                   className={cn(
-                    "w-12 h-12 rounded-[1rem] flex items-center justify-center transition-all duration-300 relative group overflow-hidden shrink-0 border-2",
-                    activeServer === s.id ? "border-primary bg-primary text-black shadow-[0_0_20px_rgba(var(--primary),0.3)] rounded-[0.8rem]" : "border-transparent bg-white/5 text-white/40 hover:bg-white/10 hover:text-white hover:rounded-[0.8rem]",
+                    "w-12 h-12 rounded-[1rem] flex items-center justify-center transition-all duration-300 relative group overflow-hidden shrink-0 border border-white/10 glass-button hover:-translate-y-1 hover:shadow-[0_8px_16px_rgba(255,255,255,0.1)]",
+                    activeServer === s.id ? "border-primary bg-primary text-black shadow-[0_0_20px_rgba(var(--primary),0.5)] rounded-[0.8rem]" : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white hover:rounded-[0.8rem]",
                     s.id !== 'home' && s.id !== 'xakteir' && s.id !== 'gaming' && s.id !== 'dev' && s.id !== 'discover' && !s.iconUrl ? `${s.color} hover:text-white` : ""
                   )}
                 >
@@ -1461,7 +1461,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         )}
 
         {/* Unified Footer */}
-        <footer className="p-5 bg-[#05030d] border-t border-white/5 flex flex-col gap-4 shrink-0">
+        <footer className="p-5 bg-black/20 border-t border-white/5 flex flex-col gap-4 shrink-0 backdrop-blur-xl">
            <div className="flex items-center justify-between">
              <div className="flex items-center gap-3 group cursor-pointer" onClick={() => setShowGlobalSettingsModal(true)}>
                 <div className="relative hover:scale-105 transition-transform">
@@ -1482,7 +1482,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         </footer>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#06060c] relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 pointer-events-none" />
         {children}
       </div>
 

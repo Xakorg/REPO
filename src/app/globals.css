@@ -82,6 +82,24 @@
   @apply border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)];
 }
 
+.glass-panel {
+  @apply bg-black/30 backdrop-blur-2xl border border-white/10 shadow-2xl;
+}
+
+.glass-button {
+  @apply relative overflow-hidden transition-all duration-300;
+}
+.glass-button::before {
+  content: '';
+  @apply absolute inset-0 bg-white/5 backdrop-blur-md opacity-0 transition-opacity duration-300;
+}
+.glass-button:hover::before {
+  @apply opacity-100;
+}
+.glass-button:active {
+  transform: scale(0.97);
+}
+
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 .animate-float { animation: float 6s ease-in-out infinite; }
 

@@ -39,6 +39,7 @@ import {
   MonitorUp,
   Flame
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { ThreadPanel } from "@/components/chat/ThreadPanel";
 import { ReactionPicker } from "@/components/chat/ReactionPicker";
@@ -1725,7 +1726,10 @@ export default function ServerChatPage() {
                   const translated = translatedTexts[msg.id];
                   
                   return (
-                    <div 
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                       key={msg.id} 
                       id={`msg-${msg.id}`}
                       onContextMenu={(e) => {
@@ -2436,7 +2440,7 @@ export default function ServerChatPage() {
              </div>
 
              <form onSubmit={(e) => handleSend(e)} className="flex items-end gap-3 md:gap-4">
-                <div className="flex-1 bg-black/40 border-2 border-white/10 rounded-[1.8rem] p-2 md:p-3 flex items-center gap-3 md:gap-4 relative">
+                <div className="flex-1 glass-panel bg-black/40 border-2 border-white/10 rounded-[2rem] p-2 md:p-3 flex items-center gap-3 md:gap-4 relative shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_32px_rgba(16,185,129,0.1)] transition-all">
                    <input 
                      type="file" 
                      accept="image/*" 
@@ -2550,7 +2554,7 @@ export default function ServerChatPage() {
 
                    <button type="button" className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all shrink-0"><Smile className="w-4 h-4 md:w-5 md:h-5" /></button>
                 </div>
-                <Button type="submit" size="icon" className="h-12 w-12 md:h-16 md:w-16 bg-primary rounded-[1rem] md:rounded-[1.5rem] shadow-2xl active:scale-90 flex items-center justify-center shrink-0 border-none"><Send className="w-5 h-5 md:w-6 md:h-6 text-white" /></Button>
+                <Button type="submit" size="icon" className="h-12 w-12 md:h-16 md:w-16 bg-primary/90 hover:bg-primary glass-button rounded-[1rem] md:rounded-[1.5rem] shadow-[0_4px_24px_rgba(16,185,129,0.4)] active:scale-90 flex items-center justify-center shrink-0 border border-white/10 hover:-translate-y-1 transition-all"><Send className="w-5 h-5 md:w-6 md:h-6 text-black" /></Button>
              </form>
             </div>
           )}
