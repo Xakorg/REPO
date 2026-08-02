@@ -15,6 +15,22 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "quantum_horizon_overdrive",
+    title: "Quantum Horizon Overdrive",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Sci-Fi", "2D", "Action", "Rogue-lite", "Arcade", "Survival", "Bullet Hell", "Cyberpunk"],
+    description: "Next-gen cybernetic rogue-lite space interceptor shooter. Pilot apex starfighters, trigger graviton EMP shockwaves, perform time-dilation iframe dashes, harvest plasma core matrix upgrades, and eliminate multi-stage Hyperion boss dreadnoughts.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=quantumhorizonoverdrive",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "20:00", description: "Official Game Release" }
+    ],
+    route: "/game/quantum-horizon-overdrive"
+  },
+  {
     id: "hyper_aether_overdrive",
     title: "Hyper Aether Overdrive",
     developer: "Xakteir Studios",
