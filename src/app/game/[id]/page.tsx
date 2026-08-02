@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
  
 const GAME_MAP: Record<string, React.ComponentType<any>> = {
+  aetheris_astral_eclipse: dynamic(() => import("@/components/game/aetheris-astral-eclipse")),
+  "aetheris-astral-eclipse": dynamic(() => import("@/components/game/aetheris-astral-eclipse")),
   quantum_horizon_overdrive: dynamic(() => import("@/components/game/quantum-horizon-overdrive")),
   "quantum-horizon-overdrive": dynamic(() => import("@/components/game/quantum-horizon-overdrive")),
   hyper_aether_overdrive: dynamic(() => import("@/components/game/hyper-aether-overdrive")),
