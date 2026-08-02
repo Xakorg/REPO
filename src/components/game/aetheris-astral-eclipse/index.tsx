@@ -437,11 +437,11 @@ export default function AetherisAstralEclipse() {
   };
 
   // Trigger Achievement Check
-  const checkAchievements = (stats: { kills: number; wave: number; score: number; bossKills: number; maxCombo: number }) => {
+  const checkAchievements = (stats: { kills: number; wave?: number; waveReached?: number; score: number; bossKills: number; maxCombo: number }) => {
     const newlyUnlocked: string[] = [];
     ACHIEVEMENTS.forEach(ach => {
       if (!unlockedAchievements.includes(ach.id)) {
-        const val = (stats as any)[ach.key] || 0;
+        const val = (stats as any)[ach.key] || (ach.key === "wave" ? stats.waveReached : 0);
         if (val >= ach.target) {
           newlyUnlocked.push(ach.id);
         }
@@ -1094,6 +1094,7 @@ export default function AetherisAstralEclipse() {
         const stats = {
           kills: engine.kills,
           bossKills: engine.bossKills,
+          wave: engine.wave,
           waveReached: engine.wave,
           score: engine.score,
           maxCombo: engine.maxCombo,
