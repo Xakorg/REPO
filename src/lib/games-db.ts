@@ -15,6 +15,48 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "pulse",
+    title: "Pulse",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Rhythm", "Corridor Defense", "Beat Sync", "Synth", "Mobile Friendly", "2P Battle"],
+    description: "Shift electro lanes and trigger timed pulse shockwaves on the beat to synchronize viral nodes before energy overload.",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=pulse",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:30", description: "Batch 5 Mobile Launch" }],
+    route: "/game/pulse"
+  },
+  {
+    id: "aegis",
+    title: "Aegis",
+    developer: "Xakteir Studios",
+    type: "Action",
+    genre: ["Orbital Shield", "360 Deflector", "Plasma Battery", "Mobile Friendly", "2P Arena"],
+    description: "Rotate a 360-degree orbital aegis barrier to deflect incoming plasma energy bolts back at hostile battery stations.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aegis",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:30", description: "Batch 5 Mobile Launch" }],
+    route: "/game/aegis"
+  },
+  {
+    id: "strata",
+    title: "Strata",
+    developer: "Xakteir Studios",
+    type: "Strategy",
+    genre: ["Geothermal Drill", "Tectonic Dig", "Minerals", "Magma Avoidance", "Mobile Friendly", "2P Race"],
+    description: "Excavate down through geological rock strata, gather subterranean mineral gems, and avoid thermal magma pockets.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=strata",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:30", description: "Batch 5 Mobile Launch" }],
+    route: "/game/strata"
+  },
+  {
     id: "vault",
     title: "Vault",
     developer: "Xakteir Studios",
