@@ -1,0 +1,1761 @@
+{
+  "about": {
+    "icons": [
+      "Code2",
+      "Rocket",
+      "Heart",
+      "Sparkles",
+      "Star",
+      "Users",
+      "Mail",
+      "Info"
+    ],
+    "states": [],
+    "features": [],
+    "size": 7040
+  },
+  "admin": {
+    "icons": [
+      "ShieldCheck",
+      "Users",
+      "Loader2",
+      "Trash2",
+      "Radio",
+      "LockKeyhole",
+      "MessageSquare",
+      "Reply",
+      "X",
+      "Trophy",
+      "Coins",
+      "RefreshCw"
+    ],
+    "states": [
+      "mounted",
+      "userToManage",
+      "coinsToGive",
+      "newPasswordInput",
+      "adminPerms",
+      "broadcast",
+      "replyTarget",
+      "replyMessage",
+      "isSendingReply",
+      "isBroadcasting",
+      "seedCount",
+      "seedImages",
+      "seedDryRun",
+      "seedRunning",
+      "removeId",
+      "removeDryRun",
+      "removeRunning",
+      "hotfixPrompt",
+      "isDeployingHotfix",
+      "goalTitle"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation",
+      "Theming",
+      "Search functionality"
+    ],
+    "size": 67341
+  },
+  "ai-chat": {
+    "icons": [
+      "Send",
+      "User",
+      "Sparkles",
+      "Loader2",
+      "Bot",
+      "Plus",
+      "MessageSquare",
+      "History",
+      "MoreVertical",
+      "Lock",
+      "Trash2",
+      "Copy",
+      "CheckCircle2",
+      "Mic",
+      "MicOff"
+    ],
+    "states": [
+      "copiedId",
+      "activeSessionId",
+      "messages",
+      "input",
+      "loading",
+      "isListening",
+      "isGlowActive",
+      "speakingIndex",
+      "hotword",
+      "alwaysOn"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Voice/Audio Support",
+      "Video Support",
+      "Translation",
+      "Search functionality"
+    ],
+    "size": 32410
+  },
+  "apps": {
+    "icons": [
+      "Mail",
+      "Gamepad2",
+      "MessageSquare",
+      "Video",
+      "FileText",
+      "ImageIcon",
+      "LayoutGrid",
+      "Calendar",
+      "Code2",
+      "Lock",
+      "Map",
+      "Users",
+      "GraduationCap",
+      "Palette",
+      "Languages"
+    ],
+    "states": [
+      "imgError"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Video Support",
+      "Translation",
+      "Search functionality"
+    ],
+    "size": 8815
+  },
+  "archive": {
+    "icons": [
+      "History",
+      "RotateCcw",
+      "Trash2",
+      "Search",
+      "FileText",
+      "Code2",
+      "ImageIcon",
+      "Zap",
+      "Clock",
+      "ShieldCheck",
+      "Loader2",
+      "ChevronRight",
+      "HardDrive",
+      "Filter",
+      "ArrowLeft"
+    ],
+    "states": [
+      "search",
+      "isRestoring"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation",
+      "Search functionality"
+    ],
+    "size": 9744
+  },
+  "art": {
+    "icons": [
+      "Palette",
+      "Sparkles",
+      "Send",
+      "Loader2",
+      "ImageIcon",
+      "Download",
+      "Share2",
+      "Heart",
+      "Trash2",
+      "Zap",
+      "Save",
+      "HardDrive",
+      "LayoutGrid",
+      "Globe",
+      "Layers"
+    ],
+    "states": [
+      "activeTab",
+      "prompt",
+      "loading",
+      "generatedImage",
+      "aspectRatio",
+      "isSaving",
+      "brushColor",
+      "brushSize",
+      "isDrawing"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation"
+    ],
+    "size": 22054
+  },
+  "auth": {
+    "icons": [
+      "Loader2",
+      "Mail",
+      "Lock",
+      "AtSign",
+      "ArrowRight",
+      "Sparkles",
+      "ShieldCheck",
+      "Chrome",
+      "HelpCircle",
+      "RefreshCw",
+      "EyeOff",
+      "Eye"
+    ],
+    "states": [
+      "activeTab",
+      "step",
+      "wizardStep",
+      "confirmPassword",
+      "showAnimation",
+      "askLinkGmail",
+      "pendingGoogleUser",
+      "usernameInput",
+      "email",
+      "password",
+      "isPublic",
+      "otpCode",
+      "isLoading"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation",
+      "Search functionality"
+    ],
+    "size": 30631
+  },
+  "authenticator": {
+    "icons": [
+      "ShieldCheck",
+      "Lock",
+      "Plus",
+      "Search",
+      "Smartphone",
+      "Monitor",
+      "Clock",
+      "Copy",
+      "Trash2",
+      "Settings",
+      "QrCode",
+      "Keyboard",
+      "ChevronRight",
+      "Loader2",
+      "Zap"
+    ],
+    "states": [
+      "mounted",
+      "isUnlocked",
+      "pin",
+      "search",
+      "activeAccountId",
+      "isAdding",
+      "newAccount",
+      "secondsLeft",
+      "isMobile",
+      "activeTab",
+      "revealPrompt",
+      "revealTarget",
+      "revealPin",
+      "revealedPasswords",
+      "newIdentity",
+      "setupStep",
+      "setupPin",
+      "setupPinConfirm"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "E2E Encryption",
+      "Translation",
+      "Pinned Items",
+      "Search functionality"
+    ],
+    "size": 40977
+  },
+  "buddy": {
+    "icons": [
+      "Heart",
+      "Pizza",
+      "Gamepad2",
+      "Smile",
+      "Ghost",
+      "Cat",
+      "Dog",
+      "Rabbit",
+      "Loader2",
+      "Plus",
+      "Trash2",
+      "Zap",
+      "Sparkles",
+      "ArrowRight"
+    ],
+    "states": [
+      "activeTab",
+      "selectedPetId",
+      "newPetName",
+      "newPetType",
+      "isCreating"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation"
+    ],
+    "size": 22727
+  },
+  "calculator": {
+    "icons": [
+      "Calculator as CalcIcon",
+      "Delete",
+      "Equal",
+      "History",
+      "Trash2"
+    ],
+    "states": [
+      "expression",
+      "result",
+      "history"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation"
+    ],
+    "size": 9334
+  },
+  "calendar": {
+    "icons": [
+      "Calendar as CalendarIcon",
+      "ChevronLeft",
+      "ChevronRight",
+      "Plus",
+      "Clock",
+      "Target",
+      "Loader2",
+      "CheckCircle2",
+      "Trash2",
+      "CalendarCheck",
+      "TrendingUp",
+      "Award",
+      "ListTodo"
+    ],
+    "states": [
+      "mounted",
+      "currentDate",
+      "selectedDate",
+      "isCreateOpen",
+      "goalTitle",
+      "goalDesc",
+      "goalCat",
+      "goalTargetDate",
+      "milestonesText"
+    ],
+    "features": [
+      "Firebase Realtime Data"
+    ],
+    "size": 20234
+  },
+  "challenge": {
+    "icons": [
+      "Bot",
+      "Bug",
+      "ShieldAlert",
+      "Cpu",
+      "Sparkles",
+      "CheckCircle2"
+    ],
+    "states": [
+      "icons",
+      "success",
+      "failed"
+    ],
+    "features": [
+      "Search functionality"
+    ],
+    "size": 4368
+  },
+  "chat": {
+    "icons": [
+      "MessageSquare",
+      "Zap",
+      "ShieldCheck",
+      "Gamepad2",
+      "Brain",
+      "Loader2",
+      "Users",
+      "Video"
+    ],
+    "states": [],
+    "features": [
+      "Framer Motion Animations",
+      "Firebase Realtime Data",
+      "Video Support",
+      "Threaded Conversations",
+      "E2E Encryption",
+      "Translation",
+      "Pinned Items",
+      "Theming",
+      "Search functionality"
+    ],
+    "size": 9565
+  },
+  "classroom": {
+    "icons": [
+      "GraduationCap",
+      "Plus",
+      "School",
+      "User",
+      "Baby",
+      "Loader2",
+      "PlusCircle",
+      "ChevronRight",
+      "BookOpen",
+      "UserCheck"
+    ],
+    "states": [
+      "mounted",
+      "newClassData",
+      "isProcessing",
+      "joinCodeInput"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation"
+    ],
+    "size": 14623
+  },
+  "code": {
+    "icons": [],
+    "states": [],
+    "features": [],
+    "size": 678
+  },
+  "contact": {
+    "icons": [
+      "MessageSquare",
+      "Send",
+      "Loader2",
+      "Sparkles",
+      "User",
+      "BadgeCheck"
+    ],
+    "states": [
+      "loading",
+      "xakId",
+      "message"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation"
+    ],
+    "size": 6421
+  },
+  "dev-centre": {
+    "icons": [
+      "Code2",
+      "ShieldAlert",
+      "Database",
+      "Users",
+      "Server",
+      "Activity",
+      "Plus",
+      "ArrowRight",
+      "LayoutGrid",
+      "Rocket",
+      "Clock"
+    ],
+    "states": [
+      "newProjectName",
+      "isCreating"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation"
+    ],
+    "size": 10913
+  },
+  "dns": {
+    "icons": [
+      "Globe",
+      "Plus",
+      "Trash2",
+      "Server",
+      "Settings",
+      "Activity"
+    ],
+    "states": [
+      "mounted",
+      "newDomainName",
+      "isAddingDomain",
+      "selectedDomain",
+      "newRecordType",
+      "newRecordName",
+      "newRecordValue",
+      "newRecordTTL",
+      "isAddingRecord"
+    ],
+    "features": [
+      "Firebase Realtime Data"
+    ],
+    "size": 15680
+  },
+  "download-desktop": {
+    "icons": [
+      "Download",
+      "Monitor",
+      "Sparkles",
+      "FolderDown",
+      "Loader2",
+      "CheckCircle2"
+    ],
+    "states": [
+      "downloading",
+      "success"
+    ],
+    "features": [
+      "Translation"
+    ],
+    "size": 5651
+  },
+  "drive": {
+    "icons": [
+      "HardDrive",
+      "Search",
+      "Trash2",
+      "Plus",
+      "Loader2",
+      "CheckCircle2",
+      "Upload",
+      "FolderOpen",
+      "File",
+      "Clock",
+      "Star",
+      "Users",
+      "ShieldCheck",
+      "Lock",
+      "ChevronDown"
+    ],
+    "states": [
+      "driveMode",
+      "viewMode",
+      "isUploading",
+      "uploadProgress",
+      "searchQuery",
+      "sortBy",
+      "sortOrder",
+      "selectedFiles",
+      "currentPath",
+      "showNewFolderDialog",
+      "newFolderName",
+      "renameFile",
+      "newFileName",
+      "shareFile",
+      "isDragging",
+      "vaultUnlocked",
+      "pinInput",
+      "contextMenu",
+      "emptyContextMenu",
+      "previewFile"
+    ],
+    "features": [
+      "Framer Motion Animations",
+      "Firebase Realtime Data",
+      "Voice/Audio Support",
+      "Video Support",
+      "Translation",
+      "Pinned Items",
+      "Search functionality"
+    ],
+    "size": 57619
+  },
+  "feedback": {
+    "icons": [
+      "Star",
+      "MessageSquareQuote",
+      "Send",
+      "ArrowLeft"
+    ],
+    "states": [
+      "rating",
+      "hoverRating",
+      "review",
+      "reviews",
+      "submitting"
+    ],
+    "features": [
+      "Framer Motion Animations",
+      "Firebase Realtime Data",
+      "Translation"
+    ],
+    "size": 7796
+  },
+  "forms": {
+    "icons": [
+      "Settings",
+      "Share",
+      "MessageSquare",
+      "History",
+      "Wand2",
+      "Eye",
+      "Plus",
+      "FileText",
+      "Trash2",
+      "ArrowLeft",
+      "GripVertical",
+      "CheckCircle2",
+      "Copy",
+      "BarChart3",
+      "LayoutTemplate"
+    ],
+    "states": [
+      "myForms",
+      "isLoadingForms",
+      "activeForm",
+      "saving",
+      "isThemePanelOpen",
+      "isPublishModalOpen"
+    ],
+    "features": [
+      "Framer Motion Animations",
+      "Firebase Realtime Data",
+      "Video Support",
+      "Translation",
+      "Theming",
+      "Search functionality"
+    ],
+    "size": 32840
+  },
+  "game": {
+    "icons": [],
+    "states": [],
+    "features": [],
+    "size": 110
+  },
+  "games": {
+    "icons": [
+      "Play",
+      "ShoppingBag",
+      "Settings",
+      "Sparkles",
+      "Gamepad2",
+      "Trophy",
+      "Sun",
+      "Moon",
+      "Search",
+      "Heart"
+    ],
+    "states": [
+      "libraryIds",
+      "recentIds",
+      "favoriteIds",
+      "searchQuery",
+      "activeItem",
+      "launchingGame",
+      "isLightMode",
+      "isMobile"
+    ],
+    "features": [
+      "Framer Motion Animations",
+      "Firebase Realtime Data",
+      "Translation",
+      "Theming",
+      "Search functionality"
+    ],
+    "size": 22221
+  },
+  "installer": {
+    "icons": [
+      "X",
+      "Settings",
+      "FolderOpen",
+      "ChevronRight",
+      "Loader2",
+      "CheckCircle2",
+      "Terminal",
+      "HardDrive",
+      "Zap",
+      "ShieldCheck",
+      "Monitor",
+      "Minus",
+      "Square"
+    ],
+    "states": [
+      "step",
+      "progress",
+      "statusText",
+      "options"
+    ],
+    "features": [
+      "Translation"
+    ],
+    "size": 12529
+  },
+  "learn-pro": {
+    "icons": [
+      "Zap",
+      "Gamepad2",
+      "Plus",
+      "Play",
+      "Users",
+      "Trophy",
+      "Sparkles",
+      "Cat",
+      "Dog",
+      "Rabbit",
+      "Ghost",
+      "Loader2",
+      "Settings",
+      "Search",
+      "LayoutGrid"
+    ],
+    "states": [
+      "activeTab",
+      "joinCode",
+      "isJoining"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Search functionality"
+    ],
+    "size": 10725
+  },
+  "mail": {
+    "icons": [
+      "Inbox",
+      "Send",
+      "Star",
+      "Trash2",
+      "Plus",
+      "Loader2",
+      "Mail as MailIcon",
+      "Globe",
+      "RefreshCw",
+      "LogOut",
+      "MailCheck",
+      "Search",
+      "Clock",
+      "Paperclip",
+      "Lock"
+    ],
+    "states": [
+      "selectedId",
+      "sidebarOpen",
+      "folder",
+      "isComposeOpen",
+      "recipient",
+      "subject",
+      "body",
+      "isSending",
+      "attachments",
+      "isUploadingAttachment",
+      "unifiedInbox",
+      "activeTab",
+      "searchQuery",
+      "debouncedSearch",
+      "selectedEmails",
+      "splitPane",
+      "isOffline",
+      "isEncrypted",
+      "focusedInbox",
+      "isTranslating"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Voice/Audio Support",
+      "Threaded Conversations",
+      "E2E Encryption",
+      "Translation",
+      "Pinned Items",
+      "Theming",
+      "Search functionality"
+    ],
+    "size": 164689
+  },
+  "map": {
+    "icons": [
+      "Map as MapIcon",
+      "Navigation",
+      "Search",
+      "Plus",
+      "Minus",
+      "Compass",
+      "Loader2",
+      "Users as UsersIcon",
+      "UserPlus",
+      "Check",
+      "X",
+      "RefreshCw",
+      "Locate",
+      "ArrowLeftRight",
+      "Play"
+    ],
+    "states": [
+      "location",
+      "loading",
+      "leafletLoaded",
+      "friendsOpen",
+      "mapLayer",
+      "startQuery",
+      "destQuery",
+      "wikiSidebarOpen",
+      "wikiData",
+      "wikiLoading",
+      "startPoint",
+      "destPoint",
+      "startSuggestions",
+      "destSuggestions",
+      "activeSearchInput",
+      "travelMode",
+      "routeDetails",
+      "routeCoords",
+      "routingLoading",
+      "steps"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation",
+      "Pinned Items",
+      "Search functionality"
+    ],
+    "size": 146716
+  },
+  "meet": {
+    "icons": [
+      "Plus",
+      "Users",
+      "Video as VideoIcon",
+      "ArrowRight",
+      "Camera",
+      "Mic",
+      "MicOff",
+      "VideoOff",
+      "Volume2",
+      "Settings"
+    ],
+    "states": [
+      "mounted",
+      "roomCode",
+      "customRoomId",
+      "activeTab",
+      "mockSettings",
+      "lobbyStream",
+      "devices",
+      "selectedCam",
+      "selectedMic",
+      "isLobbyMicOn",
+      "isLobbyVideoOn",
+      "audioLevel"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Voice/Audio Support",
+      "Video Support",
+      "Polls",
+      "Translation"
+    ],
+    "size": 26437
+  },
+  "mini-player": {
+    "icons": [
+      "Phone",
+      "PhoneOff",
+      "Mic",
+      "MicOff",
+      "Video",
+      "VideoOff",
+      "Maximize2"
+    ],
+    "states": [
+      "isMuted",
+      "isVideoOff"
+    ],
+    "features": [
+      "Voice/Audio Support",
+      "Video Support",
+      "Search functionality"
+    ],
+    "size": 3775
+  },
+  "news": {
+    "icons": [
+      "Newspaper",
+      "Clock",
+      "User",
+      "Zap",
+      "Sparkles",
+      "Loader2",
+      "Info",
+      "ChevronRight",
+      "Calendar",
+      "Bookmark"
+    ],
+    "states": [],
+    "features": [
+      "Firebase Realtime Data",
+      "Search functionality"
+    ],
+    "size": 7824
+  },
+  "notes": {
+    "icons": [
+      "Plus",
+      "Trash2",
+      "Save",
+      "Sparkles",
+      "Loader2",
+      "Book",
+      "StickyNote",
+      "Library",
+      "Settings",
+      "Search",
+      "ChevronRight",
+      "Bold",
+      "Italic",
+      "Underline",
+      "Link"
+    ],
+    "states": [
+      "activeNotebook",
+      "selectedNote",
+      "isSaving",
+      "focusMode",
+      "showOutline",
+      "searchQuery"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Voice/Audio Support",
+      "Theming",
+      "Search functionality"
+    ],
+    "size": 18500
+  },
+  "notifications": {
+    "icons": [
+      "Bell",
+      "Trash2",
+      "CheckCircle2",
+      "UserPlus",
+      "MessageSquare",
+      "Zap",
+      "Trophy",
+      "Star",
+      "Settings",
+      "MoreVertical",
+      "ArrowRight",
+      "Loader2",
+      "Inbox",
+      "Filter",
+      "Flame"
+    ],
+    "states": [
+      "mounted",
+      "activeFilter"
+    ],
+    "features": [
+      "Firebase Realtime Data"
+    ],
+    "size": 10429
+  },
+  "overlay": {
+    "icons": [],
+    "states": [
+      "isListening",
+      "isGlowActive"
+    ],
+    "features": [],
+    "size": 4326
+  },
+  "pics": {
+    "icons": [
+      "ImageIcon",
+      "Heart",
+      "Share2",
+      "Plus",
+      "Loader2",
+      "Camera",
+      "Lock",
+      "FolderOpen",
+      "LayoutGrid",
+      "X",
+      "ChevronLeft",
+      "ChevronRight",
+      "ExternalLink",
+      "PlusCircle",
+      "FolderPlus"
+    ],
+    "states": [
+      "mounted",
+      "activeTab",
+      "selectedAlbumId",
+      "slideshowIdx",
+      "albumName",
+      "albumDesc",
+      "albumCover",
+      "isAlbumOpen",
+      "picTitle",
+      "picUrl",
+      "picAlbumId",
+      "isPublishOpen"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation"
+    ],
+    "size": 24266
+  },
+  "privacy": {
+    "icons": [
+      "ShieldCheck",
+      "ChevronLeft"
+    ],
+    "states": [],
+    "features": [],
+    "size": 4800
+  },
+  "profile": {
+    "icons": [
+      "Settings",
+      "Zap",
+      "Heart",
+      "Trophy",
+      "Loader2",
+      "RefreshCw",
+      "Activity",
+      "User as UserIcon",
+      "ShieldCheck",
+      "Globe",
+      "Lock",
+      "Upload",
+      "Sparkles",
+      "Edit3"
+    ],
+    "states": [
+      "description",
+      "displayName",
+      "avatarUrl",
+      "isUpdating",
+      "inventoryTab",
+      "isUploadingPicture"
+    ],
+    "features": [
+      "Framer Motion Animations",
+      "Firebase Realtime Data",
+      "Translation"
+    ],
+    "size": 24784
+  },
+  "quick-reply": {
+    "icons": [
+      "Send",
+      "Loader2",
+      "MessageSquare",
+      "X"
+    ],
+    "states": [
+      "loading",
+      "chat",
+      "input",
+      "sending"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation"
+    ],
+    "size": 4792
+  },
+  "rietkax": {
+    "icons": [
+      "Ghost",
+      "RotateCcw",
+      "Sparkles",
+      "Zap",
+      "ShieldAlert",
+      "Dice1 as Dice",
+      "Bomb",
+      "ChevronLeft",
+      "X",
+      "Orbit"
+    ],
+    "states": [
+      "gravity",
+      "items",
+      "mounted"
+    ],
+    "features": [
+      "Translation"
+    ],
+    "size": 6227
+  },
+  "search": {
+    "icons": [
+      "Search",
+      "X",
+      "Sparkles",
+      "Loader2",
+      "BadgeCheck",
+      "Globe",
+      "Settings",
+      "Image as ImageIcon",
+      "Users",
+      "List",
+      "History",
+      "Trash2",
+      "ExternalLink",
+      "FileText",
+      "MessageCircle"
+    ],
+    "states": [
+      "queryInput",
+      "images",
+      "activeCategory",
+      "internalResults",
+      "externalSites",
+      "wikiDefinition",
+      "isWebSearching",
+      "searchHistory",
+      "showDropdown",
+      "accentTheme",
+      "safeSearchActive",
+      "openInNewTab",
+      "resultsDisplayCount",
+      "pauseHistoryLogging",
+      "timeStart",
+      "searchTime",
+      "isSpeaking",
+      "isAiLoading",
+      "isListening",
+      "bookmarkedSites"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Voice/Audio Support",
+      "Video Support",
+      "Translation",
+      "Pinned Items",
+      "Theming",
+      "Search functionality"
+    ],
+    "size": 144710
+  },
+  "search-console": {
+    "icons": [
+      "Globe",
+      "Plus",
+      "ShieldCheck",
+      "Activity",
+      "BarChart3",
+      "Search",
+      "ChevronRight",
+      "CheckCircle2",
+      "Loader2",
+      "Trash2",
+      "Settings",
+      "Info",
+      "Link as LinkIcon",
+      "Layout",
+      "ExternalLink"
+    ],
+    "states": [
+      "newSiteUrl",
+      "newSiteTitle",
+      "newSiteDesc",
+      "isRegistering",
+      "verifyingSite"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation",
+      "Search functionality"
+    ],
+    "size": 14038
+  },
+  "settings": {
+    "icons": [
+      "Settings as SettingsIcon",
+      "LayoutTemplate",
+      "Check"
+    ],
+    "states": [],
+    "features": [],
+    "size": 3691
+  },
+  "sheets": {
+    "icons": [
+      "Settings",
+      "Share",
+      "MessageSquare",
+      "History",
+      "Wand2",
+      "Plus"
+    ],
+    "states": [],
+    "features": [
+      "Translation"
+    ],
+    "size": 4257
+  },
+  "shop": {
+    "icons": [
+      "ShoppingBag",
+      "Zap",
+      "User",
+      "Award",
+      "Flame",
+      "Loader2",
+      "Sparkles",
+      "Gift",
+      "Clock",
+      "Sparkle",
+      "Star"
+    ],
+    "states": [
+      "isSyncing",
+      "activeCategory",
+      "giftTarget",
+      "timeRemaining",
+      "previewSetId",
+      "selectedItem"
+    ],
+    "features": [
+      "Framer Motion Animations",
+      "Firebase Realtime Data",
+      "Translation"
+    ],
+    "size": 33243
+  },
+  "sign": {
+    "icons": [
+      "PenTool",
+      "Plus",
+      "FileText",
+      "ShieldCheck",
+      "Clock",
+      "Trash2",
+      "Download",
+      "Share2",
+      "CheckCircle2",
+      "Loader2",
+      "Lock",
+      "Wand2",
+      "Zap",
+      "MoreVertical",
+      "Activity"
+    ],
+    "states": [
+      "activeTab",
+      "isCreating",
+      "docTitle",
+      "docContent"
+    ],
+    "features": [
+      "Firebase Realtime Data"
+    ],
+    "size": 10535
+  },
+  "slides": {
+    "icons": [
+      "Settings",
+      "Share",
+      "MessageSquare",
+      "History",
+      "Wand2",
+      "Play"
+    ],
+    "states": [],
+    "features": [
+      "Video Support",
+      "Translation"
+    ],
+    "size": 4337
+  },
+  "social": {
+    "icons": [
+      "Users",
+      "Search",
+      "TrendingUp",
+      "UserPlus",
+      "Sparkles",
+      "Globe",
+      "Loader2",
+      "UserMinus",
+      "MessageSquare",
+      "LayoutGrid",
+      "Send",
+      "Plus",
+      "X",
+      "Mail",
+      "Flame"
+    ],
+    "states": [
+      "mounted",
+      "activeTab",
+      "selectedMember",
+      "chatInput",
+      "isReporting",
+      "isCreatingGroup",
+      "newGroupName",
+      "newGroupDesc"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Search functionality"
+    ],
+    "size": 30466
+  },
+  "sports": {
+    "icons": [
+      "Trophy",
+      "PlayCircle",
+      "Loader2",
+      "ArrowRight"
+    ],
+    "states": [
+      "matches",
+      "loading",
+      "selectedMatch"
+    ],
+    "features": [
+      "Video Support"
+    ],
+    "size": 8308
+  },
+  "stream": {
+    "icons": [
+      "Radio",
+      "Users",
+      "Heart",
+      "Share2",
+      "Play",
+      "Circle",
+      "MessageSquare"
+    ],
+    "states": [],
+    "features": [
+      "Video Support"
+    ],
+    "size": 2253
+  },
+  "suite": {
+    "icons": [
+      "FileText",
+      "FileSpreadsheet",
+      "Presentation",
+      "FileJson",
+      "ArrowRight",
+      "Sparkles",
+      "Layers"
+    ],
+    "states": [
+      "mounted"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Translation"
+    ],
+    "size": 8756
+  },
+  "tasks": {
+    "icons": [
+      "ListTodo",
+      "Plus",
+      "MoreVertical",
+      "Calendar",
+      "CheckCircle2",
+      "Circle",
+      "Loader2"
+    ],
+    "states": [],
+    "features": [
+      "Firebase Realtime Data"
+    ],
+    "size": 6683
+  },
+  "terms": {
+    "icons": [
+      "ScrollText",
+      "ChevronLeft"
+    ],
+    "states": [],
+    "features": [],
+    "size": 5342
+  },
+  "translate": {
+    "icons": [
+      "Languages",
+      "ArrowRightLeft",
+      "Sparkles",
+      "Loader2",
+      "Copy",
+      "Volume2",
+      "History",
+      "Mic",
+      "MicOff",
+      "Camera",
+      "MessageSquare",
+      "Heart",
+      "Trash2",
+      "ShieldCheck",
+      "Zap"
+    ],
+    "states": [
+      "activeMode",
+      "text",
+      "result",
+      "loading",
+      "from",
+      "to",
+      "isListening",
+      "isCameraActive",
+      "convLog"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Voice/Audio Support",
+      "Video Support",
+      "Translation"
+    ],
+    "size": 14615
+  },
+  "upgrade": {
+    "icons": [
+      "Lock",
+      "ShieldAlert",
+      "ChevronLeft",
+      "Loader2",
+      "ShieldCheck"
+    ],
+    "states": [],
+    "features": [
+      "Firebase Realtime Data"
+    ],
+    "size": 4793
+  },
+  "voltra": {
+    "icons": [
+      "ChevronDown",
+      "Cpu",
+      "Globe",
+      "Rocket"
+    ],
+    "states": [],
+    "features": [
+      "Framer Motion Animations"
+    ],
+    "size": 12160
+  },
+  "voltramax": {
+    "icons": [
+      "Cpu",
+      "Maximize",
+      "Rotate3D",
+      "Shield"
+    ],
+    "states": [],
+    "features": [
+      "Framer Motion Animations",
+      "Voice/Audio Support",
+      "Video Support"
+    ],
+    "size": 13740
+  },
+  "voltraplay": {
+    "icons": [
+      "Gamepad2",
+      "Mic",
+      "Zap"
+    ],
+    "states": [],
+    "features": [
+      "Framer Motion Animations",
+      "Voice/Audio Support",
+      "Translation"
+    ],
+    "size": 12649
+  },
+  "voltrastore": {
+    "icons": [
+      "Download",
+      "Monitor",
+      "Gamepad2",
+      "TabletSmartphone",
+      "Star",
+      "ArrowRight",
+      "Search",
+      "LayoutGrid",
+      "Loader2",
+      "X",
+      "ShieldCheck"
+    ],
+    "states": [
+      "nativeApps",
+      "searchQuery",
+      "debouncedSearchQuery",
+      "activeCategory",
+      "flathubApps",
+      "isLoadingFlathub",
+      "windowsApps"
+    ],
+    "features": [
+      "Framer Motion Animations",
+      "Firebase Realtime Data",
+      "Voice/Audio Support",
+      "Translation",
+      "Search functionality"
+    ],
+    "size": 13509
+  },
+  "weather": {
+    "icons": [
+      "CloudSun",
+      "CloudRain",
+      "Wind",
+      "Thermometer",
+      "Loader2",
+      "Search",
+      "MapPin",
+      "Sun",
+      "Cloud",
+      "CloudLightning",
+      "Droplets",
+      "Gauge",
+      "Umbrella",
+      "Snowflake",
+      "AlertTriangle"
+    ],
+    "states": [
+      "weather",
+      "airQuality",
+      "loading",
+      "search",
+      "sectorName",
+      "latLon",
+      "notificationsEnabled"
+    ],
+    "features": [
+      "Translation",
+      "Pinned Items",
+      "Search functionality"
+    ],
+    "size": 22277
+  },
+  "whiteboard": {
+    "icons": [
+      "PenTool",
+      "StickyNote",
+      "Type",
+      "Square",
+      "Plus",
+      "MousePointer2",
+      "X",
+      "Zap",
+      "Clock",
+      "CloudSun",
+      "Video",
+      "Layers",
+      "Sparkles",
+      "Loader2",
+      "Presentation"
+    ],
+    "states": [
+      "activeBoardId",
+      "tool",
+      "elements",
+      "isDrawing",
+      "zoom",
+      "offset",
+      "activeNote",
+      "isWidgetSheetOpen",
+      "mounted",
+      "newBoardName",
+      "joinCode",
+      "isCreating",
+      "isOffline",
+      "isPresentationMode",
+      "gridEnabled",
+      "showMinimap",
+      "timerActive",
+      "timeLeft",
+      "bgColor"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Video Support",
+      "Translation"
+    ],
+    "size": 31588
+  },
+  "write": {
+    "icons": [
+      "Settings",
+      "Share",
+      "MessageSquare",
+      "History",
+      "Wand2",
+      "Plus",
+      "FileText",
+      "ArrowLeft",
+      "Printer",
+      "Download",
+      "Eye"
+    ],
+    "states": [
+      "documents",
+      "activeDoc",
+      "content",
+      "saving",
+      "loading",
+      "isPublishModalOpen",
+      "isHistoryModalOpen",
+      "historyVersions",
+      "wordCount",
+      "charCount"
+    ],
+    "features": [
+      "Framer Motion Animations",
+      "Firebase Realtime Data",
+      "Translation",
+      "Search functionality"
+    ],
+    "size": 24055
+  },
+  "xakarena": {
+    "icons": [
+      "Settings",
+      "Menu",
+      "X",
+      "Play"
+    ],
+    "states": [
+      "isNavOpen"
+    ],
+    "features": [
+      "Framer Motion Animations",
+      "Translation"
+    ],
+    "size": 8221
+  },
+  "xakarena-creator": {
+    "icons": [
+      "Terminal",
+      "BarChart3",
+      "PackagePlus",
+      "Wallet",
+      "FileText",
+      "Settings",
+      "LogOut",
+      "Code2",
+      "Users",
+      "ArrowRight",
+      "CheckCircle2",
+      "Gamepad2",
+      "Zap"
+    ],
+    "states": [
+      "isApprovedCreator",
+      "isApplying"
+    ],
+    "features": [
+      "Framer Motion Animations"
+    ],
+    "size": 11685
+  },
+  "xakcode": {
+    "icons": [
+      "Play",
+      "RefreshCw",
+      "Code2",
+      "Sparkles",
+      "Send",
+      "Loader2",
+      "Monitor",
+      "Smartphone",
+      "Tablet",
+      "Laptop",
+      "ExternalLink",
+      "FileText",
+      "Upload",
+      "Download",
+      "Info"
+    ],
+    "states": [
+      "viewMode",
+      "resolution",
+      "zenMode",
+      "yDoc",
+      "provider",
+      "isSearchOpen",
+      "searchQuery",
+      "replaceQuery",
+      "isRegexSearch",
+      "isCaseSensitive",
+      "history",
+      "historyIndex",
+      "count"
+    ],
+    "features": [
+      "Search functionality"
+    ],
+    "size": 43496
+  },
+  "xaksports": {
+    "icons": [],
+    "states": [
+      "gameState",
+      "gameMode",
+      "score",
+      "goalEvent"
+    ],
+    "features": [
+      "Framer Motion Animations"
+    ],
+    "size": 5418
+  },
+  "xakview": {
+    "icons": [
+      "Play",
+      "Share2",
+      "ThumbsUp",
+      "Tv",
+      "TrendingUp",
+      "Eye",
+      "Search",
+      "Loader2",
+      "Video as VideoIcon",
+      "UserPlus",
+      "Monitor",
+      "Radio",
+      "Send",
+      "UserMinus",
+      "LayoutGrid"
+    ],
+    "states": [
+      "mounted",
+      "activeViewTab",
+      "searchQuery",
+      "selectedVideoState",
+      "commentInput",
+      "isLiked",
+      "liveChatInput",
+      "liveChats",
+      "watchHistory",
+      "theaterMode",
+      "ambientMode",
+      "ccEnabled",
+      "autoPlay",
+      "loopVideo",
+      "playbackSpeed",
+      "quality",
+      "pipActive",
+      "miniplayerActive"
+    ],
+    "features": [
+      "Firebase Realtime Data",
+      "Video Support",
+      "Translation",
+      "Search functionality"
+    ],
+    "size": 63444
+  }
+}
