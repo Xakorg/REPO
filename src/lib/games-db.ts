@@ -15,6 +15,48 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "vortex",
+    title: "Vortex",
+    developer: "Xakteir Studios",
+    type: "Action",
+    genre: ["Gravitational Singularity", "Black Hole Pull", "Cosmic Scrap", "Antimatter Avoidance", "Mobile Friendly", "2P War"],
+    description: "Steer a gravitational singularity core to pull in cosmic scrap while avoiding volatile antimatter mines.",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=vortex",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:55", description: "Batch 7 Mobile Launch" }],
+    route: "/game/vortex"
+  },
+  {
+    id: "flux",
+    title: "Flux",
+    developer: "Xakteir Studios",
+    type: "Puzzle",
+    genre: ["Electromagnetic Accelerator", "Polarity Swapping", "Particle Capture", "Mobile Friendly", "2P Duel"],
+    description: "Toggle magnetic flux polarity between Positive and Negative to attract opposite charges and avoid overcharge.",
+    bannerUrl: "https://images.unsplash.com/photo-1507499739999-097706ad8914?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=flux",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:55", description: "Batch 7 Mobile Launch" }],
+    route: "/game/flux"
+  },
+  {
+    id: "trench",
+    title: "Trench",
+    developer: "Xakteir Studios",
+    type: "Strategy",
+    genre: ["Abyssal Submersible", "Deep Dredging", "Sonar Flares", "Benthic Ore", "Mobile Friendly", "2P Race"],
+    description: "Maneuver an oceanic research submersible down deep sea trenches, trigger sonar flares, and collect benthic mineral ores.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=trench",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:55", description: "Batch 7 Mobile Launch" }],
+    route: "/game/trench"
+  },
+  {
     id: "nexus",
     title: "Nexus",
     developer: "Xakteir Studios",
