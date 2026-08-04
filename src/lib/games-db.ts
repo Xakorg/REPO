@@ -15,6 +15,48 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "nexus",
+    title: "Nexus",
+    developer: "Xakteir Studios",
+    type: "Puzzle",
+    genre: ["Energy Conduit", "Circuit Wiring", "Voltage Balance", "Surge Discharge", "Mobile Friendly", "2P Grid"],
+    description: "Connect high-voltage circuit nodes, balance electric current flow, and trigger power surge discharges before circuit overload.",
+    bannerUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=nexus",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:45", description: "Batch 6 Mobile Launch" }],
+    route: "/game/nexus"
+  },
+  {
+    id: "aura",
+    title: "Aura",
+    developer: "Xakteir Studios",
+    type: "Action",
+    genre: ["Harmonic Absorption", "Color Phase Shift", "Cyan Magenta Yellow", "Mobile Friendly", "2P Duel"],
+    description: "Shift your elemental aura color state between Cyan, Magenta, and Yellow to absorb matching color energy surges.",
+    bannerUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aura",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:45", description: "Batch 6 Mobile Launch" }],
+    route: "/game/aura"
+  },
+  {
+    id: "cinder",
+    title: "Cinder",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Volcanic Defense", "Ember Deflection", "Thermal Shield", "Geothermal Core", "Mobile Friendly", "2P Showdown"],
+    description: "Position thermal shields to deflect falling volcanic embers and protect the subterranean geothermal refinery core.",
+    bannerUrl: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cinder",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:45", description: "Batch 6 Mobile Launch" }],
+    route: "/game/cinder"
+  },
+  {
     id: "pulse",
     title: "Pulse",
     developer: "Xakteir Studios",
