@@ -142,6 +142,16 @@ export default function FluxGame() {
   const [particlesCaptured, setParticlesCaptured] = useState(0);
   const [score, setScore] = useState(0);
   const [winnerName, setWinnerName] = useState<string | null>(null);
+  const [isMobileScreen, setIsMobileScreen] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileScreen(window.innerWidth <= 768 && window.matchMedia("(pointer: coarse)").matches);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const engineRef = useRef({
     keys: { left: false, right: false, up: false, down: false },
@@ -447,8 +457,9 @@ export default function FluxGame() {
             </div>
           </div>
 
-          {/* MOBILE TOUCH POLARITY SWAP BUTTONS & D-PAD */}
-          <div className="absolute bottom-6 inset-x-6 flex justify-between items-center z-30 md:hidden pointer-events-auto">
+          {/* MOBILE TOUCH POLARITY SWAP BUTTONS & D-PAD - ONLY FOR SMALL TOUCH SCREENS */}
+          {isMobileScreen && (
+            <div className="absolute bottom-6 inset-x-6 flex justify-between items-center z-30 md:hidden lg:hidden pointer-events-auto">
             <div className="flex flex-col gap-2 items-center">
               <button
                 onTouchStart={triggerMobileUpStart}
@@ -497,6 +508,7 @@ export default function FluxGame() {
               </button>
             </div>
           </div>
+          )}
         </>
       )}
 
