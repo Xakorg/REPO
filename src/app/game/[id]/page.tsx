@@ -12,6 +12,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
  
 const GAME_MAP: Record<string, React.ComponentType<any>> = {
+  vault: dynamic(() => import("@/components/game/vault")),
+  solace: dynamic(() => import("@/components/game/solace")),
+  forge: dynamic(() => import("@/components/game/forge")),
   cipher: dynamic(() => import("@/components/game/cipher")),
   circuit: dynamic(() => import("@/components/game/circuit")),
   bastion: dynamic(() => import("@/components/game/bastion")),

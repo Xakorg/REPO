@@ -15,6 +15,48 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "vault",
+    title: "Vault",
+    developer: "Xakteir Studios",
+    type: "Puzzle",
+    genre: ["Stealth", "Laser Grid", "Hacking", "Tumbler Lock", "Action", "2P Heist"],
+    description: "Infiltrate high-security vault matrices, bypass sweeping laser grids, and hack electronic tumbler locks before security lockdown.",
+    bannerUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=vault",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:15", description: "Batch 4 Launch" }],
+    route: "/game/vault"
+  },
+  {
+    id: "solace",
+    title: "Solace",
+    developer: "Xakteir Studios",
+    type: "Discovery",
+    genre: ["Submarine", "Sonar", "Deep Sea", "Exploration", "Leviathan", "2P Duel"],
+    description: "Navigate bioluminescent ocean caverns using sonar echoes, collect energy crystals, and evade abyssal ocean leviathans.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=solace",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:15", description: "Batch 4 Launch" }],
+    route: "/game/solace"
+  },
+  {
+    id: "forge",
+    title: "Forge",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Crafting", "Plasma", "Elements", "Weapon Forge", "Action", "2P Clash"],
+    description: "Catch falling fire, ice, and lightning plasma sparks to forge legendary elemental weapons on an interactive blacksmith anvil.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=forge",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:15", description: "Batch 4 Launch" }],
+    route: "/game/forge"
+  },
+  {
     id: "cipher",
     title: "Cipher",
     developer: "Xakteir Studios",
