@@ -510,59 +510,120 @@ export default function VortexGame() {
       )}
 
       {gameState === "menu" && (
-        <div className="absolute inset-0 z-40 bg-[#090514]/95 backdrop-blur-xl flex flex-col items-center justify-center p-6">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center max-w-xl mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-bold uppercase tracking-widest mb-3">
-              <Orbit className="w-3.5 h-3.5" /> Gravitational Singularity Core
+        <div className="absolute inset-0 z-40 bg-[#070312]/90 backdrop-blur-2xl flex flex-col items-center justify-center p-6 overflow-y-auto">
+          {/* Ambient Glowing Orbs */}
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+          <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-indigo-600/15 rounded-full blur-[100px] pointer-events-none" />
+
+          <motion.div
+            initial={{ scale: 0.88, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="text-center max-w-2xl mb-8 z-10"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-black uppercase tracking-widest mb-4 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+              <Orbit className="w-4 h-4 text-purple-400 animate-spin" style={{ animationDuration: "8s" }} /> Gravitational Singularity Core
             </div>
-            <h1 className="text-6xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">
+
+            <h1 className="text-7xl md:text-8xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-indigo-300 to-purple-500 drop-shadow-[0_0_40px_rgba(168,85,247,0.6)]">
               VORTEX
             </h1>
-            <p className="text-sm text-white/60 mt-3">
-              Steer a gravitational singularity core to pull in cosmic scrap while avoiding volatile antimatter mines.
+            <p className="text-base text-purple-100/70 mt-4 max-w-lg mx-auto leading-relaxed">
+              Steer a high-density singularity core to pull in cosmic scrap while dodging volatile antimatter shockwaves.
             </p>
+
+            <div className="flex justify-center gap-3 mt-4">
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-purple-300">60 FPS ENGINE</span>
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-cyan-300">ONLINE LEADERBOARD</span>
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-emerald-300">TOUCH READY</span>
+            </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-xl w-full z-10">
             <button
               onClick={() => startGame("vortex_core")}
-              className="p-5 rounded-2xl bg-[#0b0f19] border border-purple-500/40 hover:border-purple-400 flex flex-col items-center gap-2 hover:scale-105 transition-all text-center"
+              className="group p-6 rounded-3xl bg-slate-900/80 border border-purple-500/40 hover:border-purple-400 hover:shadow-[0_0_35px_rgba(168,85,247,0.35)] flex flex-col items-center gap-3 transition-all duration-300 hover:-translate-y-1 text-center backdrop-blur-xl relative overflow-hidden"
             >
-              <User className="w-8 h-8 text-purple-400" />
-              <div className="font-black text-lg">VORTEX CORE</div>
-              <div className="text-xs text-white/50">Single player singularity absorption</div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/30 group-hover:scale-110 transition-transform">
+                <User className="w-8 h-8 text-purple-300" />
+              </div>
+              <div className="font-black text-xl text-white tracking-wide">VORTEX CORE</div>
+              <div className="text-xs text-purple-200/60">Single player singularity absorption & survival</div>
+              <div className="mt-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-black tracking-wider uppercase">
+                PLAY SOLO
+              </div>
             </button>
 
             <button
               onClick={() => startGame("singularity_war")}
-              className="p-5 rounded-2xl bg-[#0b0f19] border border-indigo-500/40 hover:border-indigo-400 flex flex-col items-center gap-2 hover:scale-105 transition-all text-center"
+              className="group p-6 rounded-3xl bg-slate-900/80 border border-indigo-500/40 hover:border-indigo-400 hover:shadow-[0_0_35px_rgba(99,102,241,0.35)] flex flex-col items-center gap-3 transition-all duration-300 hover:-translate-y-1 text-center backdrop-blur-xl relative overflow-hidden"
             >
-              <Users className="w-8 h-8 text-indigo-400" />
-              <div className="font-black text-lg">SINGULARITY WAR</div>
-              <div className="text-xs text-white/50">2-Player grav-well clash</div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 group-hover:scale-110 transition-transform">
+                <Users className="w-8 h-8 text-indigo-300" />
+              </div>
+              <div className="font-black text-xl text-white tracking-wide">SINGULARITY WAR</div>
+              <div className="text-xs text-indigo-200/60">2-Player competitive gravitational well clash</div>
+              <div className="mt-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-black tracking-wider uppercase">
+                VERSUS MODE
+              </div>
             </button>
+          </div>
+
+          {/* Controls Quick Guide */}
+          <div className="mt-8 z-10 flex flex-wrap items-center justify-center gap-6 text-xs text-white/50 bg-black/40 px-6 py-3 rounded-2xl border border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-purple-300 bg-white/10 px-2 py-0.5 rounded border border-white/10 font-bold">WASD / ARROWS</span>
+              <span>Move Core</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-cyan-300 bg-white/10 px-2 py-0.5 rounded border border-white/10 font-bold">SPACE / ENTER</span>
+              <span>Singularity Pull</span>
+            </div>
           </div>
         </div>
       )}
 
       {gameState === "game_over" && (
-        <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center max-w-md w-full">
-            <h2 className="text-4xl font-black uppercase text-purple-400 mb-2">
-              {winnerName ? `${winnerName}!` : "Core Collapsed"}
+        <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-2xl flex flex-col items-center justify-center p-6">
+          <motion.div
+            initial={{ scale: 0.88, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-center max-w-md w-full bg-slate-900/90 border border-purple-500/40 p-8 rounded-3xl shadow-[0_0_50px_rgba(168,85,247,0.3)] relative overflow-hidden"
+          >
+            <div className="absolute -top-12 -left-12 w-36 h-36 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wider mb-4">
+              <Trophy className="w-3.5 h-3.5 text-amber-400" /> Trial Concluded
+            </div>
+
+            <h2 className="text-4xl font-black uppercase text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-indigo-300 mb-2">
+              {winnerName ? `${winnerName}` : "Core Collapsed"}
             </h2>
-            <p className="text-xs text-white/50 mb-6">Gravitational Singularity Trial Concluded</p>
+            <p className="text-xs text-purple-200/60 mb-6">Gravitational Singularity Absorption Results</p>
+
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                <div className="text-[10px] text-white/40 font-black uppercase">FINAL SCORE</div>
+                <div className="text-2xl font-black text-purple-300">{score}</div>
+              </div>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                <div className="text-[10px] text-white/40 font-black uppercase">SCRAP ABSORBED</div>
+                <div className="text-2xl font-black text-cyan-300">{scrapAbsorbed}</div>
+              </div>
+            </div>
 
             <div className="flex gap-4">
               <button
                 onClick={() => startGame(mode)}
-                className="flex-1 py-3.5 rounded-xl bg-purple-500 text-black font-black uppercase"
+                className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-black uppercase tracking-wider shadow-[0_0_20px_rgba(168,85,247,0.4)] active:scale-95 transition-all"
               >
                 REMATCH
               </button>
               <button
                 onClick={() => setGameState("menu")}
-                className="px-5 py-3.5 rounded-xl bg-white/10 text-white font-bold uppercase"
+                className="px-6 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold uppercase tracking-wider border border-white/10 active:scale-95 transition-all"
               >
                 MENU
               </button>

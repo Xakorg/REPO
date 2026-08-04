@@ -513,59 +513,120 @@ export default function FluxGame() {
       )}
 
       {gameState === "menu" && (
-        <div className="absolute inset-0 z-40 bg-[#030712]/95 backdrop-blur-xl flex flex-col items-center justify-center p-6">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center max-w-xl mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold uppercase tracking-widest mb-3">
-              <Magnet className="w-3.5 h-3.5" /> Electromagnetic Polarity Accelerator
+        <div className="absolute inset-0 z-40 bg-[#020817]/90 backdrop-blur-2xl flex flex-col items-center justify-center p-6 overflow-y-auto">
+          {/* Ambient Electromagnetic Orbs */}
+          <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-red-600/20 rounded-full blur-[100px] pointer-events-none" />
+
+          <motion.div
+            initial={{ scale: 0.88, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="text-center max-w-2xl mb-8 z-10"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-black uppercase tracking-widest mb-4 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+              <Magnet className="w-4 h-4 text-blue-400 animate-pulse" /> Electromagnetic Particle Accelerator
             </div>
-            <h1 className="text-6xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-red-400">
+
+            <h1 className="text-7xl md:text-8xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-red-400 drop-shadow-[0_0_40px_rgba(59,130,246,0.6)]">
               FLUX
             </h1>
-            <p className="text-sm text-white/60 mt-3">
-              Toggle magnetic flux polarity between Positive and Negative to attract opposite charges and avoid overcharge.
+            <p className="text-base text-blue-100/70 mt-4 max-w-lg mx-auto leading-relaxed">
+              Toggle magnetic flux polarity between Positive (+) and Negative (-) to attract matching charges and avoid overcharge.
             </p>
+
+            <div className="flex justify-center gap-3 mt-4">
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-blue-300">POLARITY DYNAMICS</span>
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-cyan-300">ONLINE LEADERBOARD</span>
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-emerald-300">TOUCH READY</span>
+            </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-xl w-full z-10">
             <button
               onClick={() => startGame("flux_accelerator")}
-              className="p-5 rounded-2xl bg-[#0b0f19] border border-blue-500/40 hover:border-blue-400 flex flex-col items-center gap-2 hover:scale-105 transition-all text-center"
+              className="group p-6 rounded-3xl bg-slate-900/80 border border-blue-500/40 hover:border-blue-400 hover:shadow-[0_0_35px_rgba(59,130,246,0.35)] flex flex-col items-center gap-3 transition-all duration-300 hover:-translate-y-1 text-center backdrop-blur-xl relative overflow-hidden"
             >
-              <User className="w-8 h-8 text-blue-400" />
-              <div className="font-black text-lg">FLUX ACCELERATOR</div>
-              <div className="text-xs text-white/50">Single player particle capture</div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/30 group-hover:scale-110 transition-transform">
+                <User className="w-8 h-8 text-blue-300" />
+              </div>
+              <div className="font-black text-xl text-white tracking-wide">FLUX ACCELERATOR</div>
+              <div className="text-xs text-blue-200/60">Single player particle polarity capture & speedrun</div>
+              <div className="mt-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-black tracking-wider uppercase">
+                PLAY SOLO
+              </div>
             </button>
 
             <button
               onClick={() => startGame("polarity_duel")}
-              className="p-5 rounded-2xl bg-[#0b0f19] border border-red-500/40 hover:border-red-400 flex flex-col items-center gap-2 hover:scale-105 transition-all text-center"
+              className="group p-6 rounded-3xl bg-slate-900/80 border border-red-500/40 hover:border-red-400 hover:shadow-[0_0_35px_rgba(239,68,68,0.35)] flex flex-col items-center gap-3 transition-all duration-300 hover:-translate-y-1 text-center backdrop-blur-xl relative overflow-hidden"
             >
-              <Users className="w-8 h-8 text-red-400" />
-              <div className="font-black text-lg">POLARITY DUEL</div>
-              <div className="text-xs text-white/50">2-Player magnetic clash</div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 group-hover:scale-110 transition-transform">
+                <Users className="w-8 h-8 text-red-300" />
+              </div>
+              <div className="font-black text-xl text-white tracking-wide">POLARITY DUEL</div>
+              <div className="text-xs text-red-200/60">2-Player competitive magnetic flux clash</div>
+              <div className="mt-2 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-[10px] font-black tracking-wider uppercase">
+                VERSUS MODE
+              </div>
             </button>
+          </div>
+
+          {/* Controls Quick Guide */}
+          <div className="mt-8 z-10 flex flex-wrap items-center justify-center gap-6 text-xs text-white/50 bg-black/40 px-6 py-3 rounded-2xl border border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-blue-300 bg-white/10 px-2 py-0.5 rounded border border-white/10 font-bold">WASD / ARROWS</span>
+              <span>Move Core</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-cyan-300 bg-white/10 px-2 py-0.5 rounded border border-white/10 font-bold">SPACE / ENTER</span>
+              <span>Toggle Polarity (+/-)</span>
+            </div>
           </div>
         </div>
       )}
 
       {gameState === "game_over" && (
-        <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center max-w-md w-full">
-            <h2 className="text-4xl font-black uppercase text-blue-400 mb-2">
-              {winnerName ? `${winnerName}!` : "Core Overcharged"}
+        <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-2xl flex flex-col items-center justify-center p-6">
+          <motion.div
+            initial={{ scale: 0.88, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-center max-w-md w-full bg-slate-900/90 border border-blue-500/40 p-8 rounded-3xl shadow-[0_0_50px_rgba(59,130,246,0.3)] relative overflow-hidden"
+          >
+            <div className="absolute -top-12 -left-12 w-36 h-36 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-wider mb-4">
+              <Trophy className="w-3.5 h-3.5 text-amber-400" /> Trial Concluded
+            </div>
+
+            <h2 className="text-4xl font-black uppercase text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-red-300 mb-2">
+              {winnerName ? `${winnerName}` : "Core Overcharged"}
             </h2>
-            <p className="text-xs text-white/50 mb-6">Electromagnetic Polarity Trial Concluded</p>
+            <p className="text-xs text-blue-200/60 mb-6">Electromagnetic Particle Polarity Results</p>
+
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                <div className="text-[10px] text-white/40 font-black uppercase">FINAL SCORE</div>
+                <div className="text-2xl font-black text-blue-300">{score}</div>
+              </div>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                <div className="text-[10px] text-white/40 font-black uppercase">PARTICLES CAPTURED</div>
+                <div className="text-2xl font-black text-cyan-300">{particlesCaptured}</div>
+              </div>
+            </div>
 
             <div className="flex gap-4">
               <button
                 onClick={() => startGame(mode)}
-                className="flex-1 py-3.5 rounded-xl bg-blue-500 text-black font-black uppercase"
+                className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-black uppercase tracking-wider shadow-[0_0_20px_rgba(59,130,246,0.4)] active:scale-95 transition-all"
               >
                 REMATCH
               </button>
               <button
                 onClick={() => setGameState("menu")}
-                className="px-5 py-3.5 rounded-xl bg-white/10 text-white font-bold uppercase"
+                className="px-6 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold uppercase tracking-wider border border-white/10 active:scale-95 transition-all"
               >
                 MENU
               </button>
