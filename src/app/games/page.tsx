@@ -85,12 +85,12 @@ export default function PlayStationGamesLibrary() {
       try {
         setLibraryIds(JSON.parse(storedLibs));
       } catch (e) {
-        const defaultIds = ["cyber_quest_platformer", "cyber_dungeon_rpg", "quantum_laser_puzzle", "neon_core_defense", "cyber_drift_runner", "cyber_leap_odyssey", "aetheria_realm_of_shadows", "aegis_protocol_td", "quantum_prism_puzzle", "synthwave_beat_rush", "cyber_runner_platformer", "synthwave_velocity_runner", "cyber_pinball_odyssey", "aether_pulse_2d", "sector_9_rpg", "gravity_racer_2d", "nexus_grid_defense_2d", "stellar_strike_2d", "shadow_blade_2d", "neon_ronin", "cyber_nexus_survivor", "aether_strike", "stellar_overlord", "chronos_protocol", "void_vanguard", "nexus_overdrive", "super_stick_battles", "aero_phantom", "solar_tempest", "hyper_horizon", "cyber_pulse", "xaksports", "retro_engine", "pixel_knight"];
+        const defaultIds: string[] = [];
         localStorage.setItem("xakteir_game_library", JSON.stringify(defaultIds));
         setLibraryIds(defaultIds);
       }
     } else {
-      const defaultIds = ["cyber_quest_platformer", "cyber_dungeon_rpg", "quantum_laser_puzzle", "neon_core_defense", "cyber_drift_runner", "cyber_leap_odyssey", "aetheria_realm_of_shadows", "aegis_protocol_td", "quantum_prism_puzzle", "synthwave_beat_rush", "cyber_runner_platformer", "synthwave_velocity_runner", "cyber_pinball_odyssey", "aether_pulse_2d", "sector_9_rpg", "gravity_racer_2d", "nexus_grid_defense_2d", "stellar_strike_2d", "shadow_blade_2d", "neon_ronin", "cyber_nexus_survivor", "aether_strike", "stellar_overlord", "chronos_protocol", "void_vanguard", "nexus_overdrive", "super_stick_battles", "aero_phantom", "solar_tempest", "hyper_horizon", "cyber_pulse", "xaksports", "retro_engine", "pixel_knight"];
+      const defaultIds: string[] = [];
       localStorage.setItem("xakteir_game_library", JSON.stringify(defaultIds));
       setLibraryIds(defaultIds);
     }
@@ -130,15 +130,15 @@ export default function PlayStationGamesLibrary() {
     }, 800);
   };
 
-  const filteredGames = ALL_GAMES.filter(g => 
+  const libraryGames = ALL_GAMES.filter(g => libraryIds.includes(g.id));
+  const recentGames = recentIds.map(id => ALL_GAMES.find(g => g.id === id)).filter(Boolean) as GameMeta[];
+  const favoriteGames = favoriteIds.map(id => ALL_GAMES.find(g => g.id === id)).filter(Boolean) as GameMeta[];
+  
+  const filteredGames = libraryGames.filter(g => 
     g.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
     g.genre.some(genre => genre.toLowerCase().includes(searchQuery.toLowerCase())) ||
     g.developer.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const libraryGames = ALL_GAMES.filter(g => libraryIds.includes(g.id));
-  const recentGames = recentIds.map(id => ALL_GAMES.find(g => g.id === id)).filter(Boolean) as GameMeta[];
-  const favoriteGames = favoriteIds.map(id => ALL_GAMES.find(g => g.id === id)).filter(Boolean) as GameMeta[];
   
   // Generate a dynamic gradient based on the active item ID length as a pseudo-random seed
   const getGradient = (id: string = "") => {
@@ -388,13 +388,25 @@ export default function PlayStationGamesLibrary() {
             <h3 className="text-sm md:text-base font-black tracking-widest uppercase text-white/70 mb-4 md:mb-6">
               {searchQuery ? "Search Results" : "All Games"}
             </h3>
-            <div className="flex flex-wrap gap-4 md:gap-8 pb-12 pr-6">
-              {filteredGames.length > 0 ? filteredGames.map(game => (
-                <GameCard key={`all-${game.id}`} game={game} />
-              )) : (
-                <div className="text-white/40 text-sm font-bold uppercase tracking-widest py-8">No games found.</div>
-              )}
-            </div>
+            {libraryGames.length === 0 ? (
+              <div className="flex flex-col items-start justify-center py-12 gap-6 max-w-lg">
+                <div className="text-white/40 text-sm font-bold uppercase tracking-widest">Your library is completely empty.</div>
+                <button 
+                  onClick={() => window.location.href = '/games/store'}
+                  className="px-8 py-4 bg-indigo-600 text-white rounded-full font-black tracking-widest uppercase hover:bg-indigo-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(79,70,229,0.4)] flex items-center gap-3"
+                >
+                  <ShoppingBag className="w-5 h-5" /> Go to Store
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-4 md:gap-8 pb-12 pr-6">
+                {filteredGames.length > 0 ? filteredGames.map(game => (
+                  <GameCard key={`all-${game.id}`} game={game} />
+                )) : (
+                  <div className="text-white/40 text-sm font-bold uppercase tracking-widest py-8">No games found.</div>
+                )}
+              </div>
+            )}
           </div>
           
         </div>
