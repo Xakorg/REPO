@@ -15,6 +15,48 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "cipher",
+    title: "Cipher",
+    developer: "Xakteir Studios",
+    type: "Puzzle",
+    genre: ["Cybersecurity", "Action", "Puzzle", "Node Decryption", "Hacking", "2P Duel"],
+    description: "Infiltrate secure matrix networks, align encrypted node keys, and evade rotating firewall beams in high-risk cybersecurity operations.",
+    bannerUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cipher",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:00", description: "Batch 3 Launch" }],
+    route: "/game/cipher"
+  },
+  {
+    id: "circuit",
+    title: "Circuit",
+    developer: "Xakteir Studios",
+    type: "2D Top-Down",
+    genre: ["Racing", "Drift", "Physics", "Speedcraft", "2P Duel"],
+    description: "Master vector drift momentum, trigger kinetic turbo boosts, and set record lap times around high-speed neon circuits.",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=circuit",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:00", description: "Batch 3 Launch" }],
+    route: "/game/circuit"
+  },
+  {
+    id: "bastion",
+    title: "Bastion",
+    developer: "Xakteir Studios",
+    type: "Strategy",
+    genre: ["Fortress Builder", "Tower Defense", "Wave Siege", "Co-Op", "Action"],
+    description: "Construct plasma defense turrets, fortify energy barrier walls, and defend central power cores against invading alien wave sieges.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=bastion",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "18:00", description: "Batch 3 Launch" }],
+    route: "/game/bastion"
+  },
+  {
     id: "cyber-helix-quantum-siege",
     title: "Cyber Helix: Quantum Siege",
     developer: "Xakteir Studios",
