@@ -27,6 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { RenderHat, RenderAura, RenderDecor, getNameplateClass, RenderPet, RenderBanner } from "@/components/RenderHat";
 import confetti from "canvas-confetti";
+import { ALL_SHOP_ITEMS, ALL_SHOP_SETS } from "@/lib/shopItems";
 
 const triggerConfetti = () => {
   const duration = 3 * 1000;
@@ -95,7 +96,7 @@ export default function ShopPage() {
     nextSunday.setUTCHours(0, 0, 0, 0);
     
     // Generate 50 items for the week
-    const items = [...([] as any[])];
+    const items = [...ALL_SHOP_ITEMS];
     const selectedWeekly = [];
     const selectionCount = Math.min(50, items.length);
     for(let i=0; i<selectionCount; i++) {
@@ -126,11 +127,11 @@ export default function ShopPage() {
   }, []);
 
   const isAdmin = user?.email === 'admin@xakteir.com' || user?.email === 'ridwan123456789100@gmail.com' || userData?.isAdmin === true || userData?.role === 'admin';
-  const SHOP_SETS = ([] as any[]).filter((set: any) => !set.isAdmin || isAdmin);
+  const SHOP_SETS = ALL_SHOP_SETS.filter((set: any) => !set.isAdmin || isAdmin);
 
   const displayedItems = activeCategory === "Weekly" 
     ? weekItems 
-    : ([] as any[]).filter(i => activeCategory === "All" || i.category === activeCategory);
+    : ALL_SHOP_ITEMS.filter(i => activeCategory === "All" || i.category === activeCategory);
 
   const [selectedItem, setSelectedItem] = useState<any>(activeCategory === "Featured Sets" ? null : displayedItems[0]);
 

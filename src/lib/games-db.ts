@@ -214,14 +214,14 @@ const premiumGames: GameMeta[] = [
     id: "spectra",
     title: "Spectra",
     developer: "Xakteir Studios",
-    type: "Action",
-    genre: ["Chromatic Optic", "Prism Refraction", "Wavelength Routing", "1P / 2P Modes", "Mobile Friendly"],
-    description: "Refract incoming chromatic laser beams by matching optic prism wavelengths between Red, Green, and Blue.",
+    type: "Chromatic Optic RPG",
+    genre: ["Prismatic Refraction", "Optic Foundry Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Prismatic beam refractions, optic armory upgrades, online leaderboards, and quantum codex in a 2,000+ line Chromatic Optic RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=spectra",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "19:10", description: "Batch 9 Launch" }],
+    updates: [{ time: "18:55", description: "2,000+ Line Flagship Launch" }],
     route: "/game/spectra"
   },
   {

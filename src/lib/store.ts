@@ -27,11 +27,15 @@ export const useSuiteStore = create<SuiteState>((set) => ({
   setRightPanelOpen: (value) => set({ isRightPanelOpen: value }),
 }));
 
-export type HeaderStyle = 'default' | 'google' | 'right' | 'left' | 'hamburger';
+export type HeaderStyle = 'default' | 'google' | 'right' | 'left' | 'hamburger' | 'macos' | 'floating' | 'centered';
 
 interface UIState {
   headerStyle: HeaderStyle;
   setHeaderStyle: (style: HeaderStyle) => void;
+  showLogo: boolean;
+  setShowLogo: (show: boolean) => void;
+  pinnedApps: string[];
+  setPinnedApps: (apps: string[]) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -39,6 +43,10 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       headerStyle: 'default',
       setHeaderStyle: (style) => set({ headerStyle: style }),
+      showLogo: true,
+      setShowLogo: (show) => set({ showLogo: show }),
+      pinnedApps: ['Xak AI', 'Chat', 'Games'], // Default pinned apps
+      setPinnedApps: (apps) => set({ pinnedApps: apps }),
     }),
     {
       name: 'xakteir-ui-storage',
