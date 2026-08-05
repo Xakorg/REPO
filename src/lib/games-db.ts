@@ -312,14 +312,14 @@ const premiumGames: GameMeta[] = [
     id: "nexus",
     title: "Nexus",
     developer: "Xakteir Studios",
-    type: "Puzzle",
-    genre: ["Energy Conduit", "Circuit Wiring", "Voltage Balance", "Surge Discharge", "Mobile Friendly", "2P Grid"],
-    description: "Connect high-voltage circuit nodes, balance electric current flow, and trigger power surge discharges before circuit overload.",
+    type: "Tactical Grid RPG",
+    genre: ["Sub-Atomic Quantum Grid", "Foundry Armory & Flux", "Online Lobbies", "Ion Laser Turrets", "Mobile Friendly"],
+    description: "Tactical grid defense, node chain reaction raytracing, armory shop, and global online score competition in a 2,000+ line Tactical Grid RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=nexus",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "18:45", description: "Batch 6 Mobile Launch" }],
+    updates: [{ time: "18:35", description: "2,000+ Line Flagship Launch" }],
     route: "/game/nexus"
   },
   {
