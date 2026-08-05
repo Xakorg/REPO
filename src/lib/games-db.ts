@@ -15,6 +15,48 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "kinesis",
+    title: "Kinesis",
+    developer: "Xakteir Studios",
+    type: "Puzzle",
+    genre: ["Kinetic Vector", "Particle Attraction", "Gravitational Field", "1P / 2P Modes", "Mobile Friendly"],
+    description: "Control kinetic gravitational attraction nodes to draw positive energy particles while repelling negative disruptions.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=kinesis",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:30", description: "Batch 10 Launch" }],
+    route: "/game/kinesis"
+  },
+  {
+    id: "zenith",
+    title: "Zenith",
+    developer: "Xakteir Studios",
+    type: "2D Platformer",
+    genre: ["Orbital Ascent", "Altitude Peak", "Apex Platforming", "1P / 2P Modes", "Mobile Friendly"],
+    description: "Ascend procedural orbital platforms to reach peak zenith altitude without misstepping into the abyss.",
+    bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=zenith",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:30", description: "Batch 10 Launch" }],
+    route: "/game/zenith"
+  },
+  {
+    id: "sonar",
+    title: "Sonar",
+    developer: "Xakteir Studios",
+    type: "Discovery",
+    genre: ["Subterranean Trench", "Abyssal Echolocation", "Sonar Echo", "1P / 2P Modes", "Mobile Friendly"],
+    description: "Emit active sonar echo pings to navigate pitch-black subterranean trenches and retrieve submerged relics.",
+    bannerUrl: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=sonar",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:30", description: "Batch 10 Launch" }],
+    route: "/game/sonar"
+  },
+  {
     id: "helix",
     title: "Helix",
     developer: "Xakteir Studios",
