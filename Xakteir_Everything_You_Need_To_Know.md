@@ -306,9 +306,9 @@ Search Console is an index management panel for site owners to submit and verify
 ## Settings
 Settings provides centralized controls for customizing the global navigation header layout and user interface preferences across Xakteir.
          FEATURES
-         - Header Navigation Style Selector (switch between 5 global navigation layouts: Default, Google Style, Everything Right, Everything Left, and Compact Hamburger)
-         - Persistent UI State Management (saves layout selections across the entire application using Zustand store persistence)
-         - Application Experience Dashboard (unified interface to preview and adjust application navigation layouts)
+         - Interactive Drag-and-Drop Editor (uses Framer Motion to let users pin and reorder up to 8 favorite apps directly on the global header)
+         - Header Navigation Style Selector (switch between 8 global navigation layouts: Default, macOS Style, Floating Pill, Centered Logo, Google Style, Everything Right, Everything Left, and Compact)
+         - Logo Toggle & Persistent UI State Management (toggle Xakteir logo visibility and save all layout/app selections across the entire application using Zustand store persistence)
 
 ## Sheets
 Sheets is a cloud spreadsheet editor for organizing data with standard menu toolbars and AI-powered assistance.

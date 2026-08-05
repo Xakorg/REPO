@@ -80,7 +80,7 @@ import { useSuiteStore, useUIStore } from "@/lib/store";
 
 import { AnimatedAppIcon } from "@/components/ui/AnimatedAppIcon";
 
-const APPS = [
+export const APPS = [
   // Main Apps
   { name: "Mail", iconName: "mail", href: "/mail", color: "text-blue-400", bg: "bg-blue-400/10" },
   { name: "Chat", iconName: "chat", href: "/chat", color: "text-emerald-400", bg: "bg-emerald-400/10" },
@@ -181,7 +181,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { isFocusMode } = useSuiteStore();
-  const { headerStyle } = useUIStore();
+  const { headerStyle, showLogo, pinnedApps } = useUIStore();
   const { toast } = useToast();
 
   // Multi-account switcher state
@@ -496,10 +496,34 @@ export function Header() {
     <Link href="/auth"><Button className="bg-primary hover:bg-primary/90 h-14 px-12 rounded-[2rem] font-black uppercase text-xs tracking-[0.3em] text-white shadow-2xl border-b-8 border-primary/20 active:border-b-0 transition-all">Sign In</Button></Link>
   );
 
+  const renderPinnedApps = () => {
+    if (!pinnedApps || pinnedApps.length === 0) return null;
+    return (
+      <div className="hidden lg:flex items-center gap-2 z-20">
+        {pinnedApps.map(appName => {
+          const app = APPS.find(a => a.name === appName);
+          if (!app) return null;
+          return (
+            <Button 
+              key={appName} 
+              onClick={() => navigateTo(app.href, router)}
+              variant="ghost" 
+              size="icon" 
+              title={app.name}
+              className="w-12 h-12 bg-zinc-900/60 border-2 border-white/10 rounded-2xl shadow-xl group hover:bg-white/10 transition-all flex items-center justify-center shrink-0"
+            >
+              <AnimatedAppIcon iconName={app.iconName} className="w-6 h-6 group-hover:scale-110 transition-transform" size={24} />
+            </Button>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderHamburgerLayout = () => (
     <>
       <div className="flex items-center gap-6 z-20">
-        {renderLogo()}
+        {showLogo && renderLogo()}
       </div>
       <div className="flex items-center gap-4 z-20">
         <Sheet>
@@ -538,6 +562,7 @@ export function Header() {
     <>
       <div className="flex items-center gap-4 z-20">
         {renderAppsLauncher()}
+        {renderPinnedApps()}
         {renderCommandBtn()}
         {renderFullscreenBtn()}
         {renderNotifications()}
@@ -545,7 +570,7 @@ export function Header() {
         {renderProfile()}
       </div>
       <div className="flex items-center gap-6 z-20">
-        {renderLogo()}
+        {showLogo && renderLogo()}
       </div>
     </>
   );
@@ -553,10 +578,11 @@ export function Header() {
   const renderRightLayout = () => (
     <>
       <div className="flex items-center gap-6 z-20">
-        {renderLogo()}
+        {showLogo && renderLogo()}
       </div>
       <div className="flex items-center gap-4 z-20">
         {renderAppsLauncher()}
+        {renderPinnedApps()}
         {renderCommandBtn()}
         {renderFullscreenBtn()}
         {renderNotifications()}
@@ -569,10 +595,11 @@ export function Header() {
   const renderGoogleLayout = () => (
     <>
       <div className="flex items-center gap-6 z-20">
-        {renderLogo()}
+        {showLogo && renderLogo()}
       </div>
       <div className="flex items-center gap-4 z-20">
         {renderAppsLauncher()}
+        {renderPinnedApps()}
         {renderProfile()}
       </div>
     </>
@@ -580,15 +607,66 @@ export function Header() {
 
   const renderDefaultLayout = () => (
     <>
-      <div className="flex items-center gap-6 z-20">
+      <div className="flex items-center gap-4 z-20">
         {renderAppsLauncher()}
+        {renderPinnedApps()}
         {renderCommandBtn()}
         {renderFullscreenBtn()}
       </div>
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-        {renderLogo()}
+        {showLogo && renderLogo()}
       </div>
       <div className="flex items-center gap-6 z-20">
+        {renderNotifications()}
+        {renderAdminBtn()}
+        {renderProfile()}
+      </div>
+    </>
+  );
+
+  const renderMacosLayout = () => (
+    <>
+      <div className="flex items-center gap-3 z-20">
+        {showLogo && renderLogo()}
+        <div className="w-px h-6 bg-white/10 mx-2" />
+        {renderAppsLauncher()}
+        {renderPinnedApps()}
+      </div>
+      <div className="flex items-center gap-3 z-20">
+        {renderCommandBtn()}
+        {renderFullscreenBtn()}
+        {renderNotifications()}
+        {renderAdminBtn()}
+        {renderProfile()}
+      </div>
+    </>
+  );
+
+  const renderFloatingLayout = () => (
+    <div className="w-fit mx-auto bg-black/60 backdrop-blur-2xl border-2 border-white/10 rounded-full px-4 py-2 flex items-center gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-20 mt-4 pointer-events-auto">
+       {showLogo && renderLogo()}
+       <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block" />
+       {renderAppsLauncher()}
+       {renderPinnedApps()}
+       <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block" />
+       {renderCommandBtn()}
+       {renderNotifications()}
+       {renderProfile()}
+    </div>
+  );
+
+  const renderCenteredLayout = () => (
+    <>
+      <div className="flex items-center gap-4 z-20 flex-1 justify-start">
+        {renderAppsLauncher()}
+        {renderPinnedApps()}
+        {renderCommandBtn()}
+        {renderFullscreenBtn()}
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        {showLogo && renderLogo()}
+      </div>
+      <div className="flex items-center gap-4 z-20 flex-1 justify-end">
         {renderNotifications()}
         {renderAdminBtn()}
         {renderProfile()}
@@ -606,6 +684,12 @@ export function Header() {
         return renderRightLayout();
       case 'google':
         return renderGoogleLayout();
+      case 'macos':
+        return renderMacosLayout();
+      case 'floating':
+        return renderFloatingLayout();
+      case 'centered':
+        return renderCenteredLayout();
       case 'default':
       default:
         return renderDefaultLayout();
@@ -613,8 +697,11 @@ export function Header() {
   };
 
   return (
-    <header className="h-20 bg-black/40 backdrop-blur-2xl sticky top-0 z-[100] px-10 border-b-2 border-white/10 shadow-[0_10px_50px_rgba(0,0,0,0.4)]">
-      <div className="max-w-[1800px] mx-auto h-full flex items-center justify-between relative">
+    <header className={cn(
+      "h-20 bg-black/40 backdrop-blur-2xl sticky top-0 z-[100] px-10 border-b-2 border-white/10 shadow-[0_10px_50px_rgba(0,0,0,0.4)] transition-all duration-300",
+      headerStyle === 'floating' && "bg-transparent border-none shadow-none px-4 pt-4 pointer-events-none"
+    )}>
+      <div className={cn("max-w-[1800px] mx-auto h-full flex items-center relative", headerStyle === 'centered' ? "justify-between" : "justify-between")}>
         {renderLayoutContent()}
       </div>
     </header>

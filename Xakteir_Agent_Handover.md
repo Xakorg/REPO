@@ -26,7 +26,8 @@ This file contains the critical context, rules, and architecture you need to suc
 If you are modifying existing code, keep these recent changes in mind:
 - **No `alert()`:** All `alert()` calls have been replaced with the `useToast()` hook. Do not introduce new `alert()` calls.
 - **Glassmorphism UI:** We recently overhauled the chat interface to use a premium, desktop-ready aesthetic. Use `.glass-panel` and `.glass-button` utilities from `globals.css` where applicable.
-- **Framer Motion:** Use `motion.div` for smooth entrance animations (e.g., `initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}`) to maintain the premium feel.
+- **Framer Motion:** Use `motion.div` for smooth entrance animations (e.g., `initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}`) to maintain the premium feel. We also heavily use `Reorder.Group` for drag-and-drop mechanics (e.g. in `/settings`).
+- **Global Header State:** The `<Header />` layout is managed by `useUIStore` (`src/lib/store.ts`). This includes `headerStyle`, `showLogo`, and `pinnedApps`. Users can drag-and-drop apps to pin them to the header via `/settings`.
 - **Game Store Ownership:** The `/games` library now enforces ownership. Users start with 0 games (`localStorage: xakteir_game_library = []`) and must claim them from the overhauled `/games/store` UI using the "Get Game Now!" button.
 
 ## 📝 Your Mission
