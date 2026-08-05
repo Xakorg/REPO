@@ -15,6 +15,48 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "torque",
+    title: "Torque",
+    developer: "Xakteir Studios",
+    type: "Racing",
+    genre: ["Kinetic Wheel Drift", "Garage Upgrades", "Overdrive Mode", "1P / 2P Modes", "Mobile Friendly"],
+    description: "Harness angular drift momentum to dodge kinetic obstacles, harvest stardust credits, and unlock garage upgrades.",
+    bannerUrl: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=torque",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:50", description: "Batch 12 Addictive Upgrade" }],
+    route: "/game/torque"
+  },
+  {
+    id: "prism",
+    title: "Prism",
+    developer: "Xakteir Studios",
+    type: "Puzzle",
+    genre: ["Light Refraction", "Optic Lab Upgrades", "Laser Multipliers", "1P / 2P Modes", "Mobile Friendly"],
+    description: "Reflect light beams using precision crystal optics to hit matching frequency targets and unlock lab upgrades.",
+    bannerUrl: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=prism",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:50", description: "Batch 12 Addictive Upgrade" }],
+    route: "/game/prism"
+  },
+  {
+    id: "surge",
+    title: "Surge",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Electrical Node Jumper", "Power Grid Station", "Volt Multipliers", "1P / 2P Modes", "Mobile Friendly"],
+    description: "Zap between high-voltage power grid nodes to charge energy capacitors and avoid catastrophic short circuits.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=surge",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:50", description: "Batch 12 Addictive Upgrade" }],
+    route: "/game/surge"
+  },
+  {
     id: "orbit",
     title: "Orbit",
     developer: "Xakteir Studios",
