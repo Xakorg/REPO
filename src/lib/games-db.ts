@@ -438,14 +438,14 @@ const premiumGames: GameMeta[] = [
     id: "cipher",
     title: "Cipher",
     developer: "Xakteir Studios",
-    type: "Puzzle",
-    genre: ["Cybersecurity", "Action", "Puzzle", "Node Decryption", "Hacking", "2P Duel"],
-    description: "Infiltrate secure matrix networks, align encrypted node keys, and evade rotating firewall beams in high-risk cybersecurity operations.",
+    type: "Cyberpunk Hacking RPG",
+    genre: ["Quantum Hacking Matrix", "Darknet Foundry Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Cyberpunk node overrides, darknet armory upgrades, online leaderboards, and quantum codex in a 2,000+ line Cyberpunk Hacking RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cipher",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "18:00", description: "Batch 3 Launch" }],
+    updates: [{ time: "18:55", description: "2,000+ Line Flagship Launch" }],
     route: "/game/cipher"
   },
   {
