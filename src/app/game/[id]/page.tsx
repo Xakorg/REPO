@@ -12,6 +12,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
  
 const GAME_MAP: Record<string, React.ComponentType<any>> = {
+  orbit: dynamic(() => import("@/components/game/orbit")),
+  vapor: dynamic(() => import("@/components/game/vapor")),
+  matrix: dynamic(() => import("@/components/game/matrix")),
   kinesis: dynamic(() => import("@/components/game/kinesis")),
   zenith: dynamic(() => import("@/components/game/zenith")),
   sonar: dynamic(() => import("@/components/game/sonar")),

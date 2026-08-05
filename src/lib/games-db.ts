@@ -15,6 +15,48 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "orbit",
+    title: "Orbit",
+    developer: "Xakteir Studios",
+    type: "Puzzle",
+    genre: ["Planetary Slingshot", "Gravity Well", "Orbit Trajectory", "1P / 2P Modes", "Mobile Friendly"],
+    description: "Slingshot satellites through planetary gravity wells and harvest stardust without crashing into planet surfaces.",
+    bannerUrl: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=orbit",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:40", description: "Batch 11 Launch" }],
+    route: "/game/orbit"
+  },
+  {
+    id: "vapor",
+    title: "Vapor",
+    developer: "Xakteir Studios",
+    type: "Arcade Runner",
+    genre: ["Thermal Phase Shift", "Condensation Vapor", "Phase Runner", "1P / 2P Modes", "Mobile Friendly"],
+    description: "Toggle thermal phase state between Gas vapor and Liquid condensate to pass matching energy barriers.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=vapor",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:40", description: "Batch 11 Launch" }],
+    route: "/game/vapor"
+  },
+  {
+    id: "matrix",
+    title: "Matrix",
+    developer: "Xakteir Studios",
+    type: "Strategy",
+    genre: ["Neural Node Network", "Conductive Circuit", "Grid Alignment", "1P / 2P Modes", "Mobile Friendly"],
+    description: "Align interconnected neural matrix nodes to complete conductive cyber grid circuits and stabilize network flow.",
+    bannerUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=matrix",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:40", description: "Batch 11 Launch" }],
+    route: "/game/matrix"
+  },
+  {
     id: "kinesis",
     title: "Kinesis",
     developer: "Xakteir Studios",
