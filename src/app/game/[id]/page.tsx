@@ -12,6 +12,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
  
 const GAME_MAP: Record<string, React.ComponentType<any>> = {
+  glitch: dynamic(() => import("@/components/game/glitch")),
+  drift: dynamic(() => import("@/components/game/drift")),
+  aether: dynamic(() => import("@/components/game/aether")),
   vortex: dynamic(() => import("@/components/game/vortex")),
   flux: dynamic(() => import("@/components/game/flux")),
   trench: dynamic(() => import("@/components/game/trench")),

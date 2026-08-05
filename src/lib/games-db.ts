@@ -15,6 +15,48 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "glitch",
+    title: "Glitch",
+    developer: "Xakteir Studios",
+    type: "2D Platformer",
+    genre: ["Cybernetic Repair", "Data Stream", "Defrag EMP Pulse", "Single Player", "Mobile Friendly"],
+    description: "Ascend corrupted data streams, leap across unstable glitch platforms, collect data fragments, and release defrag EMP pulses.",
+    bannerUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=glitch",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:00", description: "Batch 8 Single-Player Launch" }],
+    route: "/game/glitch"
+  },
+  {
+    id: "drift",
+    title: "Drift",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Orbital Hovercraft", "Pylon Slalom", "Nitro Boost", "Single Player", "Mobile Friendly"],
+    description: "Pilot a high-speed hovercraft down narrow neon slalom tracks, drift past pylon gates, and ignite nitro thrusters.",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=drift",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:00", description: "Batch 8 Single-Player Launch" }],
+    route: "/game/drift"
+  },
+  {
+    id: "aether",
+    title: "Aether",
+    developer: "Xakteir Studios",
+    type: "Puzzle",
+    genre: ["Zero-G Stardust", "Celestial Harmony", "Harmonic Pulse", "Single Player", "Mobile Friendly"],
+    description: "Absorb glowing stardust embers in zero-G deep space while repelling void shadow anomalies with harmonic EMP shockwaves.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aether",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:00", description: "Batch 8 Single-Player Launch" }],
+    route: "/game/aether"
+  },
+  {
     id: "vortex",
     title: "Vortex",
     developer: "Xakteir Studios",
