@@ -15,6 +15,20 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "titan",
+    title: "Titan",
+    developer: "Xakteir Studios",
+    type: "Tactical Mecha RPG",
+    genre: ["Tactical Mecha Citadel", "Foundry Shop & Cores", "Online Lobbies", "Kinetic Artillery", "Mobile Friendly"],
+    description: "Tactical mecha combat, citadel foundry armory upgrades, and global online score competition in a 2,000+ line Tactical Mecha RPG arena.",
+    bannerUrl: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=titan",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "20:00", description: "2,000+ Line Flagship Launch" }],
+    route: "/game/titan"
+  },
+  {
     id: "astral",
     title: "Astral",
     developer: "Xakteir Studios",
