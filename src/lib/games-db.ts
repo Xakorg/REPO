@@ -15,6 +15,20 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "lumen",
+    title: "Lumen",
+    developer: "Xakteir Studios",
+    type: "Tactical Sci-Fi RPG",
+    genre: ["Tactical Energy Arena", "Armory Shop & Shards", "Online Lobbies", "Companion Drones", "Mobile Friendly"],
+    description: "Tactical energy grid reflection, companion drone warfare, and global online rank competition in a 2,000+ line Sci-Fi RPG arena.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=lumen",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "20:00", description: "2,000+ Line Flagship Launch" }],
+    route: "/game/lumen"
+  },
+  {
     id: "torque",
     title: "Torque",
     developer: "Xakteir Studios",
