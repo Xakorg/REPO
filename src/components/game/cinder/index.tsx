@@ -451,37 +451,65 @@ export default function CinderGame() {
       )}
 
       {gameState === "menu" && (
-        <div className="absolute inset-0 z-40 bg-[#180808]/95 backdrop-blur-xl flex flex-col items-center justify-center p-6">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center max-w-xl mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold uppercase tracking-widest mb-3">
-              <Flame className="w-3.5 h-3.5" /> Volcanic Ember Deflection Defense
+        <div className="absolute inset-0 z-40 bg-[#1f0606]/90 backdrop-blur-2xl flex flex-col items-center justify-center p-6 overflow-y-auto">
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-orange-600/20 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+
+          <motion.div
+            initial={{ scale: 0.88, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            className="text-center max-w-2xl mb-8 z-10"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300 text-xs font-black uppercase tracking-widest mb-4 shadow-[0_0_20px_rgba(249,115,22,0.2)]">
+              <Flame className="w-4 h-4 text-orange-400 animate-pulse" /> Volcanic Ember Deflection Protocol
             </div>
-            <h1 className="text-6xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">
+
+            <h1 className="text-7xl md:text-8xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-300 to-red-500 drop-shadow-[0_0_40px_rgba(249,115,22,0.6)]">
               CINDER
             </h1>
-            <p className="text-sm text-white/60 mt-3">
+            <p className="text-base text-orange-100/70 mt-4 max-w-lg mx-auto leading-relaxed">
               Position thermal shields to deflect falling volcanic embers and protect the subterranean geothermal refinery core.
             </p>
+
+            <div className="flex justify-center gap-3 mt-4">
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-orange-300">1P / 2P MODES</span>
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-amber-300">ONLINE LEADERBOARD</span>
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-red-300">TOUCH READY</span>
+            </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl w-full z-10">
             <button
               onClick={() => startGame("cinder_defense")}
-              className="p-5 rounded-2xl bg-[#0b0f19] border border-orange-500/40 hover:border-orange-400 flex flex-col items-center gap-2 hover:scale-105 transition-all text-center"
+              className="group relative p-6 rounded-3xl bg-white/5 border border-orange-500/30 hover:border-orange-400 hover:bg-orange-500/10 flex flex-col items-center gap-3 transition-all duration-300 text-center backdrop-blur-md shadow-lg hover:shadow-[0_0_30px_rgba(249,115,22,0.3)] active:scale-95"
             >
-              <User className="w-8 h-8 text-orange-400" />
-              <div className="font-black text-lg">CINDER DEFENSE</div>
-              <div className="text-xs text-white/50">Single player ember defense</div>
+              <User className="w-8 h-8 text-orange-400 group-hover:scale-110 transition-transform" />
+              <div>
+                <div className="font-black text-xl uppercase tracking-wider text-white">CINDER DEFENSE</div>
+                <div className="text-xs text-orange-200/60 mt-1">Single player thermal shield ember defense</div>
+              </div>
             </button>
 
             <button
               onClick={() => startGame("volcanic_showdown")}
-              className="p-5 rounded-2xl bg-[#0b0f19] border border-red-500/40 hover:border-red-400 flex flex-col items-center gap-2 hover:scale-105 transition-all text-center"
+              className="group relative p-6 rounded-3xl bg-white/5 border border-red-500/30 hover:border-red-400 hover:bg-red-500/10 flex flex-col items-center gap-3 transition-all duration-300 text-center backdrop-blur-md shadow-lg hover:shadow-[0_0_30px_rgba(239,68,68,0.3)] active:scale-95"
             >
-              <Users className="w-8 h-8 text-red-400" />
-              <div className="font-black text-lg">VOLCANIC SHOWDOWN</div>
-              <div className="text-xs text-white/50">2-Player volcanic duel</div>
+              <Users className="w-8 h-8 text-red-400 group-hover:scale-110 transition-transform" />
+              <div>
+                <div className="font-black text-xl uppercase tracking-wider text-white">VOLCANIC SHOWDOWN</div>
+                <div className="text-xs text-red-200/60 mt-1">2-Player geothermal ember deflection duel</div>
+              </div>
             </button>
+          </div>
+
+          <div className="mt-8 z-10 flex flex-wrap items-center justify-center gap-6 text-xs text-white/50 bg-black/40 px-6 py-3 rounded-2xl border border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-orange-300 bg-white/10 px-2 py-0.5 rounded border border-white/10 font-bold">LEFT / RIGHT</span>
+              <span>Position Shield</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-red-300 bg-white/10 px-2 py-0.5 rounded border border-white/10 font-bold">SPACE</span>
+              <span>Thermal Blast</span>
+            </div>
           </div>
         </div>
       )}

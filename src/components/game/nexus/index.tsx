@@ -466,37 +466,65 @@ export default function NexusGame() {
       )}
 
       {gameState === "menu" && (
-        <div className="absolute inset-0 z-40 bg-[#022c22]/95 backdrop-blur-xl flex flex-col items-center justify-center p-6">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center max-w-xl mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-3">
-              <Share2 className="w-3.5 h-3.5" /> High-Voltage Conduit Network
+        <div className="absolute inset-0 z-40 bg-[#021f18]/90 backdrop-blur-2xl flex flex-col items-center justify-center p-6 overflow-y-auto">
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-600/20 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+
+          <motion.div
+            initial={{ scale: 0.88, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            className="text-center max-w-2xl mb-8 z-10"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-black uppercase tracking-widest mb-4 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+              <Share2 className="w-4 h-4 text-emerald-400 animate-pulse" /> High-Voltage Conduit Protocol
             </div>
-            <h1 className="text-6xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500">
+
+            <h1 className="text-7xl md:text-8xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-400 drop-shadow-[0_0_40px_rgba(16,185,129,0.6)]">
               NEXUS
             </h1>
-            <p className="text-sm text-white/60 mt-3">
+            <p className="text-base text-emerald-100/70 mt-4 max-w-lg mx-auto leading-relaxed">
               Connect high-voltage circuit nodes, balance electric current flow, and discharge power surges before overload.
             </p>
+
+            <div className="flex justify-center gap-3 mt-4">
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-emerald-300">1P / 2P MODES</span>
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-teal-300">ONLINE LEADERBOARD</span>
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-cyan-300">TOUCH READY</span>
+            </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl w-full z-10">
             <button
               onClick={() => startGame("conduit_master")}
-              className="p-5 rounded-2xl bg-[#0b0f19] border border-emerald-500/40 hover:border-emerald-400 flex flex-col items-center gap-2 hover:scale-105 transition-all text-center"
+              className="group relative p-6 rounded-3xl bg-white/5 border border-emerald-500/30 hover:border-emerald-400 hover:bg-emerald-500/10 flex flex-col items-center gap-3 transition-all duration-300 text-center backdrop-blur-md shadow-lg hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] active:scale-95"
             >
-              <User className="w-8 h-8 text-emerald-400" />
-              <div className="font-black text-lg">CONDUIT MASTER</div>
-              <div className="text-xs text-white/50">Single player node puzzle</div>
+              <User className="w-8 h-8 text-emerald-400 group-hover:scale-110 transition-transform" />
+              <div>
+                <div className="font-black text-xl uppercase tracking-wider text-white">CONDUIT MASTER</div>
+                <div className="text-xs text-emerald-200/60 mt-1">Single player node balance & power surge</div>
+              </div>
             </button>
 
             <button
               onClick={() => startGame("nexus_grid_clash")}
-              className="p-5 rounded-2xl bg-[#0b0f19] border border-teal-500/40 hover:border-teal-400 flex flex-col items-center gap-2 hover:scale-105 transition-all text-center"
+              className="group relative p-6 rounded-3xl bg-white/5 border border-teal-500/30 hover:border-teal-400 hover:bg-teal-500/10 flex flex-col items-center gap-3 transition-all duration-300 text-center backdrop-blur-md shadow-lg hover:shadow-[0_0_30px_rgba(20,184,166,0.3)] active:scale-95"
             >
-              <Users className="w-8 h-8 text-teal-400" />
-              <div className="font-black text-lg">GRID CLASH</div>
-              <div className="text-xs text-white/50">2-Player voltage link duel</div>
+              <Users className="w-8 h-8 text-teal-400 group-hover:scale-110 transition-transform" />
+              <div>
+                <div className="font-black text-xl uppercase tracking-wider text-white">GRID CLASH</div>
+                <div className="text-xs text-teal-200/60 mt-1">2-Player high-voltage link duel</div>
+              </div>
             </button>
+          </div>
+
+          <div className="mt-8 z-10 flex flex-wrap items-center justify-center gap-6 text-xs text-white/50 bg-black/40 px-6 py-3 rounded-2xl border border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-emerald-300 bg-white/10 px-2 py-0.5 rounded border border-white/10 font-bold">CLICK / TOUCH</span>
+              <span>Connect Nodes</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-teal-300 bg-white/10 px-2 py-0.5 rounded border border-white/10 font-bold">SPACE</span>
+              <span>Power Surge</span>
+            </div>
           </div>
         </div>
       )}

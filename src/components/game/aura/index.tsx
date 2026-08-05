@@ -494,37 +494,65 @@ export default function AuraGame() {
       )}
 
       {gameState === "menu" && (
-        <div className="absolute inset-0 z-40 bg-[#09090b]/95 backdrop-blur-xl flex flex-col items-center justify-center p-6">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center max-w-xl mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/30 text-pink-400 text-xs font-bold uppercase tracking-widest mb-3">
-              <Palette className="w-3.5 h-3.5" /> Harmonic Color Phase Absorption
+        <div className="absolute inset-0 z-40 bg-[#14061a]/90 backdrop-blur-2xl flex flex-col items-center justify-center p-6 overflow-y-auto">
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-600/20 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+
+          <motion.div
+            initial={{ scale: 0.88, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            className="text-center max-w-2xl mb-8 z-10"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/30 text-pink-300 text-xs font-black uppercase tracking-widest mb-4 shadow-[0_0_20px_rgba(236,72,153,0.2)]">
+              <Palette className="w-4 h-4 text-pink-400 animate-spin" style={{ animationDuration: "10s" }} /> Harmonic Color Phase Protocol
             </div>
-            <h1 className="text-6xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-amber-400">
+
+            <h1 className="text-7xl md:text-8xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-amber-300 to-cyan-400 drop-shadow-[0_0_40px_rgba(236,72,153,0.6)]">
               AURA
             </h1>
-            <p className="text-sm text-white/60 mt-3">
+            <p className="text-base text-pink-100/70 mt-4 max-w-lg mx-auto leading-relaxed">
               Shift your elemental aura color state between Cyan, Magenta, and Yellow to absorb matching energy surges and avoid damage.
             </p>
+
+            <div className="flex justify-center gap-3 mt-4">
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-pink-300">1P / 2P MODES</span>
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-cyan-300">ONLINE LEADERBOARD</span>
+              <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-amber-300">TOUCH READY</span>
+            </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl w-full z-10">
             <button
               onClick={() => startGame("aura_shift_challenge")}
-              className="p-5 rounded-2xl bg-[#0b0f19] border border-pink-500/40 hover:border-pink-400 flex flex-col items-center gap-2 hover:scale-105 transition-all text-center"
+              className="group relative p-6 rounded-3xl bg-white/5 border border-pink-500/30 hover:border-pink-400 hover:bg-pink-500/10 flex flex-col items-center gap-3 transition-all duration-300 text-center backdrop-blur-md shadow-lg hover:shadow-[0_0_30px_rgba(236,72,153,0.3)] active:scale-95"
             >
-              <User className="w-8 h-8 text-pink-400" />
-              <div className="font-black text-lg">AURA SHIFT</div>
-              <div className="text-xs text-white/50">Single player color absorption</div>
+              <User className="w-8 h-8 text-pink-400 group-hover:scale-110 transition-transform" />
+              <div>
+                <div className="font-black text-xl uppercase tracking-wider text-white">AURA SHIFT</div>
+                <div className="text-xs text-pink-200/60 mt-1">Single player color phase absorption</div>
+              </div>
             </button>
 
             <button
               onClick={() => startGame("prism_duel")}
-              className="p-5 rounded-2xl bg-[#0b0f19] border border-cyan-500/40 hover:border-cyan-400 flex flex-col items-center gap-2 hover:scale-105 transition-all text-center"
+              className="group relative p-6 rounded-3xl bg-white/5 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-500/10 flex flex-col items-center gap-3 transition-all duration-300 text-center backdrop-blur-md shadow-lg hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] active:scale-95"
             >
-              <Users className="w-8 h-8 text-cyan-400" />
-              <div className="font-black text-lg">PRISM DUEL</div>
-              <div className="text-xs text-white/50">2-Player aura clash</div>
+              <Users className="w-8 h-8 text-cyan-400 group-hover:scale-110 transition-transform" />
+              <div>
+                <div className="font-black text-xl uppercase tracking-wider text-white">PRISM DUEL</div>
+                <div className="text-xs text-cyan-200/60 mt-1">2-Player elemental aura clash</div>
+              </div>
             </button>
+          </div>
+
+          <div className="mt-8 z-10 flex flex-wrap items-center justify-center gap-6 text-xs text-white/50 bg-black/40 px-6 py-3 rounded-2xl border border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-pink-300 bg-white/10 px-2 py-0.5 rounded border border-white/10 font-bold">1 / 2 / 3</span>
+              <span>Switch Aura Colors</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-cyan-300 bg-white/10 px-2 py-0.5 rounded border border-white/10 font-bold">WASD / ARROWS</span>
+              <span>Move & Dodge</span>
+            </div>
           </div>
         </div>
       )}
