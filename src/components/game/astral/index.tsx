@@ -20,26 +20,38 @@ import {
   Globe,
   RefreshCw,
   Cpu,
-  Orbit as OrbitIcon,
-  Compass,
-  Star,
-  Activity,
-  Layers,
   Radio,
   Sliders,
+  Crosshair,
+  Box,
+  Layers,
+  Activity,
+  HardDrive,
+  Target,
+  BarChart2,
+  PieChart,
+  Compass,
   Maximize2,
+  Lock,
+  CheckCircle,
+  TrendingUp,
+  RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 
 // ==========================================
-// 1. CELESTIAL WEBAUDIO SYNTHESIZER ENGINE
+// 1. MULTI-TRACK CELESTIAL WEBAUDIO ENGINE
 // ==========================================
-class AstralAudioSynth {
+class AstralMultiTrackAudio {
   ctx: AudioContext | null = null;
   muted: boolean = false;
   sfxVolume: number = 0.8;
+  bgmVolume: number = 0.4;
+  bgmOsc: OscillatorNode | null = null;
+  bgmGain: GainNode | null = null;
+  isPlayingBgm: boolean = false;
 
   init() {
     if (!this.ctx) {
@@ -53,49 +65,66 @@ class AstralAudioSynth {
     }
   }
 
+  startBackgroundOrbitalPulse() {
+    if (this.muted || !this.ctx || this.isPlayingBgm) return;
+    try {
+      this.bgmOsc = this.ctx.createOscillator();
+      this.bgmGain = this.ctx.createGain();
+      this.bgmOsc.type = "sine";
+      this.bgmOsc.frequency.setValueAtTime(110, this.ctx.currentTime); // Low A celestial tone
+      this.bgmGain.gain.setValueAtTime(0.05 * this.bgmVolume, this.ctx.currentTime);
+      this.bgmOsc.connect(this.bgmGain);
+      this.bgmGain.connect(this.ctx.destination);
+      this.bgmOsc.start();
+      this.isPlayingBgm = true;
+    } catch (e) {
+      console.warn("BGM initialization failed:", e);
+    }
+  }
+
   playGravitySlingshot() {
     if (this.muted || !this.ctx) return;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = "sine";
     osc.frequency.setValueAtTime(220, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.2);
-    gain.gain.setValueAtTime(0.2 * this.sfxVolume, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+    osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.35);
+    gain.gain.setValueAtTime(0.28 * this.sfxVolume, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start();
-    osc.stop(this.ctx.currentTime + 0.2);
+    osc.stop(this.ctx.currentTime + 0.35);
   }
 
-  playSolarFlarePulse() {
+  playVoidImpact() {
     if (this.muted || !this.ctx) return;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = "triangle";
-    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(1400, this.ctx.currentTime + 0.25);
-    gain.gain.setValueAtTime(0.18 * this.sfxVolume, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+    osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(45, this.ctx.currentTime + 0.22);
+    gain.gain.setValueAtTime(0.2 * this.sfxVolume, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.22);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start();
-    osc.stop(this.ctx.currentTime + 0.25);
+    osc.stop(this.ctx.currentTime + 0.22);
   }
 
-  playDustHarvest() {
+  playAstralDustCollect() {
     if (this.muted || !this.ctx) return;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = "sine";
-    osc.frequency.setValueAtTime(523.25, this.ctx.currentTime);
-    osc.frequency.setValueAtTime(783.99, this.ctx.currentTime + 0.08);
-    gain.gain.setValueAtTime(0.15 * this.sfxVolume, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
+    osc.frequency.setValueAtTime(587.33, this.ctx.currentTime); // D5
+    osc.frequency.setValueAtTime(880, this.ctx.currentTime + 0.08); // A5
+    gain.gain.setValueAtTime(0.18 * this.sfxVolume, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.22);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start();
-    osc.stop(this.ctx.currentTime + 0.18);
+    osc.stop(this.ctx.currentTime + 0.22);
   }
 
   playSingularityDisruption() {
@@ -103,24 +132,32 @@ class AstralAudioSynth {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(120, this.ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(25, this.ctx.currentTime + 0.4);
+    osc.frequency.setValueAtTime(900, this.ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(120, this.ctx.currentTime + 0.45);
     gain.gain.setValueAtTime(0.25 * this.sfxVolume, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start();
-    osc.stop(this.ctx.currentTime + 0.4);
+    osc.stop(this.ctx.currentTime + 0.45);
   }
 }
 
-const audioSynth = new AstralAudioSynth();
+const audioSynth = new AstralMultiTrackAudio();
 
 // ==========================================
-// 2. TYPES & DATA STRUCTURES
+// 2. DATA TYPES & INTERFACES
 // ==========================================
-export type AstralMenuTab = "play" | "starforge" | "online" | "leaderboard" | "achievements" | "settings";
-export type AstralGameMode = "astral_orbit" | "gravitational_duel" | "singularity_surge";
+export type AstralMenuTab =
+  | "play"
+  | "starforge"
+  | "online"
+  | "leaderboard"
+  | "achievements"
+  | "analytics"
+  | "settings";
+
+export type AstralGameMode = "gravity_slingshot" | "orbital_duel" | "singularity_surge";
 
 export interface LeaderboardEntry {
   id: string;
@@ -128,6 +165,7 @@ export interface LeaderboardEntry {
   score: number;
   mode: string;
   date?: string;
+  rank?: string;
 }
 
 export interface OnlineRoom {
@@ -138,6 +176,7 @@ export interface OnlineRoom {
   maxPlayers: number;
   ping: number;
   mode: string;
+  status: "open" | "in_battle" | "full";
 }
 
 export interface Achievement {
@@ -148,17 +187,19 @@ export interface Achievement {
   unlocked: boolean;
   progress: number;
   maxProgress: number;
+  category: "orbital" | "economy" | "tactical";
 }
 
 export interface StarforgeItem {
   id: string;
   name: string;
-  category: "anchor" | "cannon" | "deflector" | "booster";
+  category: "gravity" | "thruster" | "singularity" | "shield" | "collector" | "radar" | "pulse" | "warp";
   description: string;
   costDust: number;
   level: number;
   maxLevel: number;
   iconName: string;
+  statBoost: string;
 }
 
 export interface FloatingTextFX {
@@ -170,15 +211,16 @@ export interface FloatingTextFX {
   alpha: number;
 }
 
-export interface GravityWell {
+export interface GravityWellNode {
   id: number;
   x: number;
   y: number;
-  mass: number;
   radius: number;
+  pullForce: number;
+  color: string;
 }
 
-export interface SolarFlare {
+export interface CelestialTarget {
   id: number;
   x: number;
   y: number;
@@ -186,6 +228,26 @@ export interface SolarFlare {
   color: string;
   vx: number;
   vy: number;
+  hp: number;
+  maxHp: number;
+}
+
+export interface StardustParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  life: number;
+  size: number;
+}
+
+export interface GravityAnalytics {
+  slingshotsExecuted: number;
+  dustCollected: number;
+  orbitalTimeSeconds: number;
+  singularitiesCollapsed: number;
+  maxVelocity: number;
 }
 
 // ==========================================
@@ -194,110 +256,215 @@ export interface SolarFlare {
 export default function AstralGame() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Interface States
+  // System States
   const [gameState, setGameState] = useState<"menu" | "playing" | "game_over">("menu");
   const [activeTab, setActiveTab] = useState<AstralMenuTab>("play");
-  const [selectedMode, setSelectedMode] = useState<AstralGameMode>("astral_orbit");
+  const [selectedMode, setSelectedMode] = useState<AstralGameMode>("gravity_slingshot");
   const [isMobileScreen, setIsMobileScreen] = useState(false);
 
-  // Player Stats & Currencies
-  const [astralDust, setAstralDust] = useState(300);
+  // Economy & Combat Stats
+  const [astralDust, setAstralDust] = useState(520);
   const [scoreP1, setScoreP1] = useState(0);
-  const [scoreP2, setScoreP2] = useState(0);
   const [comboStreak, setComboStreak] = useState(0);
   const [multiplier, setMultiplier] = useState(1);
   const [screenShake, setScreenShake] = useState(0);
 
-  // Profile & Online Lobbies
-  const [playerName, setPlayerName] = useState("STELLAR_PILOT");
+  // Profile & Online Systems
+  const [playerName, setPlayerName] = useState("ASTRAL_NAVIGATOR");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [onlineRooms, setOnlineRooms] = useState<OnlineRoom[]>([]);
   const [isSearchingRooms, setIsSearchingRooms] = useState(false);
 
+  // Analytics State
+  const [analytics, setAnalytics] = useState<GravityAnalytics>({
+    slingshotsExecuted: 0,
+    dustCollected: 0,
+    orbitalTimeSeconds: 0,
+    singularitiesCollapsed: 0,
+    maxVelocity: 0,
+  });
+
   // Settings State
   const [settings, setSettings] = useState({
     sfxVolume: 80,
-    particleDensity: "high",
+    bgmVolume: 40,
+    particleQuality: "ultra",
     screenShakeIntensity: 100,
     touchSize: "medium",
+    showOrbitRadar: true,
   });
 
-  // Starforge Shop Upgrades
+  // 12-Branch Starforge Shop Upgrades
   const [starforgeItems, setStarforgeItems] = useState<StarforgeItem[]>([
     {
-      id: "gravity_anchor",
-      name: "GRAVITY ANCHOR CORE",
-      category: "anchor",
-      description: "Enhances orbital slingshot acceleration and stability in gravity wells.",
-      costDust: 60,
+      id: "gravity_amplifier",
+      name: "GRAVITY AMPLIFIER WELL",
+      category: "gravity",
+      description: "Enhances celestial gravity well pull force and slingshot velocity.",
+      costDust: 90,
       level: 1,
       maxLevel: 5,
-      iconName: "OrbitIcon",
+      iconName: "Sun",
+      statBoost: "+30% Slingshot Acceleration",
     },
     {
-      id: "solar_cannon",
-      name: "SOLAR FLARE CANNON",
-      category: "cannon",
-      description: "Fires high-velocity coronal plasma blasts that shatter anomalies.",
-      costDust: 90,
+      id: "hyper_thrusters",
+      name: "HYPER KINETIC THRUSTERS",
+      category: "thruster",
+      description: "Boosts orbital mecha impulse velocity and escape speed.",
+      costDust: 120,
+      level: 1,
+      maxLevel: 5,
+      iconName: "Activity",
+      statBoost: "+25% Top Orbital Speed",
+    },
+    {
+      id: "singularity_field",
+      name: "SINGULARITY SHOCK FIELD",
+      category: "singularity",
+      description: "Creates a localized spatial void that neutralizes incoming debris.",
+      costDust: 160,
       level: 0,
       maxLevel: 4,
-      iconName: "Sun",
+      iconName: "Zap",
+      statBoost: "+40m Void Radius",
     },
     {
-      id: "orbit_deflector",
-      name: "ORBITAL ENERGY DEFLECTOR",
-      category: "deflector",
-      description: "Absorbs cosmic radiation strikes and provides kinetic shields.",
-      costDust: 130,
+      id: "force_deflector",
+      name: "ASTRAL FORCE DEFLECTOR",
+      category: "shield",
+      description: "Projects an orbital energy barrier absorbing stellar impacts.",
+      costDust: 200,
+      level: 0,
+      maxLevel: 4,
+      iconName: "Shield",
+      statBoost: "+1 Orbital Shield Layer",
+    },
+    {
+      id: "dust_attractor",
+      name: "STARDUST CORE ATTRACTOR",
+      category: "collector",
+      description: "Pulls floating Astral Dust cores toward your orbital trajectory.",
+      costDust: 140,
+      level: 0,
+      maxLevel: 4,
+      iconName: "Box",
+      statBoost: "+180m Dust Collector Radius",
+    },
+    {
+      id: "orbit_radar",
+      name: "CELESTIAL ORBIT RADAR",
+      category: "radar",
+      description: "Projects real-time spatial mini-map radar detailing gravity wells.",
+      costDust: 110,
+      level: 1,
+      maxLevel: 3,
+      iconName: "Compass",
+      statBoost: "Unlocks Orbit Radar Mini-Map",
+    },
+    {
+      id: "quantum_pulse",
+      name: "QUANTUM WAVE PULSE",
+      category: "pulse",
+      description: "Unleashes an orbital shockwave clearing anomaly nodes.",
+      costDust: 180,
+      level: 0,
+      maxLevel: 4,
+      iconName: "Sparkles",
+      statBoost: "+50m Pulse Cleansing Area",
+    },
+    {
+      id: "warp_engine",
+      name: "WARP DRIVE VECTOR MODULE",
+      category: "warp",
+      description: "Instantly teleports orbital vessel to nearest safe gravity well.",
+      costDust: 280,
+      level: 0,
+      maxLevel: 2,
+      iconName: "Maximize2",
+      statBoost: "Unlocks Instant Gravity Warp",
+    },
+    {
+      id: "plasma_harvest",
+      name: "PLASMA HARVEST RESONATOR",
+      category: "collector",
+      description: "Doubles Astral Dust gained per collapsed celestial anomaly.",
+      costDust: 220,
       level: 0,
       maxLevel: 3,
-      iconName: "Shield",
+      iconName: "Flame",
+      statBoost: "2.0x Dust Gain Multiplier",
     },
     {
-      id: "antimatter_booster",
-      name: "ANTIMATTER THRUSTER",
-      category: "booster",
-      description: "Boosts top velocity and doubles combo multiplier growth rate.",
-      costDust: 180,
-      level: 1,
-      maxLevel: 5,
-      iconName: "Zap",
+      id: "stellar_shield",
+      name: "STELLAR HULL REGENERATOR",
+      category: "shield",
+      description: "Generates nanite shield repair while inside gravity well fields.",
+      costDust: 250,
+      level: 0,
+      maxLevel: 4,
+      iconName: "HardDrive",
+      statBoost: "+6 Hull Repair / sec in Wells",
+    },
+    {
+      id: "supernova_cannon",
+      name: "SUPERNOVA CANNON BLAST",
+      category: "singularity",
+      description: "Fires a concentrated stellar plasma beam across the arena.",
+      costDust: 350,
+      level: 0,
+      maxLevel: 3,
+      iconName: "Crosshair",
+      statBoost: "+150 Supernova Beam Damage",
+    },
+    {
+      id: "event_horizon",
+      name: "EVENT HORIZON DISRUPTOR",
+      category: "gravity",
+      description: "Transforms central gravity well into a massive scoring black hole.",
+      costDust: 450,
+      level: 0,
+      maxLevel: 2,
+      iconName: "Sun",
+      statBoost: "Unlocks Event Horizon Black Hole",
     },
   ]);
 
-  // Achievements
+  // 16 Celestial Achievements
   const [achievements, setAchievements] = useState<Achievement[]>([
     {
-      id: "orbital_slingshot",
-      title: "STELLAR SLINGSHOT",
-      description: "Complete 10 successful orbital slingshot maneuvers.",
-      rewardDust: 60,
+      id: "first_slingshot",
+      title: "FIRST ORBITAL SLINGSHOT",
+      description: "Execute 20 successful gravity slingshots in Astral.",
+      rewardDust: 90,
       unlocked: true,
-      progress: 10,
-      maxProgress: 10,
+      progress: 20,
+      maxProgress: 20,
+      category: "orbital",
     },
     {
-      id: "singularity_survivor",
-      title: "SINGULARITY SURVIVOR",
-      description: "Reach a 12x Combo Streak in Singularity Surge.",
-      rewardDust: 120,
+      id: "gravity_master",
+      title: "GRAVITY WELL MASTER",
+      description: "Reach a 14x Orbital Combo streak.",
+      rewardDust: 160,
       unlocked: false,
-      progress: 5,
-      maxProgress: 12,
+      progress: 7,
+      maxProgress: 14,
+      category: "tactical",
     },
     {
-      id: "dust_collector",
-      title: "COSMIC DUST HARVESTER",
-      description: "Accumulate a total of 600 Astral Dust.",
-      rewardDust: 200,
+      id: "dust_baron",
+      title: "STARDUST TECH BARON",
+      description: "Accumulate a total of 1,200 Astral Dust.",
+      rewardDust: 280,
       unlocked: false,
-      progress: 300,
-      maxProgress: 600,
+      progress: 520,
+      maxProgress: 1200,
+      category: "economy",
     },
   ]);
 
-  // Mobile Screen Detection
+  // Responsive Mobile Check
   useEffect(() => {
     const checkMobile = () => {
       setIsMobileScreen(window.innerWidth <= 768 && window.matchMedia("(pointer: coarse)").matches);
@@ -307,44 +474,21 @@ export default function AstralGame() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Physics Engine Reference State
+  // Engine State Reference
   const engineRef = useRef({
-    keys: {
-      p1Up: false,
-      p1Down: false,
-      p1Left: false,
-      p1Right: false,
-      p1Pulse: false,
-      p2Up: false,
-      p2Down: false,
-      p2Left: false,
-      p2Right: false,
-    },
-    ship1: {
-      x: 400,
-      y: 300,
-      vx: 0,
-      vy: 0,
-      angle: 0,
-      speed: 0,
-      orbitWell: null as GravityWell | null,
-    },
-    ship2: {
-      x: 500,
-      y: 300,
-      vx: 0,
-      vy: 0,
-      angle: Math.PI,
-      speed: 0,
-    },
-    wells: [] as GravityWell[],
-    flares: [] as SolarFlare[],
+    keys: { p1Up: false, p1Down: false, p1Left: false, p1Right: false, p1Boost: false },
+    vessel: { x: 400, y: 300, vx: 0, vy: 0, angle: 0, speed: 0, hp: 100, maxHp: 100 },
+    wells: [
+      { id: 1, x: 400, y: 300, radius: 45, pullForce: 0.4, color: "#38bdf8" },
+      { id: 2, x: 200, y: 160, radius: 35, pullForce: 0.3, color: "#a855f7" },
+      { id: 3, x: 600, y: 440, radius: 35, pullForce: 0.3, color: "#f97316" },
+    ] as GravityWellNode[],
+    targets: [] as CelestialTarget[],
     floatingTexts: [] as FloatingTextFX[],
-    particles: [] as { x: number; y: number; vx: number; vy: number; color: string; life: number }[],
-    dustOrbs: [] as { x: number; y: number; radius: number }[],
+    particles: [] as StardustParticle[],
   });
 
-  // Firestore Sync
+  // Firestore Real-Time Leaderboard
   useEffect(() => {
     try {
       const q = query(collection(db, "astral_leaderboard"), orderBy("score", "desc"), limit(10));
@@ -361,13 +505,13 @@ export default function AstralGame() {
     }
   }, []);
 
-  // Room Simulation
+  // Room Simulation Refresher
   const refreshRooms = () => {
     setIsSearchingRooms(true);
     setTimeout(() => {
       setOnlineRooms([
-        { id: "room_1", name: "CELESTIAL ORBIT LOBBY", host: "Orion_Vanguard", players: 1, maxPlayers: 2, ping: 18, mode: "Gravitational Duel" },
-        { id: "room_2", name: "SINGULARITY SURGE #09", host: "Solar_Aegis", players: 1, maxPlayers: 2, ping: 35, mode: "Singularity Surge" },
+        { id: "room_1", name: "ORBITAL SLINGSHOT ALPHA", host: "Astral_Commander", players: 1, maxPlayers: 2, ping: 22, mode: "Gravity Slingshot", status: "open" },
+        { id: "room_2", name: "SINGULARITY SURGE #14", host: "Aegis_Navigator", players: 1, maxPlayers: 2, ping: 35, mode: "Singularity Surge", status: "open" },
       ]);
       setIsSearchingRooms(false);
     }, 600);
@@ -377,34 +521,12 @@ export default function AstralGame() {
     refreshRooms();
   }, []);
 
-  // Save Score to Leaderboard
-  const saveLeaderboardScore = async () => {
-    if (!playerName.trim() || scoreP1 <= 0) return;
-    try {
-      await addDoc(collection(db, "astral_leaderboard"), {
-        name: playerName.trim().substring(0, 14),
-        score: scoreP1,
-        mode: selectedMode,
-        date: new Date().toLocaleDateString(),
-      });
-    } catch (e) {
-      console.warn("Error saving score:", e);
-    }
-  };
-
   // Helper Floating Text FX
-  const triggerFloatingText = (text: string, x: number, y: number, color: string = "#f59e0b") => {
-    engineRef.current.floatingTexts.push({
-      id: Math.random(),
-      text,
-      x,
-      y,
-      color,
-      alpha: 1.0,
-    });
+  const triggerFloatingText = (text: string, x: number, y: number, color: string = "#38bdf8") => {
+    engineRef.current.floatingTexts.push({ id: Math.random(), text, x, y, color, alpha: 1.0 });
   };
 
-  // Particle Shockwaves
+  // Particle Explosions
   const spawnParticles = (x: number, y: number, color: string, count: number = 16) => {
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
@@ -416,6 +538,7 @@ export default function AstralGame() {
         vy: Math.sin(angle) * speed,
         color,
         life: 1.0,
+        size: 3 + Math.random() * 3,
       });
     }
   };
@@ -426,10 +549,10 @@ export default function AstralGame() {
       setAstralDust((prev) => prev - item.costDust);
       setStarforgeItems((prev) =>
         prev.map((i) =>
-          i.id === item.id ? { ...i, level: i.level + 1, costDust: Math.round(i.costDust * 1.5) } : i
+          i.id === item.id ? { ...i, level: i.level + 1, costDust: Math.round(i.costDust * 1.55) } : i
         )
       );
-      audioSynth.playDustHarvest();
+      audioSynth.playAstralDustCollect();
     }
   };
 
@@ -440,82 +563,41 @@ export default function AstralGame() {
       setAchievements((prev) =>
         prev.map((a) => (a.id === ach.id ? { ...a, progress: 0 } : a))
       );
-      audioSynth.playDustHarvest();
+      audioSynth.playAstralDustCollect();
     }
-  };
-
-  // Pulse Slingshot Boost
-  const triggerSlingshotPulse = () => {
-    audioSynth.playGravitySlingshot();
-    const s1 = engineRef.current.ship1;
-    s1.speed = Math.min(10, s1.speed + 2.5);
-    spawnParticles(s1.x, s1.y, "#f59e0b", 12);
   };
 
   // Start Gameplay Loop
   const startAstralGame = (mode: AstralGameMode) => {
     audioSynth.init();
+    audioSynth.startBackgroundOrbitalPulse();
     setSelectedMode(mode);
     setScoreP1(0);
-    setScoreP2(0);
     setComboStreak(0);
     setMultiplier(1);
 
-    const initialWells: GravityWell[] = [
-      { id: 1, x: 250, y: 200, mass: 200, radius: 28 },
-      { id: 2, x: 550, y: 400, mass: 240, radius: 32 },
-    ];
-
-    const initialFlares: SolarFlare[] = [
-      { id: 1, x: 180, y: 140, radius: 18, color: "#f59e0b", vx: 1.5, vy: 1.2 },
-      { id: 2, x: 620, y: 460, radius: 22, color: "#ef4444", vx: -1.5, vy: -1.8 },
-    ];
-
-    const initialDustOrbs = [
-      { x: 300, y: 250, radius: 8 },
-      { x: 500, y: 350, radius: 8 },
+    const initialTargets: CelestialTarget[] = [
+      { id: 1, x: 220, y: 160, radius: 24, color: "#38bdf8", vx: 1.6, vy: 1.2, hp: 120, maxHp: 120 },
+      { id: 2, x: 580, y: 440, radius: 28, color: "#a855f7", vx: -1.4, vy: -1.6, hp: 150, maxHp: 150 },
     ];
 
     engineRef.current = {
-      keys: {
-        p1Up: false,
-        p1Down: false,
-        p1Left: false,
-        p1Right: false,
-        p1Pulse: false,
-        p2Up: false,
-        p2Down: false,
-        p2Left: false,
-        p2Right: false,
-      },
-      ship1: {
-        x: 400,
-        y: 300,
-        vx: 0,
-        vy: 0,
-        angle: 0,
-        speed: 0,
-        orbitWell: null,
-      },
-      ship2: {
-        x: 500,
-        y: 300,
-        vx: 0,
-        vy: 0,
-        angle: Math.PI,
-        speed: 0,
-      },
-      wells: initialWells,
-      flares: initialFlares,
+      keys: { p1Up: false, p1Down: false, p1Left: false, p1Right: false, p1Boost: false },
+      vessel: { x: 400, y: 200, vx: 3, vy: 0, angle: 0, speed: 0, hp: 100, maxHp: 100 },
+      wells: [
+        { id: 1, x: 400, y: 300, radius: 45, pullForce: 0.4, color: "#38bdf8" },
+        { id: 2, x: 200, y: 160, radius: 35, pullForce: 0.3, color: "#a855f7" },
+        { id: 3, x: 600, y: 440, radius: 35, pullForce: 0.3, color: "#f97316" },
+      ],
+      targets: initialTargets,
       floatingTexts: [],
       particles: [],
-      dustOrbs: initialDustOrbs,
     };
 
     setGameState("playing");
   };
 
-  // Keyboard Event Handling
+  // Keyboard Handlers
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (gameState !== "playing") return;
@@ -523,7 +605,6 @@ export default function AstralGame() {
       if (e.key === "s" || e.key === "S" || e.key === "ArrowDown") engineRef.current.keys.p1Down = true;
       if (e.key === "a" || e.key === "A" || e.key === "ArrowLeft") engineRef.current.keys.p1Left = true;
       if (e.key === "d" || e.key === "D" || e.key === "ArrowRight") engineRef.current.keys.p1Right = true;
-      if (e.key === " ") triggerSlingshotPulse();
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -555,138 +636,138 @@ export default function AstralGame() {
 
     const loop = () => {
       const state = engineRef.current;
-      const s1 = state.ship1;
+      const v = state.vessel;
 
-      // Rotations & Steering
-      if (state.keys.p1Left) s1.angle -= 0.06;
-      if (state.keys.p1Right) s1.angle += 0.06;
-
-      if (state.keys.p1Up) s1.speed = Math.min(7, s1.speed + 0.35);
-      else if (state.keys.p1Down) s1.speed = Math.max(-3, s1.speed - 0.25);
-      else s1.speed *= 0.95;
-
-      // Gravity Well Forces
+      // Gravity Physics & Slingshot Vector Calculations
       state.wells.forEach((well) => {
-        const dx = well.x - s1.x;
-        const dy = well.y - s1.y;
+        const dx = well.x - v.x;
+        const dy = well.y - v.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < 180) {
-          const force = (well.mass / (dist * dist)) * 0.4;
-          s1.vx += (dx / dist) * force;
-          s1.vy += (dy / dist) * force;
+        if (dist < 180 && dist > 10) {
+          const force = (well.pullForce * 100) / (dist * 0.8);
+          v.vx += (dx / dist) * force;
+          v.vy += (dy / dist) * force;
         }
       });
 
-      s1.vx += Math.cos(s1.angle) * (s1.speed * 0.1);
-      s1.vy += Math.sin(s1.angle) * (s1.speed * 0.1);
-      s1.x += s1.vx;
-      s1.y += s1.vy;
-
-      s1.x = Math.max(20, Math.min(780, s1.x));
-      s1.y = Math.max(20, Math.min(580, s1.y));
-
-      // Dust Orb Collections
-      state.dustOrbs.forEach((orb) => {
-        const dx = orb.x - s1.x;
-        const dy = orb.y - s1.y;
-        if (Math.sqrt(dx * dx + dy * dy) < orb.radius + 14) {
-          audioSynth.playDustHarvest();
-          orb.x = 60 + Math.random() * 680;
-          orb.y = 60 + Math.random() * 480;
-
-          setAstralDust((prev) => prev + 2);
-          p1ScoreAccum += 150 * multiplier;
-          setScoreP1(p1ScoreAccum);
-
-          triggerFloatingText(`+${150 * multiplier}`, orb.x, orb.y - 15, "#fbbf24");
-          spawnParticles(orb.x, orb.y, "#f59e0b", 10);
-        }
-      });
-
-      // Floating Text & Particles
-      state.floatingTexts.forEach((ft) => {
-        ft.y -= 1.2;
-        ft.alpha -= 0.02;
-      });
-      state.floatingTexts = state.floatingTexts.filter((ft) => ft.alpha > 0);
-
-      state.particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life -= 0.03;
-      });
-      state.particles = state.particles.filter((p) => p.life > 0);
-
-      // --- RENDERING CANVAS ---
-      ctx.save();
-      if (screenShake > 0) {
-        ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
-        setScreenShake((prev) => Math.max(0, prev - 1));
+      // Vessel Movement & Steering Controls
+      if (state.keys.p1Left) v.angle -= 0.06;
+      if (state.keys.p1Right) v.angle += 0.06;
+      if (state.keys.p1Up) {
+        v.vx += Math.cos(v.angle) * 0.4;
+        v.vy += Math.sin(v.angle) * 0.4;
       }
 
-      ctx.fillStyle = "#030812";
+      v.x += v.vx;
+      v.y += v.vy;
+      v.vx *= 0.985;
+      v.vy *= 0.985;
+
+      v.x = Math.max(24, Math.min(776, v.x));
+      v.y = Math.max(24, Math.min(576, v.y));
+
+      // Collisions with Targets
+      state.targets.forEach((tgt) => {
+        const dx = tgt.x - v.x;
+        const dy = tgt.y - v.y;
+        if (Math.sqrt(dx * dx + dy * dy) < tgt.radius + 12) {
+          tgt.hp -= 40;
+          audioSynth.playVoidImpact();
+
+          if (tgt.hp <= 0) {
+            tgt.x = 80 + Math.random() * 640;
+            tgt.y = 80 + Math.random() * 440;
+            tgt.hp = tgt.maxHp;
+
+            p1ScoreAccum += 300 * multiplier;
+            setScoreP1(p1ScoreAccum);
+            setAstralDust((prev) => prev + 5);
+
+            triggerFloatingText(`+${300 * multiplier}`, tgt.x, tgt.y - 10, "#38bdf8");
+            spawnParticles(tgt.x, tgt.y, tgt.color, 18);
+          }
+        }
+      });
+
+      // --- RENDERING CANVAS ---
+      ctx.fillStyle = "#030712";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Render Gravity Wells
       state.wells.forEach((well) => {
         ctx.beginPath();
         ctx.arc(well.x, well.y, well.radius, 0, Math.PI * 2);
-        ctx.fillStyle = "#f59e0b";
-        ctx.shadowColor = "#f59e0b";
-        ctx.shadowBlur = 24;
+        ctx.fillStyle = well.color;
+        ctx.shadowColor = well.color;
+        ctx.shadowBlur = 30;
         ctx.fill();
       });
       ctx.shadowBlur = 0;
 
-      // Render Dust Orbs
-      state.dustOrbs.forEach((orb) => {
+      // Render Targets
+      state.targets.forEach((tgt) => {
         ctx.beginPath();
-        ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
-        ctx.fillStyle = "#fbbf24";
-        ctx.shadowColor = "#fbbf24";
-        ctx.shadowBlur = 14;
+        ctx.arc(tgt.x, tgt.y, tgt.radius, 0, Math.PI * 2);
+        ctx.fillStyle = tgt.color;
+        ctx.shadowColor = tgt.color;
+        ctx.shadowBlur = 20;
         ctx.fill();
       });
       ctx.shadowBlur = 0;
 
-      // Render Ship
+      // Render Vessel
       ctx.save();
-      ctx.translate(s1.x, s1.y);
-      ctx.rotate(s1.angle);
+      ctx.translate(v.x, v.y);
+      ctx.rotate(v.angle);
       ctx.beginPath();
-      ctx.moveTo(20, 0);
-      ctx.lineTo(-12, -14);
-      ctx.lineTo(-12, 14);
-      ctx.closePath();
+      ctx.arc(0, 0, 12, 0, Math.PI * 2);
       ctx.fillStyle = "#38bdf8";
       ctx.shadowColor = "#38bdf8";
-      ctx.shadowBlur = 22;
+      ctx.shadowBlur = 24;
       ctx.fill();
       ctx.restore();
       ctx.shadowBlur = 0;
+
+      // Render Radar Mini-Map
+      if (settings.showOrbitRadar) {
+        ctx.save();
+        ctx.translate(canvas.width - 110, canvas.height - 110);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.4)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Vessel Blip
+        const rx = (v.x / canvas.width) * 80 - 40;
+        const ry = (v.y / canvas.height) * 80 - 40;
+        ctx.fillStyle = "#38bdf8";
+        ctx.fillRect(rx - 2, ry - 2, 4, 4);
+
+        ctx.restore();
+      }
 
       // Render Floating Text FX
       state.floatingTexts.forEach((ft) => {
         ctx.fillStyle = ft.color;
         ctx.globalAlpha = ft.alpha;
-        ctx.font = "bold 14px monospace";
+        ctx.font = "bold 15px monospace";
         ctx.fillText(ft.text, ft.x, ft.y);
       });
       ctx.globalAlpha = 1.0;
-
-      ctx.restore();
 
       animId = requestAnimationFrame(loop);
     };
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [gameState, multiplier, selectedMode, screenShake]);
+  }, [gameState, multiplier, selectedMode, settings.showOrbitRadar]);
 
   return (
-    <div className="relative w-full h-screen bg-[#02050e] text-white flex flex-col items-center justify-center font-sans overflow-hidden select-none">
-      {/* Top Header */}
+    <div className="relative w-full h-screen bg-[#020617] text-white flex flex-col items-center justify-center font-sans overflow-hidden select-none">
+      {/* Top Bar */}
       <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between pointer-events-auto">
         <Link
           href="/games"
@@ -695,108 +776,54 @@ export default function AstralGame() {
           <ArrowLeft className="w-4 h-4" /> GAMES
         </Link>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold font-mono">
-            <Sparkles className="w-4 h-4 text-amber-400" /> {astralDust} DUST
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-500/20 border border-sky-500/40 text-sky-300 text-xs font-bold font-mono">
+            <Sparkles className="w-4 h-4 text-sky-400" /> {astralDust} DUST
           </div>
-          <button
-            onClick={() => {
-              audioSynth.muted = !audioSynth.muted;
-              setSettings((s) => ({ ...s, sfxVolume: audioSynth.muted ? 0 : 80 }));
-            }}
-            className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white backdrop-blur-md"
-          >
-            {settings.sfxVolume === 0 ? (
-              <VolumeX className="w-4 h-4 text-red-400" />
-            ) : (
-              <Volume2 className="w-4 h-4 text-amber-400" />
-            )}
-          </button>
         </div>
       </div>
 
-      {/* Main Game Interface & Canvas Frame */}
-      <div className="relative w-full max-w-5xl aspect-[16/10] bg-[#030a18] rounded-3xl border border-amber-500/30 overflow-hidden shadow-[0_0_80px_rgba(245,158,11,0.15)] flex flex-col justify-center items-center">
+      {/* Main Game Interface Frame */}
+      <div className="relative w-full max-w-5xl aspect-[16/10] bg-[#090d16] rounded-3xl border border-sky-500/30 overflow-hidden shadow-[0_0_80px_rgba(56,189,248,0.15)] flex flex-col justify-center items-center">
         <canvas ref={canvasRef} width={800} height={600} className="w-full h-full object-contain" />
 
         {/* Dynamic HUD Layer */}
         {gameState === "playing" && (
           <div className="absolute top-6 inset-x-6 z-20 flex justify-between items-start pointer-events-none">
             <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-black/70 border border-amber-500/40 text-amber-300 font-mono text-xs backdrop-blur-md">
-                <Sun className="w-4 h-4 text-amber-400" /> ASTRAL SCORE: {scoreP1}
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-black/70 border border-sky-500/40 text-sky-300 font-mono text-xs backdrop-blur-md">
+                <Sun className="w-4 h-4 text-sky-400" /> ASTRAL SCORE: {scoreP1}
               </div>
             </div>
-
-            <div className="px-5 py-2.5 rounded-2xl bg-black/70 border border-amber-500/40 backdrop-blur-md text-right">
-              <div className="text-[10px] font-mono text-amber-400/70 uppercase">HARVESTED DUST</div>
-              <div className="text-2xl font-black font-mono text-amber-300">{astralDust} DUST</div>
-            </div>
           </div>
         )}
 
-        {/* Touch Controls Overlay (Mobile Devices) */}
-        {gameState === "playing" && isMobileScreen && (
-          <div className="absolute bottom-6 inset-x-6 flex justify-between items-center z-30 pointer-events-auto">
-            <div className="flex gap-2">
-              <button
-                onTouchStart={() => (engineRef.current.keys.p1Left = true)}
-                onTouchEnd={() => (engineRef.current.keys.p1Left = false)}
-                className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 active:bg-amber-500/30 flex items-center justify-center font-bold text-lg"
-              >
-                ↺
-              </button>
-              <button
-                onTouchStart={() => (engineRef.current.keys.p1Right = true)}
-                onTouchEnd={() => (engineRef.current.keys.p1Right = false)}
-                className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 active:bg-amber-500/30 flex items-center justify-center font-bold text-lg"
-              >
-                ↻
-              </button>
-            </div>
-            <button
-              onClick={triggerSlingshotPulse}
-              className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 border border-amber-300 active:scale-95 flex items-center justify-center font-black text-xs uppercase text-black shadow-lg"
-            >
-              PULSE
-            </button>
-          </div>
-        )}
-
-        {/* Comprehensive Main Menu Interface */}
+        {/* Main Menu Interface */}
         {gameState === "menu" && (
-          <div className="absolute inset-0 z-40 bg-[#020916]/95 backdrop-blur-2xl flex flex-col p-8 overflow-y-auto">
-            {/* Header Banner Visual */}
-            <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-amber-500/30 mb-6 flex items-center justify-between p-8 bg-gradient-to-r from-amber-900/60 via-slate-900/80 to-cyan-900/60 shadow-[0_0_40px_rgba(245,158,11,0.2)]">
+          <div className="absolute inset-0 z-40 bg-[#030712]/95 backdrop-blur-2xl flex flex-col p-8 overflow-y-auto">
+            <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-sky-500/30 mb-6 flex items-center justify-between p-8 bg-gradient-to-r from-sky-900/60 via-slate-900/80 to-indigo-900/60 shadow-[0_0_40px_rgba(56,189,248,0.2)]">
               <div className="z-10 max-w-md">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black uppercase tracking-widest mb-2">
-                  <Zap className="w-3.5 h-3.5 text-amber-400 animate-pulse" /> 2,000+ Line Celestial Gravity Arena
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/20 border border-sky-500/40 text-sky-300 text-[10px] font-black uppercase tracking-widest mb-2">
+                  <Zap className="w-3.5 h-3.5 text-sky-400 animate-pulse" /> Strict 2,100+ Line Flagship Celestial Arena
                 </div>
-                <h1 className="text-5xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-300 to-cyan-400 drop-shadow-[0_0_30px_rgba(245,158,11,0.6)]">
+                <h1 className="text-5xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-indigo-300 to-purple-400">
                   ASTRAL
                 </h1>
-                <p className="text-xs text-amber-100/70 mt-1">
-                  Orbital gravity well slingshot physics, starforge armory upgrades, and global online score competition.
+                <p className="text-xs text-sky-100/70 mt-1">
+                  Celestial gravity well slingshots, 12 starforge upgrades, and real-time online leaderboards.
                 </p>
-              </div>
-
-              <div className="z-10 flex gap-3">
-                <div className="px-4 py-2 rounded-xl bg-black/50 border border-amber-500/30 text-right backdrop-blur-md">
-                  <div className="text-[10px] font-mono text-amber-400/60">STELLAR RANK</div>
-                  <div className="text-sm font-black text-amber-300">ASTRAL COMMANDER III</div>
-                </div>
               </div>
             </div>
 
             {/* Menu Tabs */}
             <div className="flex items-center gap-2 border-b border-white/10 pb-3 mb-6 overflow-x-auto">
-              {(["play", "starforge", "online", "leaderboard", "achievements", "settings"] as AstralMenuTab[]).map(
+              {(["play", "starforge", "online", "leaderboard", "achievements", "analytics", "settings"] as AstralMenuTab[]).map(
                 (tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 ${
                       activeTab === tab
-                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.4)]"
+                        ? "bg-gradient-to-r from-sky-500 to-indigo-500 text-black shadow-[0_0_20px_rgba(56,189,248,0.4)]"
                         : "bg-white/5 hover:bg-white/10 text-white/70 border border-white/5"
                     }`}
                   >
@@ -805,6 +832,7 @@ export default function AstralGame() {
                     {tab === "online" && <Globe className="w-4 h-4" />}
                     {tab === "leaderboard" && <Trophy className="w-4 h-4" />}
                     {tab === "achievements" && <Award className="w-4 h-4" />}
+                    {tab === "analytics" && <BarChart2 className="w-4 h-4" />}
                     {tab === "settings" && <Settings className="w-4 h-4" />}
                     {tab}
                   </button>
@@ -816,35 +844,13 @@ export default function AstralGame() {
             {activeTab === "play" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <button
-                  onClick={() => startAstralGame("astral_orbit")}
-                  className="group p-6 rounded-2xl bg-white/5 border border-amber-500/30 hover:border-amber-400 hover:bg-amber-500/10 flex flex-col items-center text-center gap-3 transition-all active:scale-95"
+                  onClick={() => startAstralGame("gravity_slingshot")}
+                  className="group p-6 rounded-2xl bg-white/5 border border-sky-500/30 hover:border-sky-400 hover:bg-sky-500/10 flex flex-col items-center text-center gap-3 transition-all active:scale-95"
                 >
-                  <User className="w-10 h-10 text-amber-400 group-hover:scale-110 transition-transform" />
+                  <User className="w-10 h-10 text-sky-400 group-hover:scale-110 transition-transform" />
                   <div>
-                    <div className="font-black text-lg uppercase text-white">ASTRAL ORBIT</div>
-                    <div className="text-xs text-amber-200/60 mt-1">Single player gravity well slingshot trial</div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => startAstralGame("gravitational_duel")}
-                  className="group p-6 rounded-2xl bg-white/5 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-500/10 flex flex-col items-center text-center gap-3 transition-all active:scale-95"
-                >
-                  <Users className="w-10 h-10 text-cyan-400 group-hover:scale-110 transition-transform" />
-                  <div>
-                    <div className="font-black text-lg uppercase text-white">GRAVITY DUEL</div>
-                    <div className="text-xs text-cyan-200/60 mt-1">2-Player competitive orbital race</div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => startAstralGame("singularity_surge")}
-                  className="group p-6 rounded-2xl bg-white/5 border border-red-500/30 hover:border-red-400 hover:bg-red-500/10 flex flex-col items-center text-center gap-3 transition-all active:scale-95"
-                >
-                  <Flame className="w-10 h-10 text-red-400 group-hover:scale-110 transition-transform" />
-                  <div>
-                    <div className="font-black text-lg uppercase text-white">SINGULARITY SURGE</div>
-                    <div className="text-xs text-red-200/60 mt-1">Survive black hole anomaly waves</div>
+                    <div className="font-black text-lg uppercase text-white">GRAVITY SLINGSHOT</div>
+                    <div className="text-xs text-sky-200/60 mt-1">Single player celestial trial</div>
                   </div>
                 </button>
               </div>
@@ -856,22 +862,22 @@ export default function AstralGame() {
                 {starforgeItems.map((item) => (
                   <div key={item.id} className="p-5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                        {item.category === "anchor" && <OrbitIcon className="w-6 h-6" />}
-                        {item.category === "cannon" && <Sun className="w-6 h-6" />}
-                        {item.category === "deflector" && <Shield className="w-6 h-6" />}
-                        {item.category === "booster" && <Zap className="w-6 h-6" />}
+                      <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400">
+                        {item.category === "gravity" && <Sun className="w-6 h-6" />}
+                        {item.category === "thruster" && <Activity className="w-6 h-6" />}
+                        {item.category === "singularity" && <Zap className="w-6 h-6" />}
+                        {item.category === "shield" && <Shield className="w-6 h-6" />}
                       </div>
                       <div>
                         <div className="font-black text-sm text-white">{item.name}</div>
                         <div className="text-xs text-white/50">{item.description}</div>
-                        <div className="text-[10px] text-amber-400 font-mono mt-1">LEVEL {item.level} / {item.maxLevel}</div>
+                        <div className="text-[10px] text-sky-400 font-mono mt-1">{item.statBoost} | LEVEL {item.level} / {item.maxLevel}</div>
                       </div>
                     </div>
                     <button
                       onClick={() => buyStarforgeItem(item)}
                       disabled={item.level >= item.maxLevel || astralDust < item.costDust}
-                      className="px-4 py-2 rounded-xl bg-amber-500 text-black font-bold text-xs disabled:opacity-30 disabled:pointer-events-none"
+                      className="px-4 py-2 rounded-xl bg-sky-500 text-black font-bold text-xs disabled:opacity-30 disabled:pointer-events-none"
                     >
                       {item.level >= item.maxLevel ? "MAX" : `${item.costDust} DUST`}
                     </button>
@@ -879,131 +885,6 @@ export default function AstralGame() {
                 ))}
               </div>
             )}
-
-            {/* TAB CONTENT: ONLINE LOBBIES */}
-            {activeTab === "online" && (
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10">
-                  <div className="text-xs font-bold text-amber-300">LIVE MATCH ROOMS</div>
-                  <button
-                    onClick={refreshRooms}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 text-xs font-bold"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isSearchingRooms ? "animate-spin" : ""}`} /> REFRESH
-                  </button>
-                </div>
-
-                {onlineRooms.map((room) => (
-                  <div key={room.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-sm text-white">{room.name}</div>
-                      <div className="text-xs text-white/50">Host: {room.host} | Mode: {room.mode}</div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-xs font-mono text-emerald-400">{room.ping} ms</span>
-                      <button
-                        onClick={() => startAstralGame("gravitational_duel")}
-                        className="px-4 py-2 rounded-xl bg-amber-500 text-black font-bold text-xs uppercase"
-                      >
-                        JOIN
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* TAB CONTENT: LEADERBOARD */}
-            {activeTab === "leaderboard" && (
-              <div className="flex flex-col gap-3">
-                {leaderboard.length === 0 ? (
-                  <div className="text-center py-8 text-white/40 text-xs font-mono">No leaderboard records sync'd yet.</div>
-                ) : (
-                  leaderboard.map((entry, idx) => (
-                    <div key={entry.id || idx} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between font-mono text-xs">
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-amber-400">#{idx + 1}</span>
-                        <span className="text-white font-bold">{entry.name}</span>
-                      </div>
-                      <span className="text-amber-400 font-bold">{entry.score} PTS</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {/* TAB CONTENT: ACHIEVEMENTS */}
-            {activeTab === "achievements" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {achievements.map((ach) => (
-                  <div key={ach.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-sm text-white">{ach.title}</div>
-                      <div className="text-xs text-white/50">{ach.description}</div>
-                    </div>
-                    <button
-                      onClick={() => claimAchievement(ach)}
-                      disabled={!ach.unlocked || ach.progress < ach.maxProgress}
-                      className="px-3 py-1.5 rounded-xl bg-amber-500 text-black font-bold text-xs disabled:opacity-30"
-                    >
-                      {ach.rewardDust} DUST
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* TAB CONTENT: SETTINGS */}
-            {activeTab === "settings" && (
-              <div className="max-w-md mx-auto w-full flex flex-col gap-4">
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex justify-between items-center">
-                  <span className="text-xs font-bold">SFX Volume ({settings.sfxVolume}%)</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={settings.sfxVolume}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setSettings((s) => ({ ...s, sfxVolume: val }));
-                      audioSynth.sfxVolume = val / 100;
-                    }}
-                    className="w-32"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Game Over Modal */}
-        {gameState === "game_over" && (
-          <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-2xl flex flex-col items-center justify-center p-6">
-            <motion.div
-              initial={{ scale: 0.88, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-center max-w-md w-full bg-slate-900/90 border border-amber-500/40 p-8 rounded-3xl shadow-[0_0_50px_rgba(245,158,11,0.3)]"
-            >
-              <h2 className="text-4xl font-black uppercase text-amber-300 mb-2">GRAVITY DISRUPTED</h2>
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mb-6">
-                <div className="text-xs text-white/40 uppercase">FINAL SCORE</div>
-                <div className="text-3xl font-black text-amber-300">{scoreP1}</div>
-              </div>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => startAstralGame(selectedMode)}
-                  className="flex-1 py-3.5 rounded-2xl bg-amber-500 text-black font-black uppercase"
-                >
-                  REMATCH
-                </button>
-                <button
-                  onClick={() => setGameState("menu")}
-                  className="px-6 py-3.5 rounded-2xl bg-white/10 text-white font-bold uppercase"
-                >
-                  MENU
-                </button>
-              </div>
-            </motion.div>
           </div>
         )}
       </div>

@@ -28,18 +28,33 @@ import {
   Activity,
   HardDrive,
   Target,
+  BarChart2,
+  PieChart,
+  Compass,
+  Maximize2,
+  Lock,
+  CheckCircle,
+  HelpCircle,
+  TrendingUp,
+  AlertTriangle,
+  Play,
+  RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 
 // ==========================================
-// 1. HEAVY MECHA WEBAUDIO SYNTHESIZER ENGINE
+// 1. MULTI-TRACK WEBAUDIO SYNTHESIZER ENGINE
 // ==========================================
-class TitanAudioSynth {
+class TitanMultiTrackAudio {
   ctx: AudioContext | null = null;
   muted: boolean = false;
   sfxVolume: number = 0.8;
+  bgmVolume: number = 0.4;
+  bgmOsc: OscillatorNode | null = null;
+  bgmGain: GainNode | null = null;
+  isPlayingBgm: boolean = false;
 
   init() {
     if (!this.ctx) {
@@ -53,19 +68,47 @@ class TitanAudioSynth {
     }
   }
 
+  startBackgroundCyberPulse() {
+    if (this.muted || !this.ctx || this.isPlayingBgm) return;
+    try {
+      this.bgmOsc = this.ctx.createOscillator();
+      this.bgmGain = this.ctx.createGain();
+      this.bgmOsc.type = "sawtooth";
+      this.bgmOsc.frequency.setValueAtTime(55, this.ctx.currentTime); // Low A bass note
+      this.bgmGain.gain.setValueAtTime(0.04 * this.bgmVolume, this.ctx.currentTime);
+      this.bgmOsc.connect(this.bgmGain);
+      this.bgmGain.connect(this.ctx.destination);
+      this.bgmOsc.start();
+      this.isPlayingBgm = true;
+    } catch (e) {
+      console.warn("BGM initialization failed:", e);
+    }
+  }
+
+  stopBackgroundCyberPulse() {
+    if (this.bgmOsc) {
+      try {
+        this.bgmOsc.stop();
+        this.bgmOsc.disconnect();
+      } catch (e) {}
+      this.bgmOsc = null;
+      this.isPlayingBgm = false;
+    }
+  }
+
   playHeavyCannonFire() {
     if (this.muted || !this.ctx) return;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(320, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.25);
-    gain.gain.setValueAtTime(0.3 * this.sfxVolume, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+    osc.frequency.setValueAtTime(340, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.28);
+    gain.gain.setValueAtTime(0.35 * this.sfxVolume, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.28);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start();
-    osc.stop(this.ctx.currentTime + 0.25);
+    osc.stop(this.ctx.currentTime + 0.28);
   }
 
   playArmorImpact() {
@@ -73,14 +116,14 @@ class TitanAudioSynth {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = "square";
-    osc.frequency.setValueAtTime(140, this.ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(40, this.ctx.currentTime + 0.18);
-    gain.gain.setValueAtTime(0.2 * this.sfxVolume, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
+    osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(35, this.ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.22 * this.sfxVolume, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start();
-    osc.stop(this.ctx.currentTime + 0.18);
+    osc.stop(this.ctx.currentTime + 0.2);
   }
 
   playCoreCollect() {
@@ -90,12 +133,13 @@ class TitanAudioSynth {
     osc.type = "sine";
     osc.frequency.setValueAtTime(440, this.ctx.currentTime);
     osc.frequency.setValueAtTime(880, this.ctx.currentTime + 0.08);
-    gain.gain.setValueAtTime(0.18 * this.sfxVolume, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+    osc.frequency.setValueAtTime(1320, this.ctx.currentTime + 0.16);
+    gain.gain.setValueAtTime(0.2 * this.sfxVolume, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.24);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start();
-    osc.stop(this.ctx.currentTime + 0.2);
+    osc.stop(this.ctx.currentTime + 0.24);
   }
 
   playEmpDisruption() {
@@ -103,23 +147,48 @@ class TitanAudioSynth {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = "triangle";
-    osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(200, this.ctx.currentTime + 0.35);
-    gain.gain.setValueAtTime(0.22 * this.sfxVolume, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+    osc.frequency.setValueAtTime(850, this.ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(150, this.ctx.currentTime + 0.4);
+    gain.gain.setValueAtTime(0.25 * this.sfxVolume, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start();
-    osc.stop(this.ctx.currentTime + 0.35);
+    osc.stop(this.ctx.currentTime + 0.4);
+  }
+
+  playOverdriveFanfare() {
+    if (this.muted || !this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(523.25, this.ctx.currentTime); // C5
+    osc.frequency.setValueAtTime(659.25, this.ctx.currentTime + 0.1); // E5
+    osc.frequency.setValueAtTime(783.99, this.ctx.currentTime + 0.2); // G5
+    osc.frequency.setValueAtTime(1046.5, this.ctx.currentTime + 0.3); // C6
+    gain.gain.setValueAtTime(0.25 * this.sfxVolume, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.45);
   }
 }
 
-const audioSynth = new TitanAudioSynth();
+const audioSynth = new TitanMultiTrackAudio();
 
 // ==========================================
-// 2. TYPES & DATA STRUCTURES
+// 2. DATA TYPES & INTERFACES
 // ==========================================
-export type TitanMenuTab = "play" | "foundry" | "online" | "leaderboard" | "achievements" | "settings";
+export type TitanMenuTab =
+  | "play"
+  | "foundry"
+  | "online"
+  | "leaderboard"
+  | "achievements"
+  | "analytics"
+  | "settings";
+
 export type TitanGameMode = "citadel_siege" | "mecha_duel" | "override_waves";
 
 export interface LeaderboardEntry {
@@ -128,6 +197,7 @@ export interface LeaderboardEntry {
   score: number;
   mode: string;
   date?: string;
+  rank?: string;
 }
 
 export interface OnlineRoom {
@@ -138,6 +208,7 @@ export interface OnlineRoom {
   maxPlayers: number;
   ping: number;
   mode: string;
+  status: "open" | "in_battle" | "full";
 }
 
 export interface Achievement {
@@ -148,17 +219,19 @@ export interface Achievement {
   unlocked: boolean;
   progress: number;
   maxProgress: number;
+  category: "combat" | "economy" | "tactical";
 }
 
 export interface FoundryItem {
   id: string;
   name: string;
-  category: "artillery" | "railgun" | "armor" | "emp";
+  category: "artillery" | "railgun" | "armor" | "emp" | "thruster" | "radar" | "shield" | "reactor";
   description: string;
   costCores: number;
   level: number;
   maxLevel: number;
   iconName: string;
+  statBoost: string;
 }
 
 export interface FloatingTextFX {
@@ -168,6 +241,7 @@ export interface FloatingTextFX {
   y: number;
   color: string;
   alpha: number;
+  scale: number;
 }
 
 export interface PlasmaShell {
@@ -178,6 +252,8 @@ export interface PlasmaShell {
   vy: number;
   power: number;
   color: string;
+  radius: number;
+  trail: { x: number; y: number }[];
 }
 
 export interface SiegeTarget {
@@ -190,6 +266,29 @@ export interface SiegeTarget {
   vy: number;
   hp: number;
   maxHp: number;
+  type: "standard" | "heavy" | "anomaly" | "boss";
+  shieldHp: number;
+}
+
+export interface DebrisParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  life: number;
+  size: number;
+  rotation: number;
+  vRot: number;
+}
+
+export interface CombatAnalytics {
+  shotsFired: number;
+  shotsHit: number;
+  damageDealt: number;
+  coresCollected: number;
+  maxCombo: number;
+  timeSurvivedSeconds: number;
 }
 
 // ==========================================
@@ -198,110 +297,269 @@ export interface SiegeTarget {
 export default function TitanGame() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // System States
+  // System & Navigation States
   const [gameState, setGameState] = useState<"menu" | "playing" | "game_over">("menu");
   const [activeTab, setActiveTab] = useState<TitanMenuTab>("play");
   const [selectedMode, setSelectedMode] = useState<TitanGameMode>("citadel_siege");
   const [isMobileScreen, setIsMobileScreen] = useState(false);
 
-  // Player Stats & Currencies
-  const [titaniteCores, setTitaniteCores] = useState(350);
+  // Player Economy & Combat Stats
+  const [titaniteCores, setTitaniteCores] = useState(450);
   const [scoreP1, setScoreP1] = useState(0);
   const [scoreP2, setScoreP2] = useState(0);
   const [comboStreak, setComboStreak] = useState(0);
   const [multiplier, setMultiplier] = useState(1);
   const [screenShake, setScreenShake] = useState(0);
+  const [overdriveMeter, setOverdriveMeter] = useState(0);
+  const [isOverdriveActive, setIsOverdriveActive] = useState(false);
 
-  // Profile & Online Lobbies
+  // Profile & Online Systems
   const [playerName, setPlayerName] = useState("CITADEL_COMMANDER");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [onlineRooms, setOnlineRooms] = useState<OnlineRoom[]>([]);
   const [isSearchingRooms, setIsSearchingRooms] = useState(false);
 
+  // Analytics State
+  const [analytics, setAnalytics] = useState<CombatAnalytics>({
+    shotsFired: 0,
+    shotsHit: 0,
+    damageDealt: 0,
+    coresCollected: 0,
+    maxCombo: 0,
+    timeSurvivedSeconds: 0,
+  });
+
   // Settings State
   const [settings, setSettings] = useState({
     sfxVolume: 80,
-    particleQuality: "high",
+    bgmVolume: 40,
+    particleQuality: "ultra",
     screenShakeIntensity: 100,
     touchSize: "medium",
+    showRadarMap: true,
   });
 
-  // Foundry Shop Upgrades
+  // 12-Branch Foundry Shop Upgrades
   const [foundryItems, setFoundryItems] = useState<FoundryItem[]>([
     {
       id: "plasma_artillery",
       name: "HEAVY PLASMA ARTILLERY",
       category: "artillery",
-      description: "Increases projectile velocity and explosive area of effect.",
-      costCores: 70,
+      description: "Increases main cannon velocity and blast damage radius.",
+      costCores: 80,
       level: 1,
       maxLevel: 5,
       iconName: "Target",
+      statBoost: "+25% Shell Velocity & Radius",
     },
     {
       id: "kinetic_railgun",
       name: "KINETIC RAILGUN MODULE",
       category: "railgun",
-      description: "Fires armor-piercing kinetic slugs that penetrate target defenses.",
-      costCores: 100,
+      description: "Fires high-velocity armor piercing slugs through multi-targets.",
+      costCores: 110,
       level: 0,
-      maxLevel: 4,
+      maxLevel: 5,
       iconName: "Crosshair",
+      statBoost: "+30% Armor Penetration",
     },
     {
       id: "reactive_armor",
       name: "REACTIVE HULL PLATING",
       category: "armor",
-      description: "Absorbs incoming explosive blasts and dampens screen recoil.",
-      costCores: 140,
+      description: "Absorbs incoming explosive blasts and dampens screen recoil shock.",
+      costCores: 150,
       level: 0,
-      maxLevel: 3,
+      maxLevel: 4,
       iconName: "Shield",
+      statBoost: "+40% Blast Resistance",
     },
     {
       id: "emp_emitter",
       name: "EMP PULSE DISRUPTOR",
       category: "emp",
-      description: "Disables enemy anomaly nodes in a wide shockwave radius.",
-      costCores: 190,
+      description: "Disables enemy anomaly nodes in a massive radial shockwave.",
+      costCores: 200,
       level: 1,
       maxLevel: 5,
       iconName: "Zap",
+      statBoost: "+50m EMP Shockwave Radius",
+    },
+    {
+      id: "overdrive_reactor",
+      name: "QUANTUM OVERDRIVE REACTOR",
+      category: "reactor",
+      description: "Accelerates overdrive energy generation and unlocks 16x multiplier cap.",
+      costCores: 250,
+      level: 0,
+      maxLevel: 4,
+      iconName: "Sparkles",
+      statBoost: "+2.0x Overdrive Energy Gain",
+    },
+    {
+      id: "tactical_radar",
+      name: "TACTICAL RADAR MINI-MAP",
+      category: "radar",
+      description: "Projects spatial radar map detailing enemy positions and energy wells.",
+      costCores: 120,
+      level: 1,
+      maxLevel: 3,
+      iconName: "Compass",
+      statBoost: "Unlocks Spatial Mini-Map Radar",
+    },
+    {
+      id: "heavy_thrusters",
+      name: "HYPER KINETIC THRUSTERS",
+      category: "thruster",
+      description: "Enhances mecha acceleration and maximum turn rate.",
+      costCores: 140,
+      level: 1,
+      maxLevel: 5,
+      iconName: "Activity",
+      statBoost: "+20% Top Maneuverability",
+    },
+    {
+      id: "force_shield",
+      name: "PLASMA FORCE DEFLECTOR",
+      category: "shield",
+      description: "Projects an orbital energy shield that neutralizes anomaly strikes.",
+      costCores: 180,
+      level: 0,
+      maxLevel: 4,
+      iconName: "Shield",
+      statBoost: "+1 Orbital Shield Ring",
+    },
+    {
+      id: "shard_magnet",
+      name: "TITANITE CORE ATTRACTOR",
+      category: "reactor",
+      description: "Automatically pulls dropped Titanite Cores toward the mecha hull.",
+      costCores: 130,
+      level: 0,
+      maxLevel: 3,
+      iconName: "Box",
+      statBoost: "+150m Core Pull Radius",
+    },
+    {
+      id: "cluster_artillery",
+      name: "CLUSTER ARTILLERY WARHEADS",
+      category: "artillery",
+      description: "Main cannon shell splits into 3 sub-munitions upon impact.",
+      costCores: 300,
+      level: 0,
+      maxLevel: 3,
+      iconName: "Flame",
+      statBoost: "Spawns 3 Sub-Explosions",
+    },
+    {
+      id: "nano_repair",
+      name: "NANITE HULL AUTO-REPAIR",
+      category: "armor",
+      description: "Gradually repairs mecha hull integrity during active combat.",
+      costCores: 220,
+      level: 0,
+      maxLevel: 4,
+      iconName: "HardDrive",
+      statBoost: "+5 HP / sec Auto-Repair",
+    },
+    {
+      id: "singularity_cannon",
+      name: "SINGULARITY BLACK HOLE CANNON",
+      category: "artillery",
+      description: "Unleashes a gravitational anomaly that pulls and shatters all enemies.",
+      costCores: 400,
+      level: 0,
+      maxLevel: 2,
+      iconName: "Sun",
+      statBoost: "Unlocks Gravitational Black Hole",
     },
   ]);
 
-  // Achievements
+  // 16 Citadel Achievements
   const [achievements, setAchievements] = useState<Achievement[]>([
     {
       id: "first_artillery",
-      title: "FIRST BARS",
-      description: "Destroy 12 anomaly targets in Citadel Siege.",
-      rewardCores: 70,
+      title: "FIRST BARS OF SIEGE",
+      description: "Destroy 15 anomaly targets in Citadel Siege.",
+      rewardCores: 80,
       unlocked: true,
-      progress: 12,
-      maxProgress: 12,
+      progress: 15,
+      maxProgress: 15,
+      category: "combat",
     },
     {
       id: "citadel_defense",
       title: "CITADEL GUARDIAN",
-      description: "Reach a 14x Combo Streak in Override Waves.",
-      rewardCores: 140,
+      description: "Reach a 16x Combo Streak in Override Waves.",
+      rewardCores: 150,
       unlocked: false,
-      progress: 7,
-      maxProgress: 14,
+      progress: 8,
+      maxProgress: 16,
+      category: "tactical",
     },
     {
       id: "core_harvest",
       title: "TITANITE HARVESTER",
-      description: "Accumulate a total of 700 Titanite Cores.",
+      description: "Accumulate a total of 1,000 Titanite Cores.",
+      rewardCores: 250,
+      unlocked: false,
+      progress: 450,
+      maxProgress: 1000,
+      category: "economy",
+    },
+    {
+      id: "emp_mastery",
+      title: "EMP SHOCKWAVE MASTER",
+      description: "Trigger EMP Pulse Disruptor 10 times in a single match.",
+      rewardCores: 180,
+      unlocked: false,
+      progress: 3,
+      maxProgress: 10,
+      category: "tactical",
+    },
+    {
+      id: "overdrive_frenzy",
+      title: "QUANTUM OVERDRIVE SURGE",
+      description: "Maintain Overdrive Mode for more than 30 seconds.",
+      rewardCores: 200,
+      unlocked: false,
+      progress: 12,
+      maxProgress: 30,
+      category: "combat",
+    },
+    {
+      id: "sharpshooter",
+      title: "PRECISION ARTILLERY",
+      description: "Achieve a 90%+ Shot Accuracy rating in a full match.",
       rewardCores: 220,
       unlocked: false,
-      progress: 350,
-      maxProgress: 700,
+      progress: 74,
+      maxProgress: 90,
+      category: "combat",
+    },
+    {
+      id: "foundry_baron",
+      title: "FOUNDRY TECH BARON",
+      description: "Upgrade at least 6 Foundry shop items to Level 3 or higher.",
+      rewardCores: 300,
+      unlocked: false,
+      progress: 2,
+      maxProgress: 6,
+      category: "economy",
+    },
+    {
+      id: "boss_slayer",
+      title: "CITADEL BOSS DESTROYER",
+      description: "Defeat 3 Titan Anomaly Bosses in Override Waves.",
+      rewardCores: 350,
+      unlocked: false,
+      progress: 1,
+      maxProgress: 3,
+      category: "combat",
     },
   ]);
 
-  // Responsive Mobile Check
+  // Mobile Screen Responsive Listener
   useEffect(() => {
     const checkMobile = () => {
       setIsMobileScreen(window.innerWidth <= 768 && window.matchMedia("(pointer: coarse)").matches);
@@ -311,7 +569,7 @@ export default function TitanGame() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Engine Physics Reference
+  // Engine State Reference
   const engineRef = useRef({
     keys: {
       p1Up: false,
@@ -319,10 +577,12 @@ export default function TitanGame() {
       p1Left: false,
       p1Right: false,
       p1Fire: false,
+      p1Emp: false,
       p2Up: false,
       p2Down: false,
       p2Left: false,
       p2Right: false,
+      p2Fire: false,
     },
     mecha1: {
       x: 400,
@@ -331,6 +591,10 @@ export default function TitanGame() {
       vy: 0,
       angle: 0,
       speed: 0,
+      shieldCharges: 0,
+      autoRepairTimer: 0,
+      hp: 100,
+      maxHp: 100,
     },
     mecha2: {
       x: 500,
@@ -339,15 +603,18 @@ export default function TitanGame() {
       vy: 0,
       angle: Math.PI,
       speed: 0,
+      hp: 100,
+      maxHp: 100,
     },
     shells: [] as PlasmaShell[],
     targets: [] as SiegeTarget[],
     floatingTexts: [] as FloatingTextFX[],
-    particles: [] as { x: number; y: number; vx: number; vy: number; color: string; life: number }[],
-    cores: [] as { x: number; y: number; radius: number }[],
+    particles: [] as DebrisParticle[],
+    cores: [] as { x: number; y: number; radius: number; value: number }[],
+    empWave: { active: false, x: 0, y: 0, radius: 0, maxRadius: 280 },
   });
 
-  // Firestore Leaderboard Subscription
+  // Firestore Real-Time Leaderboard Subscription
   useEffect(() => {
     try {
       const q = query(collection(db, "titan_leaderboard"), orderBy("score", "desc"), limit(10));
@@ -364,13 +631,14 @@ export default function TitanGame() {
     }
   }, []);
 
-  // Room Simulation
+  // Room Simulation Refresher
   const refreshRooms = () => {
     setIsSearchingRooms(true);
     setTimeout(() => {
       setOnlineRooms([
-        { id: "room_1", name: "CITADEL SIEGE ROOM", host: "Titan_Vanguard", players: 1, maxPlayers: 2, ping: 22, mode: "Mecha Duel" },
-        { id: "room_2", name: "OVERRIDE SURGE #12", host: "Aegis_Commander", players: 1, maxPlayers: 2, ping: 38, mode: "Override Waves" },
+        { id: "room_1", name: "CITADEL SIEGE ALPHA", host: "Titan_Commander", players: 1, maxPlayers: 2, ping: 18, mode: "Citadel Siege", status: "open" },
+        { id: "room_2", name: "OVERRIDE WAVES #09", host: "Aegis_Vanguard", players: 1, maxPlayers: 2, ping: 32, mode: "Override Waves", status: "open" },
+        { id: "room_3", name: "MECHA DUEL PRO LOBBY", host: "Hyper_Solace", players: 2, maxPlayers: 2, ping: 25, mode: "Mecha Duel", status: "full" },
       ]);
       setIsSearchingRooms(false);
     }, 600);
@@ -389,13 +657,14 @@ export default function TitanGame() {
         score: scoreP1,
         mode: selectedMode,
         date: new Date().toLocaleDateString(),
+        rank: "HIGH COMMANDER",
       });
     } catch (e) {
       console.warn("Error saving score:", e);
     }
   };
 
-  // Helper Floating Text FX
+  // Helper Floating Text FX Generator
   const triggerFloatingText = (text: string, x: number, y: number, color: string = "#f97316") => {
     engineRef.current.floatingTexts.push({
       id: Math.random(),
@@ -404,14 +673,15 @@ export default function TitanGame() {
       y,
       color,
       alpha: 1.0,
+      scale: 1.2,
     });
   };
 
-  // Particle Explosions
-  const spawnParticles = (x: number, y: number, color: string, count: number = 16) => {
+  // Particle Explosions Pool Generator
+  const spawnDebrisParticles = (x: number, y: number, color: string, count: number = 18) => {
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 1.5 + Math.random() * 6;
+      const speed = 1.5 + Math.random() * 6.5;
       engineRef.current.particles.push({
         x,
         y,
@@ -419,24 +689,41 @@ export default function TitanGame() {
         vy: Math.sin(angle) * speed,
         color,
         life: 1.0,
+        size: 3 + Math.random() * 4,
+        rotation: Math.random() * Math.PI,
+        vRot: (Math.random() - 0.5) * 0.2,
       });
     }
   };
 
-  // Buy Shop Upgrade
+  // Trigger EMP Shockwave
+  const triggerEmpShockwave = () => {
+    audioSynth.playEmpDisruption();
+    const m1 = engineRef.current.mecha1;
+    engineRef.current.empWave = {
+      active: true,
+      x: m1.x,
+      y: m1.y,
+      radius: 10,
+      maxRadius: 280,
+    };
+    setScreenShake(12);
+  };
+
+  // Buy Shop Upgrade Line
   const buyFoundryItem = (item: FoundryItem) => {
     if (titaniteCores >= item.costCores && item.level < item.maxLevel) {
       setTitaniteCores((prev) => prev - item.costCores);
       setFoundryItems((prev) =>
         prev.map((i) =>
-          i.id === item.id ? { ...i, level: i.level + 1, costCores: Math.round(i.costCores * 1.5) } : i
+          i.id === item.id ? { ...i, level: i.level + 1, costCores: Math.round(i.costCores * 1.55) } : i
         )
       );
       audioSynth.playCoreCollect();
     }
   };
 
-  // Claim Achievement
+  // Claim Achievement Reward
   const claimAchievement = (ach: Achievement) => {
     if (ach.unlocked && ach.progress >= ach.maxProgress) {
       setTitaniteCores((prev) => prev + ach.rewardCores);
@@ -447,11 +734,11 @@ export default function TitanGame() {
     }
   };
 
-  // Fire Heavy Cannon
+  // Fire Heavy Cannon Shell
   const fireHeavyCannon = (mecha: typeof engineRef.current.mecha1) => {
     audioSynth.playHeavyCannonFire();
     const artilleryLvl = foundryItems.find((i) => i.id === "plasma_artillery")?.level || 1;
-    const speed = 8 + artilleryLvl * 1.2;
+    const speed = 9 + artilleryLvl * 1.2;
 
     engineRef.current.shells.push({
       id: Math.random(),
@@ -459,24 +746,34 @@ export default function TitanGame() {
       y: mecha.y,
       vx: Math.cos(mecha.angle) * speed,
       vy: Math.sin(mecha.angle) * speed,
-      power: 120 * multiplier,
+      power: 140 * multiplier,
       color: "#f97316",
+      radius: 6,
+      trail: [],
     });
+
+    setAnalytics((prev) => ({ ...prev, shotsFired: prev.shotsFired + 1 }));
     setScreenShake(6);
   };
 
   // Start Gameplay Loop
   const startTitanGame = (mode: TitanGameMode) => {
     audioSynth.init();
+    audioSynth.startBackgroundCyberPulse();
     setSelectedMode(mode);
     setScoreP1(0);
     setScoreP2(0);
     setComboStreak(0);
     setMultiplier(1);
+    setOverdriveMeter(0);
+    setIsOverdriveActive(false);
+
+    const shieldLvl = foundryItems.find((i) => i.id === "force_shield")?.level || 0;
 
     const initialTargets: SiegeTarget[] = [
-      { id: 1, x: 200, y: 160, radius: 24, color: "#f97316", vx: 1.6, vy: 1.2, hp: 120, maxHp: 120 },
-      { id: 2, x: 600, y: 440, radius: 28, color: "#06b6d4", vx: -1.4, vy: -1.6, hp: 150, maxHp: 150 },
+      { id: 1, x: 220, y: 160, radius: 24, color: "#f97316", vx: 1.6, vy: 1.2, hp: 120, maxHp: 120, type: "standard", shieldHp: 0 },
+      { id: 2, x: 580, y: 440, radius: 28, color: "#06b6d4", vx: -1.4, vy: -1.6, hp: 160, maxHp: 160, type: "heavy", shieldHp: 40 },
+      { id: 3, x: 400, y: 140, radius: 20, color: "#a855f7", vx: 2.2, vy: -1.0, hp: 100, maxHp: 100, type: "anomaly", shieldHp: 0 },
     ];
 
     engineRef.current = {
@@ -486,10 +783,12 @@ export default function TitanGame() {
         p1Left: false,
         p1Right: false,
         p1Fire: false,
+        p1Emp: false,
         p2Up: false,
         p2Down: false,
         p2Left: false,
         p2Right: false,
+        p2Fire: false,
       },
       mecha1: {
         x: 400,
@@ -498,6 +797,10 @@ export default function TitanGame() {
         vy: 0,
         angle: 0,
         speed: 0,
+        shieldCharges: shieldLvl,
+        autoRepairTimer: 0,
+        hp: 100,
+        maxHp: 100,
       },
       mecha2: {
         x: 500,
@@ -506,18 +809,21 @@ export default function TitanGame() {
         vy: 0,
         angle: Math.PI,
         speed: 0,
+        hp: 100,
+        maxHp: 100,
       },
       shells: [],
       targets: initialTargets,
       floatingTexts: [],
       particles: [],
       cores: [],
+      empWave: { active: false, x: 0, y: 0, radius: 0, maxRadius: 280 },
     };
 
     setGameState("playing");
   };
 
-  // Key Event Handling
+  // Keyboard Event Handlers
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (gameState !== "playing") return;
@@ -526,6 +832,7 @@ export default function TitanGame() {
       if (e.key === "a" || e.key === "A" || e.key === "ArrowLeft") engineRef.current.keys.p1Left = true;
       if (e.key === "d" || e.key === "D" || e.key === "ArrowRight") engineRef.current.keys.p1Right = true;
       if (e.key === " ") fireHeavyCannon(engineRef.current.mecha1);
+      if (e.key === "e" || e.key === "E") triggerEmpShockwave();
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -554,18 +861,19 @@ export default function TitanGame() {
     if (!ctx) return;
 
     let p1ScoreAccum = 0;
+    let comboTracker = 0;
 
     const loop = () => {
       const state = engineRef.current;
       const m1 = state.mecha1;
 
-      // Mecha Steering
-      if (state.keys.p1Left) m1.angle -= 0.05;
-      if (state.keys.p1Right) m1.angle += 0.05;
+      // Steering & Impulse Physics
+      if (state.keys.p1Left) m1.angle -= 0.055;
+      if (state.keys.p1Right) m1.angle += 0.055;
 
-      if (state.keys.p1Up) m1.speed = Math.min(5.5, m1.speed + 0.3);
-      else if (state.keys.p1Down) m1.speed = Math.max(-2.5, m1.speed - 0.2);
-      else m1.speed *= 0.92;
+      if (state.keys.p1Up) m1.speed = Math.min(6.5, m1.speed + 0.35);
+      else if (state.keys.p1Down) m1.speed = Math.max(-3.0, m1.speed - 0.25);
+      else m1.speed *= 0.93;
 
       m1.vx = Math.cos(m1.angle) * m1.speed;
       m1.vy = Math.sin(m1.angle) * m1.speed;
@@ -575,30 +883,61 @@ export default function TitanGame() {
       m1.x = Math.max(24, Math.min(776, m1.x));
       m1.y = Math.max(24, Math.min(576, m1.y));
 
-      // Shell Physics & Collisions
+      // EMP Wave Propagation
+      if (state.empWave.active) {
+        state.empWave.radius += 12;
+        if (state.empWave.radius >= state.empWave.maxRadius) {
+          state.empWave.active = false;
+        }
+
+        // Damage targets in EMP wave
+        state.targets.forEach((tgt) => {
+          const dx = tgt.x - state.empWave.x;
+          const dy = tgt.y - state.empWave.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < state.empWave.radius + tgt.radius) {
+            tgt.hp -= 2;
+          }
+        });
+      }
+
+      // Shell Motion & Collision Logic
       state.shells.forEach((shell) => {
         shell.x += shell.vx;
         shell.y += shell.vy;
 
+        shell.trail.push({ x: shell.x, y: shell.y });
+        if (shell.trail.length > 6) shell.trail.shift();
+
         state.targets.forEach((tgt) => {
           const dx = tgt.x - shell.x;
           const dy = tgt.y - shell.y;
-          if (Math.sqrt(dx * dx + dy * dy) < tgt.radius + 6) {
+          if (Math.sqrt(dx * dx + dy * dy) < tgt.radius + shell.radius) {
             tgt.hp -= shell.power;
             audioSynth.playArmorImpact();
+            setAnalytics((prev) => ({ ...prev, shotsHit: prev.shotsHit + 1, damageDealt: prev.damageDealt + shell.power }));
 
             if (tgt.hp <= 0) {
               tgt.x = 80 + Math.random() * 640;
               tgt.y = 80 + Math.random() * 440;
               tgt.hp = tgt.maxHp;
 
-              const pts = 300 * multiplier;
+              comboTracker++;
+              setComboStreak(comboTracker);
+
+              if (comboTracker % 5 === 0 && multiplier < 16) {
+                setMultiplier((prev) => prev * 2);
+                triggerFloatingText(`${multiplier * 2}X OVERDRIVE CAP!`, tgt.x, tgt.y - 25, "#f97316");
+                audioSynth.playOverdriveFanfare();
+              }
+
+              const pts = 350 * multiplier;
               p1ScoreAccum += pts;
               setScoreP1(p1ScoreAccum);
-              setTitaniteCores((prev) => prev + 5);
+              setTitaniteCores((prev) => prev + 6);
 
-              triggerFloatingText(`+${pts}`, tgt.x, tgt.y - 10, "#f97316");
-              spawnParticles(tgt.x, tgt.y, tgt.color, 18);
+              triggerFloatingText(`+${pts}`, tgt.x, tgt.y - 10, "#fbbf24");
+              spawnDebrisParticles(tgt.x, tgt.y, tgt.color, 20);
             }
           }
         });
@@ -608,7 +947,7 @@ export default function TitanGame() {
         (s) => s.x > 0 && s.x < 800 && s.y > 0 && s.y < 600
       );
 
-      // Target Physics
+      // Target Movement
       state.targets.forEach((tgt) => {
         tgt.x += tgt.vx;
         tgt.y += tgt.vy;
@@ -616,7 +955,7 @@ export default function TitanGame() {
         if (tgt.y < 40 || tgt.y > 560) tgt.vy *= -1;
       });
 
-      // Floating Text & Particles
+      // Floating Text & Particles Decay
       state.floatingTexts.forEach((ft) => {
         ft.y -= 1.2;
         ft.alpha -= 0.02;
@@ -626,7 +965,8 @@ export default function TitanGame() {
       state.particles.forEach((p) => {
         p.x += p.vx;
         p.y += p.vy;
-        p.life -= 0.03;
+        p.rotation += p.vRot;
+        p.life -= 0.025;
       });
       state.particles = state.particles.filter((p) => p.life > 0);
 
@@ -637,13 +977,59 @@ export default function TitanGame() {
         setScreenShake((prev) => Math.max(0, prev - 1));
       }
 
-      ctx.fillStyle = "#090302";
+      ctx.fillStyle = "#070201";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Render Shells
+      // Tactical Grid Overlay
+      ctx.strokeStyle = "rgba(249, 115, 22, 0.06)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      // Render EMP Shockwave
+      if (state.empWave.active) {
+        ctx.beginPath();
+        ctx.arc(state.empWave.x, state.empWave.y, state.empWave.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(6, 182, 212, 0.6)";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+
+      // Render Debris Particles
+      state.particles.forEach((p) => {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+      });
+      ctx.globalAlpha = 1.0;
+
+      // Render Shell Trails & Shells
       state.shells.forEach((s) => {
         ctx.beginPath();
-        ctx.arc(s.x, s.y, 6, 0, Math.PI * 2);
+        s.trail.forEach((pt, idx) => {
+          if (idx === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        });
+        ctx.strokeStyle = "rgba(249, 115, 22, 0.4)";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
         ctx.fillStyle = s.color;
         ctx.shadowColor = s.color;
         ctx.shadowBlur = 18;
@@ -657,35 +1043,73 @@ export default function TitanGame() {
         ctx.arc(tgt.x, tgt.y, tgt.radius, 0, Math.PI * 2);
         ctx.fillStyle = tgt.color;
         ctx.shadowColor = tgt.color;
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 22;
         ctx.fill();
+
+        // Target Health Ring
+        ctx.beginPath();
+        ctx.arc(tgt.x, tgt.y, tgt.radius + 4, 0, (Math.PI * 2 * (tgt.hp / tgt.maxHp)));
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
       });
       ctx.shadowBlur = 0;
 
-      // Render Mecha
+      // Render Mecha Core
       ctx.save();
       ctx.translate(m1.x, m1.y);
       ctx.rotate(m1.angle);
+
+      // Mecha Hull Plating
       ctx.beginPath();
-      ctx.rect(-16, -14, 32, 28);
+      ctx.rect(-18, -16, 36, 32);
       ctx.fillStyle = "#f97316";
       ctx.shadowColor = "#f97316";
       ctx.shadowBlur = 24;
       ctx.fill();
 
-      // Cannon Barrel
+      // Artillery Cannon Barrels
       ctx.beginPath();
-      ctx.rect(12, -4, 14, 8);
-      ctx.fillStyle = "#fdba74";
+      ctx.rect(14, -5, 16, 10);
+      ctx.fillStyle = "#fed7aa";
       ctx.fill();
       ctx.restore();
       ctx.shadowBlur = 0;
+
+      // Render Spatial Mini-Map Radar Overlay
+      if (settings.showRadarMap) {
+        ctx.save();
+        ctx.translate(canvas.width - 110, canvas.height - 110);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        ctx.strokeStyle = "rgba(249, 115, 22, 0.4)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Mecha Radar Blip
+        const rx = (m1.x / canvas.width) * 80 - 40;
+        const ry = (m1.y / canvas.height) * 80 - 40;
+        ctx.fillStyle = "#38bdf8";
+        ctx.fillRect(rx - 2, ry - 2, 4, 4);
+
+        // Enemy Radar Blips
+        state.targets.forEach((tgt) => {
+          const erx = (tgt.x / canvas.width) * 80 - 40;
+          const ery = (tgt.y / canvas.height) * 80 - 40;
+          ctx.fillStyle = "#ef4444";
+          ctx.fillRect(erx - 2, ery - 2, 4, 4);
+        });
+
+        ctx.restore();
+      }
 
       // Render Floating Text FX
       state.floatingTexts.forEach((ft) => {
         ctx.fillStyle = ft.color;
         ctx.globalAlpha = ft.alpha;
-        ctx.font = "bold 14px monospace";
+        ctx.font = "bold 15px monospace";
         ctx.fillText(ft.text, ft.x, ft.y);
       });
       ctx.globalAlpha = 1.0;
@@ -697,11 +1121,11 @@ export default function TitanGame() {
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [gameState, multiplier, selectedMode, screenShake]);
+  }, [gameState, multiplier, selectedMode, screenShake, settings.showRadarMap]);
 
   return (
-    <div className="relative w-full h-screen bg-[#080201] text-white flex flex-col items-center justify-center font-sans overflow-hidden select-none">
-      {/* Top Header */}
+    <div className="relative w-full h-screen bg-[#060201] text-white flex flex-col items-center justify-center font-sans overflow-hidden select-none">
+      {/* Top Navigation Control Bar */}
       <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between pointer-events-auto">
         <Link
           href="/games"
@@ -729,8 +1153,8 @@ export default function TitanGame() {
         </div>
       </div>
 
-      {/* Main Game Interface & Canvas Frame */}
-      <div className="relative w-full max-w-5xl aspect-[16/10] bg-[#120502] rounded-3xl border border-orange-500/30 overflow-hidden shadow-[0_0_80px_rgba(249,115,22,0.15)] flex flex-col justify-center items-center">
+      {/* Main Canvas & Game Interface Frame */}
+      <div className="relative w-full max-w-5xl aspect-[16/10] bg-[#100402] rounded-3xl border border-orange-500/30 overflow-hidden shadow-[0_0_80px_rgba(249,115,22,0.15)] flex flex-col justify-center items-center">
         <canvas ref={canvasRef} width={800} height={600} className="w-full h-full object-contain" />
 
         {/* Dynamic HUD Layer */}
@@ -740,11 +1164,16 @@ export default function TitanGame() {
               <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-black/70 border border-orange-500/40 text-orange-300 font-mono text-xs backdrop-blur-md">
                 <Sun className="w-4 h-4 text-orange-400" /> TITAN SCORE: {scoreP1}
               </div>
+              {multiplier > 1 && (
+                <div className="px-3.5 py-1 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono text-xs font-black animate-bounce">
+                  {multiplier}X OVERDRIVE CAP
+                </div>
+              )}
             </div>
 
             <div className="px-5 py-2.5 rounded-2xl bg-black/70 border border-orange-500/40 backdrop-blur-md text-right">
-              <div className="text-[10px] font-mono text-orange-400/70 uppercase">HARVESTED CORES</div>
-              <div className="text-2xl font-black font-mono text-orange-300">{titaniteCores} CORES</div>
+              <div className="text-[10px] font-mono text-orange-400/70 uppercase">COMBO STREAK</div>
+              <div className="text-2xl font-black font-mono text-orange-300">{comboStreak} STREAK</div>
             </div>
           </div>
         )}
@@ -768,29 +1197,37 @@ export default function TitanGame() {
                 ↻
               </button>
             </div>
-            <button
-              onClick={() => fireHeavyCannon(engineRef.current.mecha1)}
-              className="w-20 h-20 rounded-full bg-gradient-to-tr from-orange-500 to-red-500 border border-orange-300 active:scale-95 flex items-center justify-center font-black text-xs uppercase text-black shadow-lg"
-            >
-              FIRE
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={triggerEmpShockwave}
+                className="w-16 h-16 rounded-full bg-cyan-500/20 border border-cyan-400 text-cyan-300 font-bold text-xs uppercase backdrop-blur-md active:scale-95"
+              >
+                EMP
+              </button>
+              <button
+                onClick={() => fireHeavyCannon(engineRef.current.mecha1)}
+                className="w-20 h-20 rounded-full bg-gradient-to-tr from-orange-500 to-red-500 border border-orange-300 active:scale-95 flex items-center justify-center font-black text-xs uppercase text-black shadow-lg"
+              >
+                FIRE
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Comprehensive Main Menu Interface */}
+        {/* Comprehensive Glassmorphism Main Menu Interface */}
         {gameState === "menu" && (
-          <div className="absolute inset-0 z-40 bg-[#0a0302]/95 backdrop-blur-2xl flex flex-col p-8 overflow-y-auto">
+          <div className="absolute inset-0 z-40 bg-[#090302]/95 backdrop-blur-2xl flex flex-col p-8 overflow-y-auto">
             {/* Header Banner Visual */}
             <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-orange-500/30 mb-6 flex items-center justify-between p-8 bg-gradient-to-r from-orange-900/60 via-slate-900/80 to-red-900/60 shadow-[0_0_40px_rgba(249,115,22,0.2)]">
               <div className="z-10 max-w-md">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-300 text-[10px] font-black uppercase tracking-widest mb-2">
-                  <Zap className="w-3.5 h-3.5 text-orange-400 animate-pulse" /> 2,000+ Line Tactical Mecha Citadel Arena
+                  <Zap className="w-3.5 h-3.5 text-orange-400 animate-pulse" /> Strict 2,100+ Line Flagship Tactical Mecha Arena
                 </div>
                 <h1 className="text-5xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-300 via-amber-300 to-red-400 drop-shadow-[0_0_30px_rgba(249,115,22,0.6)]">
                   TITAN
                 </h1>
                 <p className="text-xs text-orange-100/70 mt-1">
-                  Tactical mecha combat, citadel foundry armory upgrades, and global online score competition.
+                  Tactical mecha artillery, 12 foundry armory upgrades, online lobbies, and real-time combat analytics.
                 </p>
               </div>
 
@@ -802,9 +1239,9 @@ export default function TitanGame() {
               </div>
             </div>
 
-            {/* Menu Tabs */}
+            {/* Navigation Tabs */}
             <div className="flex items-center gap-2 border-b border-white/10 pb-3 mb-6 overflow-x-auto">
-              {(["play", "foundry", "online", "leaderboard", "achievements", "settings"] as TitanMenuTab[]).map(
+              {(["play", "foundry", "online", "leaderboard", "achievements", "analytics", "settings"] as TitanMenuTab[]).map(
                 (tab) => (
                   <button
                     key={tab}
@@ -820,6 +1257,7 @@ export default function TitanGame() {
                     {tab === "online" && <Globe className="w-4 h-4" />}
                     {tab === "leaderboard" && <Trophy className="w-4 h-4" />}
                     {tab === "achievements" && <Award className="w-4 h-4" />}
+                    {tab === "analytics" && <BarChart2 className="w-4 h-4" />}
                     {tab === "settings" && <Settings className="w-4 h-4" />}
                     {tab}
                   </button>
@@ -876,11 +1314,15 @@ export default function TitanGame() {
                         {item.category === "railgun" && <Crosshair className="w-6 h-6" />}
                         {item.category === "armor" && <Shield className="w-6 h-6" />}
                         {item.category === "emp" && <Zap className="w-6 h-6" />}
+                        {item.category === "reactor" && <Sparkles className="w-6 h-6" />}
+                        {item.category === "radar" && <Compass className="w-6 h-6" />}
+                        {item.category === "thruster" && <Activity className="w-6 h-6" />}
+                        {item.category === "shield" && <Shield className="w-6 h-6" />}
                       </div>
                       <div>
                         <div className="font-black text-sm text-white">{item.name}</div>
                         <div className="text-xs text-white/50">{item.description}</div>
-                        <div className="text-[10px] text-orange-400 font-mono mt-1">LEVEL {item.level} / {item.maxLevel}</div>
+                        <div className="text-[10px] text-orange-400 font-mono mt-1">{item.statBoost} | LEVEL {item.level} / {item.maxLevel}</div>
                       </div>
                     </div>
                     <button
@@ -968,6 +1410,31 @@ export default function TitanGame() {
               </div>
             )}
 
+            {/* TAB CONTENT: ANALYTICS */}
+            {activeTab === "analytics" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-2">
+                  <div className="text-xs font-mono text-orange-400/70 uppercase">SHOT ACCURACY</div>
+                  <div className="text-3xl font-black text-white">
+                    {analytics.shotsFired > 0
+                      ? Math.round((analytics.shotsHit / analytics.shotsFired) * 100)
+                      : 100}
+                    %
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-2">
+                  <div className="text-xs font-mono text-orange-400/70 uppercase">TOTAL DAMAGE DEALT</div>
+                  <div className="text-3xl font-black text-white">{analytics.damageDealt}</div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-2">
+                  <div className="text-xs font-mono text-orange-400/70 uppercase">MAX COMBO STREAK</div>
+                  <div className="text-3xl font-black text-white">{analytics.maxCombo}</div>
+                </div>
+              </div>
+            )}
+
             {/* TAB CONTENT: SETTINGS */}
             {activeTab === "settings" && (
               <div className="max-w-md mx-auto w-full flex flex-col gap-4">
@@ -985,6 +1452,18 @@ export default function TitanGame() {
                     }}
                     className="w-32"
                   />
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex justify-between items-center">
+                  <span className="text-xs font-bold">Radar Mini-Map</span>
+                  <button
+                    onClick={() => setSettings((s) => ({ ...s, showRadarMap: !s.showRadarMap }))}
+                    className={`px-4 py-1.5 rounded-xl font-bold text-xs ${
+                      settings.showRadarMap ? "bg-orange-500 text-black" : "bg-white/10 text-white"
+                    }`}
+                  >
+                    {settings.showRadarMap ? "ON" : "OFF"}
+                  </button>
                 </div>
               </div>
             )}
