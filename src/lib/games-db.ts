@@ -15,6 +15,20 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "astral",
+    title: "Astral",
+    developer: "Xakteir Studios",
+    type: "Celestial Gravity RPG",
+    genre: ["Orbital Gravity Well", "Starforge Shop & Dust", "Online Lobbies", "Slingshot Physics", "Mobile Friendly"],
+    description: "Orbital gravity well slingshot physics, starforge armory upgrades, and global online score competition in a 2,000+ line Celestial RPG arena.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=astral",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "20:00", description: "2,000+ Line Flagship Launch" }],
+    route: "/game/astral"
+  },
+  {
     id: "lumen",
     title: "Lumen",
     developer: "Xakteir Studios",
