@@ -100,6 +100,7 @@ export default function ProfilePage() {
       if (providerName === 'google') provider = new GoogleAuthProvider();
       else if (providerName === 'github') provider = new GithubAuthProvider();
       else if (providerName === 'apple') provider = new OAuthProvider('apple.com');
+      else if (providerName === 'discord') provider = new OAuthProvider('oidc.discord');
       
       if (provider) {
         await linkWithPopup(auth.currentUser, provider);
@@ -556,6 +557,28 @@ export default function ProfilePage() {
                         className={cn("rounded-xl text-[10px] font-black uppercase tracking-widest", providerData.find(p => p.providerId === 'apple.com') ? "border-rose-500/20 text-rose-500 hover:bg-rose-500/10" : "border-white/10 text-white hover:bg-white/10")}
                       >
                         {providerData.find(p => p.providerId === 'apple.com') ? 'Unlink' : 'Link'}
+                      </Button>
+                    </div>
+
+                    {/* Discord */}
+                    <div className="flex items-center justify-between p-4 rounded-2xl border border-white/10 bg-white/5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-[#5865F2] flex items-center justify-center p-2 shrink-0">
+                           <svg viewBox="0 0 127.14 96.36" className="w-full h-full fill-white"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.64-27.38-4.51-51.11-19.32-72.15ZM42.68,65.59c-5.36,0-9.8-4.83-9.8-10.79s4.38-10.79,9.8-10.79,9.85,4.83,9.8,10.79c0,5.96-4.45,10.79-9.8,10.79Zm41.7,0c-5.36,0-9.8-4.83-9.8-10.79s4.38-10.79,9.8-10.79,9.85,4.83,9.8,10.79c0,5.96-4.45,10.79-9.8,10.79Z"/></svg>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black uppercase text-white">Discord</h4>
+                          <p className="text-[10px] text-white/40 uppercase font-bold mt-0.5 tracking-wider">
+                            {providerData.find(p => p.providerId === 'oidc.discord') ? 'Connected' : 'Not Connected'}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => providerData.find(p => p.providerId === 'oidc.discord') ? handleUnlinkProvider('oidc.discord') : handleLinkProvider('discord')}
+                        variant="outline" 
+                        className={cn("rounded-xl text-[10px] font-black uppercase tracking-widest", providerData.find(p => p.providerId === 'oidc.discord') ? "border-rose-500/20 text-rose-500 hover:bg-rose-500/10" : "border-white/10 text-white hover:bg-white/10")}
+                      >
+                        {providerData.find(p => p.providerId === 'oidc.discord') ? 'Unlink' : 'Link'}
                       </Button>
                     </div>
 
