@@ -228,14 +228,14 @@ const premiumGames: GameMeta[] = [
     id: "glitch",
     title: "Glitch",
     developer: "Xakteir Studios",
-    type: "2D Platformer",
-    genre: ["Cybernetic Repair", "Data Stream", "Defrag EMP Pulse", "Single Player", "Mobile Friendly"],
-    description: "Ascend corrupted data streams, leap across unstable glitch platforms, collect data fragments, and release defrag EMP pulses.",
+    type: "Cyberpunk Anomaly Hacker RPG",
+    genre: ["Cyberpunk Anomaly Hacker RPG", "Blackhat Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Cyberpunk anomaly hacker RPG, blackhat shop upgrades, online leaderboards, and darknet codex in a 2,000+ line Cyberpunk Anomaly Hacker RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=glitch",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "19:00", description: "Batch 8 Single-Player Launch" }],
+    updates: [{ time: "19:45", description: "2,000+ Line Flagship Launch" }],
     route: "/game/glitch"
   },
   {
