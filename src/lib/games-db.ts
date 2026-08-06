@@ -1583,15 +1583,15 @@ const premiumGames: GameMeta[] = [
     id: "aero_phantom",
     title: "Aero Phantom 3D",
     developer: "Xakteir Studios",
-    type: "3D",
-    genre: ["Flight", "3D", "Action", "Dogfight", "Shooter"],
-    description: "Pilot an apex supersonic jet fighter across futuristic synthwave canyons in 3D. Lock onto enemy stealth drones with heat-seeking missiles, fire plasma vulcan cannons, and deploy flare countermeasures.",
+    type: "Cyber Stealth Flight Simulator Strategy",
+    genre: ["Cyber Stealth Flight Simulator Strategy", "Stealth Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Cyber stealth flight simulator strategy, armory upgrades, online leaderboards, and supersonic codex in a 2,000+ line Cyber Stealth Flight Simulator Strategy arena.",
     bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aerophantom",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "12:50", description: "Initial Update" }
+      { time: "20:10", description: "2,000+ Line Flagship Launch" }
     ],
     route: "/game/aero-phantom"
   },
