@@ -340,14 +340,14 @@ const premiumGames: GameMeta[] = [
     id: "cinder",
     title: "Cinder",
     developer: "Xakteir Studios",
-    type: "Arcade",
-    genre: ["Volcanic Defense", "Ember Deflection", "Thermal Shield", "Geothermal Core", "Mobile Friendly", "2P Showdown"],
-    description: "Position thermal shields to deflect falling volcanic embers and protect the subterranean geothermal refinery core.",
+    type: "Thermal Magma RPG",
+    genre: ["Magma Eruption", "Thermal Forge Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Thermal magma eruption, forge shop upgrades, online leaderboards, and magma codex in a 2,000+ line Thermal Magma RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cinder",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "18:45", description: "Batch 6 Mobile Launch" }],
+    updates: [{ time: "19:00", description: "2,000+ Line Flagship Launch" }],
     route: "/game/cinder"
   },
   {
