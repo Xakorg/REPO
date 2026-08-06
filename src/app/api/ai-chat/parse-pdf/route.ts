@@ -11,8 +11,9 @@ export async function POST(request: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Dynamically import pdf-parse to avoid issues with Next.js Edge runtime
-    const pdfParse = (await import('pdf-parse')).default;
+    // Use require for CJS-compatible pdf-parse
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const pdfParse = require('pdf-parse');
     const data = await pdfParse(buffer);
 
     return NextResponse.json({
