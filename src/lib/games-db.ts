@@ -242,14 +242,14 @@ const premiumGames: GameMeta[] = [
     id: "drift",
     title: "Drift",
     developer: "Xakteir Studios",
-    type: "Arcade",
-    genre: ["Orbital Hovercraft", "Pylon Slalom", "Nitro Boost", "Single Player", "Mobile Friendly"],
-    description: "Pilot a high-speed hovercraft down narrow neon slalom tracks, drift past pylon gates, and ignite nitro thrusters.",
+    type: "Quantum Void Racing RPG",
+    genre: ["Quantum Void Racing RPG", "Tachyon Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Quantum void racing RPG, garage shop upgrades, online leaderboards, and tachyon codex in a 2,000+ line Quantum Void Racing RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=drift",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "19:00", description: "Batch 8 Single-Player Launch" }],
+    updates: [{ time: "19:40", description: "2,000+ Line Flagship Launch" }],
     route: "/game/drift"
   },
   {
