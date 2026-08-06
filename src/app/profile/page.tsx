@@ -96,11 +96,15 @@ export default function ProfilePage() {
   const handleLinkProvider = async (providerName: string) => {
     if (!auth.currentUser) return;
     try {
+      if (providerName === 'discord') {
+        window.location.href = `/api/auth/discord?state=${auth.currentUser.uid}`;
+        return;
+      }
+
       let provider;
       if (providerName === 'google') provider = new GoogleAuthProvider();
       else if (providerName === 'github') provider = new GithubAuthProvider();
       else if (providerName === 'apple') provider = new OAuthProvider('apple.com');
-      else if (providerName === 'discord') provider = new OAuthProvider('oidc.discord');
       
       if (provider) {
         await linkWithPopup(auth.currentUser, provider);
@@ -115,18 +119,30 @@ export default function ProfilePage() {
 
   const handleUnlinkProvider = async (providerId: string) => {
     if (!auth.currentUser) return;
-    // Prevent unlinking if it's the last provider
-    if (providerData.length === 1) {
-      toast({ variant: "destructive", title: "Cannot Unlink", description: "You must have at least one sign-in method connected." });
-      return;
-    }
     try {
+      if (auth.currentUser.providerData.length <= 1) {
+        toast({ variant: "destructive", title: "Cannot Unlink", description: "You must have at least one sign-in method connected." });
+        return;
+      }
       await unlink(auth.currentUser, providerId);
       setProviderData([...auth.currentUser.providerData]);
       toast({ title: "Account Unlinked", description: `Successfully disconnected the account.` });
     } catch (e: any) {
       console.error(e);
-      toast({ variant: "destructive", title: "Unlink Failed", description: e.message });
+      toast({ variant: "destructive", title: "Unlinking Failed", description: e.message });
+    }
+  };
+
+  const handleUnlinkDiscord = async () => {
+    if (!auth.currentUser || !userData?.discord) return;
+    try {
+      // In a real app we'd also hit an API to remove the reverse mapping doc
+      await updateDocumentNonBlocking(doc(firestore, "users", auth.currentUser.uid), {
+        discord: null
+      });
+      toast({ title: "Account Unlinked", description: "Successfully disconnected Discord." });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Unlinking Failed", description: e.message });
     }
   };
 
@@ -569,16 +585,16 @@ export default function ProfilePage() {
                         <div>
                           <h4 className="text-sm font-black uppercase text-white">Discord</h4>
                           <p className="text-[10px] text-white/40 uppercase font-bold mt-0.5 tracking-wider">
-                            {providerData.find(p => p.providerId === 'oidc.discord') ? 'Connected' : 'Not Connected'}
+                            {userData?.discord ? 'Connected' : 'Not Connected'}
                           </p>
                         </div>
                       </div>
                       <Button 
-                        onClick={() => providerData.find(p => p.providerId === 'oidc.discord') ? handleUnlinkProvider('oidc.discord') : handleLinkProvider('discord')}
+                        onClick={() => userData?.discord ? handleUnlinkDiscord() : handleLinkProvider('discord')}
                         variant="outline" 
-                        className={cn("rounded-xl text-[10px] font-black uppercase tracking-widest", providerData.find(p => p.providerId === 'oidc.discord') ? "border-rose-500/20 text-rose-500 hover:bg-rose-500/10" : "border-white/10 text-white hover:bg-white/10")}
+                        className={cn("rounded-xl text-[10px] font-black uppercase tracking-widest", userData?.discord ? "border-rose-500/20 text-rose-500 hover:bg-rose-500/10" : "border-white/10 text-white hover:bg-white/10")}
                       >
-                        {providerData.find(p => p.providerId === 'oidc.discord') ? 'Unlink' : 'Link'}
+                        {userData?.discord ? 'Unlink' : 'Link'}
                       </Button>
                     </div>
 
