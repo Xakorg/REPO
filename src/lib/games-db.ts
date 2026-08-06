@@ -410,14 +410,14 @@ const premiumGames: GameMeta[] = [
     id: "solace",
     title: "Solace",
     developer: "Xakteir Studios",
-    type: "Discovery",
-    genre: ["Submarine", "Sonar", "Deep Sea", "Exploration", "Leviathan", "2P Duel"],
-    description: "Navigate bioluminescent ocean caverns using sonar echoes, collect energy crystals, and evade abyssal ocean leviathans.",
+    type: "Celestial Sanctuary RPG",
+    genre: ["Celestial Sanctuary RPG", "Starlight Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Celestial sanctuary RPG, foundry shop upgrades, online leaderboards, and starlight codex in a 2,000+ line Celestial Sanctuary RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=solace",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "18:15", description: "Batch 4 Launch" }],
+    updates: [{ time: "19:35", description: "2,000+ Line Flagship Launch" }],
     route: "/game/solace"
   },
   {
