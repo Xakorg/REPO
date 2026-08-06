@@ -270,14 +270,14 @@ const premiumGames: GameMeta[] = [
     id: "vortex",
     title: "Vortex",
     developer: "Xakteir Studios",
-    type: "Action",
-    genre: ["Gravitational Singularity", "Black Hole Pull", "Cosmic Scrap", "Antimatter Avoidance", "Mobile Friendly", "2P War"],
-    description: "Steer a gravitational singularity core to pull in cosmic scrap while avoiding volatile antimatter mines.",
+    type: "Cyberpunk Singularity RPG Strategy",
+    genre: ["Cyberpunk Singularity RPG Strategy", "Singularity Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Cyberpunk singularity RPG strategy, armory upgrades, online leaderboards, and dark matter codex in a 2,000+ line Cyberpunk Singularity RPG Strategy arena.",
     bannerUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=vortex",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "18:55", description: "Batch 7 Mobile Launch" }],
+    updates: [{ time: "19:55", description: "2,000+ Line Flagship Launch" }],
     route: "/game/vortex"
   },
   {
