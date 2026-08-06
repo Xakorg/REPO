@@ -1,19 +1,21 @@
 require('dotenv').config({ path: '../.env.local' });
-const { Client, GatewayIntentBits } = require('discord.js');
-const admin = require('firebase-admin');
+const { Client, GatewayIntentBits, Partials } = require('discord.js');
+const { initializeApp, applicationDefault } = require('firebase-admin/app');
+const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
 
-// Initialize Firebase Admin (assuming a service account is provided or ADC is used)
-// For local dev without a service account JSON, we might need a workaround or we can just initialize it 
-// with the config if it's available. For a Discord bot connecting to Firebase, you typically need a serviceAccountKey.json
-// Let's assume the user will set GOOGLE_APPLICATION_CREDENTIALS or we initialize with a basic config if possible.
+// Initialize Firebase Admin (using applicationDefault)
+let adminApp;
+try {
+  adminApp = initializeApp({
+    credential: applicationDefault()
+  });
+} catch(e) {
+  adminApp = initializeApp(); // fallback
+}
 
-// We will attempt default initialization.
-admin.initializeApp({
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
-});
+const db = getFirestore();
 
-const db = admin.firestore();
-
+// Note: Ensure the Bot has PRESENCE INTENT, SERVER MEMBERS INTENT, MESSAGE CONTENT INTENT enabled on Discord Dev Portal
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -21,89 +23,123 @@ const client = new Client({
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.DirectMessages,
   ],
-  partials: ['CHANNEL']
+  partials: [Partials.Channel, Partials.Message]
 });
 
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
-// Hardcode channel mapping for simplicity, or fetch from DB in a real app
-// Xakchat Channel ID -> Discord Channel ID
+// Temporary Mapping - In a full app, you'd store this in Firestore and query it dynamically!
 const CHANNEL_MAP = {
   // "xakchat-channel-id": "discord-channel-id"
 };
 
 client.once('ready', () => {
-  console.log(`🤖 Logged in as ${client.user.tag}!`);
+  console.log(`🤖 LOGGED IN AS ${client.user.tag}!`);
+  console.log(`🚀 Bridge Online: Listening to Discord & Firebase`);
   startFirestoreListener();
 });
 
+// DISCORD -> XAKCHAT
 client.on('messageCreate', async (message) => {
-  // Ignore bots
+  // Ignore bot messages to prevent infinite loops
   if (message.author.bot) return;
-
-  console.log(`Received message in Discord: ${message.content}`);
 
   // Find if this Discord channel is mapped to a Xakchat channel
   const xakchatChannelId = Object.keys(CHANNEL_MAP).find(key => CHANNEL_MAP[key] === message.channel.id);
   
   if (xakchatChannelId) {
-    // Post to Xakchat
     try {
       await db.collection("chats").doc(xakchatChannelId).collection("messages").add({
         content: message.content,
         senderId: message.author.id,
-        senderName: `${message.author.username} From Xakteir`,
+        senderName: `${message.author.username} From Discord`,
         senderPhoto: message.author.displayAvatarURL(),
         channelId: xakchatChannelId,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: FieldValue.serverTimestamp(),
         source: 'discord'
       });
-      console.log('✅ Forwarded Discord message to Xakchat');
+      console.log(`✅ [Discord -> Xakchat] Forwarded message from ${message.author.username}`);
     } catch (err) {
       console.error('Error forwarding to Xakchat:', err);
     }
   }
 
-  // Handle DMs
+  // Handle DMs to the bot (Discord -> Xakchat DM)
   if (!message.guild) {
-    // If it's a DM to the bot, we could route it to a specific Xakchat user's DM 
-    // by finding the Xakchat user linked to this Discord ID.
+    console.log(`Received DM from Discord user ${message.author.username}: ${message.content}`);
+    
+    // Look for a Xakchat user linked to this Discord ID
     const usersSnapshot = await db.collection("users").where("discord.id", "==", message.author.id).get();
+    
     if (!usersSnapshot.empty) {
-      // It's a DM from a linked user.
-      console.log('Received DM from linked user:', message.author.username);
+      const xakUser = usersSnapshot.docs[0].data();
+      console.log(`Linked to Xakchat user: ${xakUser.displayName}`);
+      
+      // We could drop this into a special 'Bot DM' chat on Xakchat
+      // For now we just log it, but the architecture is here to pipe this to Xakchat DMs!
+    } else {
+      message.reply("You need to link your Discord account inside Xakteir Profile to use DM bridging!");
     }
   }
 });
 
 let unsubscribe = null;
+
+// XAKCHAT -> DISCORD
 function startFirestoreListener() {
-  // For this simple bridge, we watch all messages in all mapped Xakchat channels
-  const xakchatChannelIds = Object.keys(CHANNEL_MAP);
+  console.log("📡 Listening to Firestore...");
   
-  if (xakchatChannelIds.length === 0) {
-    console.log("No channels mapped yet.");
-    // We could use a collectionGroup query to watch ALL messages
-    unsubscribe = db.collectionGroup("messages")
-      .where("timestamp", ">", admin.firestore.Timestamp.now())
-      .onSnapshot(snapshot => {
-        snapshot.docChanges().forEach(change => {
-          if (change.type === "added") {
-            const data = change.doc.data();
-            // Ignore messages that came FROM discord to prevent infinite loops
-            if (data.source === 'discord') return;
-            
-            // For now, let's just log it if we aren't explicitly mapping
-            console.log(`[XAKCHAT] ${data.senderName}: ${data.content}`);
+  // We use a collectionGroup query to watch ALL messages across all chats
+  unsubscribe = db.collectionGroup("messages")
+    .where("timestamp", ">", Timestamp.now())
+    .onSnapshot(snapshot => {
+      snapshot.docChanges().forEach(async change => {
+        if (change.type === "added") {
+          const data = change.doc.data();
+          
+          // CRITICAL: Ignore messages that were sent BY the discord bot to prevent infinite looping
+          if (data.source === 'discord') return;
+          
+          // Get the discord channel this xakchat channel maps to
+          const discordChannelId = CHANNEL_MAP[data.channelId];
+          
+          if (discordChannelId) {
+            const channel = await client.channels.fetch(discordChannelId).catch(console.error);
+            if (channel) {
+              // The requested formatting: "*Username* From Xakteir"
+              const header = `**${data.senderName}** From Xakteir`;
+              await channel.send(`${header}\\n${data.content}`);
+              console.log(`✅ [Xakchat -> Discord] Forwarded message from ${data.senderName}`);
+            }
           }
-        });
+          
+          // If it's a DM, we check if the recipient has a linked Discord and DM them on Discord!
+          // Note: In Xakchat DMs, data structure might differ, this is a simplified interceptor.
+          if (data.isDirectMessage && data.recipientId) {
+            const recipientDoc = await db.collection("users").doc(data.recipientId).get();
+            const recipientData = recipientDoc.data();
+            
+            if (recipientData && recipientData.discord && recipientData.discord.id) {
+               try {
+                 const discordUser = await client.users.fetch(recipientData.discord.id);
+                 if (discordUser) {
+                   await discordUser.send(`**${data.senderName}** sent you a DM on Xakteir:\\n${data.content}`);
+                   console.log(`✅ [Xakchat -> Discord DM] Forwarded DM to ${recipientData.displayName}`);
+                 }
+               } catch (e) {
+                 console.error("Failed to send DM to discord user:", e);
+               }
+            }
+          }
+        }
       });
-    return;
-  }
+    }, err => {
+      console.error("Firestore Listener Error:", err);
+    });
 }
 
 if (!DISCORD_BOT_TOKEN) {
-  console.error("❌ NO DISCORD BOT TOKEN PROVIDED! The bot cannot start.");
+  console.error("❌ NO DISCORD BOT TOKEN PROVIDED! Add it to .env.local");
 } else {
   client.login(DISCORD_BOT_TOKEN).catch(console.error);
 }

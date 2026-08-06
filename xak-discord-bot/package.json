@@ -9,5 +9,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "discord.js": "^14.27.0",
+    "dotenv": "^17.4.2",
+    "firebase-admin": "^14.2.0"
+  }
 }

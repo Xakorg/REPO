@@ -1089,15 +1089,15 @@ const premiumGames: GameMeta[] = [
     id: "starlight_commander",
     title: "Starlight Commander",
     developer: "Xakteir Studios",
-    type: "Arcade",
-    genre: ["2D Top-Down", "Shooter", "Space", "Sci-Fi", "Arcade"],
-    description: "Sci-Fi vertical space arcade shooter. Pilot your starfighter through hostile armadas, unlock plasma cannons, and defeat motherships.",
+    type: "Tactical Space Fleet Strategy RPG",
+    genre: ["Tactical Space Fleet Strategy RPG", "Fleet Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Tactical space fleet strategy RPG, armory upgrades, online leaderboards, and starlight codex in a 2,000+ line Tactical Space Fleet Strategy RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=starlightcommander",
     releaseDate: "2026",
     price: "Free",
     updates: [
-      { time: "12:50", description: "Initial Update" }
+      { time: "20:30", description: "2,000+ Line Flagship Launch" }
     ],
     route: "/game/starlight-commander"
   },
