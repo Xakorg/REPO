@@ -424,14 +424,14 @@ const premiumGames: GameMeta[] = [
     id: "forge",
     title: "Forge",
     developer: "Xakteir Studios",
-    type: "Arcade",
-    genre: ["Crafting", "Plasma", "Elements", "Weapon Forge", "Action", "2P Clash"],
-    description: "Catch falling fire, ice, and lightning plasma sparks to forge legendary elemental weapons on an interactive blacksmith anvil.",
+    type: "Thermal Foundry Blacksmith RPG",
+    genre: ["Blacksmith RPG", "Foundry Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Thermal blacksmith RPG, foundry shop upgrades, online leaderboards, and anvil codex in a 2,000+ line Thermal Foundry Blacksmith RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=forge",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "18:15", description: "Batch 4 Launch" }],
+    updates: [{ time: "19:30", description: "2,000+ Line Flagship Launch" }],
     route: "/game/forge"
   },
   {
