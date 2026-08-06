@@ -452,14 +452,14 @@ const premiumGames: GameMeta[] = [
     id: "circuit",
     title: "Circuit",
     developer: "Xakteir Studios",
-    type: "2D Top-Down",
-    genre: ["Racing", "Drift", "Physics", "Speedcraft", "2P Duel"],
-    description: "Master vector drift momentum, trigger kinetic turbo boosts, and set record lap times around high-speed neon circuits.",
+    type: "Cybernetic Matrix RPG",
+    genre: ["Cyber Matrix", "Foundry Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Cybernetic overdrive, foundry shop upgrades, online leaderboards, and matrix codex in a 2,000+ line Cybernetic Matrix RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=circuit",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "18:00", description: "Batch 3 Launch" }],
+    updates: [{ time: "19:15", description: "2,000+ Line Flagship Launch" }],
     route: "/game/circuit"
   },
   {
