@@ -592,14 +592,14 @@ const premiumGames: GameMeta[] = [
     id: "gridiron",
     title: "Gridiron",
     developer: "Xakteir Studios",
-    type: "2.5D",
-    genre: ["Sports", "Action", "Arcade", "2-Player", "Physics", "Multiplayer", "Hover Sports"],
-    description: "High-velocity cybernetic hover hockey. Utilize impulse thrusters and magnetic tractor beams to slam plasma pucks into goal nets in 1P league or 2P versus matches.",
+    type: "Cyberpunk Football RPG Strategy",
+    genre: ["Cyberpunk Football RPG Strategy", "Tactical Football Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Cyberpunk football RPG strategy, tactical armory upgrades, online leaderboards, and stadium codex in a 2,000+ line Cyberpunk Football RPG Strategy arena.",
     bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=gridiron",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "22:00", description: "Official Launch" }],
+    updates: [{ time: "19:50", description: "2,000+ Line Flagship Launch" }],
     route: "/game/gridiron"
   },
   {
