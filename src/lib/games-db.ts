@@ -186,14 +186,14 @@ const premiumGames: GameMeta[] = [
     id: "helix",
     title: "Helix",
     developer: "Xakteir Studios",
-    type: "Puzzle",
-    genre: ["Quantum Light", "DNA Spiral", "Laser Alignment", "1P / 2P Modes", "Mobile Friendly"],
-    description: "Rotate quantum light alignment beams to match revolving spiral DNA nodes and prevent total energy decay.",
+    type: "Quantum Bio-Genetic RPG",
+    genre: ["DNA Strand Splicing", "Gene Foundry Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Quantum DNA strand splicing, gene foundry armory upgrades, online leaderboards, and bio codex in a 2,000+ line Bio-Genetic RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1507499739999-097706ad8914?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=helix",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "19:10", description: "Batch 9 Launch" }],
+    updates: [{ time: "19:00", description: "2,000+ Line Flagship Launch" }],
     route: "/game/helix"
   },
   {
