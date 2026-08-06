@@ -267,6 +267,7 @@ Profile allows users to customize their account identity, equip cosmetic items, 
          - Profile Identity Customization (edit display name, bio, and avatar via file upload or AI bot avatar generation)
          - Equipment & Cosmetic Inventory Management (equip or unequip hats, auras, nameplates, decorations, pets, and banners)
          - User Stats & Verification Dashboard (view credits, XP level, follower count, admin role badges, and public visibility toggle)
+         - Linked Accounts Manager (connect or disconnect third-party authentication providers like Google and GitHub to your main account)
 
 ## Projects
 Projects provides a live interactive code runner and preview engine for web applications published on Xakteir.

@@ -19,13 +19,17 @@ import {
   Globe,
   Lock,
   Upload,
-  Sparkles
-, Edit3 } from "lucide-react";
+  Sparkles,
+  Edit3,
+  Link2,
+  Mail,
+  Github
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useFirestore, useDoc, useMemoFirebase, useStorage, useAuth, updateDocumentNonBlocking } from "@/firebase";
 import { doc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { updateProfile } from "firebase/auth";
+import { updateProfile, linkWithPopup, unlink, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -73,6 +77,8 @@ export default function ProfilePage() {
 
   const { data: userData, isLoading: isDataLoading } = useDoc(userRef);
 
+  const [providerData, setProviderData] = useState<any[]>([]);
+
   useEffect(() => {
     if (userData) {
       setDescription(userData.aboutMe || userData.description || "");
@@ -80,6 +86,47 @@ export default function ProfilePage() {
       setDisplayName(userData.displayName || user?.displayName || null);
     }
   }, [userData, user]);
+
+  useEffect(() => {
+    if (auth.currentUser) {
+      setProviderData([...auth.currentUser.providerData]);
+    }
+  }, [auth.currentUser]);
+
+  const handleLinkProvider = async (providerName: string) => {
+    if (!auth.currentUser) return;
+    try {
+      let provider;
+      if (providerName === 'google') provider = new GoogleAuthProvider();
+      else if (providerName === 'github') provider = new GithubAuthProvider();
+      
+      if (provider) {
+        await linkWithPopup(auth.currentUser, provider);
+        setProviderData([...auth.currentUser.providerData]);
+        toast({ title: "Account Linked", description: `Successfully connected your ${providerName} account.` });
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast({ variant: "destructive", title: "Linking Failed", description: e.message });
+    }
+  };
+
+  const handleUnlinkProvider = async (providerId: string) => {
+    if (!auth.currentUser) return;
+    // Prevent unlinking if it's the last provider
+    if (providerData.length === 1) {
+      toast({ variant: "destructive", title: "Cannot Unlink", description: "You must have at least one sign-in method connected." });
+      return;
+    }
+    try {
+      await unlink(auth.currentUser, providerId);
+      setProviderData([...auth.currentUser.providerData]);
+      toast({ title: "Account Unlinked", description: `Successfully disconnected the account.` });
+    } catch (e: any) {
+      console.error(e);
+      toast({ variant: "destructive", title: "Unlink Failed", description: e.message });
+    }
+  };
 
   const handleUpdate = () => {
     if (!firestore || !user) return;
@@ -433,6 +480,84 @@ export default function ProfilePage() {
                   </div>
                   <div className={cn("w-14 h-8 rounded-full transition-colors flex items-center p-1", (userData?.isPublic ?? true) ? "bg-emerald-500" : "bg-zinc-800")}>
                     <div className={cn("w-6 h-6 rounded-full bg-white transition-transform shadow-md", (userData?.isPublic ?? true) ? "translate-x-6" : "translate-x-0")} />
+                  </div>
+                </div>
+
+                {/* Linked Accounts */}
+                <div className="bg-black/40 border border-white/5 rounded-[2rem] p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Link2 className="w-5 h-5 text-primary" />
+                    <h3 className="text-lg font-black uppercase italic tracking-widest text-white">Linked Accounts</h3>
+                  </div>
+                  <p className="text-xs text-white/40 font-bold mb-6">Connect other accounts to sign in seamlessly across devices.</p>
+                  
+                  <div className="space-y-4">
+                    {/* Google */}
+                    <div className="flex items-center justify-between p-4 rounded-2xl border border-white/10 bg-white/5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-2 shrink-0">
+                           <svg viewBox="0 0 48 48" className="w-full h-full"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black uppercase text-white">Google</h4>
+                          <p className="text-[10px] text-white/40 uppercase font-bold mt-0.5 tracking-wider">
+                            {providerData.find(p => p.providerId === 'google.com') ? 'Connected' : 'Not Connected'}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => providerData.find(p => p.providerId === 'google.com') ? handleUnlinkProvider('google.com') : handleLinkProvider('google')}
+                        variant="outline" 
+                        className={cn("rounded-xl text-[10px] font-black uppercase tracking-widest", providerData.find(p => p.providerId === 'google.com') ? "border-rose-500/20 text-rose-500 hover:bg-rose-500/10" : "border-white/10 text-white hover:bg-white/10")}
+                      >
+                        {providerData.find(p => p.providerId === 'google.com') ? 'Unlink' : 'Link'}
+                      </Button>
+                    </div>
+
+                    {/* GitHub */}
+                    <div className="flex items-center justify-between p-4 rounded-2xl border border-white/10 bg-white/5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0">
+                           <Github className="w-6 h-6 text-black" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black uppercase text-white">GitHub</h4>
+                          <p className="text-[10px] text-white/40 uppercase font-bold mt-0.5 tracking-wider">
+                            {providerData.find(p => p.providerId === 'github.com') ? 'Connected' : 'Not Connected'}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => providerData.find(p => p.providerId === 'github.com') ? handleUnlinkProvider('github.com') : handleLinkProvider('github')}
+                        variant="outline" 
+                        className={cn("rounded-xl text-[10px] font-black uppercase tracking-widest", providerData.find(p => p.providerId === 'github.com') ? "border-rose-500/20 text-rose-500 hover:bg-rose-500/10" : "border-white/10 text-white hover:bg-white/10")}
+                      >
+                        {providerData.find(p => p.providerId === 'github.com') ? 'Unlink' : 'Link'}
+                      </Button>
+                    </div>
+
+                    {/* Email/Password */}
+                    <div className="flex items-center justify-between p-4 rounded-2xl border border-white/10 bg-white/5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                           <Mail className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black uppercase text-white">Email / Password</h4>
+                          <p className="text-[10px] text-white/40 uppercase font-bold mt-0.5 tracking-wider">
+                            {providerData.find(p => p.providerId === 'password') ? 'Connected' : 'Not Connected'}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        disabled={true}
+                        variant="outline" 
+                        className="rounded-xl text-[10px] font-black uppercase tracking-widest border-white/10 text-white/40 bg-transparent opacity-50 cursor-not-allowed"
+                      >
+                        Primary
+                      </Button>
+                    </div>
+
                   </div>
                 </div>
 
