@@ -17,6 +17,7 @@ import { FaviconController } from '@/components/layout/FaviconController';
 import { MaintenanceModeGuard } from '@/components/MaintenanceModeGuard';
 
 import { GlobalThemeWrapper } from '@/components/GlobalThemeWrapper';
+import { AgentActionsRunner } from '@/components/ai/AgentActionsRunner';
 
 export const metadata: Metadata = {
   title: 'Xakteir',
@@ -70,6 +71,7 @@ export default function RootLayout({
                     <FirebaseErrorListener />
                     <Toaster />
                     <DesktopBridge />
+                    <AgentActionsRunner />
                   </MaintenanceModeGuard>
                 </LockedAccountGuard>
               </OnboardingProvider>

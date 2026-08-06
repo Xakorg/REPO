@@ -366,6 +366,56 @@ const queryMemory = ai.defineTool(
   }
 );
 
+// Tool to navigate Xakteir to a specific page
+const xakteir_navigate = ai.defineTool(
+  {
+    name: 'xakteir_navigate',
+    description: 'Navigates the Xakteir app to a specific page on behalf of the user. Use when user asks to "go to", "open", "take me to", or "navigate to" a page.',
+    inputSchema: z.object({
+      userId: z.string().describe('The user ID.'),
+      path: z.string().describe('The page path to navigate to (e.g. /games, /chat, /profile, /ai-chat, /mail, /drive).'),
+      reason: z.string().describe('Short explanation of why we are navigating here.'),
+    }),
+    outputSchema: z.string(),
+  },
+  async (input) => {
+    if (!hasUsableUserId(input.userId)) return 'Sign in to let Xak AI navigate the app.';
+    const { FieldValue } = await import('firebase-admin/firestore');
+    const db = getAdminDb();
+    const commandRef = db.collection('ai_agent_commands').doc(input.userId);
+    const snap = await commandRef.get();
+    const pending = snap.exists ? (snap.data()?.pending || []) : [];
+    const action = { id: Date.now().toString(), action: 'navigate', target: input.path };
+    await commandRef.set({ pending: [...pending, action], updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return `Navigating to ${input.path}: ${input.reason}`;
+  }
+);
+
+// Tool to click an element by ID in Xakteir
+const xakteir_click = ai.defineTool(
+  {
+    name: 'xakteir_click',
+    description: 'Clicks a button or element in the Xakteir UI by its element ID. Use when user asks to "click", "press", or "activate" something visible on screen.',
+    inputSchema: z.object({
+      userId: z.string().describe('The user ID.'),
+      elementId: z.string().describe('The HTML element ID to click.'),
+      reason: z.string().describe('Short explanation of why we are clicking this.'),
+    }),
+    outputSchema: z.string(),
+  },
+  async (input) => {
+    if (!hasUsableUserId(input.userId)) return 'Sign in to let Xak AI interact with the app.';
+    const { FieldValue } = await import('firebase-admin/firestore');
+    const db = getAdminDb();
+    const commandRef = db.collection('ai_agent_commands').doc(input.userId);
+    const snap = await commandRef.get();
+    const pending = snap.exists ? (snap.data()?.pending || []) : [];
+    const action = { id: Date.now().toString(), action: 'click', target: input.elementId };
+    await commandRef.set({ pending: [...pending, action], updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return `Clicking element #${input.elementId}: ${input.reason}`;
+  }
+);
+
 export async function chatWithXakAI(input: ChatInput): Promise<ChatOutput> {
   const eveEndpoint = process.env.NEXT_PUBLIC_EVE_URL || 'https://xktreveai.xakteir.com';
   
@@ -518,7 +568,7 @@ CRITICAL GUIDELINES:
 - **Self-Teaching System**: If the user asks you to learn something from a URL, use \`readWebpage\` to read it, then immediately use \`saveToMemory\` to store the facts so you can remember it forever. When asked about a topic you might have learned, use \`queryMemory\`.`;
 
     const activeTools = signedIn 
-      ? [createDocument, createGoal, createFile, generateImage, generateVideo, editLocalFile, runTerminalCommand, generate3DObject, readWebpage, saveToMemory, queryMemory] 
+      ? [createDocument, createGoal, createFile, generateImage, generateVideo, editLocalFile, runTerminalCommand, generate3DObject, readWebpage, saveToMemory, queryMemory, xakteir_navigate, xakteir_click] 
       : [generateImage, generateVideo, editLocalFile, runTerminalCommand, generate3DObject, readWebpage];
 
     const googleSearchConfig = { googleSearchRetrieval: {} };

@@ -671,5 +671,35 @@ service cloud.firestore {
       allow create, read: if true;
       allow update, delete: if isAdmin();
     }
+
+    // ─────────────────────────────────────────────
+    // XAK AI CHATS (Group / Shared / Temp Sessions)
+    // ─────────────────────────────────────────────
+    match /ai_chats/{sessionId} {
+      // Public sessions readable by anyone
+      allow get: if resource.data.get('public', false) == true
+        || (isSignedIn() && request.auth.uid in resource.data.members);
+      allow list: if isSignedIn() && request.auth.uid in resource.data.members;
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.members;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.members;
+      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // ─────────────────────────────────────────────
+    // XAK AI AGENT COMMANDS (Xakteir Automation)
+    // ─────────────────────────────────────────────
+    match /ai_agent_commands/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // ─────────────────────────────────────────────
+    // XAK AI DNS RECORDS (Map domains)
+    // ─────────────────────────────────────────────
+    match /dns_domains/{id} {
+      allow read, write: if isSignedIn();
+    }
+    match /dns_records/{id} {
+      allow read, write: if isSignedIn();
+    }
   }
 }
