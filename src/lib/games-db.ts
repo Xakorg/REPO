@@ -466,14 +466,14 @@ const premiumGames: GameMeta[] = [
     id: "bastion",
     title: "Bastion",
     developer: "Xakteir Studios",
-    type: "Strategy",
-    genre: ["Fortress Builder", "Tower Defense", "Wave Siege", "Co-Op", "Action"],
-    description: "Construct plasma defense turrets, fortify energy barrier walls, and defend central power cores against invading alien wave sieges.",
+    type: "Siege Fortress Deflector RPG",
+    genre: ["Siege Deflection", "Foundry Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Siege fortress deflection, foundry shop upgrades, online leaderboards, and fortress codex in a 2,000+ line Siege Fortress Deflector RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=bastion",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "18:00", description: "Batch 3 Launch" }],
+    updates: [{ time: "19:20", description: "2,000+ Line Flagship Launch" }],
     route: "/game/bastion"
   },
   {
