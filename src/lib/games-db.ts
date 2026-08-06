@@ -326,14 +326,14 @@ const premiumGames: GameMeta[] = [
     id: "aura",
     title: "Aura",
     developer: "Xakteir Studios",
-    type: "Action",
-    genre: ["Harmonic Absorption", "Color Phase Shift", "Cyan Magenta Yellow", "Mobile Friendly", "2P Duel"],
-    description: "Shift your elemental aura color state between Cyan, Magenta, and Yellow to absorb matching color energy surges.",
+    type: "Elemental Energy Overdrive RPG",
+    genre: ["Elemental Energy", "Foundry Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Elemental energy overdrive, foundry shop upgrades, online leaderboards, and radiant codex in a 2,000+ line Elemental Energy Overdrive RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=aura",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "18:45", description: "Batch 6 Mobile Launch" }],
+    updates: [{ time: "19:25", description: "2,000+ Line Flagship Launch" }],
     route: "/game/aura"
   },
   {
