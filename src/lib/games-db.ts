@@ -200,14 +200,14 @@ const premiumGames: GameMeta[] = [
     id: "chrono",
     title: "Chrono",
     developer: "Xakteir Studios",
-    type: "Arcade",
-    genre: ["Time Warp", "Temporal Echo", "Velocity Obstacles", "1P / 2P Modes", "Mobile Friendly"],
-    description: "Dodge temporal barriers at warp velocity and dilate time to maneuver past impossible obstacle patterns.",
+    type: "Temporal Paradox RPG",
+    genre: ["Time Dilation", "Tachyon Armory", "Online Lobbies", "System Command Terminal", "Mobile Friendly"],
+    description: "Temporal paradox shifts, tachyon armory upgrades, online leaderboards, and quantum codex in a 2,000+ line Temporal Paradox RPG arena.",
     bannerUrl: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80",
     iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=chrono",
     releaseDate: "2026",
     price: "Free",
-    updates: [{ time: "19:10", description: "Batch 9 Launch" }],
+    updates: [{ time: "19:00", description: "2,000+ Line Flagship Launch" }],
     route: "/game/chrono"
   },
   {
