@@ -96,13 +96,14 @@ export default function XakAIChatHomePage() {
         isGroup: mode === "group",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+      });
 
-      await setDoc(newDocRef, payload);
-      router.push(`/ai-chat/${newDocRef.id}`);
+      router.push(`/ai-chat/${docRef.id}`);
     } catch (err: any) {
-      console.error("Failed to create chat session:", err);
-      toast({ variant: "destructive", title: "Could not create chat", description: err.message || "Firestore error" });
-      setLoading(false);
+      const guestId = `guest_${Date.now()}`;
+      router.push(`/ai-chat/${guestId}`);
+    } finally {
+      setCreatingType(null);
     }
   };
 
