@@ -1691,7 +1691,7 @@ export default function CinderGame() {
   };
 
   // Unlock Aura Skin
-  const unlockAuraSkin = (aura: AuraOption) => {
+  const unlockAuraSkin = (aura: any) => {
     if (!aura.unlocked && aura.costCredits && thermalCredits >= aura.costCredits) {
       setThermalCredits((prev) => prev - aura.costCredits);
       setAuras((prev) => prev.map((a) => (a.id === aura.id ? { ...a, unlocked: true } : a)));

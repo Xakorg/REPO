@@ -1697,7 +1697,7 @@ export default function LumenGame() {
   };
 
   // Unlock Aura Skin
-  const unlockAuraSkin = (aura: AuraOption) => {
+  const unlockAuraSkin = (aura: any) => {
     if (!aura.unlocked && aura.costPhotons && photons >= aura.costPhotons) {
       setPhotons((prev) => prev - aura.costPhotons);
       setAuras((prev) => prev.map((a) => (a.id === aura.id ? { ...a, unlocked: true } : a)));

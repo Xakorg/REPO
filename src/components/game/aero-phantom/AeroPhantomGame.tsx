@@ -1697,7 +1697,7 @@ export default function AeroPhantomGame() {
   };
 
   // Unlock Aura Skin
-  const unlockAuraSkin = (aura: AuraOption) => {
+  const unlockAuraSkin = (aura: any) => {
     if (!aura.unlocked && aura.costCredits && phantomCredits >= aura.costCredits) {
       setPhantomCredits((prev) => prev - aura.costCredits);
       setAuras((prev) => prev.map((a) => (a.id === aura.id ? { ...a, unlocked: true } : a)));

@@ -1690,7 +1690,7 @@ export default function AuraGame() {
   };
 
   // Unlock Aura Skin
-  const unlockAuraSkin = (aura: AuraOption) => {
+  const unlockAuraSkin = (aura: any) => {
     if (!aura.unlocked && aura.costCredits && elementalCredits >= aura.costCredits) {
       setElementalCredits((prev) => prev - aura.costCredits);
       setAuras((prev) => prev.map((a) => (a.id === aura.id ? { ...a, unlocked: true } : a)));

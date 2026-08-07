@@ -1695,7 +1695,7 @@ export default function GridironGame() {
   };
 
   // Unlock Aura Skin
-  const unlockAuraSkin = (aura: AuraOption) => {
+  const unlockAuraSkin = (aura: any) => {
     if (!aura.unlocked && aura.costCredits && stadiumCredits >= aura.costCredits) {
       setStadiumCredits((prev) => prev - aura.costCredits);
       setAuras((prev) => prev.map((a) => (a.id === aura.id ? { ...a, unlocked: true } : a)));

@@ -1669,7 +1669,7 @@ export default function ChronoGame() {
   };
 
   // Unlock Aura Skin
-  const unlockAuraSkin = (aura: AuraOption) => {
+  const unlockAuraSkin = (aura: any) => {
     if (!aura.unlocked && aura.costEnergy && temporalEnergy >= aura.costEnergy) {
       setTemporalEnergy((prev) => prev - aura.costEnergy);
       setAuras((prev) => prev.map((a) => (a.id === aura.id ? { ...a, unlocked: true } : a)));

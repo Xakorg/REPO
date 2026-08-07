@@ -1691,7 +1691,7 @@ export default function CircuitGame() {
   };
 
   // Unlock Aura Skin
-  const unlockAuraSkin = (aura: AuraOption) => {
+  const unlockAuraSkin = (aura: any) => {
     if (!aura.unlocked && aura.costCredits && cyberCredits >= aura.costCredits) {
       setCyberCredits((prev) => prev - aura.costCredits);
       setAuras((prev) => prev.map((a) => (a.id === aura.id ? { ...a, unlocked: true } : a)));

@@ -215,7 +215,7 @@ export default function SurgeGame() {
   const zapToClosestNode = () => {
     const state = engineRef.current;
     const j1 = state.jumperP1;
-    let closestNode: ElectricalNode | null = null;
+    let closestNode: any = null;
     let minDist = 140;
 
     state.nodes.forEach((node) => {

@@ -103,6 +103,7 @@ interface RefractorNode {
   y: number;
   angle: number;
   radius: number;
+  shield?: number;
 }
 
 interface FloatingText {

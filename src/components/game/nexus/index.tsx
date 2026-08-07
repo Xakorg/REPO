@@ -1658,7 +1658,7 @@ export default function NexusGame() {
   };
 
   // Unlock Aura Skin
-  const unlockAuraSkin = (aura: AuraOption) => {
+  const unlockAuraSkin = (aura: any) => {
     if (!aura.unlocked && aura.costFlux && fluxCredits >= aura.costFlux) {
       setFluxCredits((prev) => prev - aura.costFlux);
       setAuras((prev) => prev.map((a) => (a.id === aura.id ? { ...a, unlocked: true } : a)));
