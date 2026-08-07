@@ -844,14 +844,15 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   };
 
   const handleLeaveVoice = async () => {
-    if (!firestore || !user || !activeVoiceChannel) return;
-    playPing();
-    try {
-      await deleteDoc(doc(firestore, "voice_status", `${activeServer}_${activeVoiceChannel}_${user.uid}`));
-    } catch (e) { console.error(e); }
+    if (activeVoiceChannel && firestore && user) {
+      try {
+        await deleteDoc(doc(firestore, "voice_status", `${activeServer}_${activeVoiceChannel}_${user.uid}`));
+      } catch (e) { console.error(e); }
+    }
     cleanupVoiceWebRTC();
     setActiveVoiceChannel(null);
     setVoiceConnectedMsg(false);
+    playPing();
   };
 
   // Sync mute state with microphone track

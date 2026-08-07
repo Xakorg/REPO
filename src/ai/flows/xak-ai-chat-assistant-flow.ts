@@ -689,46 +689,53 @@ It can span multiple lines.
 
     const googleSearchConfig = { googleSearchRetrieval: {} };
 
-    while (retries > 0) {
-      try {
-        const {output} = await ai.generate({
-          model: 'googleai/gemini-2.5-flash',
-          system: systemPrompt,
-          messages: [
-            ...(input.history || []),
-            { role: 'user', content: [{ text: input.message }] }
-          ],
-          tools: activeTools,
-          output: { schema: ChatOutputSchema },
-        });
+    const fallbackModels = [
+      'googleai/gemini-2.5-flash',
+      'googleai/gemini-2.0-flash',
+      'googleai/gemini-1.5-flash',
+    ];
 
-        if (!output) {
-          return { response: "I had trouble processing that request. Please try again." };
-        }
-        return output;
-      } catch (error: any) {
-        console.error('XAK AI ERROR:', error);
-        const message = String(error?.message || '');
-        retries--;
-        if ((message.includes('503') || message.includes('UNAVAILABLE')) && retries > 0) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          continue;
-        }
-        if (message.includes('API key') || message.includes('GOOGLE_API_KEY')) {
-          return {
-            response: "Xak AI is not configured yet. Add GOOGLE_API_KEY in the server environment, then try again.",
-          };
-        }
-        if (message.includes('Could not load the default credentials')) {
-          return {
-            response: "Xak AI can answer chat, but account-saving tools need Firebase admin credentials in the server environment.",
-          };
-        }
-        if (retries === 0) {
-          return { response: `The system encountered an error: ${message}. Please try again.` };
+    for (const modelName of fallbackModels) {
+      let modelRetries = 2;
+      while (modelRetries > 0) {
+        try {
+          const { output } = await ai.generate({
+            model: modelName,
+            system: systemPrompt,
+            messages: [
+              ...(input.history || []),
+              { role: 'user', content: [{ text: input.message }] }
+            ],
+            tools: activeTools,
+            output: { schema: ChatOutputSchema },
+          });
+
+          if (output) return output;
+        } catch (error: any) {
+          console.error(`XAK AI ERROR [${modelName}]:`, error);
+          const message = String(error?.message || error || '');
+          modelRetries--;
+
+          // If rate limited (429 / RESOURCE_EXHAUSTED), break loop and try next fallback model
+          if (message.includes('429') || message.includes('RESOURCE_EXHAUSTED') || message.includes('Quota exceeded')) {
+            console.warn(`[XAK AI] Model ${modelName} rate limited. Switching to next fallback model...`);
+            break;
+          }
+
+          if ((message.includes('503') || message.includes('UNAVAILABLE')) && modelRetries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            continue;
+          }
+
+          if (message.includes('API key') || message.includes('GOOGLE_API_KEY')) {
+            return {
+              response: "Xak AI is not configured yet. Add GOOGLE_API_KEY in the server environment, then try again.",
+            };
+          }
         }
       }
     }
-    return { response: "An unexpected connection error occurred." };
+
+    return { response: "Xak AI servers are currently busy. Please wait a few seconds and try again." };
   }
 );

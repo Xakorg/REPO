@@ -741,17 +741,25 @@ export default function MeetingRoomPage() {
 
       activeMeetingId.current = meetingId;
 
-      // Subscribe to meeting changes
+      // Subscribe to meeting metadata changes
       meetingUnsubscribers.current.push(
         onSnapshot(callDoc, (snapshot) => {
           const data = snapshot.data();
           if (data) {
-            setParticipants((data.participants || []) as Participant[]);
+            const plist = (data.participants || []) as Participant[];
+            setParticipants(plist);
             setScreenSharerId(data.screenSharerId || null);
             setControlledById(data.controlledById || null);
             setControlledByName(data.controlledByName || null);
             setNotepadText(data.notepadContent || "");
             setPollData(data.poll || null);
+
+            // Create WebRTC offer to participants if our ID is lower (deterministic handshake)
+            plist.forEach((otherP) => {
+              if (otherP.id !== userIdToUse && userIdToUse < otherP.id && !pcMap.current[otherP.id]) {
+                void createOfferTo(meetingId, otherP.id, userIdToUse);
+              }
+            });
 
             // Listen if kicked out
             if (data.kickedIds && data.kickedIds.includes(userIdToUse)) {
