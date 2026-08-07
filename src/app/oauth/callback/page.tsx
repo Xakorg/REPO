@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { auth } from '@/firebase';
+import { useAuth } from '@/firebase';
 import { signInWithCustomToken } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -11,11 +11,12 @@ export default function OAuthCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const auth = useAuth();
 
   useEffect(() => {
     const token = searchParams.get('token');
-    if (!token) {
-      router.push('/profile');
+    if (!token || !auth) {
+      if (!token) router.push('/profile');
       return;
     }
 
@@ -23,7 +24,7 @@ export default function OAuthCallbackPage() {
       try {
         await signInWithCustomToken(auth, token);
         toast({ title: 'Success', description: 'Signed in successfully via Discord.' });
-        router.push('/profile'); // or wherever they should go after login
+        router.push('/profile');
       } catch (error: any) {
         console.error('Sign in with custom token failed:', error);
         toast({ variant: 'destructive', title: 'Sign In Failed', description: error.message });
@@ -32,7 +33,7 @@ export default function OAuthCallbackPage() {
     };
 
     signIn();
-  }, [searchParams, router, toast]);
+  }, [searchParams, router, toast, auth]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-black">

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -17,6 +17,9 @@ export async function GET(request: Request) {
   if (!clientId || !clientSecret) {
     return NextResponse.json({ error: 'Discord credentials missing' }, { status: 500 });
   }
+
+  const adminDb = getAdminDb();
+  const adminAuth = getAdminAuth();
 
   try {
     // 1. Exchange code for access token
@@ -53,7 +56,7 @@ export async function GET(request: Request) {
     }
 
     const discordId = userData.id;
-    const discordEmail = userData.email;
+    const discordEmail = userData.email || `${discordId}@discord.xakteir.com`;
     const discordUsername = userData.username;
 
     // 3. Check if linking or signing in
