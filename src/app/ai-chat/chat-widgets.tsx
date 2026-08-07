@@ -1054,3 +1054,26 @@ export function ThreeDViewer({ data }: { data: any }) {
     </div>
   );
 }
+
+// Re-export Xak AI 30-Feature Supercharged Suite
+export { MultiFileCodeSandbox } from "@/components/ai/MultiFileCodeSandbox";
+export { DataChartWidget } from "@/components/ai/DataChartWidget";
+export { ProceduralCanvasStudio } from "@/components/ai/ProceduralCanvasStudio";
+export { ThreeDShaderPlayground } from "@/components/ai/ThreeDShaderPlayground";
+export { RPGEngineWidget } from "@/components/ai/RPGEngineWidget";
+export { MathFormulaSolver } from "@/components/ai/MathFormulaSolver";
+export { CodeSnippetManager } from "@/components/ai/CodeSnippetManager";
+export { UnitTestDocGenerator } from "@/components/ai/UnitTestDocGenerator";
+export { AudioMemoTranscriber } from "@/components/ai/AudioMemoTranscriber";
+export { EcosystemIntegrationsModal } from "@/components/ai/EcosystemIntegrationsModal";
+export { WebSearchAgentWidget } from "@/components/ai/WebSearchAgentWidget";
+export { KanbanBoardGenerator } from "@/components/ai/KanbanBoardGenerator";
+export { CodeRefactoringWorkbench } from "@/components/ai/CodeRefactoringWorkbench";
+export { PluginBuilderModal } from "@/components/ai/PluginBuilderModal";
+export { FloatingPiPAssistant } from "@/components/ai/FloatingPiPAssistant";
+export { CustomPersonasStudioModal } from "@/components/ai/CustomPersonasStudioModal";
+export { GhostSessionVaultModal } from "@/components/ai/GhostSessionVaultModal";
+export { PromptLibraryModal } from "@/components/ai/PromptLibraryModal";
+export { ContextMemoryVaultModal } from "@/components/ai/ContextMemoryVaultModal";
+export { CommandPaletteModal } from "@/components/ai/CommandPaletteModal";
+

@@ -20,7 +20,9 @@ import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { PluginStoreModal } from "@/components/ai/PluginStoreModal";
 import { UniversalSearchModal } from "@/components/ai/UniversalSearchModal";
+import { FloatingPiPAssistant } from "@/app/ai-chat/chat-widgets";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+
 
 type Session = {
   id: string;
@@ -361,6 +363,8 @@ export default function XakAIChatHomePage() {
           </div>
         </div>
       </main>
+
+      <FloatingPiPAssistant />
     </div>
   );
 }

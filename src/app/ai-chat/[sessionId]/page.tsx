@@ -39,8 +39,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu } from "lucide-react";
+import { Menu, Terminal, Brain, Puzzle, HardDrive, Bookmark } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  EcosystemIntegrationsModal,
+  PluginBuilderModal,
+  CustomPersonasStudioModal,
+  GhostSessionVaultModal,
+  PromptLibraryModal,
+  ContextMemoryVaultModal,
+  CommandPaletteModal,
+  FloatingPiPAssistant,
+  MultiFileCodeSandbox,
+  DataChartWidget,
+  ProceduralCanvasStudio,
+  ThreeDShaderPlayground,
+  RPGEngineWidget,
+  MathFormulaSolver,
+  CodeSnippetManager,
+  UnitTestDocGenerator,
+  AudioMemoTranscriber,
+  WebSearchAgentWidget,
+  KanbanBoardGenerator,
+  CodeRefactoringWorkbench
+} from "@/app/ai-chat/chat-widgets";
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Message = {
@@ -114,9 +137,24 @@ function FormattedContent({ content }: { content: string }) {
           const lang = match?.[1] || "code";
           const code = match?.[2] || "";
 
-          if (["html", "js", "javascript", "jsx", "ts", "typescript", "tsx", "css"].includes(lang.toLowerCase())) {
+          const lowerLang = lang.toLowerCase();
+          if (lowerLang === "sandbox") return <MultiFileCodeSandbox key={i} />;
+          if (lowerLang === "chart") return <DataChartWidget key={i} />;
+          if (lowerLang === "canvas") return <ProceduralCanvasStudio key={i} />;
+          if (lowerLang === "shader") return <ThreeDShaderPlayground key={i} />;
+          if (lowerLang === "rpg") return <RPGEngineWidget key={i} />;
+          if (lowerLang === "math") return <MathFormulaSolver key={i} initialEquation={code.trim()} />;
+          if (lowerLang === "snippets") return <CodeSnippetManager key={i} />;
+          if (lowerLang === "unittest") return <UnitTestDocGenerator key={i} targetCode={code.trim()} />;
+          if (lowerLang === "audio") return <AudioMemoTranscriber key={i} />;
+          if (lowerLang === "websearch") return <WebSearchAgentWidget key={i} query={code.trim()} />;
+          if (lowerLang === "kanban") return <KanbanBoardGenerator key={i} />;
+          if (lowerLang === "refactor") return <CodeRefactoringWorkbench key={i} />;
+
+          if (["html", "js", "javascript", "jsx", "ts", "typescript", "tsx", "css"].includes(lowerLang)) {
             return <LiveCodeEditor key={i} code={code.trim()} language={lang} />;
           }
+
 
           return (
             <div key={i} className="my-2 rounded-xl overflow-hidden border border-white/10 bg-zinc-950">
@@ -239,9 +277,31 @@ export default function XakAIChatSessionPage() {
   // Dismissed email drafts
   const [dismissedDrafts, setDismissedDrafts] = useState<Set<number>>(new Set());
 
+  // 30 Supercharged Suite Modals State
+  const [ecoModalOpen, setEcoModalOpen] = useState(false);
+  const [pluginModalOpen, setPluginModalOpen] = useState(false);
+  const [personaModalOpen, setPersonaModalOpen] = useState(false);
+  const [ghostModalOpen, setGhostModalOpen] = useState(false);
+  const [promptModalOpen, setPromptModalOpen] = useState(false);
+  const [memoryModalOpen, setMemoryModalOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Ctrl+K Command Palette Keyboard Listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
 
   // ─── Load session ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1188,6 +1248,52 @@ export default function XakAIChatSessionPage() {
 
             <form onSubmit={handleSubmit} className="relative flex items-end gap-2.5 max-w-3xl mx-auto">
               {/* PDF Attachment button */}
+              {/* 30-Suite Feature Shortcut Buttons */}
+              <button
+                type="button"
+                onClick={() => setEcoModalOpen(true)}
+                className="w-10 h-10 shrink-0 flex items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-all mb-0.5"
+                title="Deep Ecosystem Integrations (XakDrive, Notes, Mail, Calendar)"
+              >
+                <HardDrive className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPromptModalOpen(true)}
+                className="w-10 h-10 shrink-0 flex items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-all mb-0.5"
+                title="100+ Smart AI Prompt Library"
+              >
+                <Bookmark className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setGhostModalOpen(true)}
+                className="w-10 h-10 shrink-0 flex items-center justify-center rounded-2xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-all mb-0.5"
+                title="Ghost Encrypted Session Vault"
+              >
+                <Ghost className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMemoryModalOpen(true)}
+                className="w-10 h-10 shrink-0 flex items-center justify-center rounded-2xl border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-all mb-0.5"
+                title="Xak AI Context Memory Vault"
+              >
+                <Brain className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCommandPaletteOpen(true)}
+                className="w-10 h-10 shrink-0 flex items-center justify-center rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-all mb-0.5"
+                title="Command Palette (Ctrl+K)"
+              >
+                <Terminal className="w-4 h-4" />
+              </button>
+
               <button
                 type="button"
                 onClick={() => (document.getElementById("pdf-upload-input") as HTMLInputElement)?.click()}
@@ -1211,7 +1317,7 @@ export default function XakAIChatSessionPage() {
                       handleSubmit();
                     }
                   }}
-                  placeholder={`Message ${PERSONAS.find((p) => p.id === persona)?.name || "Xak AI"}…`}
+                  placeholder={`Message ${PERSONAS.find((p) => p.id === persona)?.name || "Xak AI"}… (Ctrl+K for Command Palette)`}
                   rows={1}
                   className="w-full resize-none rounded-2xl border border-white/10 focus-visible:border-primary/40 bg-white/5 px-4 py-3.5 text-sm placeholder:text-white/20 text-white focus-visible:ring-0 min-h-[48px] max-h-40 leading-relaxed transition-all"
                   style={{ fieldSizing: "content" } as any}
@@ -1241,11 +1347,36 @@ export default function XakAIChatSessionPage() {
             </form>
 
             <p className="text-center text-[10px] text-white/20 mt-2 max-w-3xl mx-auto">
-              Xak AI can process documents and write real code. Shift+Enter for new line.
+              Xak AI 30-Feature Supercharged Suite active. Press Ctrl+K for Command Palette.
             </p>
           </div>
         )}
       </main>
+
+      {/* Render 30-Suite Modals & Floating PiP Assistant */}
+      <EcosystemIntegrationsModal open={ecoModalOpen} onOpenChange={setEcoModalOpen} />
+      <PluginBuilderModal open={pluginModalOpen} onOpenChange={setPluginModalOpen} />
+      <CustomPersonasStudioModal open={personaModalOpen} onOpenChange={setPersonaModalOpen} />
+      <GhostSessionVaultModal open={ghostModalOpen} onOpenChange={setGhostModalOpen} />
+      <PromptLibraryModal
+        open={promptModalOpen}
+        onOpenChange={setPromptModalOpen}
+        onSelectPrompt={(pText) => setInput((prev) => (prev ? `${prev}\n${pText}` : pText))}
+      />
+      <ContextMemoryVaultModal open={memoryModalOpen} onOpenChange={setMemoryModalOpen} />
+      <CommandPaletteModal
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        onTriggerAction={(actionId) => {
+          if (actionId === "voice_mode") setVoiceOpen(true);
+          if (actionId === "sandbox") setInput((prev) => `${prev}\n\`\`\`sandbox\n\`\`\``);
+          if (actionId === "ghost_vault") setGhostModalOpen(true);
+          if (actionId === "ecosystem_sync") setEcoModalOpen(true);
+          if (actionId === "prompt_library") setPromptModalOpen(true);
+        }}
+      />
+      <FloatingPiPAssistant />
     </div>
   );
 }
+

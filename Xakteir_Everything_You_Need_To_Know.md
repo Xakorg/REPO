@@ -20,8 +20,12 @@ Admin is a comprehensive management dashboard for platform operators to handle s
 AI Chat is a conversational assistant powered by Xak AI that supports interactive embedded widgets, voice interactions, and file attachments.
          FEATURES
          - Multi-session AI chat assistant with prompt presets, persistent history, and message clipboard tools
-         - Interactive embedded widgets including HTML sandbox, procedural video player, 3D model viewer, multi-file code explorer, RPG console, spreadsheets, and IPC terminal runner
-         - Speech-to-text voice input, text-to-speech audio output playback, and file attachment handling
+         - Interactive embedded widgets including Multi-File Code Execution Sandbox, Data Analytics Charts, Procedural Canvas Studio, 3D Shader Playground, RPG Dungeon Engine, AI Math Solver, Code Snippet Vault, Jest Test Synthesizer, Audio Memo Transcriber, Web Intelligence Agent, Task Board Generator, and Code Refactoring Workbench
+         - Deep ecosystem integrations with XakDrive, XakNotes, XakMail, and XakCalendar directly from chat
+         - Zero-knowledge Ghost Encrypted Session Vault with auto-destruct timer and client-side E2EE
+         - Custom Personas & System Prompt Studio, 100+ Prompt Template Library, Context Memory Vault, and Command Palette (Ctrl+K)
+         - Speech-to-text voice input, text-to-speech audio output playback, floating Picture-in-Picture Mini Assistant, and PDF document parsing
+
 
 ## Apps
 Apps serves as the central launcher and directory for discovering and accessing all tools and applications within the Xakteir ecosystem.
