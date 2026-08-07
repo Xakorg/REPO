@@ -29,8 +29,10 @@ export default function SpaceInvaders() {
     };
     spawn();
 
-    window.addEventListener("keydown", e => { keys[e.code] = true; });
-    window.addEventListener("keyup", e => { keys[e.code] = false; });
+    const onKeyDown = (e: KeyboardEvent) => { keys[e.code] = true; };
+    const onKeyUp = (e: KeyboardEvent) => { keys[e.code] = false; };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
 
     let frame: number;
     const tick = (time: number) => {
@@ -151,7 +153,11 @@ export default function SpaceInvaders() {
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
   }, []);
 
   return (

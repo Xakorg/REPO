@@ -3,7 +3,7 @@ export interface GameMeta {
   id: string;
   title: string;
   developer: string;
-  type: "3D" | "2.5D" | "2D Top-Down" | "2D Platformer" | "Retro Emulator" | "Arcade" | "Sports" | "Puzzle" | "Strategy" | "Discovery" | "App";
+  type: "3D" | "2.5D" | "2D Top-Down" | "2D Platformer" | "Retro Emulator" | "Arcade" | "Sports" | "Puzzle" | "Strategy" | "Discovery" | "App" | "Action" | "Tactical Grid" | "2.5D Fighter" | "2D RTS" | (string & {});
   genre: string[];
   description: string;
   bannerUrl: string;

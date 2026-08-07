@@ -27,7 +27,14 @@ export default function DevCentreLayout({ children }: { children: React.ReactNod
     const updateAccounts = () => {
       const accs = localStorage.getItem("xakteir_accounts");
       const activeId = localStorage.getItem("xakteir_active_account_id");
-      if (accs) setAccounts(JSON.parse(accs));
+      if (accs) {
+        try {
+          const parsed = JSON.parse(accs);
+          if (Array.isArray(parsed)) setAccounts(parsed);
+        } catch (e) {
+          console.error("Error parsing accounts JSON in dev-centre layout", e);
+        }
+      }
       if (activeId) setActiveAccountId(activeId);
     };
     updateAccounts();

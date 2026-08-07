@@ -260,7 +260,17 @@ export const useUser = (): UserHookResult => {
     if (typeof window === "undefined") return;
     if (firebaseUser) {
       const accountsJson = localStorage.getItem('xakteir_accounts');
-      let accs = accountsJson ? JSON.parse(accountsJson) : [];
+      let accs: any[] = [];
+      if (accountsJson) {
+        try {
+          const parsed = JSON.parse(accountsJson);
+          if (Array.isArray(parsed)) {
+            accs = parsed;
+          }
+        } catch (e) {
+          console.error("Error parsing accounts JSON in provider sync", e);
+        }
+      }
       
       const existingIdx = accs.findIndex((a: any) => a.uid === firebaseUser.uid);
       const newAcc = {

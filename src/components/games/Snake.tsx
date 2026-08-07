@@ -22,19 +22,21 @@ export default function Snake() {
       food = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
     };
 
-    window.addEventListener("keydown", e => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === "ArrowUp" && dir.y !== 1) nextDir = { x: 0, y: -1 };
       if (e.code === "ArrowDown" && dir.y !== -1) nextDir = { x: 0, y: 1 };
       if (e.code === "ArrowLeft" && dir.x !== 1) nextDir = { x: -1, y: 0 };
       if (e.code === "ArrowRight" && dir.x !== -1) nextDir = { x: 1, y: 0 };
-    });
+    };
+    window.addEventListener("keydown", onKeyDown);
 
     let interval: ReturnType<typeof setInterval>;
     const restart = () => {
       snake = [{ x: 10, y: 10 }]; dir = { x: 1, y: 0 }; nextDir = { x: 1, y: 0 };
       score = 0; gameOver = false; spawnFood();
     };
-    canvas.addEventListener("click", () => { if (gameOver) restart(); });
+    const onClick = () => { if (gameOver) restart(); };
+    canvas.addEventListener("click", onClick);
 
     let frame: number;
     const draw = () => {
@@ -110,7 +112,11 @@ export default function Snake() {
       draw();
     }, 120);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("keydown", onKeyDown);
+      canvas.removeEventListener("click", onClick);
+    };
   }, []);
 
   return (

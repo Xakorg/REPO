@@ -114,7 +114,13 @@ function DevAutomateCanvas() {
       
       if (!nodeDataStr || !reactFlowBounds || !reactFlowInstance) return;
 
-      const nodeData = JSON.parse(nodeDataStr);
+      let nodeData: any = null;
+      try {
+        nodeData = JSON.parse(nodeDataStr);
+      } catch (e) {
+        console.error("Failed to parse node data for drop", e);
+        return;
+      }
       
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX - reactFlowBounds.left,

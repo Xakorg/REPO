@@ -1589,8 +1589,13 @@ export default function XakteirMapsPage() {
 
       const cached = sessionStorage.getItem(cacheKey);
       if (cached) {
-        nodes = JSON.parse(cached);
-      } else {
+        try {
+          nodes = JSON.parse(cached);
+        } catch (e) {
+          nodes = [];
+        }
+      }
+      if (!nodes || nodes.length === 0) {
         try {
           const amenityTag = cat.amenity ? `amenity=${cat.amenity}` : `leisure=${(cat as any).leisure}`;
           const overpassQuery = `[out:json];node[${amenityTag}](${s},${w},${n},${e});out 30;`;

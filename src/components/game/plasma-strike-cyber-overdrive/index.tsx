@@ -867,7 +867,6 @@ export default function PlasmaStrikeGame() {
           ctx.shadowColor = e.color;
           ctx.shadowBlur = 15;
           ctx.beginPath();
-          ctx.polygon = function () {};
           ctx.moveTo(0, 45);
           ctx.lineTo(-45, -20);
           ctx.lineTo(-20, -45);

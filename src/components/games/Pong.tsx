@@ -15,8 +15,10 @@ export default function Pong() {
     let s1 = 0, s2 = 0;
     const keys: Record<string, boolean> = {};
 
-    window.addEventListener("keydown", e => { keys[e.code] = true; });
-    window.addEventListener("keyup", e => { keys[e.code] = false; });
+    const onKeyDown = (e: KeyboardEvent) => { keys[e.code] = true; };
+    const onKeyUp = (e: KeyboardEvent) => { keys[e.code] = false; };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
 
     let frame: number;
     const tick = () => {
@@ -90,7 +92,11 @@ export default function Pong() {
       frame = requestAnimationFrame(tick);
     };
     tick();
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
   }, []);
 
   return (

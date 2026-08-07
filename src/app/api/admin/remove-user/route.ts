@@ -6,9 +6,13 @@ const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
 function initAdmin() {
   if (admin.apps && admin.apps.length) return;
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    const key = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-    admin.initializeApp({ credential: admin.credential.cert(key) });
-    return;
+    try {
+      const key = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+      admin.initializeApp({ credential: admin.credential.cert(key) });
+      return;
+    } catch (err) {
+      console.error('Error parsing FIREBASE_SERVICE_ACCOUNT_KEY:', err);
+    }
   }
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     admin.initializeApp();
