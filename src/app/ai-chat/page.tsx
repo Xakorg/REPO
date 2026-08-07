@@ -7,9 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import {
-  Plus, Ghost, MessageSquare, History, Lock, Trash2,
-  Bot, Sparkles, Globe, Users, Zap, FileText, Send, Paperclip,
-  Mic, MicOff, Search, ChevronRight, Puzzle, Compass, ArrowRight, Loader2
+  Send, User, Sparkles, Loader2, Bot, Plus, MessageSquare, History,
+  Lock, Trash2, Globe, Ghost, ChevronRight, Menu, Users, Search, Puzzle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore } from "@/firebase";
@@ -19,9 +18,9 @@ import {
 } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { motion, AnimatePresence } from "framer-motion";
 import { PluginStoreModal } from "@/components/ai/PluginStoreModal";
 import { UniversalSearchModal } from "@/components/ai/UniversalSearchModal";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 type Session = {
   id: string;
@@ -42,11 +41,12 @@ export default function XakAIChatHomePage() {
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [creatingType, setCreatingType] = useState<"standard" | "temp" | "group" | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSidebar, setShowSidebar] = useState(true);
 
-  // Wave 3 Modals
+  // Modals
   const [pluginStoreOpen, setPluginStoreOpen] = useState(false);
   const [universalSearchOpen, setUniversalSearchOpen] = useState(false);
 
@@ -70,8 +70,9 @@ export default function XakAIChatHomePage() {
   }, [user, firestore]);
 
   // Create session safely and redirect
-  const handleStartChat = async (mode: "standard" | "temp" | "group" = "standard") => {
+  const handleStartChat = async (promptText?: string, mode: "standard" | "temp" | "group" = "standard") => {
     setCreatingType(mode);
+    setLoading(true);
     if (!user || !firestore) {
       const guestId = `guest_${Date.now()}`;
       router.push(`/ai-chat/${guestId}`);
@@ -80,20 +81,37 @@ export default function XakAIChatHomePage() {
     try {
       const docRef = doc(collection(firestore, "ai_chats"));
       const isTemp = mode === "temp";
-      const defaultTitle = isTemp
+      const isGroup = mode === "group";
+      const text = promptText?.trim() || input.trim();
+      const defaultTitle = text
+        ? text.substring(0, 40)
+        : isTemp
         ? "Ghost Session"
-        : mode === "group"
+        : isGroup
         ? "Group AI Workspace"
         : "New Chat Session";
 
+      const initialMessages = text
+        ? [
+            {
+              role: "user",
+              content: text,
+              senderUid: user.uid,
+              senderName: user.displayName || "You",
+              senderPhoto: user.photoURL || "",
+              timestamp: Date.now(),
+            },
+          ]
+        : [];
+
       await setDoc(docRef, {
         title: defaultTitle,
-        messages: [],
+        messages: initialMessages,
         members: [user.uid],
         ownerId: user.uid,
         public: false,
         temporary: isTemp,
-        isGroup: mode === "group",
+        isGroup,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -104,6 +122,7 @@ export default function XakAIChatHomePage() {
       router.push(`/ai-chat/${guestId}`);
     } finally {
       setCreatingType(null);
+      setLoading(false);
     }
   };
 
@@ -120,7 +139,7 @@ export default function XakAIChatHomePage() {
 
   return (
     <div className="h-[calc(100vh-80px)] flex overflow-hidden text-white bg-[#05030d]">
-      {/* Wave 3 Modals */}
+      {/* Modals */}
       <PluginStoreModal isOpen={pluginStoreOpen} onClose={() => setPluginStoreOpen(false)} />
       <UniversalSearchModal isOpen={universalSearchOpen} onClose={() => setUniversalSearchOpen(false)} />
 
@@ -133,23 +152,23 @@ export default function XakAIChatHomePage() {
       >
         <div className="p-3 space-y-1.5 border-b border-white/10 shrink-0">
           <button
-            onClick={() => handleStartChat("", false, false)}
-            disabled={!user || loading}
+            onClick={() => handleStartChat("", "standard")}
+            disabled={loading}
             className="w-full h-9 rounded-xl bg-primary/15 hover:bg-primary/25 text-primary border border-primary/25 font-bold text-xs flex items-center gap-2 px-3 transition-all shadow-md shadow-primary/10"
           >
             <Plus className="w-4 h-4" /> New Chat
           </button>
           <div className="grid grid-cols-2 gap-1.5 pt-1">
             <button
-              onClick={() => handleStartChat("", true, false)}
-              disabled={!user || loading}
+              onClick={() => handleStartChat("", "temp")}
+              disabled={loading}
               className="h-8 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
             >
               <Ghost className="w-3 h-3 text-purple-400" /> Temp
             </button>
             <button
-              onClick={() => handleStartChat("", false, true)}
-              disabled={!user || loading}
+              onClick={() => handleStartChat("", "group")}
+              disabled={loading}
               className="h-8 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
             >
               <Users className="w-3 h-3 text-blue-400" /> Group
@@ -158,50 +177,55 @@ export default function XakAIChatHomePage() {
         </div>
 
         {/* Search bar inside sidebar */}
-        <div className="p-3 border-b border-white/5">
+        <div className="p-2 border-b border-white/5">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+            <Search className="w-3 h-3 absolute left-2.5 top-2.5 text-white/30" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search chats..."
-              className="w-full h-8 pl-8 pr-3 bg-white/5 border border-white/10 rounded-xl text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-primary/40"
+              placeholder="Search history..."
+              className="w-full h-7 pl-7 pr-2 rounded-lg bg-white/5 border border-white/10 text-[10px] text-white placeholder:text-white/20 focus:outline-none focus:border-primary/40"
             />
           </div>
         </div>
 
-        {/* Sessions list */}
+        {/* Sidebar Sessions List */}
         <ScrollArea className="flex-1 px-2 py-2">
           {!user ? (
-            <div className="py-12 text-center">
-              <Lock className="w-5 h-5 mx-auto mb-2 text-white/10" />
-              <p className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Sign in to save chats</p>
+            <div className="py-8 text-center px-3">
+              <Lock className="w-4 h-4 mx-auto mb-2 text-white/20" />
+              <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider mb-1">Guest Mode</p>
+              <p className="text-[9px] text-white/20">Sign in to save chat history permanently.</p>
             </div>
-          ) : filteredSessions.length === 0 ? (
-            <div className="py-8 text-center text-white/20 text-xs">No chat history</div>
           ) : (
             <div className="space-y-0.5">
-              <p className="px-2 py-1.5 text-[9px] font-black text-white/20 uppercase tracking-widest">History</p>
+              <p className="px-2 py-1.5 text-[9px] font-black text-white/30 uppercase tracking-widest flex items-center justify-between">
+                <span>History</span>
+                <span className="font-mono text-white/20">{filteredSessions.length}</span>
+              </p>
               {filteredSessions.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => router.push(`/ai-chat/${s.id}`)}
-                  className="w-full px-3 py-2 rounded-xl text-left transition-all flex items-center justify-between group/item text-[11px] hover:bg-white/5 text-white/50 hover:text-white"
+                  className="w-full px-3 py-2 rounded-xl text-left hover:bg-white/5 text-white/60 hover:text-white transition-all flex items-center justify-between group/item text-[11px]"
                 >
                   <div className="flex items-center gap-2 truncate min-w-0">
                     {s.temporary ? (
-                      <Ghost className="w-3 h-3 shrink-0 text-purple-400/60" />
+                      <Ghost className="w-3.5 h-3.5 shrink-0 text-purple-400" />
+                    ) : s.members?.length > 1 ? (
+                      <Users className="w-3.5 h-3.5 shrink-0 text-blue-400" />
                     ) : s.public ? (
-                      <Globe className="w-3 h-3 shrink-0 text-emerald-400/60" />
+                      <Globe className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
                     ) : (
-                      <MessageSquare className="w-3 h-3 shrink-0 opacity-30" />
+                      <MessageSquare className="w-3.5 h-3.5 shrink-0 opacity-40" />
                     )}
-                    <span className="truncate font-medium">{s.title || "Untitled"}</span>
+                    <span className="truncate font-medium">{s.title || "Untitled Session"}</span>
                   </div>
+
                   <button
                     onClick={(e) => handleDeleteSession(s.id, e)}
-                    className="opacity-0 group-hover/item:opacity-40 hover:!opacity-100 p-1 rounded hover:bg-rose-500/20 text-rose-400 shrink-0 transition-all"
+                    className="opacity-0 group-hover/item:opacity-40 hover:!opacity-100 p-1 rounded hover:bg-rose-500/20 text-rose-400 shrink-0"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
@@ -210,81 +234,66 @@ export default function XakAIChatHomePage() {
             </div>
           )}
         </ScrollArea>
-
-        {/* Sidebar Footer Buttons: Plugins & Universal Search */}
-        <div className="p-3 border-t border-white/10 space-y-1.5 shrink-0">
-          <button
-            onClick={() => setPluginStoreOpen(true)}
-            className="w-full h-8 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-2 px-3 transition-all"
-          >
-            <Puzzle className="w-3.5 h-3.5 text-primary" /> Plugin Store
-          </button>
-          <button
-            onClick={() => setUniversalSearchOpen(true)}
-            className="w-full h-8 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10 text-xs font-bold flex items-center gap-2 px-3 transition-all"
-          >
-            <Search className="w-3.5 h-3.5 text-sky-400" /> Universal Search
-          </button>
-        </div>
       </aside>
 
-      {/* ── Main Chat Area (ChatGPT Style) ─────────────────────────────── */}
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {/* Header toolbar */}
-        <header className="h-13 border-b border-white/10 bg-black/30 backdrop-blur-xl flex items-center justify-between px-4 shrink-0">
+      {/* ── Main Hero Area ──────────────────────────────────────────────── */}
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
+        {/* Header */}
+        <header className="h-14 border-b border-white/10 bg-black/40 backdrop-blur-xl flex items-center justify-between px-4 shrink-0">
           <div className="flex items-center gap-3">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="lg:hidden w-8 h-8 rounded-xl border border-white/10 bg-white/5">
+                  <Menu className="w-4 h-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="bg-[#05030d] border-white/10 p-0 w-64 text-white">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Navigation</SheetTitle>
+                </SheetHeader>
+                {/* Mobile sidebar content */}
+                <div className="p-4 space-y-2">
+                  <button
+                    onClick={() => handleStartChat("", "standard")}
+                    className="w-full h-9 rounded-xl bg-primary text-white font-bold text-xs"
+                  >
+                    New Chat
+                  </button>
+                </div>
+              </SheetContent>
+            </Sheet>
+
             <button
               onClick={() => setShowSidebar((v) => !v)}
               className="hidden lg:flex w-8 h-8 items-center justify-center rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all"
             >
-              <ChevronRight className={cn("w-3.5 h-3.5 transition-transform", showSidebar && "rotate-180")} />
+              <ChevronRight className={cn("w-4 h-4 transition-transform", showSidebar && "rotate-180")} />
             </button>
-            <div className="flex items-center gap-2">
-              <Bot className="w-5 h-5 text-primary" />
-              <span className="font-black uppercase italic tracking-tighter text-lg">Xak AI</span>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPluginStoreOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white/70 transition-all"
-            >
-              <Puzzle className="w-3.5 h-3.5 text-primary" /> Plugins
-            </button>
-            <button
-              onClick={() => setUniversalSearchOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white/70 transition-all"
-            >
-              <Search className="w-3.5 h-3.5 text-sky-400" /> Smart Search
-            </button>
+            <div className="flex items-center gap-2">
+              <Bot className="w-4 h-4 text-primary" />
+              <span className="font-black uppercase italic tracking-tight text-sm md:text-base">Xak AI</span>
+            </div>
           </div>
         </header>
 
-        {/* Center Hero Content */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto">
-          <div className="w-full max-w-2xl space-y-8 text-center my-auto">
-            {/* Logo orb */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="w-16 h-16 rounded-3xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center mx-auto shadow-2xl shadow-primary/20"
-            >
+        {/* Center Hero View */}
+        <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-center">
+          <div className="max-w-xl w-full space-y-6">
+            <div className="w-16 h-16 rounded-3xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center mx-auto shadow-2xl shadow-primary/20">
               <Sparkles className="w-8 h-8 text-primary animate-pulse" />
-            </motion.div>
+            </div>
 
             <div>
-              <h1 className="text-3xl md:text-4xl font-black uppercase italic tracking-tight mb-2 text-white">
-                What can I help with today?
-              </h1>
+              <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter mb-2">What can Xak AI build for you?</h1>
               <p className="text-white/40 text-sm">Ask anything, generate code, draft emails, or build playable games.</p>
             </div>
 
-            {/* Central Input Bar (ChatGPT style) */}
+            {/* Central Input Bar */}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleStartChat(input);
+                handleStartChat(input, "standard");
               }}
               className="relative flex flex-col rounded-2xl border border-white/15 bg-white/5 p-3 shadow-2xl focus-within:border-primary/50 transition-all text-left"
             >
@@ -295,7 +304,7 @@ export default function XakAIChatHomePage() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    handleStartChat(input);
+                    handleStartChat(input, "standard");
                   }
                 }}
                 placeholder="Message Xak AI... (Shift+Enter for new line)"
@@ -341,7 +350,7 @@ export default function XakAIChatHomePage() {
               ].map((card, i) => (
                 <button
                   key={i}
-                  onClick={() => handleStartChat(card.prompt)}
+                  onClick={() => handleStartChat(card.prompt, "standard")}
                   className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/30 hover:bg-primary/5 transition-all text-left group"
                 >
                   <p className="text-xs font-bold text-white group-hover:text-primary transition-colors">{card.title}</p>
