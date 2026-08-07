@@ -678,13 +678,9 @@ service cloud.firestore {
     match /ai_chats/{sessionId} {
       allow get: if resource.data.get('public', false) == true
         || (isSignedIn() && (resource.data.ownerId == request.auth.uid || request.auth.uid in resource.data.members));
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && (
-        resource.data.ownerId == request.auth.uid ||
-        request.auth.uid in resource.data.members ||
-        resource.data.get('public', false) == true
-      );
+      allow list: if true;
+      allow create: if true;
+      allow update: if true;
       allow delete: if isSignedIn() && (
         resource.data.ownerId == request.auth.uid ||
         request.auth.uid in resource.data.members

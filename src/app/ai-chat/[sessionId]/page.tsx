@@ -10,7 +10,8 @@ import {
   Send, User, Sparkles, Loader2, Bot, Plus, MessageSquare, History,
   Lock, Trash2, Copy, CheckCircle2, Mic, MicOff, Volume2, VolumeX,
   Paperclip, Download, Share2, Globe, Ghost, ChevronRight,
-  X, FileText, Eye, Settings, Zap, Users, UserPlus, Save, Edit3, Search
+  X, FileText, Eye, Settings, Zap, Users, UserPlus, Save, Edit3, Search,
+  MoreVertical, SlidersHorizontal, ArrowLeft
 } from "lucide-react";
 import { chatWithXakAI } from "@/ai/flows/xak-ai-chat-assistant-flow";
 import { cn } from "@/lib/utils";
@@ -18,7 +19,7 @@ import { copyToClipboard } from "@/lib/clipboard";
 import { useUser, useFirestore } from "@/firebase";
 import {
   collection, query, orderBy, limit, serverTimestamp,
-  doc, updateDoc, setDoc, onSnapshot, getDoc, arrayUnion
+  doc, updateDoc, setDoc, onSnapshot, arrayUnion
 } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,14 @@ import { EmailDraftCard, type EmailDraft } from "@/components/ai/EmailDraftCard"
 import { VoiceModeOverlay } from "@/components/ai/VoiceModeOverlay";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Menu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -65,7 +74,7 @@ interface AttachedPDF {
   sizeKb: string;
 }
 
-// ─── Parse email draft ────────────────────────────────────────────────────────
+// ─── Parse Email Draft ────────────────────────────────────────────────────────
 function parseEmailDraft(text: string): EmailDraft | null {
   const emailBlock = text.match(/```email\n?([\s\S]*?)```/i);
   if (!emailBlock) return null;
@@ -90,7 +99,7 @@ function FormattedContent({ content }: { content: string }) {
     const ok = await copyToClipboard(text);
     if (ok) {
       setCopiedId(id);
-      toast({ title: "Copied to clipboard" });
+      toast({ title: "Copied code block" });
       setTimeout(() => setCopiedId(null), 2000);
     }
   };
@@ -180,7 +189,7 @@ function AgentControlBanner({ isActive, onViewThoughts }: { isActive: boolean; o
   );
 }
 
-// ─── Main Chat Session Page Component ─────────────────────────────────────────
+// ─── Main Chat Session Component ──────────────────────────────────────────────
 export default function XakAIChatSessionPage() {
   const params = useParams();
   const router = useRouter();
@@ -236,28 +245,58 @@ export default function XakAIChatSessionPage() {
 
   // ─── Load session ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!sessionId || !firestore) {
+    if (!sessionId) {
       setSessionLoading(false);
       return;
     }
-    const docRef = doc(firestore, "ai_chats", sessionId);
-    const unsub = onSnapshot(docRef, (snap) => {
-      if (!snap.exists()) {
-        setSessionLoading(false);
-        return;
-      }
-      const data = { id: snap.id, ...snap.data() } as Session;
-      setSession(data);
-      setMessages(data.messages || []);
-      setEditedTitle(data.title || "");
 
-      if (user) {
-        setIsReadOnly(!data.members?.includes(user.uid) && !data.public);
-      } else {
-        setIsReadOnly(!data.public);
-      }
+    // Handle local guest session
+    if (sessionId.startsWith("guest_")) {
+      setSession({
+        id: sessionId,
+        title: "Guest Session",
+        messages: [],
+        members: ["guest"],
+        ownerId: "guest",
+        public: false,
+        temporary: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
       setSessionLoading(false);
-    });
+      return;
+    }
+
+    if (!firestore) {
+      setSessionLoading(false);
+      return;
+    }
+
+    const docRef = doc(firestore, "ai_chats", sessionId);
+    const unsub = onSnapshot(
+      docRef,
+      (snap) => {
+        if (!snap.exists()) {
+          setSessionLoading(false);
+          return;
+        }
+        const data = { id: snap.id, ...snap.data() } as Session;
+        setSession(data);
+        setMessages(data.messages || []);
+        setEditedTitle(data.title || "");
+
+        if (user) {
+          setIsReadOnly(!data.members?.includes(user.uid) && !data.public);
+        } else {
+          setIsReadOnly(!data.public);
+        }
+        setSessionLoading(false);
+      },
+      (err) => {
+        console.warn("Session snapshot error:", err);
+        setSessionLoading(false);
+      }
+    );
     return () => unsub();
   }, [sessionId, firestore, user]);
 
@@ -265,13 +304,17 @@ export default function XakAIChatSessionPage() {
   useEffect(() => {
     if (!user || !firestore) return;
     const q = query(collection(firestore, "ai_chats"), orderBy("updatedAt", "desc"), limit(40));
-    const unsub = onSnapshot(q, (snap) => {
-      setAllSessions(
-        snap.docs
-          .map((d) => ({ id: d.id, ...d.data() } as Session))
-          .filter((s) => s.members?.includes(user.uid) || s.ownerId === user.uid)
-      );
-    });
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setAllSessions(
+          snap.docs
+            .map((d) => ({ id: d.id, ...d.data() } as Session))
+            .filter((s) => s.members?.includes(user.uid) || s.ownerId === user.uid)
+        );
+      },
+      (err) => console.warn("All sessions snapshot error:", err)
+    );
     return () => unsub();
   }, [user, firestore]);
 
@@ -320,61 +363,79 @@ export default function XakAIChatSessionPage() {
   // ─── Create New Session ─────────────────────────────────────────────────────
   const createNewSession = useCallback(
     async (mode: "standard" | "temp" | "group" = "standard") => {
-      if (!user || !firestore) {
-        toast({ title: "Sign in to create a session" });
+      if (!user) {
+        // Fallback to guest ephemeral session
+        const guestId = `guest_${Date.now()}`;
+        router.push(`/ai-chat/${guestId}`);
         return;
       }
+      if (!firestore) return;
+
       const docRef = doc(collection(firestore, "ai_chats"));
       const isTemp = mode === "temp";
       const title = isTemp ? "Ghost Session" : mode === "group" ? "Group AI Workspace" : "New Chat Session";
 
-      await setDoc(docRef, {
-        title,
-        messages: [],
-        members: [user.uid],
-        ownerId: user.uid,
-        public: false,
-        temporary: isTemp,
-        isGroup: mode === "group",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      router.push(`/ai-chat/${docRef.id}`);
+      try {
+        await setDoc(docRef, {
+          title,
+          messages: [],
+          members: [user.uid],
+          ownerId: user.uid,
+          public: false,
+          temporary: isTemp,
+          isGroup: mode === "group",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        router.push(`/ai-chat/${docRef.id}`);
+      } catch (err: any) {
+        // Fallback to local guest route if Firestore fails
+        const guestId = `guest_${Date.now()}`;
+        router.push(`/ai-chat/${guestId}`);
+      }
     },
-    [user, firestore, router, toast]
+    [user, firestore, router]
   );
 
   // ─── Save Title ────────────────────────────────────────────────────────────
   const handleSaveTitle = async () => {
-    if (!sessionId || !firestore || !editedTitle.trim()) return;
-    await updateDoc(doc(firestore, "ai_chats", sessionId), {
-      title: editedTitle.trim(),
-      updatedAt: serverTimestamp(),
-    });
+    if (!sessionId || !editedTitle.trim()) return;
+    if (firestore && !sessionId.startsWith("guest_")) {
+      await updateDoc(doc(firestore, "ai_chats", sessionId), {
+        title: editedTitle.trim(),
+        updatedAt: serverTimestamp(),
+      }).catch(() => {});
+    }
+    setSession((prev) => (prev ? { ...prev, title: editedTitle.trim() } : prev));
     setIsEditingTitle(false);
     toast({ title: "Session title updated" });
   };
 
   // ─── Convert Temp to Saved ──────────────────────────────────────────────────
   const handleConvertTempToSaved = async () => {
-    if (!sessionId || !firestore) return;
-    await updateDoc(doc(firestore, "ai_chats", sessionId), {
-      temporary: false,
-      updatedAt: serverTimestamp(),
-    });
+    if (!sessionId) return;
+    if (firestore && !sessionId.startsWith("guest_")) {
+      await updateDoc(doc(firestore, "ai_chats", sessionId), {
+        temporary: false,
+        updatedAt: serverTimestamp(),
+      }).catch(() => {});
+    }
+    setSession((prev) => (prev ? { ...prev, temporary: false } : prev));
     toast({ title: "Chat saved permanently!" });
   };
 
   // ─── Invite Member to Group ────────────────────────────────────────────────
   const handleInviteMember = async () => {
-    if (!sessionId || !firestore || !inviteUid.trim()) return;
+    if (!sessionId || !inviteUid.trim()) return;
     setInviting(true);
     try {
-      await updateDoc(doc(firestore, "ai_chats", sessionId), {
-        members: arrayUnion(inviteUid.trim()),
-        isGroup: true,
-        updatedAt: serverTimestamp(),
-      });
+      if (firestore && !sessionId.startsWith("guest_")) {
+        await updateDoc(doc(firestore, "ai_chats", sessionId), {
+          members: arrayUnion(inviteUid.trim()),
+          isGroup: true,
+          updatedAt: serverTimestamp(),
+        });
+      }
       toast({ title: "Member invited to session!" });
       setInviteUid("");
       setInviteModalOpen(false);
@@ -425,7 +486,7 @@ export default function XakAIChatSessionPage() {
     const userMsg: Message = {
       role: "user",
       content: text || `Uploaded ${attachedPDF?.name || "PDF Document"}`,
-      senderUid: user?.uid,
+      senderUid: user?.uid || "guest",
       senderName: user?.displayName || "You",
       senderPhoto: user?.photoURL || "",
       timestamp: Date.now(),
@@ -450,7 +511,7 @@ export default function XakAIChatSessionPage() {
         content: [{ text: m.content }],
       }));
 
-      addThought({ type: "tool_call", label: `${personaObj.name} is thinking`, detail: `"${fullPrompt.substring(0, 100)}..."` });
+      addThought({ type: "tool_call", label: `${personaObj.name} is thinking`, detail: `"${fullPrompt.substring(0, 80)}..."` });
 
       const response = await chatWithXakAI({
         message: fullPrompt,
@@ -490,12 +551,13 @@ export default function XakAIChatSessionPage() {
         setSpeakingIndex(finalMessages.length - 1);
       }
 
-      if (user && firestore && sessionId) {
+      // Persist if authenticated session
+      if (user && firestore && sessionId && !sessionId.startsWith("guest_")) {
         await updateDoc(doc(firestore, "ai_chats", sessionId), {
           messages: finalMessages,
-          title: session?.title === "New Chat Session" || session?.title === "New Chat" ? fullPrompt.substring(0, 45) : session?.title,
+          title: session?.title === "New Chat Session" || session?.title === "New Chat" ? fullPrompt.substring(0, 40) : session?.title,
           updatedAt: serverTimestamp(),
-        });
+        }).catch(() => {});
       }
     } catch (err: any) {
       addThought({ type: "tool_result", label: "Error", detail: String(err) });
@@ -536,9 +598,12 @@ export default function XakAIChatSessionPage() {
 
   // ─── Share Link Toggle ─────────────────────────────────────────────────────
   const handleShare = async () => {
-    if (!session || !sessionId || !firestore) return;
+    if (!session || !sessionId) return;
     const nextPublicState = !session.public;
-    await updateDoc(doc(firestore, "ai_chats", sessionId), { public: nextPublicState });
+    if (firestore && !sessionId.startsWith("guest_")) {
+      await updateDoc(doc(firestore, "ai_chats", sessionId), { public: nextPublicState }).catch(() => {});
+    }
+    setSession((prev) => (prev ? { ...prev, public: nextPublicState } : prev));
     if (nextPublicState) {
       const shareUrl = `${window.location.origin}/ai-chat/${sessionId}`;
       await copyToClipboard(shareUrl);
@@ -577,11 +642,10 @@ export default function XakAIChatSessionPage() {
   );
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-[#070514]/90 backdrop-blur-3xl">
+    <div className="flex flex-col h-full bg-[#070514]/95 backdrop-blur-3xl">
       <div className="p-3 space-y-1.5 border-b border-white/10 shrink-0">
         <button
           onClick={() => createNewSession("standard")}
-          disabled={!user}
           className="w-full h-9 rounded-xl bg-primary/15 hover:bg-primary/25 text-primary border border-primary/25 font-black uppercase text-xs tracking-wider flex items-center gap-2 px-3 transition-all"
         >
           <Plus className="w-3.5 h-3.5" /> New Chat
@@ -590,21 +654,18 @@ export default function XakAIChatSessionPage() {
         <div className="grid grid-cols-2 gap-1.5">
           <button
             onClick={() => createNewSession("group")}
-            disabled={!user}
             className="h-8 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1 transition-all"
           >
             <Users className="w-3 h-3" /> Group AI
           </button>
           <button
             onClick={() => createNewSession("temp")}
-            disabled={!user}
             className="h-8 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1 transition-all"
           >
             <Ghost className="w-3 h-3" /> Temp Chat
           </button>
         </div>
 
-        {/* Sidebar Search */}
         <div className="relative pt-1">
           <Search className="w-3 h-3 absolute left-2.5 top-3.5 text-white/30" />
           <input
@@ -619,9 +680,10 @@ export default function XakAIChatSessionPage() {
 
       <ScrollArea className="flex-1 px-2 py-2">
         {!user ? (
-          <div className="py-12 text-center">
-            <Lock className="w-5 h-5 mx-auto mb-2 text-white/10" />
-            <p className="text-[10px] text-white/30 font-bold uppercase tracking-wider">Sign in to save history</p>
+          <div className="py-8 text-center px-3">
+            <Lock className="w-4 h-4 mx-auto mb-2 text-white/20" />
+            <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider mb-1">Guest Mode</p>
+            <p className="text-[9px] text-white/20">Sign in to save chat history permanently across devices.</p>
           </div>
         ) : (
           <div className="space-y-0.5">
@@ -756,10 +818,10 @@ export default function XakAIChatSessionPage() {
 
       {/* Main Chat Area */}
       <main className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
-        {/* Header */}
+        {/* ── STREAMLINED UNCROWDED HEADER ────────────────────────────────────── */}
         <header className="h-14 border-b border-white/10 bg-black/40 backdrop-blur-xl flex items-center justify-between px-4 shrink-0 z-10">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            {/* Mobile menu trigger */}
+            {/* Mobile Navigation Drawer */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="lg:hidden w-8 h-8 rounded-xl border border-white/10 bg-white/5 shrink-0">
@@ -774,15 +836,16 @@ export default function XakAIChatSessionPage() {
               </SheetContent>
             </Sheet>
 
-            {/* Sidebar toggle */}
+            {/* Desktop Sidebar Toggle */}
             <button
               onClick={() => setShowSidebar((v) => !v)}
               className="hidden lg:flex w-8 h-8 items-center justify-center rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all shrink-0"
+              title="Toggle Sidebar"
             >
               <ChevronRight className={cn("w-4 h-4 transition-transform", showSidebar && "rotate-180")} />
             </button>
 
-            {/* Title / Title editing */}
+            {/* Session Title & Badge */}
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Bot className="w-4 h-4 text-primary shrink-0" />
               {isEditingTitle ? (
@@ -812,97 +875,105 @@ export default function XakAIChatSessionPage() {
                 </div>
               )}
 
-              {/* Status Badges */}
-              {session?.temporary && (
+              {/* Single Clean Badge */}
+              {session?.temporary ? (
                 <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[9px] font-black uppercase tracking-widest shrink-0 flex items-center gap-1">
-                  <Ghost className="w-3 h-3" /> Ghost Temp
+                  <Ghost className="w-3 h-3" /> Temp
                 </Badge>
-              )}
-              {session?.public && (
+              ) : session?.public ? (
                 <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[9px] font-black uppercase tracking-widest shrink-0 flex items-center gap-1">
                   <Globe className="w-3 h-3" /> Public
                 </Badge>
-              )}
-              {session?.isGroup && (
+              ) : session?.isGroup ? (
                 <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 text-[9px] font-black uppercase tracking-widest shrink-0 flex items-center gap-1">
                   <Users className="w-3 h-3" /> Group ({session.members?.length || 1})
                 </Badge>
-              )}
+              ) : null}
             </div>
           </div>
 
-          {/* Right Header Controls */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* Convert Temp Session */}
-            {session?.temporary && (
-              <button
-                onClick={handleConvertTempToSaved}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-all"
-                title="Save chat permanently"
-              >
-                <Save className="w-3 h-3" />
-                <span className="hidden sm:inline">Save Chat</span>
-              </button>
-            )}
-
-            {/* Invite Member button */}
-            <button
-              onClick={() => setInviteModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-blue-500/15 text-blue-300 border border-blue-500/25 hover:bg-blue-500/25 transition-all"
-            >
-              <UserPlus className="w-3 h-3" />
-              <span className="hidden md:inline">Invite</span>
-            </button>
-
+          {/* Clean Right Controls (Persona + Share + Tools Dropdown Menu) */}
+          <div className="flex items-center gap-2 shrink-0">
             {/* Persona Switcher */}
             <PersonaSwitcher activePersona={persona} onChange={setPersona} />
 
-            {/* Voice toggle */}
-            <button
-              onClick={toggleVoice}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
-                voiceOpen ? "bg-violet-500/20 text-violet-400 border-violet-500/30" : "bg-white/5 text-white/40 border-white/10 hover:bg-white/10 hover:text-white"
-              )}
-            >
-              <Mic className="w-3 h-3" />
-              <span className="hidden sm:inline">Voice</span>
-            </button>
-
-            {/* Share Link button */}
+            {/* Quick Share Link */}
             {session && (
               <button
                 onClick={handleShare}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
-                  session.public ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-white/5 text-white/40 border-white/10 hover:bg-white/10 hover:text-white"
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
+                  session.public
+                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                    : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white"
                 )}
               >
-                <Share2 className="w-3 h-3" />
-                <span className="hidden md:inline">{session.public ? "Shared" : "Share"}</span>
+                <Share2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{session.public ? "Shared" : "Share"}</span>
               </button>
             )}
 
-            {/* Export PDF button */}
-            <button
-              onClick={handleExportPDF}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border bg-white/5 text-white/40 border-white/10 hover:bg-white/10 hover:text-white transition-all"
-            >
-              <Download className="w-3 h-3" />
-              <span className="hidden md:inline">PDF</span>
-            </button>
+            {/* ── UNCROWDED TOOLS DROPDOWN MENU ────────────────────────────────── */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all"
+                  title="Tools & Actions"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-[#0e0a24] border-white/10 text-white w-52 rounded-2xl p-1.5 shadow-2xl">
+                <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-widest text-white/30 px-2 py-1">
+                  Session Tools
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-white/10" />
 
-            {/* Auto-speak toggle */}
-            <button
-              onClick={() => setAutoSpeak((v) => !v)}
-              title="Auto-speak AI responses"
-              className={cn(
-                "w-8 h-8 rounded-xl flex items-center justify-center border transition-all",
-                autoSpeak ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-white/5 text-white/30 border-white/10 hover:text-white hover:bg-white/10"
-              )}
-            >
-              {autoSpeak ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
-            </button>
+                <DropdownMenuItem
+                  onClick={handleExportPDF}
+                  className="flex items-center gap-2 text-xs font-medium cursor-pointer rounded-xl px-2 py-2 hover:bg-white/5 text-white/80 hover:text-white"
+                >
+                  <Download className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Export to PDF</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => setInviteModalOpen(true)}
+                  className="flex items-center gap-2 text-xs font-medium cursor-pointer rounded-xl px-2 py-2 hover:bg-white/5 text-white/80 hover:text-white"
+                >
+                  <UserPlus className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Invite to Group AI</span>
+                </DropdownMenuItem>
+
+                {session?.temporary && (
+                  <DropdownMenuItem
+                    onClick={handleConvertTempToSaved}
+                    className="flex items-center gap-2 text-xs font-medium cursor-pointer rounded-xl px-2 py-2 hover:bg-purple-500/10 text-purple-300"
+                  >
+                    <Save className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Save Chat Permanently</span>
+                  </DropdownMenuItem>
+                )}
+
+                <DropdownMenuSeparator className="bg-white/10" />
+
+                <DropdownMenuItem
+                  onClick={toggleVoice}
+                  className="flex items-center gap-2 text-xs font-medium cursor-pointer rounded-xl px-2 py-2 hover:bg-white/5 text-white/80 hover:text-white"
+                >
+                  <Mic className="w-3.5 h-3.5 text-violet-400" />
+                  <span>{voiceOpen ? "Close Voice Mode" : "Open Voice Assistant"}</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => setAutoSpeak((v) => !v)}
+                  className="flex items-center gap-2 text-xs font-medium cursor-pointer rounded-xl px-2 py-2 hover:bg-white/5 text-white/80 hover:text-white"
+                >
+                  {autoSpeak ? <Volume2 className="w-3.5 h-3.5 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5 text-white/40" />}
+                  <span>{autoSpeak ? "Auto-speak: On" : "Auto-speak: Off"}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
@@ -939,7 +1010,7 @@ export default function XakAIChatSessionPage() {
                     {PERSONAS.find((p) => p.id === persona)?.tagline || "Your personal AI agent — chat, code, analyze PDFs, and control Xakteir."}
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-2 max-w-md mx-auto">
+                <div className="grid grid-cols-2 gap-2.5 max-w-md mx-auto">
                   {[
                     "Build me an interactive web app",
                     "Analyze uploaded PDF document",

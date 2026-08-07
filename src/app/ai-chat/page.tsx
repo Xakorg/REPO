@@ -70,43 +70,32 @@ export default function XakAIChatHomePage() {
   }, [user, firestore]);
 
   // Create session safely and redirect
-  const handleStartChat = async (promptText?: string, temporary = false, isGroup = false) => {
-    const text = promptText || input.trim();
+  const handleStartChat = async (mode: "standard" | "temp" | "group" = "standard") => {
+    setCreatingType(mode);
     if (!user || !firestore) {
-      toast({ title: "Sign in to launch Xak AI", description: "You need to be signed in to save sessions." });
+      const guestId = `guest_${Date.now()}`;
+      router.push(`/ai-chat/${guestId}`);
       return;
     }
-
-    setLoading(true);
-
     try {
-      const newDocRef = doc(collection(firestore, "ai_chats"));
-      const title = text ? text.substring(0, 40) : (temporary ? "Ghost Session" : isGroup ? "Group AI Workspace" : "New Chat");
+      const docRef = doc(collection(firestore, "ai_chats"));
+      const isTemp = mode === "temp";
+      const defaultTitle = isTemp
+        ? "Ghost Session"
+        : mode === "group"
+        ? "Group AI Workspace"
+        : "New Chat Session";
 
-      const initialMessages = text
-        ? [
-            {
-              role: "user",
-              content: text,
-              senderUid: user.uid,
-              senderName: user.displayName || "You",
-              senderPhoto: user.photoURL || "",
-              timestamp: Date.now(),
-            },
-          ]
-        : [];
-
-      const payload = {
-        title,
-        messages: initialMessages,
+      await setDoc(docRef, {
+        title: defaultTitle,
+        messages: [],
         members: [user.uid],
         ownerId: user.uid,
         public: false,
-        temporary,
-        isGroup,
+        temporary: isTemp,
+        isGroup: mode === "group",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      };
 
       await setDoc(newDocRef, payload);
       router.push(`/ai-chat/${newDocRef.id}`);
