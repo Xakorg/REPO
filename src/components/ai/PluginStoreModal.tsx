@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Puzzle, X, CheckCircle2, Plus, Sparkles, Github, Music, FileText,
-  Calendar, CheckSquare, ExternalLink, Zap
+  Puzzle, X, CheckCircle2, Plus, Sparkles, Github, CloudSun, BookOpen,
+  Mail, Search, Key, ShieldCheck, RefreshCw, Zap, Check, Lock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useUser, useFirestore } from '@/firebase';
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
 export type Plugin = {
   id: string;
@@ -19,63 +21,71 @@ export type Plugin = {
   bgColor: string;
   borderColor: string;
   connected: boolean;
+  requiresKey?: boolean;
+  apiKey?: string;
+  docsUrl?: string;
 };
 
-const INITIAL_PLUGINS: Plugin[] = [
+const AVAILABLE_PLUGINS: Plugin[] = [
   {
     id: 'github',
-    name: 'GitHub Copilot Sync',
+    name: 'GitHub REST API',
     category: 'Developer',
-    description: 'Summarize commits, inspect PRs, and read repositories in real time.',
+    description: 'Inspect repositories, read source files, commits, and pull requests via GitHub API.',
     icon: Github,
     color: 'text-white',
     bgColor: 'bg-white/10',
     borderColor: 'border-white/20',
-    connected: true,
-  },
-  {
-    id: 'spotify',
-    name: 'Spotify Music',
-    category: 'Media',
-    description: 'Control playback, generate lo-fi playlists, and play music inside Xakteir.',
-    icon: Music,
-    color: 'text-emerald-400',
-    bgColor: 'bg-emerald-500/10',
-    borderColor: 'border-emerald-500/20',
     connected: false,
+    requiresKey: true,
   },
   {
-    id: 'notion',
-    name: 'Notion Workspace',
-    category: 'Productivity',
-    description: 'Search Notion pages, pull database context, and export notes directly.',
-    icon: FileText,
-    color: 'text-sky-400',
-    bgColor: 'bg-sky-500/10',
-    borderColor: 'border-sky-500/20',
-    connected: true,
-  },
-  {
-    id: 'trello',
-    name: 'Trello / Jira Tasks',
-    category: 'Work',
-    description: 'Manage boards, create task cards, and assign deadlines via voice/chat.',
-    icon: CheckSquare,
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/20',
-    connected: false,
-  },
-  {
-    id: 'calendar',
-    name: 'Google Calendar Sync',
-    category: 'Schedule',
-    description: 'Read upcoming events, schedule meetings, and send calendar invites.',
-    icon: Calendar,
+    id: 'weather',
+    name: 'Open-Meteo Weather API',
+    category: 'Environment',
+    description: 'Fetch real live weather conditions, hourly forecasts, and wind data worldwide.',
+    icon: CloudSun,
     color: 'text-amber-400',
     bgColor: 'bg-amber-500/10',
     borderColor: 'border-amber-500/20',
     connected: true,
+    requiresKey: false,
+  },
+  {
+    id: 'wikipedia',
+    name: 'Wikipedia Knowledge Base',
+    category: 'Knowledge',
+    description: 'Search and pull full encyclopedic summaries, history, and scientific facts.',
+    icon: BookOpen,
+    color: 'text-sky-400',
+    bgColor: 'bg-sky-500/10',
+    borderColor: 'border-sky-500/20',
+    connected: true,
+    requiresKey: false,
+  },
+  {
+    id: 'websearch',
+    name: 'DuckDuckGo Web Search',
+    category: 'Search',
+    description: 'Perform real-time live search across the entire internet for up-to-date news and info.',
+    icon: Search,
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/10',
+    borderColor: 'border-emerald-500/20',
+    connected: true,
+    requiresKey: false,
+  },
+  {
+    id: 'xakmail',
+    name: 'Xak Mailer System',
+    category: 'Productivity',
+    description: 'Integrate directly with Xakteir Mail service to compose, draft, and dispatch real emails.',
+    icon: Mail,
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-500/10',
+    borderColor: 'border-purple-500/20',
+    connected: true,
+    requiresKey: false,
   },
 ];
 
@@ -85,28 +95,94 @@ interface PluginStoreModalProps {
 }
 
 export function PluginStoreModal({ isOpen, onClose }: PluginStoreModalProps) {
-  const [plugins, setPlugins] = useState<Plugin[]>(INITIAL_PLUGINS);
-  const [filter, setFilter] = useState<string>('All');
+  const { user } = useUser();
+  const firestore = useFirestore();
   const { toast } = useToast();
 
-  const toggleConnect = (id: string) => {
-    setPlugins(prev =>
-      prev.map(p => {
-        if (p.id === id) {
-          const nextState = !p.connected;
-          toast({
-            title: nextState ? `Connected ${p.name}` : `Disconnected ${p.name}`,
-            description: nextState ? "Xak AI can now use tools from this plugin." : "Plugin disabled.",
-          });
-          return { ...p, connected: nextState };
+  const [plugins, setPlugins] = useState<Plugin[]>(AVAILABLE_PLUGINS);
+  const [filter, setFilter] = useState<string>('All');
+  const [editingKeyPlugin, setEditingKeyPlugin] = useState<string | null>(null);
+  const [keyInput, setKeyInput] = useState<string>('');
+  const [savingKey, setSavingKey] = useState(false);
+
+  // Sync real plugin states from Firestore `users/{uid}/ai_plugins`
+  useEffect(() => {
+    if (!user || !firestore) return;
+
+    const unsubscribes = AVAILABLE_PLUGINS.map(p => {
+      const pluginRef = doc(firestore, 'users', user.uid, 'ai_plugins', p.id);
+      return onSnapshot(pluginRef, snap => {
+        if (snap.exists()) {
+          const data = snap.data();
+          setPlugins(prev =>
+            prev.map(item =>
+              item.id === p.id
+                ? { ...item, connected: data.connected ?? item.connected, apiKey: data.apiKey || '' }
+                : item
+            )
+          );
         }
-        return p;
-      })
-    );
+      });
+    });
+
+    return () => unsubscribes.forEach(unsub => unsub());
+  }, [user, firestore]);
+
+  const toggleConnect = async (plugin: Plugin) => {
+    if (!user || !firestore) {
+      toast({ title: "Sign in required", description: "Log in to enable plugins on your account." });
+      return;
+    }
+
+    const nextState = !plugin.connected;
+    const pluginRef = doc(firestore, 'users', user.uid, 'ai_plugins', plugin.id);
+
+    try {
+      await setDoc(
+        pluginRef,
+        {
+          id: plugin.id,
+          name: plugin.name,
+          connected: nextState,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      toast({
+        title: nextState ? `Activated ${plugin.name}` : `Deactivated ${plugin.name}`,
+        description: nextState ? "Xak AI can now invoke real tools from this API." : "Plugin disabled.",
+      });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Failed to update plugin state", description: e.message });
+    }
   };
 
-  const categories = ['All', 'Developer', 'Productivity', 'Media', 'Work', 'Schedule'];
+  const handleSaveApiKey = async (pluginId: string) => {
+    if (!user || !firestore) return;
+    setSavingKey(true);
+    try {
+      const pluginRef = doc(firestore, 'users', user.uid, 'ai_plugins', pluginId);
+      await setDoc(
+        pluginRef,
+        {
+          apiKey: keyInput.trim(),
+          connected: true,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      toast({ title: "API Token Saved!", description: "Plugin authenticated successfully." });
+      setEditingKeyPlugin(null);
+      setKeyInput('');
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Failed to save API key" });
+    } finally {
+      setSavingKey(false);
+    }
+  };
 
+  const categories = ['All', 'Developer', 'Environment', 'Knowledge', 'Search', 'Productivity'];
   const filtered = filter === 'All' ? plugins : plugins.filter(p => p.category === filter);
 
   return (
@@ -131,8 +207,8 @@ export function PluginStoreModal({ isOpen, onClose }: PluginStoreModalProps) {
                   <Puzzle className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-black uppercase italic tracking-tight text-white">Xak AI Plugin Store</h2>
-                  <p className="text-[10px] text-white/40 font-medium">Extend Xak AI capabilities with external tools</p>
+                  <h2 className="text-sm font-black uppercase italic tracking-tight text-white">Xak AI Live Plugin System</h2>
+                  <p className="text-[10px] text-white/40 font-medium">Real-time REST API integrations powered by Genkit Tools</p>
                 </div>
               </div>
               <button
@@ -163,45 +239,88 @@ export function PluginStoreModal({ isOpen, onClose }: PluginStoreModalProps) {
             <div className="p-6 overflow-y-auto space-y-3 flex-1">
               {filtered.map(p => {
                 const Icon = p.icon;
+                const isEditing = editingKeyPlugin === p.id;
                 return (
                   <div
                     key={p.id}
-                    className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-4 transition-all hover:bg-white/8"
+                    className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-3 transition-all hover:bg-white/8"
                   >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0', p.bgColor, p.borderColor)}>
-                        <Icon className={cn('w-6 h-6', p.color as string)} />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-white truncate">{p.name}</h3>
-                          <span className="text-[9px] font-black uppercase tracking-widest text-white/30 px-2 py-0.5 rounded bg-white/5">
-                            {p.category}
-                          </span>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0', p.bgColor, p.borderColor)}>
+                          <Icon className={cn('w-6 h-6', p.color as string)} />
                         </div>
-                        <p className="text-xs text-white/50 mt-0.5 leading-relaxed truncate">{p.description}</p>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-white truncate">{p.name}</h3>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-white/30 px-2 py-0.5 rounded bg-white/5">
+                              {p.category}
+                            </span>
+                            {p.requiresKey && (
+                              <span className="text-[9px] font-black uppercase tracking-widest text-amber-400/80 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                                Requires Token
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-white/50 mt-0.5 leading-relaxed truncate">{p.description}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {p.requiresKey && (
+                          <button
+                            onClick={() => {
+                              setEditingKeyPlugin(isEditing ? null : p.id);
+                              setKeyInput(p.apiKey || '');
+                            }}
+                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/40 hover:text-white border border-white/10 transition-all"
+                            title="Configure API Token"
+                          >
+                            <Key className="w-4 h-4" />
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => toggleConnect(p)}
+                          className={cn(
+                            'px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5',
+                            p.connected
+                              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-white/10 hover:bg-primary text-white border border-white/10'
+                          )}
+                        >
+                          {p.connected ? (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Active
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="w-3.5 h-3.5" /> Enable
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => toggleConnect(p.id)}
-                      className={cn(
-                        'px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0',
-                        p.connected
-                          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                          : 'bg-white/10 hover:bg-primary text-white border border-white/10'
-                      )}
-                    >
-                      {p.connected ? (
-                        <>
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Active
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-3.5 h-3.5" /> Connect
-                        </>
-                      )}
-                    </button>
+                    {/* API Token Input Drawer */}
+                    {isEditing && (
+                      <div className="mt-2 pt-3 border-t border-white/10 flex items-center gap-2 animate-in fade-in">
+                        <input
+                          type="password"
+                          value={keyInput}
+                          onChange={e => setKeyInput(e.target.value)}
+                          placeholder="Paste API Token / Key..."
+                          className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50"
+                        />
+                        <button
+                          onClick={() => handleSaveApiKey(p.id)}
+                          disabled={savingKey}
+                          className="px-3 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-xs uppercase tracking-wider transition-all"
+                        >
+                          {savingKey ? "Saving..." : "Save Key"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -209,9 +328,9 @@ export function PluginStoreModal({ isOpen, onClose }: PluginStoreModalProps) {
 
             {/* Footer */}
             <div className="h-11 bg-black/60 border-t border-white/5 px-6 flex items-center justify-between shrink-0 text-[10px] text-white/30">
-              <span>{plugins.filter(p => p.connected).length} of {plugins.length} plugins enabled</span>
-              <span className="flex items-center gap-1 text-primary">
-                <Zap className="w-3 h-3" /> Real-time Tool Calling Enabled
+              <span>{plugins.filter(p => p.connected).length} of {plugins.length} plugins active & synced to Firestore</span>
+              <span className="flex items-center gap-1 text-emerald-400 font-medium">
+                <ShieldCheck className="w-3.5 h-3.5" /> Real API Tools Powered by Genkit
               </span>
             </div>
           </motion.div>

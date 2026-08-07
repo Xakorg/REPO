@@ -366,6 +366,110 @@ const queryMemory = ai.defineTool(
   }
 );
 
+// Real Open-Meteo Weather Plugin Tool
+const plugin_getWeather = ai.defineTool(
+  {
+    name: 'plugin_getWeather',
+    description: 'Fetches real live weather conditions and temperature forecasts for any city or latitude/longitude.',
+    inputSchema: z.object({
+      location: z.string().describe('City name or location (e.g. London, Tokyo, New York).'),
+      latitude: z.number().optional().describe('Latitude if available.'),
+      longitude: z.number().optional().describe('Longitude if available.'),
+    }),
+    outputSchema: z.string(),
+  },
+  async (input) => {
+    try {
+      let lat = input.latitude ?? 51.5074;
+      let lon = input.longitude ?? -0.1278;
+
+      if (!input.latitude || !input.longitude) {
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(input.location)}&count=1&language=en&format=json`);
+        const geoData = await geoRes.json();
+        if (geoData.results && geoData.results.length > 0) {
+          lat = geoData.results[0].latitude;
+          lon = geoData.results[0].longitude;
+        }
+      }
+
+      const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+      const weatherData = await weatherRes.json();
+      if (weatherData.current_weather) {
+        const cw = weatherData.current_weather;
+        return `Current Weather for ${input.location}: ${cw.temperature}°C, Wind Speed: ${cw.windspeed} km/h, Wind Direction: ${cw.winddirection}°. (Time: ${cw.time})`;
+      }
+      return `Could not parse weather for ${input.location}.`;
+    } catch (e: any) {
+      return `Weather API error: ${e.message}`;
+    }
+  }
+);
+
+// Real Wikipedia Knowledge Plugin Tool
+const plugin_wikiSearch = ai.defineTool(
+  {
+    name: 'plugin_wikiSearch',
+    description: 'Searches Wikipedia for factual summaries, historical details, and scientific articles.',
+    inputSchema: z.object({
+      query: z.string().describe('Topic or entity to look up on Wikipedia.'),
+    }),
+    outputSchema: z.string(),
+  },
+  async (input) => {
+    try {
+      const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(input.query.trim())}`);
+      if (!res.ok) {
+        const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(input.query)}&limit=1&namespace=0&format=json`);
+        const searchData = await searchRes.json();
+        if (searchData[1] && searchData[1].length > 0) {
+          const firstTitle = searchData[1][0];
+          const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(firstTitle)}`);
+          const summaryData = await summaryRes.json();
+          return `[Wikipedia: ${summaryData.title}]: ${summaryData.extract || summaryData.description}`;
+        }
+        return `No Wikipedia summary found for "${input.query}".`;
+      }
+      const data = await res.json();
+      return `[Wikipedia: ${data.title}]: ${data.extract || data.description}`;
+    } catch (e: any) {
+      return `Wikipedia API error: ${e.message}`;
+    }
+  }
+);
+
+// Real GitHub REST Plugin Tool
+const plugin_githubFetchRepo = ai.defineTool(
+  {
+    name: 'plugin_githubFetchRepo',
+    description: 'Fetches real information, README, or files from a public GitHub repository.',
+    inputSchema: z.object({
+      owner: z.string().describe('GitHub repository owner or organization.'),
+      repo: z.string().describe('Repository name.'),
+      path: z.string().optional().describe('File path in repo (optional).'),
+    }),
+    outputSchema: z.string(),
+  },
+  async (input) => {
+    try {
+      const url = input.path
+        ? `https://api.github.com/repos/${input.owner}/${input.repo}/contents/${input.path}`
+        : `https://api.github.com/repos/${input.owner}/${input.repo}/readme`;
+      
+      const res = await fetch(url, { headers: { 'User-Agent': 'XakAI-Agent' } });
+      if (!res.ok) return `GitHub API returned status ${res.status} for ${input.owner}/${input.repo}.`;
+      
+      const data = await res.json();
+      if (data.content) {
+        const decoded = Buffer.from(data.content, 'base64').toString('utf-8');
+        return `[GitHub: ${input.owner}/${input.repo}/${data.name || ''}]:\n${decoded.substring(0, 4000)}`;
+      }
+      return `[GitHub Repo Info]: Stars: ${data.stargazers_count}, Language: ${data.language}, Description: ${data.description}`;
+    } catch (e: any) {
+      return `GitHub API error: ${e.message}`;
+    }
+  }
+);
+
 // Tool to navigate Xakteir to a specific page
 const xakteir_navigate = ai.defineTool(
   {
@@ -580,8 +684,8 @@ It can span multiple lines.
 - You can write any type of email: professional, casual, follow-up, cold outreach, apology, thank you, invoice, etc.`;
 
     const activeTools = signedIn 
-      ? [createDocument, createGoal, createFile, generateImage, generateVideo, editLocalFile, runTerminalCommand, generate3DObject, readWebpage, saveToMemory, queryMemory, xakteir_navigate, xakteir_click] 
-      : [generateImage, generateVideo, editLocalFile, runTerminalCommand, generate3DObject, readWebpage];
+      ? [createDocument, createGoal, createFile, generateImage, generateVideo, editLocalFile, runTerminalCommand, generate3DObject, readWebpage, saveToMemory, queryMemory, xakteir_navigate, xakteir_click, plugin_getWeather, plugin_wikiSearch, plugin_githubFetchRepo] 
+      : [generateImage, generateVideo, editLocalFile, runTerminalCommand, generate3DObject, readWebpage, plugin_getWeather, plugin_wikiSearch, plugin_githubFetchRepo];
 
     const googleSearchConfig = { googleSearchRetrieval: {} };
 
