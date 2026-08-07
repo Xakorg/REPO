@@ -2087,7 +2087,7 @@ export default function MeetingRoomPage() {
 
         {/* Sliding Chat Panel (Right Sidebar) */}
         {isChatOpen && (
-          <aside className="w-96 glass-card border-l-4 border-white/10 bg-zinc-950/90 backdrop-blur-2xl flex flex-col z-50 animate-in slide-in-from-right duration-300 rounded-[2.5rem] overflow-hidden shadow-2xl">
+          <aside className="w-96 glass-card border-l-4 border-white/10 bg-zinc-950/95 backdrop-blur-2xl flex flex-col z-[100] animate-in slide-in-from-right duration-300 rounded-[2.5rem] overflow-hidden shadow-2xl pb-24 sm:pb-0">
             <header className="h-20 border-b border-white/10 px-8 flex items-center justify-between">
               <span className="text-sm font-black uppercase tracking-[0.2em] text-white">Meeting Chat</span>
               <Button variant="ghost" size="icon" onClick={() => setIsChatOpen(false)} className="text-zinc-400 hover:text-white rounded-xl">
@@ -2109,7 +2109,7 @@ export default function MeetingRoomPage() {
               <div ref={chatEndRef} />
             </div>
 
-            <div className="p-6 border-t border-white/10 bg-black/40 flex gap-3">
+            <div className="p-6 border-t border-white/10 bg-black/80 flex gap-3 relative z-[110] pointer-events-auto">
               <Input
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
@@ -2126,7 +2126,7 @@ export default function MeetingRoomPage() {
 
         {/* Sliding Notepad Content Drawer */}
         {isNotepadOpen && (
-          <aside className="w-96 glass-card border-l-4 border-white/10 bg-zinc-950/90 backdrop-blur-2xl flex flex-col z-50 animate-in slide-in-from-right duration-300 rounded-[2.5rem] overflow-hidden shadow-2xl">
+          <aside className="w-96 glass-card border-l-4 border-white/10 bg-zinc-950/95 backdrop-blur-2xl flex flex-col z-[100] animate-in slide-in-from-right duration-300 rounded-[2.5rem] overflow-hidden shadow-2xl pb-24 sm:pb-0">
             <header className="h-20 border-b border-white/10 px-8 flex items-center justify-between">
               <span className="text-sm font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
                 <FileText className="w-4 h-4 text-rose-500" /> Collaborative Notepad
@@ -2151,10 +2151,11 @@ export default function MeetingRoomPage() {
                   a.href = url;
                   a.download = `meeting-notes-${roomId}.txt`;
                   a.click();
+                  URL.revokeObjectURL(url);
                 }}
-                className="w-full h-12 bg-rose-600 hover:bg-rose-500 text-xs font-black uppercase tracking-widest rounded-xl"
+                className="h-12 bg-rose-600 hover:bg-rose-500 rounded-2xl font-black uppercase text-xs tracking-widest text-white shadow-lg"
               >
-                Download Notes
+                Export Notes
               </Button>
             </div>
           </aside>

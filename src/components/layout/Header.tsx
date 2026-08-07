@@ -698,7 +698,7 @@ export function Header() {
 
   return (
     <header className={cn(
-      "h-20 bg-black/40 backdrop-blur-2xl sticky top-0 z-[100] px-10 border-b-2 border-white/10 shadow-[0_10px_50px_rgba(0,0,0,0.4)] transition-all duration-300",
+      "h-20 bg-black/40 backdrop-blur-2xl sticky top-0 z-50 px-10 border-b-2 border-white/10 shadow-[0_10px_50px_rgba(0,0,0,0.4)] transition-all duration-300",
       headerStyle === 'floating' && "bg-transparent border-none shadow-none px-4 pt-4 pointer-events-none"
     )}>
       <div className={cn("max-w-[1800px] mx-auto h-full flex items-center relative", headerStyle === 'centered' ? "justify-between" : "justify-between")}>
