@@ -15,6 +15,48 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "helix",
+    title: "Helix",
+    developer: "Xakteir Studios",
+    type: "Puzzle",
+    genre: ["Quantum Light", "DNA Spiral", "Laser Alignment", "1P / 2P Modes", "Mobile Friendly"],
+    description: "Rotate quantum light alignment beams to match revolving spiral DNA nodes and prevent total energy decay.",
+    bannerUrl: "https://images.unsplash.com/photo-1507499739999-097706ad8914?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=helix",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:10", description: "Batch 9 Launch" }],
+    route: "/game/helix"
+  },
+  {
+    id: "chrono",
+    title: "Chrono",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Time Warp", "Temporal Echo", "Velocity Obstacles", "1P / 2P Modes", "Mobile Friendly"],
+    description: "Dodge temporal barriers at warp velocity and dilate time to maneuver past impossible obstacle patterns.",
+    bannerUrl: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=chrono",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:10", description: "Batch 9 Launch" }],
+    route: "/game/chrono"
+  },
+  {
+    id: "spectra",
+    title: "Spectra",
+    developer: "Xakteir Studios",
+    type: "Action",
+    genre: ["Chromatic Optic", "Prism Refraction", "Wavelength Routing", "1P / 2P Modes", "Mobile Friendly"],
+    description: "Refract incoming chromatic laser beams by matching optic prism wavelengths between Red, Green, and Blue.",
+    bannerUrl: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=spectra",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "19:10", description: "Batch 9 Launch" }],
+    route: "/game/spectra"
+  },
+  {
     id: "glitch",
     title: "Glitch",
     developer: "Xakteir Studios",
