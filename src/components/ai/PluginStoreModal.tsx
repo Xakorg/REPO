@@ -170,7 +170,7 @@ export function PluginStoreModal({ isOpen, onClose }: PluginStoreModalProps) {
                   >
                     <div className="flex items-center gap-4 min-w-0">
                       <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0', p.bgColor, p.borderColor)}>
-                        <Icon className={cn('w-6 h-6', p.color)} />
+                        <Icon className={cn('w-6 h-6', p.color as string)} />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">

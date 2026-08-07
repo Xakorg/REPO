@@ -110,7 +110,7 @@ export function PersonaSwitcher({ activePersona, onChange }: PersonaSwitcherProp
           current.bgColor, current.borderColor, current.textColor
         )}
       >
-        <Icon className="w-3 h-3" />
+        <Icon className={cn('w-3 h-3', current.textColor as string)} />
         <span className="hidden sm:inline">{current.name}</span>
         <ChevronRight className={cn('w-3 h-3 transition-transform', open && 'rotate-90')} />
       </button>
@@ -151,7 +151,7 @@ export function PersonaSwitcher({ activePersona, onChange }: PersonaSwitcherProp
                         'w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border',
                         p.bgColor, p.borderColor
                       )}>
-                        <PIcon className={cn('w-4 h-4', p.textColor)} />
+                        <PIcon className={cn('w-4 h-4', p.textColor as string)} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className={cn('text-xs font-bold', isActive ? p.textColor : 'text-white/80')}>
