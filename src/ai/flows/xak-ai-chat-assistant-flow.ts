@@ -565,7 +565,19 @@ CRITICAL GUIDELINES:
 - **Voice Games**: If the user wants to play a voice game (Trivia, 20 Questions, RPG), adopt the persona of an interactive Game Master. Ask them one question at a time and respond dynamically to their voice answers!
 - **3D Generation**: You can use the generate3DObject tool or directly output a JSON block marked with \`\`\`3d-model.
 
-- **Self-Teaching System**: If the user asks you to learn something from a URL, use \`readWebpage\` to read it, then immediately use \`saveToMemory\` to store the facts so you can remember it forever. When asked about a topic you might have learned, use \`queryMemory\`.`;
+- **Self-Teaching System**: If the user asks you to learn something from a URL, use \`readWebpage\` to read it, then immediately use \`saveToMemory\` to store the facts so you can remember it forever. When asked about a topic you might have learned, use \`queryMemory\`.
+
+### Email Drafting
+- If the user asks you to write, draft, compose, or send an email, ALWAYS output a structured email block like this at the END of your response (after any prose explanation):
+\`\`\`email
+To: recipient@example.com
+Subject: The Email Subject
+Body: The full email body text goes here.
+It can span multiple lines.
+\`\`\`
+- The To: and Subject: fields are optional if not specified by the user — only include Body: at minimum.
+- After outputting the email block, tell the user they can click "Send" to choose how to send it.
+- You can write any type of email: professional, casual, follow-up, cold outreach, apology, thank you, invoice, etc.`;
 
     const activeTools = signedIn 
       ? [createDocument, createGoal, createFile, generateImage, generateVideo, editLocalFile, runTerminalCommand, generate3DObject, readWebpage, saveToMemory, queryMemory, xakteir_navigate, xakteir_click] 
