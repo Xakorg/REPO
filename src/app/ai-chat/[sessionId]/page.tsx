@@ -1021,14 +1021,6 @@ export default function XakAIChatSessionPage() {
                     {!isUser && (
                       <div className="absolute -top-7 right-0 opacity-0 group-hover/bubble:opacity-100 flex items-center gap-1 transition-all bg-[#0a0814] border border-white/10 rounded-lg px-2 py-1 shadow-xl z-10">
                         <button
-                          onClick={() => handleSaveNote(msg.content)}
-                          className="w-5 h-5 flex items-center justify-center rounded text-white/40 hover:text-amber-400 transition-colors"
-                          title="Save to Xak Notes"
-                        >
-                          <BookmarkPlus className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
                           onClick={() => {
                             const clean = msg.content.replace(/```[\s\S]*?```/g, "[code]").replace(/[*_#`|]/g, "");
                             if (speakingIndex === i) {

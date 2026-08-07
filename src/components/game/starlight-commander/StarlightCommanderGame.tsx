@@ -1696,8 +1696,9 @@ export default function StarlightCommanderGame() {
 
   // Unlock Aura Skin
   const unlockAuraSkin = (aura: AuraOption) => {
-    if (!aura.unlocked && aura.costCredits && starlightCredits >= aura.costCredits) {
-      setStarlightCredits((prev) => prev - aura.costCredits);
+    const cost = aura.costCredits || 0;
+    if (!aura.unlocked && cost > 0 && starlightCredits >= cost) {
+      setStarlightCredits((prev) => prev - cost);
       setAuras((prev) => prev.map((a) => (a.id === aura.id ? { ...a, unlocked: true } : a)));
       setSelectedAuraId(aura.id);
       audioSynthEngine.playStarlightCannonBlastSFX();
