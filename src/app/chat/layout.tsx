@@ -1483,7 +1483,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         </footer>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0 bg-[#06060c] relative">
+      <div key={`${pathname}?${searchParams.toString()}`} className="flex-1 flex flex-col min-w-0 bg-[#06060c] relative">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 pointer-events-none" />
         {children}
       </div>

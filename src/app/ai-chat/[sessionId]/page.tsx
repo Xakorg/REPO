@@ -282,7 +282,13 @@ export default function XakAIChatSessionPage() {
         }
         const data = { id: snap.id, ...snap.data() } as Session;
         setSession(data);
-        setMessages(data.messages || []);
+        if (data.messages) {
+          setMessages((prev) => {
+            // Keep local optimistic messages if snapshot hasn't caught up yet
+            if (prev.length > data.messages.length) return prev;
+            return data.messages;
+          });
+        }
         setEditedTitle(data.title || "");
 
         if (user) {
@@ -498,6 +504,15 @@ export default function XakAIChatSessionPage() {
     setLoading(true);
     setThoughtSteps([]);
     setAgentActive(false);
+
+    // Save user message to Firestore immediately so refresh preserves history
+    if (user && firestore && sessionId && !sessionId.startsWith("guest_")) {
+      await updateDoc(doc(firestore, "ai_chats", sessionId), {
+        messages: newMessages,
+        title: session?.title === "New Chat Session" || session?.title === "New Chat" ? fullPrompt.substring(0, 40) : session?.title,
+        updatedAt: serverTimestamp(),
+      }).catch(() => {});
+    }
 
     const addThought = (step: Omit<ThoughtStep, "id" | "timestamp">) => {
       setThoughtSteps((prev) => [...prev, { ...step, id: Math.random().toString(36), timestamp: Date.now() }]);
