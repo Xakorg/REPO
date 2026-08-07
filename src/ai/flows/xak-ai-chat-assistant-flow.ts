@@ -690,16 +690,16 @@ It can span multiple lines.
     const googleSearchConfig = { googleSearchRetrieval: {} };
 
     const fallbackModels = [
-      'googleai/gemini-2.5-flash',
-      'googleai/gemini-2.0-flash',
       'googleai/gemini-1.5-flash',
+      'googleai/gemini-1.5-pro',
+      'googleai/gemini-2.0-flash-exp',
     ];
 
     for (const modelName of fallbackModels) {
       let modelRetries = 2;
       while (modelRetries > 0) {
         try {
-          const { output } = await ai.generate({
+          const res = await ai.generate({
             model: modelName,
             system: systemPrompt,
             messages: [
@@ -710,15 +710,17 @@ It can span multiple lines.
             output: { schema: ChatOutputSchema },
           });
 
-          if (output) return output;
+          if (res.output) return res.output;
+          if (res.text) return { response: res.text };
         } catch (error: any) {
           console.error(`XAK AI ERROR [${modelName}]:`, error);
           const message = String(error?.message || error || '');
           modelRetries--;
 
-          // If rate limited (429 / RESOURCE_EXHAUSTED), break loop and try next fallback model
+          // If rate limited (429 / RESOURCE_EXHAUSTED), wait 2s and try next model
           if (message.includes('429') || message.includes('RESOURCE_EXHAUSTED') || message.includes('Quota exceeded')) {
-            console.warn(`[XAK AI] Model ${modelName} rate limited. Switching to next fallback model...`);
+            console.warn(`[XAK AI] Model ${modelName} rate limited. Waiting 2s and trying fallback...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
             break;
           }
 
@@ -736,6 +738,19 @@ It can span multiple lines.
       }
     }
 
-    return { response: "Xak AI servers are currently busy. Please wait a few seconds and try again." };
+    // Final fallback text attempt without schema constraint to guarantee response delivery
+    try {
+      const textRes = await ai.generate({
+        model: 'googleai/gemini-1.5-flash',
+        prompt: `${systemPrompt}\n\nUser Question: ${input.message}`,
+      });
+      if (textRes.text) {
+        return { response: textRes.text };
+      }
+    } catch {
+      // Ignored fallback
+    }
+
+    return { response: "Xak AI servers are experiencing high traffic. Please retry in a few seconds." };
   }
 );
