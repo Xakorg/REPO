@@ -14,11 +14,11 @@ export type Persona = {
   id: PersonaId;
   name: string;
   tagline: string;
-  icon: React.ElementType;
-  accentColor: string;
-  borderColor: string;
-  bgColor: string;
-  textColor: string;
+  icon: any;
+  accentColor: any;
+  borderColor: any;
+  bgColor: any;
+  textColor: any;
   systemPromptAddition: string;
 };
 

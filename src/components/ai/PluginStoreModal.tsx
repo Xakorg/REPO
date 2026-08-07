@@ -16,10 +16,10 @@ export type Plugin = {
   name: string;
   category: string;
   description: string;
-  icon: React.ElementType;
-  color: string;
-  bgColor: string;
-  borderColor: string;
+  icon: any;
+  color: any;
+  bgColor: any;
+  borderColor: any;
   connected: boolean;
   requiresKey?: boolean;
   apiKey?: string;
