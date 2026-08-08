@@ -93,6 +93,8 @@ Challenge is a visual bot-protection captcha page (XakCaptcha) that verifies hum
 ## Xakchat
 A Discord-like platform with Servers, Channels, DMs, real-time messaging, threads, voice/video calls, reactions, pinned messages, AI translation, scheduled messages, E2E encryption, and glassmorphic UI.
          FEATURES
+         - Native Desktop Application (`Desktop-Apps/XakChat`) powered by Tauri & React with native window controls, server sidebar, category sidebar, and real-time chat
+         - Desktop App Launcher Bar (`DesktopLauncherBar`) in web application with 1-click desktop app launch and installer setup triggers
          - Servers and Channels
          - Direct Messages (DMs)
          - Voice/Video Calls
@@ -103,6 +105,7 @@ A Discord-like platform with Servers, Channels, DMs, real-time messaging, thread
          - Real-time 1-to-1 direct messaging and multi-channel community server communication
          - High-definition group voice and video calling with screen sharing, live captions, and noise suppression
          - AI messaging features including conversation summarization, catch-up notes, auto-moderation, and smart reply suggestions
+
 
 ## Classroom
 Classroom is an educational portal connecting teachers, students, and parents for class management, assignment tracking, and grade reporting.

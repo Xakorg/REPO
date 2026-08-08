@@ -59,9 +59,10 @@ import { RenderHat, RenderAura, RenderDecor, RenderPet, RenderBanner, getNamepla
 import { Card } from "@/components/ui/card";
 import { getIceServers } from "@/lib/webrtc/config";
 import { IceCandidateBuffer } from "@/lib/webrtc/ice-buffer";
-// Removed DynamicFavicon import
+import { DesktopLauncherBar } from "@/components/chat/DesktopLauncherBar";
 
 const SERVERS = [
+
   { id: 'home', name: 'Home', icon: Home, color: 'bg-primary', href: '/chat' },
   { id: 'discover', name: 'Discovery', icon: Globe, color: 'bg-emerald-500', href: '/chat/s/discover' },
 ];
@@ -1228,9 +1229,12 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   if (!user) return <>{children}</>;
 
   return (
-    <div className="h-[calc(100vh-80px)] flex overflow-hidden bg-zinc-950 text-white relative">
+    <div className="h-[calc(100vh-80px)] flex flex-col overflow-hidden bg-zinc-950 text-white relative">
+      <DesktopLauncherBar />
+      <div className="flex-1 flex overflow-hidden relative">
       {userData?.customCss && <style dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userData.customCss, { ALLOWED_TAGS: [] }) }} />}
       <div className="absolute inset-0 arcade-grid opacity-[0.02] pointer-events-none" />
+
 
       {/* Mobile Drawer Trigger */}
       <div className="md:hidden absolute bottom-6 left-6 z-40">
