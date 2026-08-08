@@ -2811,9 +2811,11 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           </Tabs>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
+
 
 function DMContactItem({ chatId, participants, activeChatId, currentUserId }: { chatId: string, participants: string[], activeChatId: string | null, currentUserId: string }) {
   const firestore = useFirestore();
