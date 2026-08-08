@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { navigateTo } from "@/lib/navigation";
 import { GAMES_DB, GameMeta } from "@/lib/games-db";
 import { Maximize, ChevronLeft, Gamepad2, Info, Clock, Star, MessageSquare, Trophy, Send } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
@@ -11,6 +12,7 @@ import { XakchatSidebar } from "@/components/game/XakchatSidebar";
 
 export default function GameLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [currentGame, setCurrentGame] = useState<GameMeta | null>(null);
   const [otherGames, setOtherGames] = useState<GameMeta[]>([]);
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "achievements">("overview");
@@ -78,7 +80,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
       {/* Top Breadcrumb Nav */}
       <div className="w-full max-w-7xl mx-auto px-4 md:px-8 mb-4 flex items-center justify-between">
         <button 
-          onClick={() => window.location.href = '/games'}
+          onClick={() => navigateTo('/games', router)}
           className="flex items-center gap-2 text-white/50 hover:text-white transition-colors font-bold uppercase tracking-widest text-xs"
         >
           <ChevronLeft className="w-4 h-4" /> Back to Library

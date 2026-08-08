@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { navigateTo } from '@/lib/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, limit } from 'firebase/firestore';
 
@@ -45,30 +46,51 @@ export function CommandCenter() {
 
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-      document.body.style.overflow = 'hidden';
+      setTimeout(() => inputRef.current?.focus(), 50);
     } else {
-      document.body.style.overflow = '';
       setQueryInput("");
+      setSelectedIndex(0);
     }
   }, [isOpen]);
 
-  const appsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, "system_apps"), limit(10));
-  }, [firestore]);
+  // Handle global custom events from header or buttons to open command palette
+  useEffect(() => {
+    const handleToggle = () => setIsOpen(prev => !prev);
+    window.addEventListener('open-command-center', handleToggle);
+    return () => window.removeEventListener('open-command-center', handleToggle);
+  }, []);
 
-  const results = useMemo(() => [
-    { name: "Whiteboard", type: "App", icon: LayoutGrid, href: "/whiteboard" },
-    { name: "Xakteir Suite", type: "App", icon: FileText, href: "/suite" },
-    { name: "Xakteir Write", type: "Suite App", icon: FileText, href: "/write" },
-    { name: "Xakteir Sheets", type: "Suite App", icon: LayoutGrid, href: "/sheets" },
-    { name: "Xakteir Slides", type: "Suite App", icon: LayoutGrid, href: "/slides" },
-    { name: "Xakteir Forms", type: "Suite App", icon: LayoutGrid, href: "/forms" },
-    { name: "Games", type: "App", icon: Gamepad2, href: "/games" },
-    { name: "Xak AI", type: "App", icon: Zap, href: "/ai-chat" },
-    { name: "XakCode", type: "App", icon: FileText, href: "/xakcode" },
-  ].filter(r => r.name.toLowerCase().includes(queryInput.toLowerCase())), [queryInput]);
+  // Fetch Firestore users for search
+  const usersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "users"), limit(10));
+  }, [firestore]);
+  const { data: usersData } = useCollection(usersQuery);
+
+  const staticActions = [
+    { title: 'Open Xakteir Suite', type: 'App', icon: LayoutGrid, href: '/suite' },
+    { title: 'Play Games Library', type: 'Games', icon: Gamepad2, href: '/games' },
+    { title: 'Create New Document', type: 'Write', icon: FileText, href: '/write' },
+    { title: 'Browse Dev Centre', type: 'Dev', icon: Zap, href: '/dev-centre' },
+  ];
+
+  const results = useMemo(() => {
+    if (!queryInput.trim()) return staticActions;
+    
+    const term = queryInput.toLowerCase();
+    const actions = staticActions.filter(a => a.title.toLowerCase().includes(term) || a.type.toLowerCase().includes(term));
+    const users = (usersData || []).filter(u => 
+      (u.username && u.username.toLowerCase().includes(term)) || 
+      (u.displayName && u.displayName.toLowerCase().includes(term))
+    ).map(u => ({
+      title: u.displayName || u.username || 'User',
+      type: 'User Profile',
+      icon: Users,
+      href: `/user/${u.id}`
+    }));
+
+    return [...actions, ...users];
+  }, [queryInput, usersData]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -95,7 +117,7 @@ export function CommandCenter() {
   }, [isOpen, results, selectedIndex]);
 
   const handleNavigate = (href: string) => {
-    window.location.href = href;
+    navigateTo(href, router);
     setIsOpen(false);
   };
 

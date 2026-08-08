@@ -247,6 +247,16 @@ const GAME_MAP: Record<string, React.ComponentType<any>> = {
   rhythmTap:    dynamic(() => import("@/components/games/RhythmTap")),
 };
  
+const DYNAMIC_CACHE: Record<string, React.ComponentType<any>> = {};
+
+function getDynamicGameComponent(pascalId: string) {
+  if (!pascalId) return null;
+  if (!DYNAMIC_CACHE[pascalId]) {
+    DYNAMIC_CACHE[pascalId] = dynamic(() => import(`@/components/games/${pascalId}`));
+  }
+  return DYNAMIC_CACHE[pascalId];
+}
+
 export default function GamePlayerPage() {
   const params = useParams();
   const router = useRouter();
@@ -409,7 +419,7 @@ export default function GamePlayerPage() {
     (normalizedId ? GAME_MAP[normalizedId] : null) || 
     (gameIdToUse ? GAME_MAP[gameIdToUse] : null) || 
     (gameIdToUse ? GAME_MAP[gameIdToUse.replace(/_/g, "-")] : null) || 
-    (PascalId ? dynamic(() => import(`@/components/games/${PascalId}`)) : null);
+    getDynamicGameComponent(PascalId);
  
   const KEY_CODES: Record<string, number> = {
     ArrowLeft: 37,
@@ -421,7 +431,7 @@ export default function GamePlayerPage() {
   };
 
   const handleTouchStart = (e: React.TouchEvent, key: string) => {
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     if (navigator.vibrate) navigator.vibrate(20);
     const keyCode = KEY_CODES[key] || 0;
     const actualKey = key === "Space" ? " " : key;
@@ -441,7 +451,7 @@ export default function GamePlayerPage() {
   };
 
   const handleTouchEnd = (e: React.TouchEvent, key: string) => {
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     const keyCode = KEY_CODES[key] || 0;
     const actualKey = key === "Space" ? " " : key;
     const actualCode = key === "Space" ? "Space" : key;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { navigateTo } from "@/lib/navigation";
 import { GAMES_DB, GameMeta } from "@/lib/games-db";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Sparkles, Download, Play, Search, Gamepad2, Users, Flame, Compass, Crosshair } from "lucide-react";
@@ -106,7 +107,7 @@ export default function GamesStorePage() {
 
           {isOwned ? (
             <button 
-              onClick={() => window.location.href = game.route}
+              onClick={() => navigateTo(game.route, router)}
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-400 text-black font-black tracking-widest uppercase flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
             >
               <Play className="w-5 h-5 fill-black" />
@@ -133,7 +134,7 @@ export default function GamesStorePage() {
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-6 bg-gradient-to-b from-black/90 via-black/60 to-transparent backdrop-blur-md">
         <div className="flex items-center gap-4 md:gap-6">
           <button 
-            onClick={() => window.location.href = '/games'}
+            onClick={() => navigateTo('/games', router)}
             className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors border border-white/10"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -224,7 +225,7 @@ export default function GamesStorePage() {
                   <div className="flex flex-wrap items-center gap-4 md:gap-6">
                     {libraryIds.includes(featuredGame.id) ? (
                       <button 
-                        onClick={() => window.location.href = featuredGame.route}
+                        onClick={() => navigateTo(featuredGame.route, router)}
                         className="flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-emerald-500 to-emerald-400 text-black rounded-full font-black tracking-widest uppercase hover:scale-105 transition-all shadow-[0_0_40px_rgba(16,185,129,0.5)] text-sm md:text-base w-full sm:w-auto"
                       >
                         <Play className="w-6 h-6 fill-black" />

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { navigateTo } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MessageSquare, Users, Send, Search, Swords } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,6 +10,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebas
 import { collection, query, orderBy, limit, addDoc, serverTimestamp, setDoc, doc, getDoc } from "firebase/firestore";
 
 export function XakchatSidebar({ activeGameId, activeGameTitle }: { activeGameId?: string; activeGameTitle?: string }) {
+  const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
   
@@ -243,7 +246,7 @@ export function XakchatSidebar({ activeGameId, activeGameTitle }: { activeGameId
                               {msg.type === "invite" && <div className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80 flex items-center gap-1"><Swords className="w-3 h-3"/> Game Invite</div>}
                               <div className="text-sm font-medium">{msg.text}</div>
                               {msg.type === "invite" && !isMe && msg.gameId && (
-                                <button onClick={() => window.location.href = `/game/${msg.gameId}`} className="mt-2 w-full py-1.5 bg-black/40 hover:bg-black/60 rounded text-xs font-bold transition-colors uppercase tracking-widest">
+                                <button onClick={() => navigateTo(`/game/${msg.gameId}`, router)} className="mt-2 w-full py-1.5 bg-black/40 hover:bg-black/60 rounded text-xs font-bold transition-colors uppercase tracking-widest">
                                   Click to Join
                                 </button>
                               )}

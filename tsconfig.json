@@ -38,6 +38,7 @@
   "exclude": [
     "node_modules",
     "Xakteir Authenticator Extension",
-    "xak-ai-app"
+    "xak-ai-app",
+    "Desktop-Apps"
   ]
 }
