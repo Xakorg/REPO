@@ -24,7 +24,8 @@ export function LockedAccountGuard({ children }: { children: React.ReactNode }) 
 
   const { data: userData } = useDoc(userDocRef);
 
-  if (!mounted) return null;
+  if (!mounted) return <>{children}</>;
+
 
   if (user && userData?.isBanned) {
     if (userData.bannedUntil && Date.now() > userData.bannedUntil) {
