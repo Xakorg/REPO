@@ -1134,6 +1134,22 @@ const premiumGames: GameMeta[] = [
     route: "/game/chronos-sentinel-quantum-siege"
   },
   {
+    id: "void_valkyrie_horizon_overdrive",
+    title: "Void Valkyrie: Horizon Overdrive",
+    developer: "Xakteir Studios",
+    type: "High-Speed Cyber Fighter & Orbital Combat Arena",
+    genre: ["Cyber Fighter", "Orbital Mecha Combat", "Bullet Hell", "Armory Upgrades", "Dev Terminal", "2,000+ Lines"],
+    description: "High-speed orbital fighter combat arena featuring Valkyrie V-9, 4 weapon systems, 3 reactor skill matrices, boss warships, audio synth SFX, and dev terminal controls in a 2,000+ line flagship arena.",
+    bannerUrl: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=voidvalkyrie",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "15:20", description: "2,000+ Line Flagship Launch" }
+    ],
+    route: "/game/void-valkyrie-horizon-overdrive"
+  },
+  {
     id: "cyber_quest_platformer",
     title: "Cyber Quest Platformer 2D",
     developer: "Xakteir Studios",
