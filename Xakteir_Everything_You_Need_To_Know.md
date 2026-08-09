@@ -491,8 +491,11 @@ Xakcode is a cloud-based web IDE and development workspace supporting code editi
          - Workspace project and file manager with ZIP export, CPU/RAM resource diagnostics, and console log capture
 
 ## Xaksports
-Xaksports is a real family sports tournament studio featuring a 7-stage multi-screen creation wizard, interactive elimination brackets, AI goal calibration, custom scoring rules, continuous AI camera scanning, and fullscreen scoreboard with Goal Undo/Redo.
+Xaksports is a real family sports tournament studio featuring a 7-stage multi-screen creation wizard, custom match duration picker, master AI referee enable/disable toggle, 5-second flipping score/time header, interactive elimination brackets, AI goal calibration, custom scoring rules, continuous AI camera scanning, and fullscreen scoreboard with Goal Undo/Redo.
          FEATURES
+         - 5-Second Flipping Scoreboard Header (smoothly alternates every 5 seconds between SCORE view and TIME REMAINING view)
+         - Custom Match Duration Picker (1m, 3m, 5m, 10m, 15m, 30m, 90m presets + custom numeric duration input)
+         - Master AI Referee Enable / Disable Toggle (`aiRefereeEnabled`)
          - 7-Stage Multi-Screen Creation Wizard (Landing -> Details & Date/Time -> Rosters & Logos -> Bracket Generator -> AI Referee Calibration & Custom Rules -> Review -> Auto Fullscreen Scoreboard)
          - Interactive Elimination Bracket Generator for 2, 4, 8, or 16 teams
          - AI Referee Calibration Studio (Goal coordinates calibration, offside toggle, custom rules like *"Headers worth 2 goals"*)
@@ -500,6 +503,7 @@ Xaksports is a real family sports tournament studio featuring a 7-stage multi-sc
          - Continuous Real-Time AI Camera Referee Scanner & Slow-Motion VAR Frame Replay Viewfinder
          - Automatic WebAudio Synthetic Referee Whistle Sound Generator (`playRefereeWhistle()`)
          - Fullscreen Stadium Scoreboard featuring Custom Badge Logo Images and **MASSIVE SCORE CHARACTERS** (`text-[14rem]`)
+
 
 
          - Live Match Arena with side-clicks and keyboard shortcuts (`[A]` / `[D]`) to register goals

@@ -110,6 +110,7 @@ export default function XakSportsMultiStagePage() {
   ]);
 
   // Stage 5: AI Referee Calibration & Rules
+  const [aiRefereeEnabled, setAiRefereeEnabled] = useState(true); // Can disable/enable AI Referee
   const [goalLeftBound, setGoalLeftBound] = useState(15);
   const [goalRightBound, setGoalRightBound] = useState(85);
   const [offsideEnabled, setOffsideEnabled] = useState(true);
@@ -122,10 +123,23 @@ export default function XakSportsMultiStagePage() {
   const [scoreHistory, setScoreHistory] = useState<{ score1: number; score2: number }[]>([]);
   const [redoHistory, setRedoHistory] = useState<{ score1: number; score2: number }[]>([]);
 
+  // 5-Second Flipping Scoreboard Header Mode ("score" <-> "time")
+  const [headerDisplayMode, setHeaderDisplayMode] = useState<"score" | "time">("score");
+
   const [matchTimeLeft, setMatchTimeLeft] = useState(5 * 60);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [goalCelebration, setGoalCelebration] = useState<{ team: string; logo: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // 5-Second Header Flipping Effect
+  useEffect(() => {
+    if (wizardStep !== 7) return;
+    const flipInterval = setInterval(() => {
+      setHeaderDisplayMode((prev) => (prev === "score" ? "time" : "score"));
+    }, 5000);
+    return () => clearInterval(flipInterval);
+  }, [wizardStep]);
+
 
   // Camera & Continuous AI State
   const [cameraActive, setCameraActive] = useState(false);
@@ -156,13 +170,14 @@ export default function XakSportsMultiStagePage() {
   // Continuous Camera Scanner
   useEffect(() => {
     let scanInterval: any;
-    if (cameraActive && autoScanEnabled && wizardStep === 7 && !varReviewing) {
+    if (cameraActive && aiRefereeEnabled && autoScanEnabled && wizardStep === 7 && !varReviewing) {
       scanInterval = setInterval(() => {
         void triggerVarCheck();
       }, 4000);
     }
     return () => clearInterval(scanInterval);
-  }, [cameraActive, autoScanEnabled, wizardStep, varReviewing, teams, team1Score, team2Score, offsideEnabled, customRules]);
+  }, [cameraActive, aiRefereeEnabled, autoScanEnabled, wizardStep, varReviewing, teams, team1Score, team2Score, offsideEnabled, customRules]);
+
 
   // Match Timer Countdown Effect
   useEffect(() => {
@@ -440,9 +455,41 @@ export default function XakSportsMultiStagePage() {
             </div>
 
             <div>
+              <label className="text-xs text-gray-300 font-bold block mb-1.5">Match Duration (Minutes):</label>
+              <div className="flex items-center space-x-3">
+                <div className="grid grid-cols-4 gap-2 flex-1">
+                  {[1, 3, 5, 10, 15, 30, 90].map((mins) => (
+                    <button
+                      key={mins}
+                      type="button"
+                      onClick={() => setMatchDuration(mins)}
+                      className={`p-2 rounded-xl border text-xs font-bold transition-all ${
+                        matchDuration === mins ? "bg-emerald-500 text-black border-emerald-400" : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
+                      }`}
+                    >
+                      {mins}m
+                    </button>
+                  ))}
+                </div>
+                <div className="w-32">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={180}
+                    value={matchDuration}
+                    onChange={(e) => setMatchDuration(Math.max(1, Number(e.target.value)))}
+                    placeholder="Custom Mins"
+                    className="bg-black/50 border-white/10 text-white h-9 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
               <label className="text-xs text-gray-300 font-bold block mb-1.5">Amount of Teams in Tournament:</label>
               <div className="grid grid-cols-4 gap-3">
                 {[2, 4, 8, 16].map((num) => (
+
                   <button
                     key={num}
                     onClick={() => setNumTeams(num)}
@@ -661,9 +708,25 @@ export default function XakSportsMultiStagePage() {
 
                 <div className="space-y-4">
                   <div>
+                    <label className="text-[11px] text-gray-300 block mb-1.5">Master AI Referee Status:</label>
+                    <Button
+                      size="sm"
+                      variant={aiRefereeEnabled ? "secondary" : "outline"}
+                      onClick={() => setAiRefereeEnabled(!aiRefereeEnabled)}
+                      className={`w-full justify-between text-xs font-bold ${
+                        aiRefereeEnabled ? "bg-emerald-500 text-black border-emerald-400" : "bg-rose-950/40 text-rose-300 border-rose-500/40"
+                      }`}
+                    >
+                      <span>AI Referee Vision Engine:</span>
+                      <span>{aiRefereeEnabled ? "🤖 ENABLED" : "🚫 DISABLED"}</span>
+                    </Button>
+                  </div>
+
+                  <div>
                     <label className="text-[11px] text-gray-300 block mb-1.5">Offside Rule Enforcement:</label>
                     <Button
                       size="sm"
+                      disabled={!aiRefereeEnabled}
                       variant={offsideEnabled ? "secondary" : "outline"}
                       onClick={() => setOffsideEnabled(!offsideEnabled)}
                       className="w-full justify-between text-xs border-white/20"
@@ -672,6 +735,7 @@ export default function XakSportsMultiStagePage() {
                       <span>{offsideEnabled ? "✅ ENABLED" : "❌ DISABLED"}</span>
                     </Button>
                   </div>
+
 
                   <div>
                     <label className="text-[11px] text-gray-300 block mb-1">Tell AI Custom Match Rules:</label>
@@ -754,22 +818,51 @@ export default function XakSportsMultiStagePage() {
               </Button>
             </div>
 
+            {/* Dynamic 5-Second Flipping Header (SCORE <-> TIME) */}
             <div className="flex items-center space-x-4">
-              <div className="text-2xl font-black font-mono text-amber-400 bg-amber-950/80 px-6 py-1 rounded-xl border border-amber-500/40">
-                {formatTime(matchTimeLeft)}
-              </div>
+              <AnimatePresence mode="wait">
+                {headerDisplayMode === "time" ? (
+                  <motion.div
+                    key="time-view"
+                    initial={{ rotateX: 90, opacity: 0 }}
+                    animate={{ rotateX: 0, opacity: 1 }}
+                    exit={{ rotateX: -90, opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="text-2xl font-black font-mono text-amber-400 bg-amber-950/80 px-6 py-1.5 rounded-2xl border border-amber-500/40 flex items-center space-x-2 shadow-lg"
+                  >
+                    <Clock className="w-5 h-5 mr-1.5 animate-spin text-amber-400" />
+                    <span>TIME: {formatTime(matchTimeLeft)}</span>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="score-view"
+                    initial={{ rotateX: 90, opacity: 0 }}
+                    animate={{ rotateX: 0, opacity: 1 }}
+                    exit={{ rotateX: -90, opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="text-xl font-black italic uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-6 py-1.5 rounded-2xl border border-emerald-500/40 flex items-center space-x-3 shadow-lg"
+                  >
+                    <span>{teams[0]?.name || "Team 1"}</span>
+                    <span className="text-2xl font-mono text-white font-black">{team1Score} - {team2Score}</span>
+                    <span>{teams[1]?.name || "Team 2"}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <Button
                 size="sm"
                 onClick={() => setIsTimerRunning(!isTimerRunning)}
-                className={isTimerRunning ? "bg-amber-600 text-white" : "bg-emerald-600 text-white"}
+                className={isTimerRunning ? "bg-amber-600 hover:bg-amber-500 text-white" : "bg-emerald-600 hover:bg-emerald-500 text-white"}
               >
                 {isTimerRunning ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
                 {isTimerRunning ? "Pause" : "Resume"}
               </Button>
+
               <Button size="sm" variant="outline" onClick={() => setWizardStep(1)} className="border-white/20 text-gray-400">
                 Exit Match
               </Button>
             </div>
+
           </div>
 
           {/* MASSIVE SCOREBOARD LAYOUT */}
