@@ -1150,6 +1150,22 @@ const premiumGames: GameMeta[] = [
     route: "/game/void-valkyrie-horizon-overdrive"
   },
   {
+    id: "neon_ronin_cyber_slash",
+    title: "Neon Ronin: Cyber Slash",
+    developer: "Xakteir Studios",
+    type: "2D Cyberpunk Hack-and-Slash Action RPG",
+    genre: ["2D Action RPG", "Hack and Slash", "Cyberpunk", "Katana Armory", "Dev Terminal", "2,000+ Lines"],
+    description: "Cyberpunk hack-and-slash action RPG featuring Neon Ronin Kaito, 3 plasma Katana blades, 3 samurai stance techniques, boss duels, audio synth SFX, and dev terminal controls in a 2,000+ line flagship arena.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neonronin",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "15:40", description: "2,000+ Line Flagship Launch" }
+    ],
+    route: "/game/neon-ronin-cyber-slash"
+  },
+  {
     id: "cyber_quest_platformer",
     title: "Cyber Quest Platformer 2D",
     developer: "Xakteir Studios",
