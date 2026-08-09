@@ -1102,6 +1102,22 @@ const premiumGames: GameMeta[] = [
     route: "/game/starlight-commander"
   },
   {
+    id: "astral_valkyrie_cyber_overdrive",
+    title: "Astral Valkyrie: Cyber Overdrive",
+    developer: "Xakteir Studios",
+    type: "Sci-Fi Mecha Action RPG & Bullet Hell",
+    genre: ["Sci-Fi Mecha Action RPG", "Bullet Hell Shooter", "Armory Upgrades", "Skill Tree", "Dev Terminal", "2,000+ Lines"],
+    description: "High-octane mecha action RPG & bullet hell shooter featuring Valkyrie-X01 Apex mecha, 4 weapon systems, 4 skill matrices, boss encounters, web audio synth SFX, and dev terminal controls in a 2,000+ line flagship arena.",
+    bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=astralvalkyriekey",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "14:52", description: "2,000+ Line Flagship Launch" }
+    ],
+    route: "/game/astral-valkyrie-cyber-overdrive"
+  },
+  {
     id: "cyber_quest_platformer",
     title: "Cyber Quest Platformer 2D",
     developer: "Xakteir Studios",
