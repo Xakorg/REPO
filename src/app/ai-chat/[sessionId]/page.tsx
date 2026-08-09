@@ -23,6 +23,7 @@ import {
 } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import XakAiAnimatedIcon from "@/components/ai/XakAiAnimatedIcon";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { AgentThoughtSidebar, type ThoughtStep } from "@/components/ai/AgentThoughtSidebar";
 import { LiveCodeEditor } from "@/components/ai/LiveCodeEditor";
@@ -922,7 +923,8 @@ export default function XakAIChatSessionPage() {
 
             {/* Session Title & Badge */}
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <Bot className="w-4 h-4 text-primary shrink-0" />
+              <XakAiAnimatedIcon size={24} className="shrink-0" />
+
               {isEditingTitle ? (
                 <div className="flex items-center gap-1 min-w-0">
                   <Input

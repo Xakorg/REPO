@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import XakAiAnimatedIcon from "@/components/ai/XakAiAnimatedIcon";
 import { PluginStoreModal } from "@/components/ai/PluginStoreModal";
 import { UniversalSearchModal } from "@/components/ai/UniversalSearchModal";
 import { FloatingPiPAssistant } from "@/app/ai-chat/chat-widgets";
@@ -273,7 +274,7 @@ export default function XakAIChatHomePage() {
             </button>
 
             <div className="flex items-center gap-2">
-              <Bot className="w-4 h-4 text-primary" />
+              <XakAiAnimatedIcon size={24} />
               <span className="font-black uppercase italic tracking-tight text-sm md:text-base">Xak AI</span>
             </div>
           </div>
@@ -282,9 +283,10 @@ export default function XakAIChatHomePage() {
         {/* Center Hero View */}
         <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-center">
           <div className="max-w-xl w-full space-y-6">
-            <div className="w-16 h-16 rounded-3xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center mx-auto shadow-2xl shadow-primary/20">
-              <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+            <div className="w-20 h-20 rounded-3xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center mx-auto shadow-2xl shadow-primary/20">
+              <XakAiAnimatedIcon size={48} />
             </div>
+
 
             <div>
               <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter mb-2">What can Xak AI build for you?</h1>

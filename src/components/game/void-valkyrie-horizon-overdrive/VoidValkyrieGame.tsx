@@ -6,7 +6,7 @@ import {
   Shield, Zap, Award, Flame, Play, Pause, RotateCcw, Volume2, VolumeX,
   Crosshair, Sparkles, Terminal, ChevronRight, Settings, Radio, Cpu,
   Compass, Swords, RefreshCw, ShoppingBag, Lock, Unlock, Star, ArrowUpRight,
-  Maximize2, Activity, Battery, Target, AlertTriangle, Eye, Layers, Box
+  Maximize2, Activity, Battery, Target, AlertTriangle, Eye, Rocket, Navigation
 } from "lucide-react";
 import { useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
 import { doc, getDoc } from "firebase/firestore";
@@ -16,21 +16,35 @@ import { doc, getDoc } from "firebase/firestore";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type GameMode = "campaign" | "endless" | "boss_rush";
-export type TabState = "game" | "turrets" | "pilot" | "achievements" | "terminal";
+export type TabState = "game" | "armory" | "skills" | "achievements" | "terminal";
 
-export interface TurretType {
+export interface WeaponOption {
   id: string;
   name: string;
-  type: "tachyon" | "singularity" | "emp" | "chrono" | "railgun";
+  type: "pulse" | "singularity" | "railgun" | "tachyon";
   level: number;
   maxLevel: number;
   damage: number;
-  range: number;
   fireRate: number; // ms
+  energyCost: number;
   costCredits: number;
+  description: string;
   unlocked: boolean;
   color: string;
+}
+
+export interface SkillNode {
+  id: string;
+  name: string;
+  icon: string;
   description: string;
+  cooldown: number; // seconds
+  duration: number; // seconds
+  energyCost: number;
+  unlocked: boolean;
+  active: boolean;
+  costCredits: number;
+  category: "offense" | "defense" | "utility";
 }
 
 export interface AchievementItem {
@@ -44,26 +58,12 @@ export interface AchievementItem {
   icon: string;
 }
 
-export interface PlacedTurret {
-  id: string;
-  typeId: string;
-  x: number;
-  y: number;
-  level: number;
-  damage: number;
-  range: number;
-  fireRate: number;
-  lastShot: number;
-  color: string;
-  targetEnemyId?: string;
-  angle: number;
-}
-
 export interface ParticleEffect {
   x: number;
   y: number;
   vx: number;
   vy: number;
+  vz?: number;
   radius: number;
   color: string;
   life: number;
@@ -83,7 +83,7 @@ export interface Bullet {
   isPlayer: boolean;
 }
 
-export interface SiegeEnemy {
+export interface EnemyShip {
   id: string;
   x: number;
   y: number;
@@ -91,18 +91,17 @@ export interface SiegeEnemy {
   vy: number;
   hp: number;
   maxHp: number;
-  type: "crawler" | "interceptor" | "dreadnought" | "boss";
+  type: "drone" | "interceptor" | "frigate" | "boss";
   name: string;
   color: string;
   radius: number;
-  speed: number;
   shootCooldown: number;
   lastShot: number;
   scoreValue: number;
   creditsValue: number;
 }
 
-export interface SentinelPilot {
+export interface ValkyrieFighter {
   x: number;
   y: number;
   radius: number;
@@ -112,27 +111,20 @@ export interface SentinelPilot {
   maxShield: number;
   energy: number;
   maxEnergy: number;
+  overdrive: number;
+  maxOverdrive: number;
+  isOverdriveActive: boolean;
   speed: number;
   score: number;
   kills: number;
   credits: number;
-  angle: number;
-}
-
-export interface BaseCore {
-  x: number;
-  y: number;
-  hp: number;
-  maxHp: number;
-  shield: number;
-  maxShield: number;
-  radius: number;
+  rollAngle: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WEB AUDIO SYNTHESIZER ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
-class SentinelAudioEngine {
+class VoidAudioEngine {
   private ctx: AudioContext | null = null;
   private isMuted: boolean = false;
 
@@ -150,7 +142,7 @@ class SentinelAudioEngine {
     this.isMuted = muted;
   }
 
-  public playTurretShot(freq: number = 750) {
+  public playLaserShot(freq: number = 820) {
     if (this.isMuted) return;
     this.initCtx();
     if (!this.ctx) return;
@@ -161,26 +153,26 @@ class SentinelAudioEngine {
 
       osc.type = "sawtooth";
       osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(120, this.ctx.currentTime + 0.1);
+      osc.frequency.exponentialRampToValueAtTime(140, this.ctx.currentTime + 0.11);
 
-      gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.14, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.11);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start();
-      osc.stop(this.ctx.currentTime + 0.1);
+      osc.stop(this.ctx.currentTime + 0.11);
     } catch {}
   }
 
-  public playExplosion(intensity: "small" | "heavy" = "small") {
+  public playExplosion(intensity: "small" | "heavy" | "boss" = "small") {
     if (this.isMuted) return;
     this.initCtx();
     if (!this.ctx) return;
 
     try {
-      const duration = intensity === "heavy" ? 0.4 : 0.2;
+      const duration = intensity === "boss" ? 0.7 : intensity === "heavy" ? 0.35 : 0.18;
       const bufferSize = this.ctx.sampleRate * duration;
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const data = buffer.getChannelData(0);
@@ -194,11 +186,11 @@ class SentinelAudioEngine {
 
       const filter = this.ctx.createBiquadFilter();
       filter.type = "lowpass";
-      filter.frequency.setValueAtTime(intensity === "heavy" ? 400 : 900, this.ctx.currentTime);
-      filter.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + duration);
+      filter.frequency.setValueAtTime(intensity === "boss" ? 350 : 750, this.ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(25, this.ctx.currentTime + duration);
 
       const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(intensity === "heavy" ? 0.3 : 0.15, this.ctx.currentTime);
+      gain.gain.setValueAtTime(intensity === "boss" ? 0.35 : 0.18, this.ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
 
       noise.connect(filter);
@@ -209,126 +201,134 @@ class SentinelAudioEngine {
       noise.stop(this.ctx.currentTime + duration);
     } catch {}
   }
-
-  public playCoreHit() {
-    if (this.isMuted) return;
-    this.initCtx();
-    if (!this.ctx) return;
-
-    try {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-
-      osc.type = "square";
-      osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.25);
-
-      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.25);
-    } catch {}
-  }
 }
 
-const audioSynth = new SentinelAudioEngine();
+const audioSynth = new VoidAudioEngine();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INITIAL DEFAULT CONFIGURATIONS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const INITIAL_TURRET_TYPES: TurretType[] = [
+const INITIAL_WEAPONS: WeaponOption[] = [
   {
-    id: "tachyon_cannon",
-    name: "Tachyon Pulse Turret",
-    type: "tachyon",
+    id: "twin_void_pulse",
+    name: "Twin Void Pulse Blasters",
+    type: "pulse",
     level: 1,
     maxLevel: 5,
-    damage: 35,
-    range: 180,
-    fireRate: 250,
-    costCredits: 300,
+    damage: 28,
+    fireRate: 170,
+    energyCost: 2,
+    costCredits: 0,
+    description: "Rapid high-frequency void energy cannons mounted on Valkyrie wings.",
     unlocked: true,
     color: "#38bdf8",
-    description: "Rapid-fire energy cannon designed for continuous light & medium enemy suppression.",
   },
   {
-    id: "singularity_emitter",
-    name: "Singularity Railgun",
+    id: "singularity_cannon",
+    name: "Singularity Rail Cannon",
     type: "singularity",
     level: 1,
     maxLevel: 5,
-    damage: 120,
-    range: 240,
-    fireRate: 650,
-    costCredits: 1500,
+    damage: 90,
+    fireRate: 480,
+    energyCost: 14,
+    costCredits: 1400,
+    description: "Launches heavy gravitational singularity bolts that tear through enemy shields.",
     unlocked: false,
     color: "#a855f7",
-    description: "Launches heavy gravitational singularity bolts that pierce armor.",
   },
   {
-    id: "emp_tesla",
-    name: "EMP Tesla Coil",
-    type: "emp",
+    id: "hyper_railgun",
+    name: "Hyper-Kinetic Railgun",
+    type: "railgun",
     level: 1,
     maxLevel: 5,
-    damage: 60,
-    range: 150,
-    fireRate: 400,
-    costCredits: 2800,
+    damage: 150,
+    fireRate: 700,
+    energyCost: 22,
+    costCredits: 3200,
+    description: "Ultra high-velocity tungsten projectile capable of piercing multiple enemy hulls.",
     unlocked: false,
     color: "#f59e0b",
-    description: "Emits high-frequency EMP shockwaves that slow and damage surrounding foes.",
   },
   {
-    id: "chrono_stasis",
-    name: "Chrono Stasis Pylon",
-    type: "chrono",
+    id: "quantum_tachyon_beam",
+    name: "Quantum Tachyon Beam",
+    type: "tachyon",
     level: 1,
     maxLevel: 5,
-    damage: 180,
-    range: 280,
-    fireRate: 900,
-    costCredits: 5000,
+    damage: 200,
+    fireRate: 850,
+    energyCost: 30,
+    costCredits: 6500,
+    description: "Continuous thermal tachyon laser beam causing catastrophic boss damage.",
     unlocked: false,
     color: "#10b981",
-    description: "Calls down intense temporal disruption beams that annihilate heavy dreadnoughts.",
+  },
+];
+
+const INITIAL_SKILLS: SkillNode[] = [
+  {
+    id: "stasis_field",
+    name: "Stasis Temporal Field",
+    icon: "Zap",
+    description: "Slows surrounding enemy projectiles and movement by 80% for 6 seconds.",
+    cooldown: 22,
+    duration: 6,
+    energyCost: 35,
+    unlocked: true,
+    active: false,
+    costCredits: 0,
+    category: "utility",
+  },
+  {
+    id: "reactor_overdrive",
+    name: "Valkyrie Reactor Overdrive",
+    icon: "Flame",
+    description: "Unleashes 100% reactor power, doubling weapon fire rate and damage output.",
+    cooldown: 28,
+    duration: 8,
+    energyCost: 45,
+    unlocked: true,
+    active: false,
+    costCredits: 1800,
+    category: "offense",
+  },
+  {
+    id: "kinetic_barrier",
+    name: "Aegis Kinetic Barrier",
+    icon: "Shield",
+    description: "Instantly recharges 100% Valkyrie shield matrix and repels nearby attacks.",
+    cooldown: 20,
+    duration: 3,
+    energyCost: 40,
+    unlocked: false,
+    active: false,
+    costCredits: 3500,
+    category: "defense",
   },
 ];
 
 const INITIAL_ACHIEVEMENTS: AchievementItem[] = [
   {
-    id: "first_defence",
-    title: "Quantum Barrier Active",
-    description: "Defeat 15 siege enemies in battle.",
+    id: "horizon_sweeper",
+    title: "Galactic Horizon Ace",
+    description: "Destroy 20 enemy Void fighters in combat.",
     unlocked: false,
     progress: 0,
-    target: 15,
-    rewardCredits: 600,
-    icon: "Shield",
+    target: 20,
+    rewardCredits: 700,
+    icon: "Rocket",
   },
   {
-    id: "turret_master",
-    title: "Arsenal Engineer",
-    description: "Deploy 8 turrets on the grid.",
-    unlocked: false,
-    progress: 0,
-    target: 8,
-    rewardCredits: 2200,
-    icon: "Layers",
-  },
-  {
-    id: "boss_conqueror",
-    title: "Void Leviathan Destroyer",
-    description: "Defeat 2 Siege Bosses.",
+    id: "overlord_slayer",
+    title: "Void Overlord Hunter",
+    description: "Defeat 2 Colossal Boss Warships.",
     unlocked: false,
     progress: 0,
     target: 2,
-    rewardCredits: 3500,
+    rewardCredits: 3000,
     icon: "Award",
   },
 ];
@@ -337,7 +337,7 @@ const INITIAL_ACHIEVEMENTS: AchievementItem[] = [
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function ChronosSentinelGame() {
+export default function VoidValkyrieGame() {
   const { user } = useUser();
   const firestore = useFirestore();
 
@@ -363,58 +363,52 @@ export default function ChronosSentinelGame() {
   const [muted, setMuted] = useState<boolean>(false);
 
   // Armory & Stats
-  const [turretTypes, setTurretTypes] = useState<TurretType[]>(INITIAL_TURRET_TYPES);
-  const [selectedTurretTypeId, setSelectedTurretTypeId] = useState<string>("tachyon_cannon");
+  const [weapons, setWeapons] = useState<WeaponOption[]>(INITIAL_WEAPONS);
+  const [selectedWeaponId, setSelectedWeaponId] = useState<string>("twin_void_pulse");
+  const [skills, setSkills] = useState<SkillNode[]>(INITIAL_SKILLS);
   const [achievements, setAchievements] = useState<AchievementItem[]>(INITIAL_ACHIEVEMENTS);
 
   const [sector, setSector] = useState<number>(1);
-  const [totalCredits, setTotalCredits] = useState<number>(3000);
+  const [totalCredits, setTotalCredits] = useState<number>(3500);
   const [highScore, setHighScore] = useState<number>(0);
 
   // Dynamic Game State Refs
-  const baseCoreRef = useRef<BaseCore>({
+  const fighterRef = useRef<ValkyrieFighter>({
     x: 400,
-    y: 300,
-    hp: 1000,
-    maxHp: 1000,
-    shield: 500,
-    maxShield: 500,
-    radius: 35,
-  });
-
-  const pilotRef = useRef<SentinelPilot>({
-    x: 400,
-    y: 420,
-    radius: 18,
-    hp: 300,
-    maxHp: 300,
-    shield: 150,
-    maxShield: 150,
+    y: 520,
+    radius: 20,
+    hp: 250,
+    maxHp: 250,
+    shield: 120,
+    maxShield: 120,
     energy: 100,
     maxEnergy: 100,
-    speed: 5.5,
+    overdrive: 0,
+    maxOverdrive: 100,
+    isOverdriveActive: false,
+    speed: 7.0,
     score: 0,
     kills: 0,
     credits: 0,
-    angle: 0,
+    rollAngle: 0,
   });
 
-  const placedTurretsRef = useRef<PlacedTurret[]>([]);
-  const enemiesRef = useRef<SiegeEnemy[]>([]);
+  const enemiesRef = useRef<EnemyShip[]>([]);
   const bulletsRef = useRef<Bullet[]>([]);
   const particlesRef = useRef<ParticleEffect[]>([]);
+  const skillCooldownsRef = useRef<{ [key: string]: number }>({});
 
   // Dev Terminal State
   const [terminalInput, setTerminalInput] = useState("");
   const [terminalLogs, setTerminalLogs] = useState<string[]>([
-    "[SYSTEM ONLINE] Chronos Sentinel Defense Grid v5.0 Active.",
-    "[STATUS] Quantum core operational. Grid defense online.",
+    "[SYSTEM ONLINE] Void Valkyrie V-9 Horizon Engine Initialized.",
+    "[STATUS] Reactor matrices online. Warp course plotted.",
   ]);
 
   // Load Persistence
   useEffect(() => {
     if (!user || !firestore) return;
-    const docRef = doc(firestore, `users/${user.uid}/game_stats`, "chronos_sentinel_quantum_siege");
+    const docRef = doc(firestore, `users/${user.uid}/game_stats`, "void_valkyrie_horizon_overdrive");
     getDoc(docRef)
       .then((snap) => {
         if (snap.exists()) {
@@ -430,7 +424,7 @@ export default function ChronosSentinelGame() {
   const saveStatsToFirebase = useCallback(
     (newScore: number, earnedCredits: number) => {
       if (!user || !firestore) return;
-      const docRef = doc(firestore, `users/${user.uid}/game_stats`, "chronos_sentinel_quantum_siege");
+      const docRef = doc(firestore, `users/${user.uid}/game_stats`, "void_valkyrie_horizon_overdrive");
       setDocumentNonBlocking(
         docRef,
         {
@@ -456,117 +450,77 @@ export default function ChronosSentinelGame() {
     setActiveTab("game");
     setSector(1);
 
-    baseCoreRef.current = {
+    fighterRef.current = {
       x: 400,
-      y: 300,
-      hp: 1000,
-      maxHp: 1000,
-      shield: 500,
-      maxShield: 500,
-      radius: 35,
-    };
-
-    pilotRef.current = {
-      x: 400,
-      y: 420,
-      radius: 18,
-      hp: 300,
-      maxHp: 300,
-      shield: 150,
-      maxShield: 150,
+      y: 520,
+      radius: 20,
+      hp: 250,
+      maxHp: 250,
+      shield: 120,
+      maxShield: 120,
       energy: 100,
       maxEnergy: 100,
-      speed: 5.5,
+      overdrive: 0,
+      maxOverdrive: 100,
+      isOverdriveActive: false,
+      speed: 7.0,
       score: 0,
       kills: 0,
       credits: 0,
-      angle: 0,
+      rollAngle: 0,
     };
-
-    placedTurretsRef.current = [
-      {
-        id: "turret_init_1",
-        typeId: "tachyon_cannon",
-        x: 320,
-        y: 220,
-        level: 1,
-        damage: 35,
-        range: 180,
-        fireRate: 250,
-        lastShot: 0,
-        color: "#38bdf8",
-        angle: 0,
-      },
-      {
-        id: "turret_init_2",
-        typeId: "tachyon_cannon",
-        x: 480,
-        y: 220,
-        level: 1,
-        damage: 35,
-        range: 180,
-        fireRate: 250,
-        lastShot: 0,
-        color: "#38bdf8",
-        angle: 0,
-      },
-    ];
 
     bulletsRef.current = [];
     enemiesRef.current = [];
     particlesRef.current = [];
+    skillCooldownsRef.current = {};
 
     spawnWave(1, mode);
   };
 
   const spawnWave = (currentSector: number, mode: GameMode) => {
     const isBossSector = currentSector % 3 === 0 || mode === "boss_rush";
-    const enemyCount = mode === "boss_rush" ? 1 : 5 + currentSector * 3;
+    const enemyCount = mode === "boss_rush" ? 1 : 5 + currentSector * 2;
 
-    const newEnemies: SiegeEnemy[] = [];
+    const newEnemies: EnemyShip[] = [];
 
     if (isBossSector) {
       newEnemies.push({
         id: `boss_${Date.now()}`,
         x: 400,
-        y: 60,
-        vx: 2,
-        vy: 0.5,
-        hp: 1500 + currentSector * 800,
-        maxHp: 1500 + currentSector * 800,
+        y: 110,
+        vx: 2.8,
+        vy: 0,
+        hp: 1400 + currentSector * 700,
+        maxHp: 1400 + currentSector * 700,
         type: "boss",
-        name: `Void Leviathan Mk-${currentSector}`,
+        name: `Void Overlord Omega Mk-${currentSector}`,
         color: "#f43f5e",
-        radius: 42,
-        speed: 1.2,
-        shootCooldown: 900,
+        radius: 48,
+        shootCooldown: 750,
         lastShot: 0,
-        scoreValue: 6000,
-        creditsValue: 1500,
+        scoreValue: 5500,
+        creditsValue: 1400,
       });
     } else {
       for (let i = 0; i < enemyCount; i++) {
-        const isDread = Math.random() > 0.75;
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 380 + Math.random() * 80;
-
+        const isFrigate = Math.random() > 0.7;
         newEnemies.push({
           id: `enemy_${Date.now()}_${i}`,
-          x: 400 + Math.cos(angle) * dist,
-          y: 300 + Math.sin(angle) * dist,
-          vx: 0,
-          vy: 0,
-          hp: isDread ? 220 : 70,
-          maxHp: isDread ? 220 : 70,
-          type: isDread ? "dreadnought" : Math.random() > 0.5 ? "interceptor" : "crawler",
-          name: isDread ? "Siege Dreadnought" : "Rift Crawler",
-          color: isDread ? "#c084fc" : "#38bdf8",
-          radius: isDread ? 24 : 15,
-          speed: isDread ? 0.8 : 1.6,
-          shootCooldown: isDread ? 1400 : 2000,
+          x: 60 + Math.random() * 680,
+          y: -40 - i * 50,
+          vx: (Math.random() - 0.5) * 3.5,
+          vy: 1.8 + Math.random() * 1.5,
+          hp: isFrigate ? 200 : 65,
+          maxHp: isFrigate ? 200 : 65,
+          type: isFrigate ? "frigate" : Math.random() > 0.5 ? "interceptor" : "drone",
+          name: isFrigate ? "Void Frigate" : "Void Drone",
+          color: isFrigate ? "#c084fc" : "#38bdf8",
+          radius: isFrigate ? 26 : 15,
+          shootCooldown: isFrigate ? 1100 : 1700,
           lastShot: 0,
-          scoreValue: isDread ? 450 : 160,
-          creditsValue: isDread ? 90 : 35,
+          scoreValue: isFrigate ? 420 : 150,
+          creditsValue: isFrigate ? 85 : 30,
         });
       }
     }
@@ -581,7 +535,7 @@ export default function ChronosSentinelGame() {
   const spawnParticles = (x: number, y: number, color: string, count: number = 10, shape: "circle" | "spark" | "ring" = "circle") => {
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 1 + Math.random() * 5;
+      const speed = 1 + Math.random() * 5.5;
       particlesRef.current.push({
         x,
         y,
@@ -590,49 +544,61 @@ export default function ChronosSentinelGame() {
         radius: 2 + Math.random() * 3.5,
         color,
         life: 0,
-        maxLife: 15 + Math.random() * 20,
+        maxLife: 18 + Math.random() * 22,
         shape,
       });
     }
   };
 
   // ───────────────────────────────────────────────────────────────────────────
-  // TURRET PLACEMENT LOGIC
+  // SHOOTING LOGIC
   // ───────────────────────────────────────────────────────────────────────────
 
-  const placeTurretAt = (canvasX: number, canvasY: number) => {
-    const tType = turretTypes.find((t) => t.id === selectedTurretTypeId) || turretTypes[0];
-    if (totalCredits < tType.costCredits) return;
+  const fireWeapon = (now: number) => {
+    const activeWeapon = weapons.find((w) => w.id === selectedWeaponId) || weapons[0];
+    if (now - lastShotTimeRef.current < activeWeapon.fireRate) return;
+    if (fighterRef.current.energy < activeWeapon.energyCost) return;
 
-    setTotalCredits((prev) => prev - tType.costCredits);
+    lastShotTimeRef.current = now;
+    fighterRef.current.energy = Math.max(0, fighterRef.current.energy - activeWeapon.energyCost);
 
-    placedTurretsRef.current.push({
-      id: `turret_${Date.now()}`,
-      typeId: tType.id,
-      x: canvasX,
-      y: canvasY,
-      level: 1,
-      damage: tType.damage,
-      range: tType.range,
-      fireRate: tType.fireRate,
-      lastShot: 0,
-      color: tType.color,
-      angle: 0,
-    });
+    const fx = fighterRef.current.x;
+    const fy = fighterRef.current.y - fighterRef.current.radius;
+    const dmg = fighterRef.current.isOverdriveActive ? activeWeapon.damage * 2 : activeWeapon.damage;
 
-    spawnParticles(canvasX, canvasY, tType.color, 20, "ring");
-    audioSynth.playTurretShot(900);
-
-    // Update achievement
-    setAchievements((prev) =>
-      prev.map((ach) => {
-        if (ach.id === "turret_master") {
-          const prog = Math.min(ach.target, placedTurretsRef.current.length);
-          return { ...ach, progress: prog, unlocked: prog >= ach.target };
-        }
-        return ach;
-      })
+    bulletsRef.current.push(
+      { id: `b_${now}_1`, x: fx - 14, y: fy, vx: 0, vy: -15, damage: dmg, color: activeWeapon.color, radius: 4, isPlayer: true },
+      { id: `b_${now}_2`, x: fx + 14, y: fy, vx: 0, vy: -15, damage: dmg, color: activeWeapon.color, radius: 4, isPlayer: true }
     );
+
+    audioSynth.playLaserShot(850);
+    spawnParticles(fx, fy, activeWeapon.color, 4, "spark");
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // SKILL ACTIVATION
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const activateSkill = (skillId: string) => {
+    const sk = skills.find((s) => s.id === skillId);
+    if (!sk || !sk.unlocked) return;
+
+    const cd = skillCooldownsRef.current[skillId] || 0;
+    if (cd > 0) return;
+    if (fighterRef.current.energy < sk.energyCost) return;
+
+    fighterRef.current.energy -= sk.energyCost;
+    skillCooldownsRef.current[skillId] = sk.cooldown;
+
+    if (skillId === "reactor_overdrive") {
+      fighterRef.current.isOverdriveActive = true;
+      setTimeout(() => {
+        fighterRef.current.isOverdriveActive = false;
+      }, sk.duration * 1000);
+    } else if (skillId === "kinetic_barrier") {
+      fighterRef.current.shield = fighterRef.current.maxShield;
+      spawnParticles(fighterRef.current.x, fighterRef.current.y, "#38bdf8", 25, "ring");
+    }
   };
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -642,113 +608,35 @@ export default function ChronosSentinelGame() {
   const updateGameLogic = (dt: number) => {
     if (!isPlaying || isPaused || gameOver) return;
 
-    const p = pilotRef.current;
-    const core = baseCoreRef.current;
+    const f = fighterRef.current;
     const now = performance.now();
 
-    // Pilot Movement Controls
-    if (keysRef.current["KeyA"] || keysRef.current["ArrowLeft"]) p.x = Math.max(p.radius, p.x - p.speed);
-    if (keysRef.current["KeyD"] || keysRef.current["ArrowRight"]) p.x = Math.min(800 - p.radius, p.x + p.speed);
-    if (keysRef.current["KeyW"] || keysRef.current["ArrowUp"]) p.y = Math.max(p.radius, p.y - p.speed);
-    if (keysRef.current["KeyS"] || keysRef.current["ArrowDown"]) p.y = Math.min(600 - p.radius, p.y + p.speed);
-
-    // Pilot Shooting Towards Mouse
-    if (isMouseDownRef.current || keysRef.current["Space"]) {
-      if (now - lastShotTimeRef.current > 160 && p.energy >= 4) {
-        lastShotTimeRef.current = now;
-        p.energy -= 4;
-
-        const dx = mousePosRef.current.x - p.x;
-        const dy = mousePosRef.current.y - p.y;
-        const angle = Math.atan2(dy, dx);
-        p.angle = angle;
-
-        bulletsRef.current.push({
-          id: `pb_${now}`,
-          x: p.x,
-          y: p.y,
-          vx: Math.cos(angle) * 14,
-          vy: Math.sin(angle) * 14,
-          damage: 30,
-          color: "#38bdf8",
-          radius: 4,
-          isPlayer: true,
-        });
-
-        audioSynth.playTurretShot(850);
-      }
+    // Movement Controls
+    if (keysRef.current["KeyA"] || keysRef.current["ArrowLeft"]) {
+      f.x = Math.max(f.radius, f.x - f.speed);
+      f.rollAngle = -0.3;
+    } else if (keysRef.current["KeyD"] || keysRef.current["ArrowRight"]) {
+      f.x = Math.min(800 - f.radius, f.x + f.speed);
+      f.rollAngle = 0.3;
+    } else {
+      f.rollAngle = 0;
     }
 
-    // Energy & Core Shield Passive Recovery
-    p.energy = Math.min(p.maxEnergy, p.energy + 0.3);
-    core.shield = Math.min(core.maxShield, core.shield + 0.1);
+    if (keysRef.current["KeyW"] || keysRef.current["ArrowUp"]) f.y = Math.max(f.radius, f.y - f.speed);
+    if (keysRef.current["KeyS"] || keysRef.current["ArrowDown"]) f.y = Math.min(600 - f.radius, f.y + f.speed);
 
-    // ── Update Placed Turrets & Auto-Targeting ───────────────────────────────
-    placedTurretsRef.current.forEach((t) => {
-      // Find nearest enemy within range
-      let nearestEnemy: SiegeEnemy | null = null;
-      let nearestDist = t.range;
+    if (isMouseDownRef.current || keysRef.current["Space"]) {
+      fireWeapon(now);
+    }
 
-      for (const e of enemiesRef.current) {
-        const dist = Math.hypot(e.x - t.x, e.y - t.y);
-        if (dist < nearestDist) {
-          nearestDist = dist;
-          nearestEnemy = e;
-        }
-      }
+    // Energy & Shield Passive Recovery
+    f.energy = Math.min(f.maxEnergy, f.energy + 0.3);
+    f.shield = Math.min(f.maxShield, f.shield + 0.1);
 
-      if (nearestEnemy) {
-        const target: SiegeEnemy = nearestEnemy;
-        const angle = Math.atan2(target.y - t.y, target.x - t.x);
-        t.angle = angle;
-
-        if (now - t.lastShot > t.fireRate) {
-          t.lastShot = now;
-          bulletsRef.current.push({
-            id: `tb_${now}_${t.id}`,
-            x: t.x,
-            y: t.y,
-            vx: Math.cos(angle) * 12,
-            vy: Math.sin(angle) * 12,
-            damage: t.damage,
-            color: t.color,
-            radius: 5,
-            isPlayer: true,
-          });
-
-          audioSynth.playTurretShot(650);
-        }
-      }
-    });
-
-    // ── Update Enemies (Movement towards Core) ──────────────────────────────
-    enemiesRef.current.forEach((e) => {
-      const dx = core.x - e.x;
-      const dy = core.y - e.y;
-      const dist = Math.hypot(dx, dy);
-
-      if (dist > core.radius + e.radius) {
-        e.vx = (dx / dist) * e.speed;
-        e.vy = (dy / dist) * e.speed;
-        e.x += e.vx;
-        e.y += e.vy;
-      } else {
-        // Enemies hitting base core
-        let dmg = 15;
-        if (core.shield > 0) {
-          core.shield = Math.max(0, core.shield - dmg);
-        } else {
-          core.hp -= dmg;
-        }
-        audioSynth.playCoreHit();
-        spawnParticles(e.x, e.y, "#ef4444", 8, "spark");
-        e.hp = 0; // Destroy enemy on core impact
-
-        if (core.hp <= 0) {
-          setGameOver(true);
-          setIsPlaying(false);
-          saveStatsToFirebase(p.score, p.credits);
-        }
+    // Update Skill Cooldowns
+    Object.keys(skillCooldownsRef.current).forEach((k) => {
+      if (skillCooldownsRef.current[k] > 0) {
+        skillCooldownsRef.current[k] = Math.max(0, skillCooldownsRef.current[k] - dt / 1000);
       }
     });
 
@@ -756,7 +644,38 @@ export default function ChronosSentinelGame() {
     bulletsRef.current = bulletsRef.current.filter((b) => {
       b.x += b.vx;
       b.y += b.vy;
-      return b.x > -20 && b.x < 820 && b.y > -20 && b.y < 620;
+      return b.y > -20 && b.y < 620 && b.x > -20 && b.x < 820;
+    });
+
+    // ── Update Enemies & Enemy Shooting ─────────────────────────────────────
+    enemiesRef.current.forEach((e) => {
+      e.x += e.vx;
+      e.y += e.vy;
+
+      if (e.x < e.radius || e.x > 800 - e.radius) e.vx *= -1;
+
+      if (now - e.lastShot > e.shootCooldown) {
+        e.lastShot = now;
+        bulletsRef.current.push({
+          id: `eb_${now}`,
+          x: e.x,
+          y: e.y + e.radius,
+          vx: 0,
+          vy: 5.5,
+          damage: 14,
+          color: "#ec4899",
+          radius: 4,
+          isPlayer: false,
+        });
+      }
+    });
+
+    // Respawn off-screen non-boss enemies
+    enemiesRef.current.forEach((e) => {
+      if (e.y > 640 && e.type !== "boss") {
+        e.y = -30;
+        e.x = 50 + Math.random() * 700;
+      }
     });
 
     // ── Collision: Player Bullets -> Enemies ────────────────────────────────
@@ -766,24 +685,23 @@ export default function ChronosSentinelGame() {
         const dist = Math.hypot(b.x - e.x, b.y - e.y);
         if (dist < b.radius + e.radius) {
           e.hp -= b.damage;
-          b.y = -999; // destroy bullet
+          b.y = -999;
           spawnParticles(b.x, b.y, b.color, 5, "spark");
 
           if (e.hp <= 0) {
-            p.score += e.scoreValue;
-            p.credits += e.creditsValue;
-            p.kills += 1;
+            f.score += e.scoreValue;
+            f.credits += e.creditsValue;
+            f.kills += 1;
             spawnParticles(e.x, e.y, e.color, e.type === "boss" ? 35 : 15, "circle");
-            audioSynth.playExplosion(e.type === "boss" ? "heavy" : "small");
+            audioSynth.playExplosion(e.type === "boss" ? "boss" : "small");
 
-            // Update achievement progress
             setAchievements((prev) =>
               prev.map((ach) => {
-                if (ach.id === "first_defence") {
+                if (ach.id === "horizon_sweeper") {
                   const prog = Math.min(ach.target, ach.progress + 1);
                   return { ...ach, progress: prog, unlocked: prog >= ach.target };
                 }
-                if (ach.id === "boss_conqueror" && e.type === "boss") {
+                if (ach.id === "overlord_slayer" && e.type === "boss") {
                   const prog = Math.min(ach.target, ach.progress + 1);
                   return { ...ach, progress: prog, unlocked: prog >= ach.target };
                 }
@@ -795,15 +713,47 @@ export default function ChronosSentinelGame() {
       });
     });
 
-    // Remove dead enemies
     enemiesRef.current = enemiesRef.current.filter((e) => e.hp > 0);
 
-    // Wave Progression
     if (enemiesRef.current.length === 0) {
       const nextSec = sector + 1;
       setSector(nextSec);
       spawnWave(nextSec, gameMode);
     }
+
+    // ── Collision: Enemy Bullets -> Valkyrie Fighter ────────────────────────
+    bulletsRef.current.forEach((b) => {
+      if (b.isPlayer) return;
+      const dist = Math.hypot(b.x - f.x, b.y - f.y);
+      if (dist < b.radius + f.radius) {
+        b.y = 9999;
+        let dmg = b.damage;
+
+        if (f.shield > 0) {
+          if (f.shield >= dmg) {
+            f.shield -= dmg;
+            dmg = 0;
+          } else {
+            dmg -= f.shield;
+            f.shield = 0;
+          }
+          spawnParticles(f.x, f.y, "#38bdf8", 6, "ring");
+        }
+
+        if (dmg > 0) {
+          f.hp -= dmg;
+          spawnParticles(f.x, f.y, "#ef4444", 10, "spark");
+          audioSynth.playExplosion("small");
+        }
+
+        if (f.hp <= 0) {
+          setGameOver(true);
+          setIsPlaying(false);
+          audioSynth.playExplosion("boss");
+          saveStatsToFirebase(f.score, f.credits);
+        }
+      }
+    });
 
     // ── Update Particles ───────────────────────────────────────────────────
     particlesRef.current = particlesRef.current.filter((pt) => {
@@ -821,8 +771,8 @@ export default function ChronosSentinelGame() {
   const renderCanvas = (ctx: CanvasRenderingContext2D) => {
     ctx.clearRect(0, 0, 800, 600);
 
-    // Grid Lines
-    ctx.strokeStyle = "rgba(56, 189, 248, 0.05)";
+    // Warp Grid Lines
+    ctx.strokeStyle = "rgba(168, 85, 247, 0.06)";
     ctx.lineWidth = 1;
     for (let x = 0; x < 800; x += 40) {
       ctx.beginPath();
@@ -837,31 +787,7 @@ export default function ChronosSentinelGame() {
       ctx.stroke();
     }
 
-    // ── Draw Base Core ──────────────────────────────────────────────────────
-    const core = baseCoreRef.current;
-    ctx.save();
-    ctx.translate(core.x, core.y);
-
-    if (core.shield > 0) {
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
-      ctx.lineWidth = 3;
-      ctx.shadowColor = "#38bdf8";
-      ctx.shadowBlur = 15;
-      ctx.beginPath();
-      ctx.arc(0, 0, core.radius + 12, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    ctx.fillStyle = "#38bdf8";
-    ctx.shadowColor = "#38bdf8";
-    ctx.shadowBlur = 20;
-    ctx.beginPath();
-    ctx.arc(0, 0, core.radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
-
-    // ── Draw Particles ──────────────────────────────────────────────────────
+    // Draw Particles
     particlesRef.current.forEach((pt) => {
       ctx.save();
       ctx.globalAlpha = 1 - pt.life / pt.maxLife;
@@ -871,7 +797,7 @@ export default function ChronosSentinelGame() {
         ctx.strokeStyle = pt.color;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(pt.x, pt.y, pt.radius + pt.life * 1.2, 0, Math.PI * 2);
+        ctx.arc(pt.x, pt.y, pt.radius + pt.life * 1.4, 0, Math.PI * 2);
         ctx.stroke();
       } else {
         ctx.beginPath();
@@ -881,34 +807,7 @@ export default function ChronosSentinelGame() {
       ctx.restore();
     });
 
-    // ── Draw Placed Turrets ────────────────────────────────────────────────
-    placedTurretsRef.current.forEach((t) => {
-      ctx.save();
-      ctx.translate(t.x, t.y);
-
-      // Turret Range Radius Outline
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-      ctx.beginPath();
-      ctx.arc(0, 0, t.range, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Turret Base
-      ctx.fillStyle = "#1e293b";
-      ctx.beginPath();
-      ctx.arc(0, 0, 16, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Rotating Cannon Barrel
-      ctx.rotate(t.angle);
-      ctx.fillStyle = t.color;
-      ctx.shadowColor = t.color;
-      ctx.shadowBlur = 10;
-      ctx.fillRect(0, -4, 20, 8);
-
-      ctx.restore();
-    });
-
-    // ── Draw Bullets ────────────────────────────────────────────────────────
+    // Draw Bullets
     bulletsRef.current.forEach((b) => {
       ctx.save();
       ctx.fillStyle = b.color;
@@ -920,36 +819,54 @@ export default function ChronosSentinelGame() {
       ctx.restore();
     });
 
-    // ── Draw Enemies ────────────────────────────────────────────────────────
+    // Draw Enemies
     enemiesRef.current.forEach((e) => {
       ctx.save();
       ctx.fillStyle = e.color;
       ctx.shadowColor = e.color;
-      ctx.shadowBlur = e.type === "boss" ? 20 : 10;
-
+      ctx.shadowBlur = e.type === "boss" ? 22 : 10;
       ctx.beginPath();
       ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
       ctx.fill();
-
       ctx.restore();
     });
 
-    // ── Draw Pilot Mech Hero ────────────────────────────────────────────────
+    // Draw Valkyrie Fighter V-9
     if (isPlaying && !gameOver) {
-      const p = pilotRef.current;
+      const f = fighterRef.current;
       ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.angle);
+      ctx.translate(f.x, f.y);
+      ctx.rotate(f.rollAngle);
 
-      ctx.fillStyle = "#ffffff";
+      if (f.shield > 0) {
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.7)";
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = "#38bdf8";
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.arc(0, 0, f.radius + 8, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#38bdf8";
       ctx.shadowColor = "#38bdf8";
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 15;
 
+      // Fighter Wings
       ctx.beginPath();
-      ctx.moveTo(18, 0);
-      ctx.lineTo(-12, -12);
-      ctx.lineTo(-6, 0);
-      ctx.lineTo(-12, 12);
+      ctx.moveTo(0, -f.radius * 1.5);
+      ctx.lineTo(-f.radius * 1.6, f.radius * 0.8);
+      ctx.lineTo(0, f.radius * 0.4);
+      ctx.lineTo(f.radius * 1.6, f.radius * 0.8);
+      ctx.closePath();
+      ctx.fill();
+
+      // Thruster Flame
+      ctx.fillStyle = "#f59e0b";
+      ctx.beginPath();
+      ctx.moveTo(-5, f.radius * 0.6);
+      ctx.lineTo(0, f.radius * 1.5 + Math.random() * 6);
+      ctx.lineTo(5, f.radius * 0.6);
       ctx.closePath();
       ctx.fill();
 
@@ -979,10 +896,13 @@ export default function ChronosSentinelGame() {
     };
   }, [isPlaying, isPaused, gameOver]);
 
-  // Mouse & Keyboard Listeners
+  // Keyboard & Mouse Listeners
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       keysRef.current[e.code] = true;
+      if (e.code === "Digit1") activateSkill("stasis_field");
+      if (e.code === "Digit2") activateSkill("reactor_overdrive");
+      if (e.code === "Digit3") activateSkill("kinetic_barrier");
     };
     const handleKeyUp = (e: KeyboardEvent) => {
       keysRef.current[e.code] = false;
@@ -995,18 +915,7 @@ export default function ChronosSentinelGame() {
         y: e.clientY - rect.top,
       };
     };
-    const handleMouseDown = (e: MouseEvent) => {
-      if (e.button === 0 && canvasRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const clickY = e.clientY - rect.top;
-
-        // Check if placing turret on empty space
-        const distToCore = Math.hypot(clickX - 400, clickY - 300);
-        if (distToCore > 60) {
-          placeTurretAt(clickX, clickY);
-        }
-      }
+    const handleMouseDown = () => {
       isMouseDownRef.current = true;
     };
     const handleMouseUp = () => {
@@ -1026,7 +935,7 @@ export default function ChronosSentinelGame() {
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [selectedTurretTypeId, totalCredits]);
+  }, [skills]);
 
   // Dev Terminal Submit
   const handleTerminalSubmit = (e: React.FormEvent) => {
@@ -1037,57 +946,53 @@ export default function ChronosSentinelGame() {
     const newLogs = [...terminalLogs, `> ${terminalInput}`];
 
     if (cmd === "override_power") {
-      baseCoreRef.current.hp = 99999;
-      baseCoreRef.current.shield = 99999;
-      newLogs.push("[CHEAT] Base Core Matrix Invincibility Engaged.");
+      fighterRef.current.hp = 99999;
+      fighterRef.current.shield = 99999;
+      newLogs.push("[CHEAT] Void Valkyrie Invincibility Matrix Engaged.");
     } else if (cmd.startsWith("add_credits")) {
-      setTotalCredits((prev) => prev + 15000);
-      newLogs.push("[CHEAT] Added +15,000 Credits to Sentinel Vault.");
-    } else if (cmd === "nuke_enemies") {
-      enemiesRef.current.forEach((e) => (e.hp = 0));
-      newLogs.push("[CHEAT] Orbital Nuke Deployed. All enemies purged.");
+      setTotalCredits((prev) => prev + 20000);
+      newLogs.push("[CHEAT] Added +20,000 Credits to Armory Vault.");
     } else if (cmd === "clear") {
       setTerminalLogs([]);
       setTerminalInput("");
       return;
     } else {
-      newLogs.push(`[ERROR] Unknown command: "${cmd}". Type "override_power", "add_credits", "nuke_enemies", or "clear".`);
+      newLogs.push(`[ERROR] Unknown command: "${cmd}". Type "override_power", "add_credits", or "clear".`);
     }
 
     setTerminalLogs(newLogs);
     setTerminalInput("");
   };
 
-  const p = pilotRef.current;
-  const core = baseCoreRef.current;
+  const f = fighterRef.current;
 
   return (
-    <div className="w-full min-h-screen bg-[#05030d] text-white flex flex-col items-center justify-start p-4 md:p-8 font-sans selection:bg-sky-500 selection:text-black">
-      {/* Top Navigation */}
+    <div className="w-full min-h-screen bg-[#05030d] text-white flex flex-col items-center justify-start p-4 md:p-8 font-sans selection:bg-purple-500 selection:text-black">
+      {/* Top Header Navigation */}
       <header className="w-full max-w-6xl flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-2xl shadow-2xl mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-sky-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Shield className="w-6 h-6 text-white animate-pulse" />
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <Rocket className="w-6 h-6 text-white animate-pulse" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter bg-gradient-to-r from-indigo-400 via-sky-300 to-purple-400 bg-clip-text text-transparent">
-              Chronos Sentinel: Quantum Siege
+            <h1 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter bg-gradient-to-r from-purple-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
+              Void Valkyrie: Horizon Overdrive
             </h1>
             <p className="text-xs text-white/40 font-mono flex items-center gap-2">
-              <span>DEFENSE MATRIX V5.0</span> • <span className="text-emerald-400">SECTOR {sector}</span>
+              <span>WARP ENGINE V9.0</span> • <span className="text-emerald-400">SECTOR {sector}</span>
             </p>
           </div>
         </div>
 
-        {/* Tab Navigation */}
+        {/* Tab Selection */}
         <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-black/40 border border-white/10">
-          {(["game", "turrets", "achievements", "terminal"] as TabState[]).map((t) => (
+          {(["game", "armory", "skills", "achievements", "terminal"] as TabState[]).map((t) => (
             <button
               key={t}
               onClick={() => setActiveTab(t)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                 activeTab === t
-                  ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/30"
+                  ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30"
                   : "text-white/50 hover:text-white hover:bg-white/5"
               }`}
             >
@@ -1109,7 +1014,7 @@ export default function ChronosSentinelGame() {
             }}
             className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white transition-all"
           >
-            {muted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-sky-400" />}
+            {muted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-purple-400" />}
           </button>
         </div>
       </header>
@@ -1118,15 +1023,25 @@ export default function ChronosSentinelGame() {
       <main className="w-full max-w-6xl flex flex-col items-center justify-center">
         {activeTab === "game" && (
           <div className="w-full flex flex-col items-center gap-4">
-            {/* HUD */}
+            {/* HUD Bar */}
             <div className="w-full max-w-[800px] flex items-center justify-between px-6 py-3 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl text-xs font-mono">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-sky-400" />
+                  <Activity className="w-4 h-4 text-rose-400" />
                   <div className="w-28 h-2.5 rounded-full bg-white/10 overflow-hidden">
                     <div
+                      className="h-full bg-rose-500 transition-all duration-200"
+                      style={{ width: `${Math.max(0, (f.hp / f.maxHp) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-sky-400" />
+                  <div className="w-24 h-2.5 rounded-full bg-white/10 overflow-hidden">
+                    <div
                       className="h-full bg-sky-400 transition-all duration-200"
-                      style={{ width: `${Math.max(0, (core.hp / core.maxHp) * 100)}%` }}
+                      style={{ width: `${Math.max(0, (f.shield / f.maxShield) * 100)}%` }}
                     />
                   </div>
                 </div>
@@ -1135,18 +1050,18 @@ export default function ChronosSentinelGame() {
               <div className="flex items-center gap-6">
                 <div className="text-right">
                   <span className="text-white/40 block text-[10px]">SCORE</span>
-                  <span className="text-indigo-400 font-bold text-sm">{p.score.toLocaleString()}</span>
+                  <span className="text-purple-400 font-bold text-sm">{f.score.toLocaleString()}</span>
                 </div>
                 <div className="text-right">
                   <span className="text-white/40 block text-[10px]">KILLS</span>
-                  <span className="text-emerald-400 font-bold text-sm">{p.kills}</span>
+                  <span className="text-emerald-400 font-bold text-sm">{f.kills}</span>
                 </div>
               </div>
             </div>
 
-            {/* Canvas */}
-            <div className="relative w-full max-w-[800px] aspect-[4/3] rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl shadow-indigo-500/10 bg-slate-950">
-              <canvas ref={canvasRef} width={800} height={600} className="w-full h-full block cursor-crosshair" />
+            {/* Canvas Container */}
+            <div className="relative w-full max-w-[800px] aspect-[4/3] rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl shadow-purple-500/10 bg-slate-950">
+              <canvas ref={canvasRef} width={800} height={600} className="w-full h-full block" />
 
               {/* Start / Game Over */}
               {(!isPlaying || gameOver) && (
@@ -1157,28 +1072,28 @@ export default function ChronosSentinelGame() {
                         <AlertTriangle className="w-8 h-8 text-rose-500 animate-bounce" />
                       </div>
                       <div>
-                        <h2 className="text-3xl font-black uppercase italic tracking-wider text-rose-400">BASE CORE DESTRUCTION</h2>
+                        <h2 className="text-3xl font-black uppercase italic tracking-wider text-rose-400">VALKYRIE V-9 DESTROYED</h2>
                         <p className="text-sm text-white/50 mt-1 font-mono">
-                          Final Score: {p.score.toLocaleString()} • Credits: +{p.credits} CR
+                          Final Score: {f.score.toLocaleString()} • Credits: +{f.credits} CR
                         </p>
                       </div>
 
                       <button
                         onClick={() => startGame(gameMode)}
-                        className="px-8 py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-indigo-500 text-white font-black uppercase tracking-wider text-sm shadow-xl shadow-rose-500/30 hover:scale-105 transition-all"
+                        className="px-8 py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-purple-500 text-white font-black uppercase tracking-wider text-sm shadow-xl shadow-rose-500/30 hover:scale-105 transition-all"
                       >
-                        Re-Deploy Sentinel Grid
+                        Re-Deploy Fighter
                       </button>
                     </>
                   ) : (
                     <>
-                      <div className="w-20 h-20 rounded-3xl bg-indigo-500/20 border-2 border-indigo-500/40 flex items-center justify-center shadow-2xl shadow-indigo-500/30">
-                        <Shield className="w-10 h-10 text-indigo-400 animate-pulse" />
+                      <div className="w-20 h-20 rounded-3xl bg-purple-500/20 border-2 border-purple-500/40 flex items-center justify-center shadow-2xl shadow-purple-500/30">
+                        <Rocket className="w-10 h-10 text-purple-400 animate-pulse" />
                       </div>
                       <div>
-                        <h2 className="text-3xl font-black uppercase italic tracking-wider">CHRONOS SENTINEL GRID</h2>
+                        <h2 className="text-3xl font-black uppercase italic tracking-wider">VOID VALKYRIE HORIZON</h2>
                         <p className="text-xs text-white/50 max-w-md mx-auto mt-2 leading-relaxed">
-                          Deploy automated quantum turrets by clicking anywhere on the grid. Pilot your Sentinel Mech with WASD to shoot enemies directly and defend the base core.
+                          Pilot the Void Valkyrie V-9 fighter across deep-space warp sectors. Use WASD to maneuver, mouse to aim & shoot blasters, and keys 1-3 for skill matrices.
                         </p>
                       </div>
 
@@ -1187,9 +1102,9 @@ export default function ChronosSentinelGame() {
                           <button
                             key={m}
                             onClick={() => startGame(m)}
-                            className="px-6 py-3 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-wider text-xs shadow-xl shadow-indigo-500/30 hover:scale-105 transition-all"
+                            className="px-6 py-3 rounded-2xl bg-purple-500 hover:bg-purple-400 text-white font-black uppercase tracking-wider text-xs shadow-xl shadow-purple-500/30 hover:scale-105 transition-all"
                           >
-                            Start {m.replace("_", " ")}
+                            Launch {m.replace("_", " ")}
                           </button>
                         ))}
                       </div>
@@ -1199,45 +1114,78 @@ export default function ChronosSentinelGame() {
               )}
             </div>
 
-            {/* Turret Selection Palette */}
-            <div className="w-full max-w-[800px] grid grid-cols-4 gap-3">
-              {turretTypes.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setSelectedTurretTypeId(t.id)}
-                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all ${
-                    selectedTurretTypeId === t.id
-                      ? "bg-indigo-500/20 border-indigo-500 text-white shadow-lg shadow-indigo-500/20"
-                      : "bg-white/5 border-white/10 text-white/50 hover:text-white"
-                  }`}
-                >
-                  <Box className="w-4 h-4 text-sky-400" />
-                  <span className="text-[10px] font-bold truncate max-w-full">{t.name}</span>
-                  <span className="text-[9px] font-mono text-amber-400">{t.costCredits} CR</span>
-                </button>
-              ))}
+            {/* Quick Skill Bar */}
+            <div className="w-full max-w-[800px] grid grid-cols-3 gap-3">
+              {skills.map((sk, idx) => {
+                const cd = skillCooldownsRef.current[sk.id] || 0;
+                return (
+                  <button
+                    key={sk.id}
+                    onClick={() => activateSkill(sk.id)}
+                    disabled={!sk.unlocked || cd > 0}
+                    className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all ${
+                      sk.unlocked && cd === 0
+                        ? "bg-white/5 border-white/10 hover:border-purple-500/50 hover:bg-purple-500/10 text-white"
+                        : "bg-white/[0.02] border-white/5 text-white/30"
+                    }`}
+                  >
+                    <span className="text-[10px] font-mono text-white/40">[{idx + 1}]</span>
+                    <Zap className="w-4 h-4 text-purple-400" />
+                    <span className="text-[10px] font-bold truncate max-w-full">{sk.name}</span>
+                    {cd > 0 && <span className="text-[10px] font-mono text-amber-400 font-bold">{cd.toFixed(1)}s</span>}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* TAB: TURRET ARMORY */}
-        {activeTab === "turrets" && (
+        {/* TAB: ARMORY */}
+        {activeTab === "armory" && (
           <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4">
-            {turretTypes.map((t) => (
-              <div key={t.id} className="p-5 rounded-3xl bg-white/[0.03] border border-white/10 flex flex-col justify-between gap-4">
+            {weapons.map((w) => (
+              <div
+                key={w.id}
+                className={`p-5 rounded-3xl border transition-all flex flex-col justify-between gap-4 ${
+                  selectedWeaponId === w.id
+                    ? "bg-purple-500/10 border-purple-500/40 shadow-xl shadow-purple-500/10"
+                    : "bg-white/[0.03] border-white/10"
+                }`}
+              >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-mono text-sky-400 font-bold uppercase">{t.type} Turret</span>
-                    <span className="text-xs font-mono text-white/40">{t.damage} DMG</span>
+                    <span className="text-xs font-mono font-bold uppercase tracking-widest text-purple-400">
+                      LVL {w.level}/{w.maxLevel}
+                    </span>
+                    <span className="text-xs font-mono text-white/40">{w.damage} DMG</span>
                   </div>
-                  <h3 className="text-lg font-black uppercase italic tracking-tight">{t.name}</h3>
-                  <p className="text-xs text-white/50 mt-1 leading-relaxed">{t.description}</p>
+                  <h3 className="text-lg font-black uppercase italic tracking-tight">{w.name}</h3>
+                  <p className="text-xs text-white/50 mt-1 leading-relaxed">{w.description}</p>
                 </div>
 
-                <div className="flex items-center justify-between text-xs font-mono text-white/40 pt-2 border-t border-white/5">
-                  <span>Range: {t.range}px</span>
-                  <span>Fire Rate: {t.fireRate}ms</span>
-                </div>
+                {!w.unlocked ? (
+                  <button
+                    onClick={() => {
+                      if (totalCredits >= w.costCredits) {
+                        setTotalCredits((prev) => prev - w.costCredits);
+                        setWeapons((prev) => prev.map((item) => (item.id === w.id ? { ...item, unlocked: true } : item)));
+                      }
+                    }}
+                    disabled={totalCredits < w.costCredits}
+                    className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black uppercase tracking-wider text-xs shadow-lg transition-all"
+                  >
+                    Unlock ({w.costCredits} CR)
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setSelectedWeaponId(w.id)}
+                    className={`w-full py-2.5 rounded-xl font-black uppercase tracking-wider text-xs transition-all ${
+                      selectedWeaponId === w.id ? "bg-purple-500 text-white" : "bg-white/10 hover:bg-white/20 text-white"
+                    }`}
+                  >
+                    {selectedWeaponId === w.id ? "Equipped" : "Equip Weapon"}
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -1279,7 +1227,7 @@ export default function ChronosSentinelGame() {
                 type="text"
                 value={terminalInput}
                 onChange={(e) => setTerminalInput(e.target.value)}
-                placeholder="Enter command (e.g. override_power, add_credits, nuke_enemies)..."
+                placeholder="Enter command (e.g. override_power, add_credits)..."
                 className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500"
               />
               <button type="submit" className="px-5 py-2.5 rounded-xl bg-emerald-500 text-black font-bold uppercase text-xs">
