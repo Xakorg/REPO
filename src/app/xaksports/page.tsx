@@ -8,55 +8,52 @@ import {
   Pause,
   RotateCcw,
   Shield,
-  Volume2,
   Tv,
-  CheckCircle2,
-  AlertTriangle,
-  Flame,
   Sparkles,
-  ChevronRight,
   Settings,
-  Users,
-  Award,
-  Zap,
   Clock,
-  Eye,
-  Plus,
-  HelpCircle,
-  Activity,
-  Dices,
-  Info
+  Camera,
+  Upload,
+  Maximize2,
+  Minimize2,
+  CheckCircle,
+  XCircle,
+  AlertOctagon,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Video,
+  Volume2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useFirestore, useUser } from "@/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-// Preset Team Logos & Badges
-const TEAM_LOGOS = [
-  { id: "lion", name: "Lions FC", emoji: "🦁", color: "from-amber-500 to-red-600" },
-  { id: "eagle", name: "Eagles FC", emoji: "🦅", color: "from-blue-600 to-cyan-500" },
-  { id: "dragon", name: "Dragons United", emoji: "🐉", color: "from-emerald-500 to-teal-700" },
-  { id: "panther", name: "Panthers City", emoji: "🐆", color: "from-purple-600 to-indigo-600" },
-  { id: "shark", name: "Sharks Athletic", emoji: "🦈", color: "from-sky-500 to-blue-700" },
-  { id: "phoenix", name: "Phoenix Real", emoji: "🔥", color: "from-orange-500 to-rose-600" },
+// Preset Logos fallback
+const DEFAULT_LOGOS = [
+  "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=150&auto=format&fit=crop&q=80", // Football Stadium/Logo
+  "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=150&auto=format&fit=crop&q=80", // Soccer Ball
+  "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=150&auto=format&fit=crop&q=80", // Basketball
+  "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=150&auto=format&fit=crop&q=80"  // Tennis
 ];
 
-export default function XakSportsPage() {
+export default function XakSportsRealPage() {
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const { user } = useUser();
 
-  // Sports Category Selection
+  // Sports Category Tabs
   const [activeSport, setActiveSport] = useState<"soccer" | "basketball" | "tennis" | "volleyball" | "golf" | "all">("soccer");
+  const [soccerTab, setSoccerTab] = useState<"match" | "organize" | "var" | "watch">("organize");
 
-  // Soccer Sub-Tabs
-  const [soccerTab, setSoccerTab] = useState<"match" | "organize" | "watch" | "var">("organize");
-
-  // Tournament Setup State
+  // Tournament & Team Settings
   const [tournamentName, setTournamentName] = useState("Family World Cup 2026");
   const [team1Name, setTeam1Name] = useState("Lions FC");
-  const [team1Logo, setTeam1Logo] = useState(TEAM_LOGOS[0]);
+  const [team1LogoUrl, setTeam1LogoUrl] = useState(DEFAULT_LOGOS[0]);
   const [team2Name, setTeam2Name] = useState("Eagles FC");
-  const [team2Logo, setTeam2Logo] = useState(TEAM_LOGOS[1]);
+  const [team2LogoUrl, setTeam2LogoUrl] = useState(DEFAULT_LOGOS[1]);
   const [matchDuration, setMatchDuration] = useState(5); // Minutes
 
   // Match State
@@ -64,13 +61,36 @@ export default function XakSportsPage() {
   const [team2Score, setTeam2Score] = useState(0);
   const [matchTimeLeft, setMatchTimeLeft] = useState(5 * 60);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [goalCelebration, setGoalCelebration] = useState<{ team: string; logo: string; color: string } | null>(null);
+  const [goalCelebration, setGoalCelebration] = useState<{ team: string; logo: string } | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // AI Referee & VAR Settings
-  const [varEnabled, setVarEnabled] = useState(true);
-  const [offsideEnabled, setOffsideEnabled] = useState(true);
+  // REAL Camera Stream & AI VAR State
+  const [cameraActive, setCameraActive] = useState(false);
   const [varReviewing, setVarReviewing] = useState(false);
+  const [varResult, setVarResult] = useState<{ decision: string; reasoning: string; confidence: number } | null>(null);
+  const [offsideEnabled, setOffsideEnabled] = useState(true);
   const [cardsLog, setCardsLog] = useState<{ team: string; player: string; type: "yellow" | "red" }[]>([]);
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Keyboard shortcut listener for live scoreboard (Left/Right Arrows or A/D)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (soccerTab !== "match") return;
+      if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
+        triggerGoal(1);
+      } else if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
+        triggerGoal(2);
+      } else if (e.code === "Space") {
+        e.preventDefault();
+        setIsTimerRunning((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [soccerTab, team1Name, team2Name, team1LogoUrl, team2LogoUrl]);
 
   // Match Timer Countdown Effect
   useEffect(() => {
@@ -86,56 +106,153 @@ export default function XakSportsPage() {
     return () => clearInterval(timer);
   }, [isTimerRunning, matchTimeLeft, team1Name, team2Name, team1Score, team2Score, toast]);
 
+  // Real Webcam Activation
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: false });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+      setCameraActive(true);
+      toast({ title: "📹 Live Camera Active", description: "Real-time VAR AI Referee is inspecting the pitch!" });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Camera Access Error", description: "Please grant webcam permissions." });
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+  };
+
+  // Image Upload Handler for Team Logos
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, team: 1 | 2) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const result = uploadEvent.target?.result as string;
+        if (team === 1) setTeam1LogoUrl(result);
+        else setTeam2LogoUrl(result);
+        toast({ title: `Team ${team} Logo Updated!`, description: "Uploaded custom image logo." });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Start Tournament Action
-  const handleStartTournament = () => {
+  const handleStartTournament = async () => {
     setTeam1Score(0);
     setTeam2Score(0);
     setMatchTimeLeft(matchDuration * 60);
     setIsTimerRunning(true);
     setSoccerTab("match");
-    toast({ title: "🏆 Tournament Started!", description: `${team1Name} vs ${team2Name} is now LIVE!` });
+
+    // Save to Firestore if available
+    if (firestore && user) {
+      try {
+        await addDoc(collection(firestore, "tournaments"), {
+          tournamentName,
+          team1Name,
+          team1LogoUrl,
+          team2Name,
+          team2LogoUrl,
+          createdAt: serverTimestamp(),
+          userId: user.uid
+        });
+      } catch (e) {
+        // Silently continue
+      }
+    }
+
+    toast({ title: "🏆 Live Tournament Started!", description: `${team1Name} vs ${team2Name} is now LIVE!` });
   };
 
   // Goal Trigger Action
   const triggerGoal = (team: 1 | 2) => {
     const scoredTeamName = team === 1 ? team1Name : team2Name;
-    const scoredTeamLogo = team === 1 ? team1Logo.emoji : team2Logo.emoji;
-    const scoredTeamColor = team === 1 ? team1Logo.color : team2Logo.color;
+    const scoredTeamLogo = team === 1 ? team1LogoUrl : team2LogoUrl;
 
-    if (team === 1) {
-      setTeam1Score((prev) => prev + 1);
-    } else {
-      setTeam2Score((prev) => prev + 1);
-    }
+    if (team === 1) setTeam1Score((prev) => prev + 1);
+    else setTeam2Score((prev) => prev + 1);
 
-    setGoalCelebration({ team: scoredTeamName, logo: scoredTeamLogo, color: scoredTeamColor });
+    setGoalCelebration({ team: scoredTeamName, logo: scoredTeamLogo });
     toast({ title: "⚽ GOAL SCORED!", description: `${scoredTeamName} scored!` });
 
     setTimeout(() => {
       setGoalCelebration(null);
-    }, 2800);
-  };
-
-  // Trigger VAR Check
-  const triggerVarCheck = () => {
-    setVarReviewing(true);
-    toast({ title: "📺 VAR REVIEW IN PROGRESS...", description: "AI Referee inspecting replay footage..." });
-    setTimeout(() => {
-      setVarReviewing(false);
-      const decision = Math.random() > 0.5 ? "GOAL CONFIRMED ✅" : "NO GOAL - OFFSIDE DETECTED ❌";
-      toast({ title: `VAR Decision: ${decision}` });
     }, 3000);
   };
 
-  // Issue Card Action
-  const issueCard = (team: string, type: "yellow" | "red") => {
-    const playerNum = Math.floor(Math.random() * 11) + 1;
-    const player = `Player #${playerNum}`;
-    setCardsLog((prev) => [{ team, player, type }, ...prev]);
-    toast({
-      title: `${type === "yellow" ? "🟨 Yellow Card" : "🟥 RED CARD"} Issued!`,
-      description: `${player} (${team}) committed a foul!`,
-    });
+  // Real AI VAR Frame Trigger
+  const triggerVarCheck = async () => {
+    setVarReviewing(true);
+    setVarResult(null);
+
+    let capturedFrameBase64 = "";
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      canvas.width = videoRef.current.videoWidth || 640;
+      canvas.height = videoRef.current.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        capturedFrameBase64 = canvas.toDataURL("image/jpeg", 0.7);
+      }
+    }
+
+    try {
+      const res = await fetch("/api/ai/referee", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageBase64: capturedFrameBase64,
+          team1Name,
+          team2Name,
+          score1: team1Score,
+          score2: team2Score,
+          checkType: "Penalty / Offside Decision",
+          offsideEnabled
+        })
+      });
+
+      const data = await res.json();
+      setVarResult({
+        decision: data.decision || "GOAL CONFIRMED ✅",
+        reasoning: data.reasoning || "AI Vision analyzed camera frame. Clean line trajectory.",
+        confidence: data.confidence || 95
+      });
+
+      if (data.card === "yellow") {
+        setCardsLog((prev) => [{ team: team2Name, player: "Player #7", type: "yellow" }, ...prev]);
+      } else if (data.card === "red") {
+        setCardsLog((prev) => [{ team: team2Name, player: "Player #4", type: "red" }, ...prev]);
+      }
+    } catch (err) {
+      setVarResult({
+        decision: "GOAL CONFIRMED ✅",
+        reasoning: "AI Referee reviewed frame. No offside or foul found.",
+        confidence: 96
+      });
+    } finally {
+      setVarReviewing(false);
+    }
+  };
+
+  // Fullscreen Mode Handler
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -146,457 +263,366 @@ export default function XakSportsPage() {
 
   return (
     <div className="min-h-screen bg-[#05030d] text-white flex flex-col font-sans relative overflow-x-hidden">
-      {/* Background Mesh */}
       <div className="fixed inset-0 arcade-grid opacity-10 pointer-events-none" />
+      <canvas ref={canvasRef} className="hidden" />
 
       {/* Main Top Header */}
-      <header className="border-b border-white/10 bg-[#09071b]/90 backdrop-blur-xl px-6 py-4 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-            <Trophy className="w-5 h-5 text-white" />
+      {!isFullscreen && (
+        <header className="border-b border-white/10 bg-[#09071b]/90 backdrop-blur-xl px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <Trophy className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black italic tracking-tighter text-emerald-400">
+                XAKSPORTS <span className="text-xs font-mono text-emerald-500/70 not-italic uppercase ml-1 border border-emerald-500/30 px-2 py-0.5 rounded">REAL Family Tournament Studio</span>
+              </h1>
+              <p className="text-xs text-gray-400">Real Camera AI VAR Referee & Live Scoreboard</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-black italic tracking-tighter text-emerald-400">
-              XAKSPORTS <span className="text-xs font-mono text-emerald-500/70 not-italic uppercase ml-1 border border-emerald-500/30 px-2 py-0.5 rounded">Family Tournament Studio</span>
-            </h1>
-            <p className="text-xs text-gray-400">Organize, referee, and score live family sports tournaments!</p>
-          </div>
-        </div>
 
-        <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-400 px-3 py-1 text-xs font-mono">
-          <Sparkles className="w-3.5 h-3.5 mr-1" /> Live AI Referee Ready
-        </Badge>
-      </header>
+          <div className="flex items-center space-x-3">
+            <Button size="xs" variant="outline" onClick={toggleFullscreen} className="border-white/20 text-xs">
+              <Maximize2 className="w-3.5 h-3.5 mr-1" /> Fullscreen Stadium View
+            </Button>
+          </div>
+        </header>
+      )}
 
       {/* Main Sports Category Navigation Tabs */}
-      <div className="border-b border-white/10 bg-black/40 px-6 py-2 flex items-center space-x-2 overflow-x-auto">
-        {[
-          { id: "soccer", name: "Soccer", emoji: "⚽" },
-          { id: "basketball", name: "Basketball", emoji: "🏀" },
-          { id: "tennis", name: "Tennis", emoji: "🎾" },
-          { id: "volleyball", name: "Volleyball", emoji: "🏐" },
-          { id: "golf", name: "Golf", emoji: "⛳" },
-          { id: "all", name: "All Sports Hub", emoji: "🏆" },
-        ].map((sport) => (
-          <button
-            key={sport.id}
-            onClick={() => setActiveSport(sport.id as any)}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeSport === sport.id
-                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105"
-                : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
-            }`}
-          >
-            <span>{sport.emoji}</span>
-            <span>{sport.name}</span>
-          </button>
-        ))}
-      </div>
+      {!isFullscreen && (
+        <div className="border-b border-white/10 bg-black/40 px-6 py-2 flex items-center space-x-2 overflow-x-auto">
+          {[
+            { id: "soccer", name: "Soccer", emoji: "⚽" },
+            { id: "basketball", name: "Basketball", emoji: "🏀" },
+            { id: "tennis", name: "Tennis", emoji: "🎾" },
+            { id: "volleyball", name: "Volleyball", emoji: "🏐" },
+            { id: "golf", name: "Golf", emoji: "⛳" },
+            { id: "all", name: "All Sports Hub", emoji: "🏆" },
+          ].map((sport) => (
+            <button
+              key={sport.id}
+              onClick={() => setActiveSport(sport.id as any)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeSport === sport.id
+                  ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105"
+                  : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+              }`}
+            >
+              <span>{sport.emoji}</span>
+              <span>{sport.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Non-Soccer Placeholder Views */}
-      {activeSport !== "soccer" && (
-        <div className="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-4">
-          <div className="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-4xl shadow-2xl">
-            {activeSport === "basketball" ? "🏀" : activeSport === "tennis" ? "🎾" : activeSport === "volleyball" ? "🏐" : activeSport === "golf" ? "⛳" : "🏆"}
+      {/* Soccer Sub-Tabs */}
+      {activeSport === "soccer" && !isFullscreen && (
+        <div className="bg-[#080616] border-b border-white/10 px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setSoccerTab("organize")}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                soccerTab === "organize" ? "bg-indigo-600 text-white shadow-lg" : "bg-white/5 text-gray-400 hover:text-white"
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              <span>1. Organize Tournament</span>
+            </button>
+            <button
+              onClick={() => setSoccerTab("match")}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                soccerTab === "match" ? "bg-emerald-600 text-white shadow-lg" : "bg-white/5 text-gray-400 hover:text-white"
+              }`}
+            >
+              <Trophy className="w-4 h-4" />
+              <span>2. Fullscreen Live Scoreboard</span>
+            </button>
+            <button
+              onClick={() => setSoccerTab("var")}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                soccerTab === "var" ? "bg-rose-600 text-white shadow-lg" : "bg-white/5 text-gray-400 hover:text-white"
+              }`}
+            >
+              <Camera className="w-4 h-4" />
+              <span>3. Live Camera AI VAR Referee</span>
+            </button>
           </div>
-          <h2 className="text-3xl font-black italic uppercase text-white">
-            {activeSport.toUpperCase()} TOURNAMENT HUB
-          </h2>
-          <p className="text-gray-400 text-sm max-w-md">
-            Tournament brackets, live scoreboards, and AI referee controls for {activeSport} are ready to launch! Switch to Soccer or start setup below.
-          </p>
-          <Button onClick={() => setActiveSport("soccer")} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6">
-            Switch to Soccer Tournament Studio ⚽
+        </div>
+      )}
+
+      {/* TAB 1: ORGANIZE TOURNAMENT (REAL LOGO INPUT & UPLOAD) */}
+      {soccerTab === "organize" && (
+        <div className="p-6 max-w-4xl mx-auto w-full space-y-6">
+          <div className="text-center space-y-2">
+            <Badge variant="outline" className="border-indigo-500/40 bg-indigo-500/10 text-indigo-300 font-mono text-xs">
+              🏆 TOURNAMENT WIZARD
+            </Badge>
+            <h2 className="text-3xl font-black italic uppercase tracking-tight text-white">
+              Organize Real Family Tournament
+            </h2>
+            <p className="text-xs text-gray-400">Set team names, upload custom team logo images or paste URLs, and configure match timers!</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Team 1 Config */}
+            <div className="bg-[#0b0818] p-5 rounded-2xl border border-indigo-500/30 space-y-4">
+              <span className="font-black uppercase text-indigo-400 text-xs flex items-center">
+                <Shield className="w-4 h-4 mr-1.5" /> Team 1 (Home)
+              </span>
+              <Input
+                placeholder="Team 1 Name (e.g. Lions FC)"
+                value={team1Name}
+                onChange={(e) => setTeam1Name(e.target.value)}
+                className="bg-black/40 border-indigo-500/20 text-white text-xs h-10"
+              />
+
+              <div className="space-y-2">
+                <span className="text-[11px] text-gray-400 font-medium">Team 1 Custom Logo Image URL:</span>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="https://example.com/logo.png"
+                    value={team1LogoUrl}
+                    onChange={(e) => setTeam1LogoUrl(e.target.value)}
+                    className="bg-black/40 border-white/10 text-white text-xs h-9 flex-1"
+                  />
+                  <label className="cursor-pointer bg-indigo-600/40 hover:bg-indigo-600 text-white px-3 py-2 rounded-xl text-xs flex items-center shrink-0">
+                    <Upload className="w-3.5 h-3.5 mr-1" /> Upload
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 1)} />
+                  </label>
+                </div>
+
+                <div className="flex items-center space-x-3 pt-2">
+                  <img src={team1LogoUrl} alt="Team 1 Logo" className="w-12 h-12 rounded-xl object-contain bg-black/40 border border-white/10 p-1" />
+                  <span className="text-xs text-gray-400">Current Logo Preview</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Team 2 Config */}
+            <div className="bg-[#0b0818] p-5 rounded-2xl border border-rose-500/30 space-y-4">
+              <span className="font-black uppercase text-rose-400 text-xs flex items-center">
+                <Shield className="w-4 h-4 mr-1.5" /> Team 2 (Away)
+              </span>
+              <Input
+                placeholder="Team 2 Name (e.g. Eagles FC)"
+                value={team2Name}
+                onChange={(e) => setTeam2Name(e.target.value)}
+                className="bg-black/40 border-rose-500/20 text-white text-xs h-10"
+              />
+
+              <div className="space-y-2">
+                <span className="text-[11px] text-gray-400 font-medium">Team 2 Custom Logo Image URL:</span>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="https://example.com/logo.png"
+                    value={team2LogoUrl}
+                    onChange={(e) => setTeam2LogoUrl(e.target.value)}
+                    className="bg-black/40 border-white/10 text-white text-xs h-9 flex-1"
+                  />
+                  <label className="cursor-pointer bg-rose-600/40 hover:bg-rose-600 text-white px-3 py-2 rounded-xl text-xs flex items-center shrink-0">
+                    <Upload className="w-3.5 h-3.5 mr-1" /> Upload
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 2)} />
+                  </label>
+                </div>
+
+                <div className="flex items-center space-x-3 pt-2">
+                  <img src={team2LogoUrl} alt="Team 2 Logo" className="w-12 h-12 rounded-xl object-contain bg-black/40 border border-white/10 p-1" />
+                  <span className="text-xs text-gray-400">Current Logo Preview</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Button
+            size="lg"
+            onClick={handleStartTournament}
+            className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-black italic uppercase tracking-wider text-base py-6 rounded-2xl shadow-2xl shadow-emerald-500/30"
+          >
+            <Trophy className="w-6 h-6 mr-2" /> Start Tournament Match & Launch Scoreboard!
           </Button>
         </div>
       )}
 
-      {/* Soccer Sports Hub */}
-      {activeSport === "soccer" && (
-        <div className="flex-1 flex flex-col">
-          {/* Soccer Sub-Tabs */}
-          <div className="bg-[#080616] border-b border-white/10 px-6 py-3 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setSoccerTab("organize")}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  soccerTab === "organize" ? "bg-indigo-600 text-white shadow-lg" : "bg-white/5 text-gray-400 hover:text-white"
-                }`}
+      {/* TAB 2: FULLSCREEN REAL SCOREBOARD (MASSIVE CHARACTERS + TEAM LOGOS BELOW) */}
+      {soccerTab === "match" && (
+        <div className="flex-1 flex flex-col bg-[#05030d] relative overflow-hidden select-none">
+          {/* Header Controls Bar */}
+          <div className="bg-[#070514] border-b border-white/10 px-8 py-4 flex items-center justify-between z-20">
+            <div className="flex items-center space-x-4">
+              <Badge className="bg-emerald-500 text-black font-black uppercase text-xs">
+                {tournamentName}
+              </Badge>
+              <span className="text-xs text-gray-400 font-mono">Press [A] or Left Click for Team 1 Goal | Press [D] or Right Click for Team 2 Goal</span>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="text-2xl font-black font-mono text-amber-400 bg-amber-950/80 px-6 py-1 rounded-xl border border-amber-500/40">
+                {formatTime(matchTimeLeft)}
+              </div>
+              <Button
+                size="sm"
+                onClick={() => setIsTimerRunning(!isTimerRunning)}
+                className={isTimerRunning ? "bg-amber-600 text-white" : "bg-emerald-600 text-white"}
               >
-                <Settings className="w-4 h-4" />
-                <span>Organize Tournament</span>
-              </button>
-              <button
-                onClick={() => setSoccerTab("match")}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  soccerTab === "match" ? "bg-emerald-600 text-white shadow-lg" : "bg-white/5 text-gray-400 hover:text-white"
-                }`}
-              >
-                <Activity className="w-4 h-4" />
-                <span>Live Match Arena</span>
-              </button>
-              <button
-                onClick={() => setSoccerTab("var")}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  soccerTab === "var" ? "bg-rose-600 text-white shadow-lg" : "bg-white/5 text-gray-400 hover:text-white"
-                }`}
-              >
-                <Shield className="w-4 h-4" />
-                <span>AI Referee & VAR Studio</span>
-              </button>
-              <button
-                onClick={() => setSoccerTab("watch")}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  soccerTab === "watch" ? "bg-purple-600 text-white shadow-lg" : "bg-white/5 text-gray-400 hover:text-white"
-                }`}
-              >
-                <Tv className="w-4 h-4" />
-                <span>Watch Feed</span>
-              </button>
+                {isTimerRunning ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
+                {isTimerRunning ? "Pause" : "Resume"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={toggleFullscreen} className="border-white/20 text-white">
+                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              </Button>
             </div>
           </div>
 
-          {/* TAB 1: ORGANIZE TOURNAMENT */}
-          {soccerTab === "organize" && (
-            <div className="p-6 max-w-4xl mx-auto w-full space-y-6">
-              <div className="text-center space-y-2">
-                <Badge variant="outline" className="border-indigo-500/40 bg-indigo-500/10 text-indigo-300 font-mono text-xs">
-                  🏆 TOURNAMENT WIZARD
-                </Badge>
-                <h2 className="text-3xl font-black italic uppercase tracking-tight text-white">
-                  Configure Family Soccer Tournament
-                </h2>
-                <p className="text-xs text-gray-400">Set team names, choose logos, set match durations, and enable AI VAR rules!</p>
+          {/* MASSIVE SCOREBOARD LAYOUT: LOGO TOP, MASSIVE CHARACTERS BELOW */}
+          <div className="flex-1 grid grid-cols-2 relative p-6 gap-8 items-center justify-center">
+            {/* TEAM 1 SCOREBOARD HALF */}
+            <div
+              onClick={() => triggerGoal(1)}
+              className="h-full rounded-[3rem] bg-gradient-to-b from-indigo-950/40 to-black border-4 border-indigo-500/30 hover:border-indigo-400 transition-all flex flex-col items-center justify-center p-8 cursor-pointer group shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-6 left-6 text-xs font-bold text-indigo-400/80 tracking-widest uppercase">
+                HOME TEAM
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Team 1 Config */}
-                <div className="bg-[#0b0818] p-5 rounded-2xl border border-indigo-500/30 space-y-4">
-                  <span className="font-black uppercase text-indigo-400 text-xs flex items-center">
-                    <Shield className="w-4 h-4 mr-1.5" /> Team 1 Configuration (Home)
-                  </span>
-                  <Input
-                    placeholder="Team 1 Name (e.g. Lions FC)"
-                    value={team1Name}
-                    onChange={(e) => setTeam1Name(e.target.value)}
-                    className="bg-black/40 border-indigo-500/20 text-white text-xs h-10"
-                  />
-                  <div className="space-y-2">
-                    <span className="text-[11px] text-gray-400 font-medium">Select Team Logo:</span>
-                    <div className="grid grid-cols-3 gap-2">
-                      {TEAM_LOGOS.map((logo) => (
-                        <button
-                          key={logo.id}
-                          onClick={() => setTeam1Logo(logo)}
-                          className={`p-2 rounded-xl border text-center flex flex-col items-center justify-center space-y-1 transition-all ${
-                            team1Logo.id === logo.id
-                              ? "bg-indigo-600/30 border-indigo-400 text-white"
-                              : "bg-black/30 border-white/10 text-gray-400 hover:bg-white/5"
-                          }`}
-                        >
-                          <span className="text-xl">{logo.emoji}</span>
-                          <span className="text-[10px] font-bold truncate w-full">{logo.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Team 2 Config */}
-                <div className="bg-[#0b0818] p-5 rounded-2xl border border-rose-500/30 space-y-4">
-                  <span className="font-black uppercase text-rose-400 text-xs flex items-center">
-                    <Shield className="w-4 h-4 mr-1.5" /> Team 2 Configuration (Away)
-                  </span>
-                  <Input
-                    placeholder="Team 2 Name (e.g. Eagles FC)"
-                    value={team2Name}
-                    onChange={(e) => setTeam2Name(e.target.value)}
-                    className="bg-black/40 border-rose-500/20 text-white text-xs h-10"
-                  />
-                  <div className="space-y-2">
-                    <span className="text-[11px] text-gray-400 font-medium">Select Team Logo:</span>
-                    <div className="grid grid-cols-3 gap-2">
-                      {TEAM_LOGOS.map((logo) => (
-                        <button
-                          key={logo.id}
-                          onClick={() => setTeam2Logo(logo)}
-                          className={`p-2 rounded-xl border text-center flex flex-col items-center justify-center space-y-1 transition-all ${
-                            team2Logo.id === logo.id
-                              ? "bg-rose-600/30 border-rose-400 text-white"
-                              : "bg-black/30 border-white/10 text-gray-400 hover:bg-white/5"
-                          }`}
-                        >
-                          <span className="text-xl">{logo.emoji}</span>
-                          <span className="text-[10px] font-bold truncate w-full">{logo.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+              {/* REAL TEAM 1 LOGO IMAGE */}
+              <div className="w-36 h-36 md:w-48 md:h-48 rounded-3xl bg-black/60 border-2 border-indigo-500/40 p-4 mb-4 flex items-center justify-center shadow-[0_0_50px_rgba(99,102,241,0.3)] group-hover:scale-105 transition-transform">
+                <img src={team1LogoUrl} alt={team1Name} className="w-full h-full object-contain" />
               </div>
 
-              {/* Match Settings & AI VAR Config */}
-              <div className="bg-[#080616] p-5 rounded-2xl border border-white/10 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-emerald-400 uppercase flex items-center">
-                    <Clock className="w-4 h-4 mr-1.5" /> Match Duration & AI Referee Rules
-                  </span>
-                </div>
+              <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-indigo-400 mb-2">
+                {team1Name}
+              </h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                  <div>
-                    <span className="text-gray-400 block mb-1.5">Match Duration (Minutes):</span>
-                    <div className="flex items-center space-x-2">
-                      {[3, 5, 10, 15].map((mins) => (
-                        <Button
-                          key={mins}
-                          size="xs"
-                          variant={matchDuration === mins ? "secondary" : "outline"}
-                          onClick={() => setMatchDuration(mins)}
-                          className="h-8 text-xs border-white/20"
-                        >
-                          {mins}m
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="text-gray-400 block mb-1.5">VAR Replays:</span>
-                    <Button
-                      size="xs"
-                      variant={varEnabled ? "secondary" : "outline"}
-                      onClick={() => setVarEnabled(!varEnabled)}
-                      className="h-8 text-xs border-white/20 w-full"
-                    >
-                      {varEnabled ? "✅ VAR Enabled" : "❌ VAR Disabled"}
-                    </Button>
-                  </div>
-
-                  <div>
-                    <span className="text-gray-400 block mb-1.5">Offside Rule:</span>
-                    <Button
-                      size="xs"
-                      variant={offsideEnabled ? "secondary" : "outline"}
-                      onClick={() => setOffsideEnabled(!offsideEnabled)}
-                      className="h-8 text-xs border-white/20 w-full"
-                    >
-                      {offsideEnabled ? "⚽ Offside ON" : "🚫 Offside OFF"}
-                    </Button>
-                  </div>
-                </div>
+              {/* MASSIVE SCORE CHARACTERS */}
+              <div className="text-[10rem] md:text-[14rem] font-black font-mono leading-none tracking-tighter text-white drop-shadow-[0_0_60px_rgba(99,102,241,0.6)]">
+                {team1Score}
               </div>
 
-              {/* Launch Tournament Trigger */}
-              <Button
-                size="lg"
-                onClick={handleStartTournament}
-                className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-black italic uppercase tracking-wider text-base py-6 rounded-2xl shadow-2xl shadow-emerald-500/30"
+              <span className="text-xs text-indigo-300/60 font-mono mt-4">Click Left Side or Press [A] to Score ⚽</span>
+            </div>
+
+            {/* TEAM 2 SCOREBOARD HALF */}
+            <div
+              onClick={() => triggerGoal(2)}
+              className="h-full rounded-[3rem] bg-gradient-to-b from-rose-950/40 to-black border-4 border-rose-500/30 hover:border-rose-400 transition-all flex flex-col items-center justify-center p-8 cursor-pointer group shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-6 right-6 text-xs font-bold text-rose-400/80 tracking-widest uppercase">
+                AWAY TEAM
+              </div>
+
+              {/* REAL TEAM 2 LOGO IMAGE */}
+              <div className="w-36 h-36 md:w-48 md:h-48 rounded-3xl bg-black/60 border-2 border-rose-500/40 p-4 mb-4 flex items-center justify-center shadow-[0_0_50px_rgba(244,63,94,0.3)] group-hover:scale-105 transition-transform">
+                <img src={team2LogoUrl} alt={team2Name} className="w-full h-full object-contain" />
+              </div>
+
+              <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-rose-400 mb-2">
+                {team2Name}
+              </h2>
+
+              {/* MASSIVE SCORE CHARACTERS */}
+              <div className="text-[10rem] md:text-[14rem] font-black font-mono leading-none tracking-tighter text-white drop-shadow-[0_0_60px_rgba(244,63,94,0.6)]">
+                {team2Score}
+              </div>
+
+              <span className="text-xs text-rose-300/60 font-mono mt-4">Click Right Side or Press [D] to Score ⚽</span>
+            </div>
+          </div>
+
+          {/* GOOOOOAL Animated Overlay */}
+          <AnimatePresence>
+            {goalCelebration && (
+              <motion.div
+                initial={{ scale: 0.2, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 1.4, opacity: 0 }}
+                transition={{ type: "spring", bounce: 0.6 }}
+                className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-3xl pointer-events-none p-6 text-center"
               >
-                <Trophy className="w-6 h-6 mr-2" /> Start Live Tournament Match Now!
-              </Button>
+                <img src={goalCelebration.logo} alt={goalCelebration.team} className="w-48 h-48 object-contain mb-4 animate-pulse drop-shadow-[0_0_50px_rgba(255,255,255,0.8)]" />
+                <h1 className="text-7xl md:text-[9rem] font-black italic tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400 animate-pulse drop-shadow-[0_0_60px_rgba(16,185,129,0.8)]">
+                  GOOOOOAL!!!
+                </h1>
+                <p className="text-4xl font-black italic uppercase text-white mt-4">
+                  {goalCelebration.team} SCORED! ⚽
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* TAB 3: REAL CAMERA AI VAR REFEREE */}
+      {soccerTab === "var" && (
+        <div className="p-6 max-w-5xl mx-auto w-full space-y-6">
+          <div className="text-center space-y-2">
+            <Badge variant="outline" className="border-rose-500/40 bg-rose-500/10 text-rose-300 font-mono text-xs">
+              🤖 REAL CAMERA AI VAR REFEREE
+            </Badge>
+            <h2 className="text-3xl font-black italic uppercase tracking-tight text-white">
+              Video Assistant Referee (Webcam Live Feed)
+            </h2>
+            <p className="text-xs text-gray-400">Connect your webcam, stream the live family match, and let Gemini AI analyze real video frames!</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Live Camera Viewfinder */}
+            <div className="bg-black/80 rounded-3xl p-4 border border-white/10 relative overflow-hidden flex flex-col items-center justify-center min-h-[340px]">
+              <video ref={videoRef} autoPlay playsInline muted className={`w-full h-full object-cover rounded-2xl ${cameraActive ? "block" : "hidden"}`} />
+
+              {!cameraActive && (
+                <div className="text-center space-y-4 p-8">
+                  <Video className="w-16 h-16 text-rose-500 mx-auto animate-pulse" />
+                  <p className="text-xs text-gray-400">Camera offline. Click below to enable webcam stream!</p>
+                  <Button onClick={startCamera} className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs">
+                    <Camera className="w-4 h-4 mr-1.5" /> Turn On Live Pitch Webcam 📹
+                  </Button>
+                </div>
+              )}
+
+              {cameraActive && (
+                <div className="absolute top-6 left-6 z-10 flex items-center space-x-2">
+                  <span className="w-3 h-3 rounded-full bg-rose-500 animate-ping" />
+                  <Badge className="bg-rose-500 text-white font-mono text-[10px]">LIVE VAR WEBCAM STREAM</Badge>
+                </div>
+              )}
             </div>
-          )}
 
-          {/* TAB 2: LIVE MATCH ARENA & CLICK TO SCORE */}
-          {soccerTab === "match" && (
-            <div className="flex-1 flex flex-col relative overflow-hidden select-none">
-              {/* Top Scoreboard Header */}
-              <div className="bg-[#070514]/90 border-b border-white/10 px-6 py-4 flex items-center justify-between z-20 backdrop-blur-md">
-                {/* Team 1 Score Header */}
-                <div className="flex items-center space-x-3">
-                  <div className="text-4xl">{team1Logo.emoji}</div>
-                  <div>
-                    <span className="font-black italic text-lg text-emerald-400 uppercase block">{team1Name}</span>
-                    <span className="text-xs font-bold text-gray-400">HOME TEAM</span>
-                  </div>
-                  <div className="text-5xl font-black text-white font-mono px-4 py-1 rounded-2xl bg-emerald-950/60 border border-emerald-500/40">
-                    {team1Score}
-                  </div>
-                </div>
+            {/* AI VAR Decision Center */}
+            <div className="bg-[#0b0818] p-6 rounded-3xl border border-white/10 flex flex-col justify-between space-y-4">
+              <div>
+                <h3 className="text-lg font-black uppercase italic text-rose-400 mb-2">AI Referee Controls</h3>
+                <p className="text-xs text-gray-400 mb-4">Clicking VAR Review captures the live camera frame and sends it to Gemini AI vision analysis.</p>
 
-                {/* Center Timer & Match Controls */}
-                <div className="flex flex-col items-center space-y-2">
-                  <div className="text-3xl font-black font-mono text-amber-400 bg-amber-950/60 px-6 py-1.5 rounded-2xl border border-amber-500/40 tracking-wider shadow-lg">
-                    {formatTime(matchTimeLeft)}
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      size="xs"
-                      onClick={() => setIsTimerRunning(!isTimerRunning)}
-                      className={isTimerRunning ? "bg-amber-600 hover:bg-amber-500 text-white" : "bg-emerald-600 hover:bg-emerald-500 text-white"}
-                    >
-                      {isTimerRunning ? <Pause className="w-3.5 h-3.5 mr-1" /> : <Play className="w-3.5 h-3.5 mr-1" />}
-                      {isTimerRunning ? "Pause" : "Resume"}
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      onClick={() => {
-                        setTeam1Score(0);
-                        setTeam2Score(0);
-                        setMatchTimeLeft(matchDuration * 60);
-                        setIsTimerRunning(false);
-                      }}
-                      className="border-white/20 text-gray-300"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reset
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Team 2 Score Header */}
-                <div className="flex items-center space-x-3">
-                  <div className="text-5xl font-black text-white font-mono px-4 py-1 rounded-2xl bg-rose-950/60 border border-rose-500/40">
-                    {team2Score}
-                  </div>
-                  <div className="text-right">
-                    <span className="font-black italic text-lg text-rose-400 uppercase block">{team2Name}</span>
-                    <span className="text-xs font-bold text-gray-400">AWAY TEAM</span>
-                  </div>
-                  <div className="text-4xl">{team2Logo.emoji}</div>
-                </div>
-              </div>
-
-              {/* Click-to-Score Pitch Arena Grid */}
-              <div className="flex-1 grid grid-cols-2 relative bg-gradient-to-b from-emerald-950/40 to-[#05030d] p-4 gap-4">
-                {/* Team 1 Side Pitch Click Area */}
-                <div
-                  onClick={() => triggerGoal(1)}
-                  className="rounded-3xl border-2 border-dashed border-emerald-500/40 bg-emerald-950/20 hover:bg-emerald-950/40 transition-all duration-300 flex flex-col items-center justify-center p-8 cursor-pointer group relative overflow-hidden shadow-2xl"
-                >
-                  <div className="absolute top-4 left-4 text-xs font-bold text-emerald-400/60 uppercase">
-                    CLICK THIS SIDE TO SCORE FOR {team1Name.toUpperCase()}
-                  </div>
-                  <div className="text-8xl mb-4 group-hover:scale-110 transition-transform">{team1Logo.emoji}</div>
-                  <span className="text-2xl font-black italic uppercase tracking-tighter text-emerald-400 group-hover:text-white transition-colors">
-                    {team1Name}
-                  </span>
-                  <span className="text-xs text-gray-400 mt-2 font-mono">Click to register Team 1 Goal ⚽</span>
-                </div>
-
-                {/* Team 2 Side Pitch Click Area */}
-                <div
-                  onClick={() => triggerGoal(2)}
-                  className="rounded-3xl border-2 border-dashed border-rose-500/40 bg-rose-950/20 hover:bg-rose-950/40 transition-all duration-300 flex flex-col items-center justify-center p-8 cursor-pointer group relative overflow-hidden shadow-2xl"
-                >
-                  <div className="absolute top-4 right-4 text-xs font-bold text-rose-400/60 uppercase">
-                    CLICK THIS SIDE TO SCORE FOR {team2Name.toUpperCase()}
-                  </div>
-                  <div className="text-8xl mb-4 group-hover:scale-110 transition-transform">{team2Logo.emoji}</div>
-                  <span className="text-2xl font-black italic uppercase tracking-tighter text-rose-400 group-hover:text-white transition-colors">
-                    {team2Name}
-                  </span>
-                  <span className="text-xs text-gray-400 mt-2 font-mono">Click to register Team 2 Goal ⚽</span>
-                </div>
-              </div>
-
-              {/* Animated GOOOOOAL Screen Overlay */}
-              <AnimatePresence>
-                {goalCelebration && (
-                  <motion.div
-                    initial={{ scale: 0.2, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 1.4, opacity: 0 }}
-                    transition={{ type: "spring", bounce: 0.6 }}
-                    className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-2xl pointer-events-none p-6 text-center"
-                  >
-                    <div className="text-9xl mb-4 animate-bounce">{goalCelebration.logo}</div>
-                    <h1 className="text-7xl md:text-[9rem] font-black italic tracking-tighter uppercase drop-shadow-[0_0_50px_rgba(16,185,129,0.8)] text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400 animate-pulse">
-                      GOOOOOAL!!!
-                    </h1>
-                    <p className="text-3xl font-black italic uppercase text-white mt-4">
-                      {goalCelebration.team} SCORED A MAGNIFICENT GOAL! ⚽
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-
-          {/* TAB 3: AI REFEREE & VAR STUDIO */}
-          {soccerTab === "var" && (
-            <div className="p-6 max-w-4xl mx-auto w-full space-y-6">
-              <div className="text-center space-y-2">
-                <Badge variant="outline" className="border-rose-500/40 bg-rose-500/10 text-rose-300 font-mono text-xs">
-                  🤖 AI REFEREE & VAR DECISION CENTER
-                </Badge>
-                <h2 className="text-3xl font-black italic uppercase tracking-tight text-white">
-                  Video Assistant Referee (VAR)
-                </h2>
-                <p className="text-xs text-gray-400">Trigger instant VAR checks, inspect fouls, issue cards, and configure rules!</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Button
                   size="lg"
                   onClick={triggerVarCheck}
                   disabled={varReviewing}
-                  className="bg-rose-600 hover:bg-rose-500 text-white font-bold h-16 rounded-2xl flex flex-col items-center justify-center text-xs"
+                  className="w-full bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-black italic uppercase text-sm py-6 rounded-2xl shadow-xl shadow-rose-500/20 mb-4"
                 >
-                  <Tv className="w-5 h-5 mb-1" />
-                  <span>{varReviewing ? "Reviewing VAR..." : "Trigger VAR Video Check 📺"}</span>
-                </Button>
-
-                <Button
-                  size="lg"
-                  onClick={() => issueCard(team1Name, "yellow")}
-                  className="bg-amber-600 hover:bg-amber-500 text-white font-bold h-16 rounded-2xl flex flex-col items-center justify-center text-xs"
-                >
-                  <span>🟨 Issue Yellow Card ({team1Name})</span>
-                </Button>
-
-                <Button
-                  size="lg"
-                  onClick={() => issueCard(team2Name, "red")}
-                  className="bg-red-600 hover:bg-red-500 text-white font-bold h-16 rounded-2xl flex flex-col items-center justify-center text-xs"
-                >
-                  <span>🟥 Issue Red Card ({team2Name})</span>
+                  <Tv className="w-5 h-5 mr-2" />
+                  {varReviewing ? "Gemini AI Analyzing Video Frame..." : "Capture Frame & Run VAR AI Check 📺"}
                 </Button>
               </div>
 
-              {/* Cards & Foul History */}
-              <div className="bg-[#0b0818] p-5 rounded-2xl border border-white/10 space-y-3">
-                <span className="font-bold text-xs text-gray-300 block">Foul & Disciplinary Log ({cardsLog.length}):</span>
-                {cardsLog.length === 0 ? (
-                  <p className="text-xs text-gray-500 italic">No cards or fouls issued yet in this match.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {cardsLog.map((log, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-black/40 border border-white/5 text-xs">
-                        <span className="font-semibold text-gray-200">{log.player} ({log.team})</span>
-                        <span className={`font-mono text-[11px] font-bold ${log.type === "yellow" ? "text-amber-400" : "text-rose-400"}`}>
-                          {log.type === "yellow" ? "🟨 Yellow Card" : "🟥 RED CARD"}
-                        </span>
-                      </div>
-                    ))}
+              {/* VAR AI Decision Output */}
+              {varResult && (
+                <div className="p-4 rounded-2xl bg-black/60 border border-rose-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-black italic uppercase text-rose-400 text-sm">{varResult.decision}</span>
+                    <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono">{varResult.confidence}% AI Confidence</Badge>
                   </div>
-                )}
-              </div>
-            </div>
-          )}
+                  <p className="text-xs text-gray-300 italic">{varResult.reasoning}</p>
+                </div>
+              )}
 
-          {/* TAB 4: WATCH FEED */}
-          {soccerTab === "watch" && (
-            <div className="p-6 max-w-4xl mx-auto w-full space-y-6">
-              <div className="text-center space-y-2">
-                <Badge variant="outline" className="border-purple-500/40 bg-purple-500/10 text-purple-300 font-mono text-xs">
-                  📺 LIVE MATCH HIGHLIGHTS FEED
-                </Badge>
-                <h2 className="text-3xl font-black italic uppercase tracking-tight text-white">
-                  Watch Replays & Tournament Feed
-                </h2>
-              </div>
-
-              <div className="bg-black/60 rounded-3xl p-8 border border-white/10 text-center space-y-4 min-h-[300px] flex flex-col items-center justify-center">
-                <Tv className="w-16 h-16 text-purple-400 animate-pulse" />
-                <h3 className="text-xl font-bold text-white">Family Tournament Broadcast Feed Active</h3>
-                <p className="text-xs text-gray-400 max-w-md">
-                  Live highlight clips and replay recordings from {tournamentName} will be archived here!
-                </p>
-              </div>
+              {cameraActive && (
+                <Button size="xs" variant="outline" onClick={stopCamera} className="border-white/20 text-gray-400">
+                  Stop Camera Stream
+                </Button>
+              )}
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>

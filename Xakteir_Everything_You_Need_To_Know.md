@@ -491,14 +491,15 @@ Xakcode is a cloud-based web IDE and development workspace supporting code editi
          - Workspace project and file manager with ZIP export, CPU/RAM resource diagnostics, and console log capture
 
 ## Xaksports
-Xaksports is a family sports tournament studio and referee platform featuring multi-sports category tabs, tournament configuration, live click-to-score pitch arena, animated goal overlays, and AI Referee VAR controls.
+Xaksports is a real family sports tournament studio featuring live webcam integration, real AI Referee VAR vision analysis, custom team logo image uploads, and full-screen scoreboard.
          FEATURES
-         - Multi-Sport Category Tabs (Soccer ⚽, Basketball 🏀, Tennis 🎾, Volleyball 🏐, Golf ⛳, All Sports Hub 🏆)
-         - Soccer Sub-Tabs (Organize Tournament, Live Match Arena, AI Referee & VAR Studio, Watch Feed)
-         - Tournament Setup Wizard (Tournament Name, Team 1 Name & Logo Picker, Team 2 Name & Logo Picker, Custom Match Duration Timer)
-         - Live Match Interactive Arena with Team 1 & Team 2 side-click goal registration system
-         - Explosive Framer Motion screen-filling **"GOOOOOAL!!!"** celebration overlay with dynamic score counter increment
-         - AI Referee VAR Studio (Video Assistant Referee reviews, foul logger, 🟨 yellow / 🟥 red card issuer, offside rule toggle switch)
+         - Custom Team Logo Image File Upload (`<input type="file">`) & Image URL input fields
+         - Real Live Pitch Webcam Integration (`navigator.mediaDevices.getUserMedia`) for live pitch video streaming
+         - Real AI Referee VAR Endpoint (`/api/ai/referee/route.ts`) capturing and analyzing live webcam video frames
+         - Fullscreen Stadium Scoreboard layout featuring Team Logos and **MASSIVE SCORE CHARACTERS** (`text-[14rem]`)
+         - Live Match Arena with side-clicks and keyboard shortcuts (`[A]` / `[D]`) to register goals
+         - Explosive Framer Motion screen-filling **"GOOOOOAL!!!"** celebration overlay
+
 
 
 ## Xakview
