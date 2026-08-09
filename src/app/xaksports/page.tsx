@@ -115,13 +115,26 @@ export default function XakSportsRealPage() {
 
   // REAL Camera Stream & AI VAR State
   const [cameraActive, setCameraActive] = useState(false);
+  const [autoScanEnabled, setAutoScanEnabled] = useState(true); // Continuous AI Scan
   const [varReviewing, setVarReviewing] = useState(false);
-  const [varResult, setVarResult] = useState<{ decision: string; reasoning: string; confidence: number } | null>(null);
+  const [varResult, setVarResult] = useState<{ decision: string; reasoning: string; confidence: number; frame?: string } | null>(null);
   const [offsideEnabled, setOffsideEnabled] = useState(true);
   const [cardsLog, setCardsLog] = useState<{ team: string; player: string; type: "yellow" | "red" }[]>([]);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // CONTINUOUS AUTOMATED AI CAMERA SCANNER (Scans every 4s when camera is active)
+  useEffect(() => {
+    let scanInterval: any;
+    if (cameraActive && autoScanEnabled && !varReviewing) {
+      scanInterval = setInterval(() => {
+        void triggerVarCheck();
+      }, 4000);
+    }
+    return () => clearInterval(scanInterval);
+  }, [cameraActive, autoScanEnabled, varReviewing, team1Name, team2Name, team1Score, team2Score, offsideEnabled]);
+
 
   // Keyboard shortcut listener for live scoreboard (Left/Right Arrows or A/D)
   useEffect(() => {
@@ -275,8 +288,10 @@ export default function XakSportsRealPage() {
       setVarResult({
         decision: data.decision || "GOAL CONFIRMED ✅",
         reasoning: data.reasoning || "AI Vision analyzed camera frame. Clean line trajectory.",
-        confidence: data.confidence || 95
+        confidence: data.confidence || 95,
+        frame: capturedFrameBase64
       });
+
 
 
       if (data.card === "yellow") {
@@ -642,8 +657,22 @@ export default function XakSportsRealPage() {
             {/* AI VAR Decision Center */}
             <div className="bg-[#0b0818] p-6 rounded-3xl border border-white/10 flex flex-col justify-between space-y-4">
               <div>
-                <h3 className="text-lg font-black uppercase italic text-rose-400 mb-2">AI Referee Controls</h3>
-                <p className="text-xs text-gray-400 mb-4">Clicking VAR Review captures the live camera frame and sends it to Gemini AI vision analysis.</p>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-black uppercase italic text-rose-400">AI Referee Controls</h3>
+                  <Button
+                    size="xs"
+                    variant={autoScanEnabled ? "secondary" : "outline"}
+                    onClick={() => setAutoScanEnabled(!autoScanEnabled)}
+                    className="border-emerald-500/40 text-[10px] font-mono"
+                  >
+                    {autoScanEnabled ? "🟢 Auto-Scan ON (Every 4s)" : "🔴 Auto-Scan OFF"}
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-400 mb-4">
+                  {autoScanEnabled
+                    ? "AI is continuously scanning your live camera stream every 4 seconds for fouls, handball, and offsides!"
+                    : "Continuous scanning disabled. Use manual trigger or enable auto-scan above."}
+                </p>
 
                 <div className="space-y-3 mb-4">
                   <Button
@@ -653,7 +682,7 @@ export default function XakSportsRealPage() {
                     className="w-full bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-black italic uppercase text-sm py-6 rounded-2xl shadow-xl shadow-rose-500/20"
                   >
                     <Tv className="w-5 h-5 mr-2" />
-                    {varReviewing ? "Gemini AI Analyzing Video Frame..." : "Capture Frame & Run VAR AI Check 📺"}
+                    {varReviewing ? "Gemini AI Analyzing Video Frame..." : "Capture Frame & Run Manual VAR Check 📺"}
                   </Button>
 
                   <Button
@@ -666,19 +695,31 @@ export default function XakSportsRealPage() {
                     <span>Blow AI Referee Whistle 🎺</span>
                   </Button>
                 </div>
-
               </div>
 
-              {/* VAR AI Decision Output */}
+              {/* VAR AI Decision Output & Slow Motion Replay Frame */}
               {varResult && (
-                <div className="p-4 rounded-2xl bg-black/60 border border-rose-500/30 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-black italic uppercase text-rose-400 text-sm">{varResult.decision}</span>
+                <div className="p-4 rounded-2xl bg-black/80 border border-rose-500/40 space-y-3 shadow-2xl animate-in zoom-in-95">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                    <span className="font-black italic uppercase text-rose-400 text-sm tracking-tight">{varResult.decision}</span>
                     <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono">{varResult.confidence}% AI Confidence</Badge>
                   </div>
+
+                  {/* Slow Motion Captured VAR Frame Preview */}
+                  {varResult.frame && (
+                    <div className="relative rounded-xl overflow-hidden border border-rose-500/30 bg-black/90">
+                      <img src={varResult.frame} alt="VAR Replay Frame" className="w-full h-36 object-cover opacity-90" />
+                      <div className="absolute inset-0 border-2 border-rose-500/60 pointer-events-none rounded-xl" />
+                      <div className="absolute bottom-2 left-2 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] font-mono text-rose-400 border border-rose-500/30 flex items-center">
+                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping mr-1.5" /> VAR SLOW-MOTION REPLAY FRAME
+                      </div>
+                    </div>
+                  )}
+
                   <p className="text-xs text-gray-300 italic">{varResult.reasoning}</p>
                 </div>
               )}
+
 
               {cameraActive && (
                 <Button size="xs" variant="outline" onClick={stopCamera} className="border-white/20 text-gray-400">

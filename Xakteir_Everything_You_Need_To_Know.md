@@ -491,14 +491,17 @@ Xakcode is a cloud-based web IDE and development workspace supporting code editi
          - Workspace project and file manager with ZIP export, CPU/RAM resource diagnostics, and console log capture
 
 ## Xaksports
-Xaksports is a real family sports tournament studio featuring live webcam integration, real AI Referee VAR vision analysis, automatic referee whistle sound effects, custom team logo image uploads, and full-screen scoreboard.
+Xaksports is a real family sports tournament studio featuring continuous automated AI camera scanning, VAR slow-motion frame replays, automatic referee whistle sound effects, custom team logo image uploads, and full-screen scoreboard.
          FEATURES
+         - Continuous Real-Time AI Camera Referee Scanner (automatically captures and analyzes live webcam frames every 4s without manual clicking)
+         - VAR Slow-Motion Frame Replay Viewfinder displaying captured video frame, AI analysis reasoning, and decision
          - Automatic WebAudio Synthetic Referee Whistle Sound Generator (`playRefereeWhistle()`) triggering on AI VAR decisions, cards, and match events
          - Manual "Blow AI Referee Whistle 🎺" button for on-demand whistle blasts
          - Custom Team Logo Image File Upload (`<input type="file">`) & Image URL input fields
          - Real Live Pitch Webcam Integration (`navigator.mediaDevices.getUserMedia`) for live pitch video streaming
          - Real AI Referee VAR Endpoint (`/api/ai/referee/route.ts`) capturing and analyzing live webcam video frames
          - Fullscreen Stadium Scoreboard layout featuring Team Logos and **MASSIVE SCORE CHARACTERS** (`text-[14rem]`)
+
          - Live Match Arena with side-clicks and keyboard shortcuts (`[A]` / `[D]`) to register goals
 
 
