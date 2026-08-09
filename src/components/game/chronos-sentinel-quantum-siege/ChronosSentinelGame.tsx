@@ -266,6 +266,8 @@ const INITIAL_TURRET_TYPES: TurretType[] = [
     range: 240,
     fireRate: 650,
     costCredits: 1500,
+    unlocked: false,
+    color: "#a855f7",
     description: "Launches heavy gravitational singularity bolts that pierce armor.",
   },
   {
@@ -278,6 +280,8 @@ const INITIAL_TURRET_TYPES: TurretType[] = [
     range: 150,
     fireRate: 400,
     costCredits: 2800,
+    unlocked: false,
+    color: "#f59e0b",
     description: "Emits high-frequency EMP shockwaves that slow and damage surrounding foes.",
   },
   {
@@ -290,6 +294,8 @@ const INITIAL_TURRET_TYPES: TurretType[] = [
     range: 280,
     fireRate: 900,
     costCredits: 5000,
+    unlocked: false,
+    color: "#10b981",
     description: "Calls down intense temporal disruption beams that annihilate heavy dreadnoughts.",
   },
 ];
