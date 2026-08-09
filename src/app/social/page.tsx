@@ -246,7 +246,7 @@ export default function XakSocialPage() {
               <Globe className="w-8 h-8 text-primary animate-pulse" />
             </div>
             <div>
-              <h1 className="text-5xl font-black text-white tracking-tighter uppercase italic leading-none">Social Space</h1>
+              <h1 className="text-5xl font-black text-white tracking-tighter uppercase italic leading-none">Xakteir Social</h1>
               <p className="text-primary font-black uppercase tracking-[0.5em] text-[8px] mt-2 flex items-center gap-4">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.8)]" /> Hub Community Active
               </p>

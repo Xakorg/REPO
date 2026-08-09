@@ -1267,7 +1267,7 @@ export default function MailPage() {
              </div>
              <h1 className="text-3xl font-black uppercase italic tracking-tighter mb-4 text-blue-500">Access Restricted</h1>
              <p className="text-sm font-medium text-white/70 italic mb-8">
-               Your account has been banned from accessing XakMail. If you believe this is an error, please contact a Hub Administrator.
+               Your account has been banned from accessing Xakteir Mail. If you believe this is an error, please contact a Hub Administrator.
              </p>
              <Button onClick={() => window.location.href = "/"} className="bg-blue-500 hover:bg-blue-600 text-white font-black uppercase tracking-widest rounded-xl h-12 px-8">
                Return to Hub

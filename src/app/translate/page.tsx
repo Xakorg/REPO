@@ -163,7 +163,7 @@ export default function XakTranslatePage() {
           <div className="w-20 h-20 rounded-[2.2rem] bg-blue-500/10 flex items-center justify-center border-4 border-blue-500/20 shadow-2xl">
             <Languages className="w-10 h-10 text-blue-400" />
           </div>
-          <h1 className="text-6xl font-black tracking-tighter uppercase italic leading-none">Bridge Pro</h1>
+          <h1 className="text-6xl font-black tracking-tighter uppercase italic leading-none text-white">Xakteir <span className="text-blue-400">Translate</span></h1>
         </div>
         <nav className="flex bg-black/40 p-2 rounded-[2rem] border-4 border-white/10 relative z-10 shadow-xl overflow-x-auto max-w-full">
            {(['standard', 'camera', 'conversation', 'favorites'] as const).map(mode => (

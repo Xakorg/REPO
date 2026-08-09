@@ -150,7 +150,7 @@ function WriteApp() {
           <div className="max-w-[1200px] mx-auto">
              <div className="flex items-center justify-between mb-12">
                 <div>
-                   <h1 className="text-4xl font-black tracking-tighter mb-2">Xakteir Write</h1>
+                   <h1 className="text-4xl font-black tracking-tighter mb-2">Suite Write</h1>
                    <p className="text-white/60">Your beautiful, distraction-free documents.</p>
                 </div>
                 <Button onClick={handleCreateNew} className="bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest rounded-xl h-12 px-6">

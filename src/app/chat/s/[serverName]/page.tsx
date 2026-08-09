@@ -1109,29 +1109,34 @@ export default function ServerChatPage() {
         }
       }
 
-      const payload: any = {
+      const rawPayload: any = {
         content,
         senderId: user.uid,
         senderName: user.displayName?.replace(/^@+/, "") || "Member",
         senderPhoto: user.photoURL || "",
         senderHat: userData?.hat || null,
         channelId,
-        channelName,
+        channelName: channelName || "general",
         timestamp: serverTimestamp(),
-        ephemeral: disappearingMessages,
-        e2e: e2eEnabled
+        ephemeral: disappearingMessages || false,
+        e2e: e2eEnabled || false
       };
 
       if (replyingToMessage) {
-        payload.replyTo = {
+        rawPayload.replyTo = {
           id: replyingToMessage.id,
-          senderName: replyingToMessage.senderName,
-          content: replyingToMessage.content
+          senderName: replyingToMessage.senderName || "Member",
+          content: replyingToMessage.content || ""
         };
         setReplyingToMessage(null);
       }
 
+      // Strip any undefined keys so Firestore addDoc does not reject payload
+      const payload = JSON.parse(JSON.stringify(rawPayload, (k, v) => (v === undefined ? null : v)));
+      payload.timestamp = serverTimestamp(); // Preserve serverTimestamp sentinel
+
       await addDocumentNonBlocking(collection(firestore, "chats", channelId, "messages"), payload);
+
 
       // Dispatch @mention notifications after message is saved
       if (content.includes("@")) {

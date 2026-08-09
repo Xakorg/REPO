@@ -29,13 +29,14 @@ export function normalizeUsername(name: string) {
 export function isOffensive(name: string) {
   const n = normalizeUsername(name);
   if (!n) return false;
-  // direct match or contains any blacklisted token
+  // Word boundary regex check to avoid false positives on words like "class", "grass", "assign", "password"
   for (const bad of BLACKLIST) {
-    if (n === bad) return true;
-    if (n.includes(bad)) return true;
+    const regex = new RegExp(`\\b${bad}\\b`, "i");
+    if (regex.test(n)) return true;
   }
   return false;
 }
+
 
 export function sanitizeForId(name: string) {
   // remove spaces and suspicious chars for safe ids

@@ -90,15 +90,6 @@ Challenge is a visual bot-protection captcha page (XakCaptcha) that verifies hum
          - Sitekey URL query parameter verification with automatic reshuffling on failed attempts
          - Cross-window verification message postMessage dispatcher sending authentication tokens to parent windows
 
-## Xakchat
-A Discord-like platform with Servers, Channels, DMs, real-time messaging, threads, voice/video calls, reactions, pinned messages, AI translation, scheduled messages, E2E encryption, and glassmorphic UI.
-         FEATURES
-         - Native Desktop Application (`Desktop-Apps/XakChat`) powered by Tauri & React with native window controls, server sidebar, category sidebar, and real-time chat
-         - Desktop App Launcher Bar (`DesktopLauncherBar`) in web application with 1-click desktop app launch and installer setup triggers
-         - Servers and Channels
-         - Direct Messages (DMs)
-         - Voice/Video Calls
-         - Reactions
          - Scheduled Messages
          - Glassmorphic UI
          - Threaded Conversations

@@ -55,9 +55,11 @@ export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
       } else {
         console.error('addDocumentNonBlocking failed:', error);
       }
+      throw error;
     });
   return promise;
 }
+
 
 
 /**

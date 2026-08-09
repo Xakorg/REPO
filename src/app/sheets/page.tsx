@@ -37,7 +37,7 @@ export default function XakteirSheets() {
          <div className="flex-1 bg-white text-black overflow-hidden relative">
             <div className="absolute inset-0 flex items-center justify-center">
                <div className="text-center opacity-40">
-                  <h2 className="text-4xl font-black uppercase tracking-tighter">Xakteir Sheets</h2>
+                  <h2 className="text-4xl font-black uppercase tracking-tighter">Suite Sheets</h2>
                   <p className="mt-2 text-xl font-medium">Infinite Grid Engine Loading...</p>
                </div>
             </div>

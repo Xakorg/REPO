@@ -157,7 +157,7 @@ export default function XakBuddyPage() {
               <Ghost className="w-10 h-10 text-primary animate-pulse" />
             </div>
             <div>
-              <h1 className="text-7xl font-black text-foreground tracking-tighter uppercase italic leading-none">XakBuddy</h1>
+              <h1 className="text-7xl font-black text-foreground tracking-tighter uppercase italic leading-none">Xakteir Buddy</h1>
               <p className="text-primary font-black uppercase tracking-[0.5em] text-[10px] mt-4 flex items-center gap-4">
                 <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse" /> Shared 3D Park Online
               </p>

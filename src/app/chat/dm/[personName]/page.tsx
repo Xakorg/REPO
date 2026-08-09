@@ -887,13 +887,18 @@ export default function DirectMessagePage() {
       if (replyingToMessage) {
         payload.replyTo = {
           id: replyingToMessage.id,
-          senderName: replyingToMessage.senderName,
-          content: replyingToMessage.content
+          senderName: replyingToMessage.senderName || "Member",
+          content: replyingToMessage.content || ""
         };
         setReplyingToMessage(null);
       }
 
-      await addDocumentNonBlocking(collection(firestore, "chats", dmChatId, "messages"), payload);
+      // Clean undefined properties so Firestore addDoc does not reject
+      const cleanPayload = JSON.parse(JSON.stringify(payload, (k, v) => (v === undefined ? null : v)));
+      cleanPayload.timestamp = serverTimestamp(); // Preserve serverTimestamp sentinel
+
+      await addDocumentNonBlocking(collection(firestore, "chats", dmChatId, "messages"), cleanPayload);
+
 
       // ── Feature 1: Write read receipt ──
       try {

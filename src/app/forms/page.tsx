@@ -155,7 +155,7 @@ function FormsApp() {
         <div className="max-w-[1200px] mx-auto">
           <div className="flex items-center justify-between mb-12">
             <div>
-              <h1 className="text-4xl font-black tracking-tighter italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">Xakteir Forms</h1>
+              <h1 className="text-4xl font-black tracking-tighter italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">Suite Forms</h1>
               <p className="text-white/40 font-bold mt-2">Create beautiful, engaging forms in seconds.</p>
             </div>
             <Button onClick={handleCreateForm} className="bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest rounded-2xl h-12 px-8 shadow-[0_0_30px_rgba(var(--primary),0.3)]">

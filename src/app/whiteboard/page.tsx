@@ -316,7 +316,7 @@ export default function WhiteboardPage() {
                  <Presentation className="w-10 h-10 text-primary" />
               </div>
               <div>
-                 <h1 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">My Boards</h1>
+                 <h1 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Xakteir Whiteboard</h1>
                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mt-2 italic">Hub Collaboration Station</p>
               </div>
            </div>

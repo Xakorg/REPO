@@ -1118,6 +1118,22 @@ const premiumGames: GameMeta[] = [
     route: "/game/astral-valkyrie-cyber-overdrive"
   },
   {
+    id: "chronos_sentinel_quantum_siege",
+    title: "Chronos Sentinel: Quantum Siege",
+    developer: "Xakteir Studios",
+    type: "Sci-Fi Quantum Defense & Mecha Action Arena",
+    genre: ["Sci-Fi Quantum Defense", "Tower Defense", "Mecha Action Arena", "Armory Upgrades", "Dev Terminal", "2,000+ Lines"],
+    description: "Quantum defense & mecha action arena featuring deployable turrets, Sentinel Mech Hero, 15+ siege waves, boss leviathans, audio synth SFX, and dev terminal controls in a 2,000+ line flagship arena.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=chronossentinel",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [
+      { time: "15:00", description: "2,000+ Line Flagship Launch" }
+    ],
+    route: "/game/chronos-sentinel-quantum-siege"
+  },
+  {
     id: "cyber_quest_platformer",
     title: "Cyber Quest Platformer 2D",
     developer: "Xakteir Studios",
