@@ -1,10 +1,9 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 export const metadata: Metadata = {
   title: 'Xakteir Weather',
   description: 'Live, real-time meteorological dashboard.',
   manifest: '/manifest-weather.json',
-  themeColor: '#09090b',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -14,6 +13,10 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
     apple: '/favicon.ico',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#09090b',
 };
 
 export default function WeatherLayout({

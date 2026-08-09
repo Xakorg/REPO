@@ -17,7 +17,8 @@ Admin is a comprehensive management dashboard for platform operators to handle s
          - System broadcast publisher, auto-moderation rules management, and live World Cup event notification controls
 
 ## AI Chat
-AI- **Xak AI:** Conversational AI assistant with 30-feature supercharged suite and special infinite SVG morphing icon (Hexagon -> Star -> Radial Supernova Burst -> Hexagon loop).
+- **Xak AI:** Conversational AI assistant with 30-feature supercharged suite, special infinite SVG morphing icon (Hexagon -> Star -> Radial Supernova Burst -> Hexagon loop), and dynamic animated browser favicon!
+
          FEATURES
          - Multi-session AI chat assistant with prompt presets, persistent history, and message clipboard tools
          - Interactive embedded widgets including Multi-File Code Execution Sandbox, Data Analytics Charts, Procedural Canvas Studio, 3D Shader Playground, RPG Dungeon Engine, AI Math Solver, Code Snippet Vault, Jest Test Synthesizer, Audio Memo Transcriber, Web Intelligence Agent, Task Board Generator, and Code Refactoring Workbench
