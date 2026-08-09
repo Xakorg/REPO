@@ -491,16 +491,16 @@ Xakcode is a cloud-based web IDE and development workspace supporting code editi
          - Workspace project and file manager with ZIP export, CPU/RAM resource diagnostics, and console log capture
 
 ## Xaksports
-Xaksports is a real family sports tournament studio featuring continuous automated AI camera scanning, VAR slow-motion frame replays, automatic referee whistle sound effects, custom team logo image uploads, and full-screen scoreboard.
+Xaksports is a real family sports tournament studio featuring a 7-stage multi-screen creation wizard, interactive elimination brackets, AI goal calibration, custom scoring rules, continuous AI camera scanning, and fullscreen scoreboard with Goal Undo/Redo.
          FEATURES
-         - Continuous Real-Time AI Camera Referee Scanner (automatically captures and analyzes live webcam frames every 4s without manual clicking)
-         - VAR Slow-Motion Frame Replay Viewfinder displaying captured video frame, AI analysis reasoning, and decision
-         - Automatic WebAudio Synthetic Referee Whistle Sound Generator (`playRefereeWhistle()`) triggering on AI VAR decisions, cards, and match events
-         - Manual "Blow AI Referee Whistle 🎺" button for on-demand whistle blasts
-         - Custom Team Logo Image File Upload (`<input type="file">`) & Image URL input fields
-         - Real Live Pitch Webcam Integration (`navigator.mediaDevices.getUserMedia`) for live pitch video streaming
-         - Real AI Referee VAR Endpoint (`/api/ai/referee/route.ts`) capturing and analyzing live webcam video frames
-         - Fullscreen Stadium Scoreboard layout featuring Team Logos and **MASSIVE SCORE CHARACTERS** (`text-[14rem]`)
+         - 7-Stage Multi-Screen Creation Wizard (Landing -> Details & Date/Time -> Rosters & Logos -> Bracket Generator -> AI Referee Calibration & Custom Rules -> Review -> Auto Fullscreen Scoreboard)
+         - Interactive Elimination Bracket Generator for 2, 4, 8, or 16 teams
+         - AI Referee Calibration Studio (Goal coordinates calibration, offside toggle, custom rules like *"Headers worth 2 goals"*)
+         - Undo Goal (`<Undo>`) and Redo Goal (`<Redo>`) score history management
+         - Continuous Real-Time AI Camera Referee Scanner & Slow-Motion VAR Frame Replay Viewfinder
+         - Automatic WebAudio Synthetic Referee Whistle Sound Generator (`playRefereeWhistle()`)
+         - Fullscreen Stadium Scoreboard featuring Custom Badge Logo Images and **MASSIVE SCORE CHARACTERS** (`text-[14rem]`)
+
 
          - Live Match Arena with side-clicks and keyboard shortcuts (`[A]` / `[D]`) to register goals
 
