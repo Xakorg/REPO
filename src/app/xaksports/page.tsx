@@ -39,8 +39,57 @@ const DEFAULT_LOGOS = [
   "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=150&auto=format&fit=crop&q=80"  // Tennis
 ];
 
+// Real WebAudio API Referee Whistle Generator
+function playRefereeWhistle() {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const lfo = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(2800, ctx.currentTime);
+
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(2950, ctx.currentTime);
+
+    // Trill modulation (~32Hz LFO for realistic referee whistle vibration)
+    lfo.type = "square";
+    lfo.frequency.setValueAtTime(32, ctx.currentTime);
+
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.setValueAtTime(160, ctx.currentTime);
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc1.frequency);
+    lfoGain.connect(osc2.frequency);
+
+    gainNode.gain.setValueAtTime(0.01, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.5, ctx.currentTime + 0.04);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.75);
+
+    osc1.connect(gainNode);
+    osc2.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc1.start(ctx.currentTime);
+    osc2.start(ctx.currentTime);
+    lfo.start(ctx.currentTime);
+
+    osc1.stop(ctx.currentTime + 0.8);
+    osc2.stop(ctx.currentTime + 0.8);
+    lfo.stop(ctx.currentTime + 0.8);
+  } catch (e) {
+    // WebAudio fallback
+  }
+}
+
 export default function XakSportsRealPage() {
   const { toast } = useToast();
+
   const firestore = useFirestore();
   const { user } = useUser();
 
@@ -222,11 +271,13 @@ export default function XakSportsRealPage() {
       });
 
       const data = await res.json();
+      playRefereeWhistle(); // AUTOMATIC WHISTLE SOUND FOR AI DECISION 🎺
       setVarResult({
         decision: data.decision || "GOAL CONFIRMED ✅",
         reasoning: data.reasoning || "AI Vision analyzed camera frame. Clean line trajectory.",
         confidence: data.confidence || 95
       });
+
 
       if (data.card === "yellow") {
         setCardsLog((prev) => [{ team: team2Name, player: "Player #7", type: "yellow" }, ...prev]);
@@ -594,15 +645,28 @@ export default function XakSportsRealPage() {
                 <h3 className="text-lg font-black uppercase italic text-rose-400 mb-2">AI Referee Controls</h3>
                 <p className="text-xs text-gray-400 mb-4">Clicking VAR Review captures the live camera frame and sends it to Gemini AI vision analysis.</p>
 
-                <Button
-                  size="lg"
-                  onClick={triggerVarCheck}
-                  disabled={varReviewing}
-                  className="w-full bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-black italic uppercase text-sm py-6 rounded-2xl shadow-xl shadow-rose-500/20 mb-4"
-                >
-                  <Tv className="w-5 h-5 mr-2" />
-                  {varReviewing ? "Gemini AI Analyzing Video Frame..." : "Capture Frame & Run VAR AI Check 📺"}
-                </Button>
+                <div className="space-y-3 mb-4">
+                  <Button
+                    size="lg"
+                    onClick={triggerVarCheck}
+                    disabled={varReviewing}
+                    className="w-full bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-black italic uppercase text-sm py-6 rounded-2xl shadow-xl shadow-rose-500/20"
+                  >
+                    <Tv className="w-5 h-5 mr-2" />
+                    {varReviewing ? "Gemini AI Analyzing Video Frame..." : "Capture Frame & Run VAR AI Check 📺"}
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => playRefereeWhistle()}
+                    className="w-full border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 font-bold text-xs py-3 rounded-xl"
+                  >
+                    <Volume2 className="w-4 h-4 mr-2 text-amber-400" />
+                    <span>Blow AI Referee Whistle 🎺</span>
+                  </Button>
+                </div>
+
               </div>
 
               {/* VAR AI Decision Output */}
