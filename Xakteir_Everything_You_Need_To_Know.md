@@ -491,12 +491,15 @@ Xakcode is a cloud-based web IDE and development workspace supporting code editi
          - Workspace project and file manager with ZIP export, CPU/RAM resource diagnostics, and console log capture
 
 ## Xaksports
-Xaksports is a 3D physics-based arcade soccer game supporting local splitscreen multiplayer and online match sessions.
+Xaksports is a family sports tournament studio and referee platform featuring multi-sports category tabs, tournament configuration, live click-to-score pitch arena, animated goal overlays, and AI Referee VAR controls.
          FEATURES
-         - 3D physics-based soccer gameplay powered by React Three Fiber and Rapier physics engines
-         - Game lobby supporting 1 to 4 local players or online WebRTC multiplayer matchmaking
-         - Dynamic splitscreen camera system automatically tracking local player positions on field
-         - Real-time score HUD and animated GOAL celebration screen overlays
+         - Multi-Sport Category Tabs (Soccer ⚽, Basketball 🏀, Tennis 🎾, Volleyball 🏐, Golf ⛳, All Sports Hub 🏆)
+         - Soccer Sub-Tabs (Organize Tournament, Live Match Arena, AI Referee & VAR Studio, Watch Feed)
+         - Tournament Setup Wizard (Tournament Name, Team 1 Name & Logo Picker, Team 2 Name & Logo Picker, Custom Match Duration Timer)
+         - Live Match Interactive Arena with Team 1 & Team 2 side-click goal registration system
+         - Explosive Framer Motion screen-filling **"GOOOOOAL!!!"** celebration overlay with dynamic score counter increment
+         - AI Referee VAR Studio (Video Assistant Referee reviews, foul logger, 🟨 yellow / 🟥 red card issuer, offside rule toggle switch)
+
 
 ## Xakview
 Xakview is a video streaming and livestreaming platform featuring video playback, shorts feed, creator subscriptions, and live chat interaction.

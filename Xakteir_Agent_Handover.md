@@ -31,7 +31,8 @@ If you are modifying existing code, keep these recent changes in mind:
 - **Game Store Ownership:** The `/games` library now enforces ownership. Users start with 0 games (`localStorage: xakteir_game_library = []`) and must claim them from the overhauled `/games/store` UI using the "Get Game Now!" button.
 - **Linked Accounts:** Users can connect multiple OAuth providers (Google, GitHub, Apple) to their main email account via the Profile page using Firebase's `linkWithPopup`.
 - **Custom Discord Auth:** Because Firebase Identity Platform is paid, Discord OAuth is handled entirely by a custom Next.js API Route (`/api/auth/discord`). It mints a Custom Firebase Token using the `firebase-admin` SDK. The connection state is tracked directly in Firestore under `users/{uid}/discord`.
-- **XakChat Standalone App Suite:** Ported and built out the native desktop application in `Desktop-Apps/XakChat` (React + Vite + Tauri with custom native TitleBar, ServerSidebar, ChannelSidebar, ChatArea, and E2EE encryption status). Also supercharged `/chat` web application with `<DesktopLauncherBar />` allowing direct desktop app launching and installation setup triggers.
+- **XakSports Family Tournament & AI Referee Studio:** Overhauled `/xaksports` into a family tournament hub featuring multi-sports tabs (Soccer, Basketball, Tennis, Volleyball, Golf), Soccer sub-tabs (Organize Tournament, Live Match Arena, AI Referee & VAR Studio, Watch Feed), team logo & name pickers, live countdown match timer, side-click goal registration system, screen-filling animated **"GOOOOOAL!!!"** celebration overlay, and AI Referee VAR controls (foul logger, 🟨 yellow / 🟥 red cards, offside toggles, VAR decision engine).
+
 
 
 
