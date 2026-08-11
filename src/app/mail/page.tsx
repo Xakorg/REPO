@@ -1341,11 +1341,8 @@ export default function MailPage() {
         {!isImage && !isPdf && <Download className="w-3 h-3 text-white/50 opacity-0 group-hover:opacity-100 transition-opacity" />}
       </div>
     );
-  };
-
-  const maxByDay = Math.max(...Object.values(analyticsData.byDay), 1);
-
   // ── Theme Classes ──
+
   const themeClasses = {
     obsidian: "bg-background text-foreground",
     cyberpunk: "bg-[#0a0014] text-pink-50 border-pink-500/20 shadow-[0_0_50px_rgba(236,72,153,0.1)]",

@@ -581,7 +581,9 @@ export default function SolarTempestGame() {
       if (savedCreds) setCredits(parseInt(savedCreds, 10));
 
       const savedSkins = localStorage.getItem("solar_tempest_unlocked_skins");
-      if (savedSkins) setUnlockedSkins(JSON.parse(savedSkins));
+      if (savedSkins) {
+        try { setUnlockedSkins(JSON.parse(savedSkins)); } catch (e) { console.error("Failed to parse saved skins", e); }
+      }
     }
   }, []);
 
