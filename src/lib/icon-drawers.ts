@@ -317,11 +317,11 @@ export const drawAbout = (c: CanvasRenderingContext2D) => {
 };
 
 export const drawAIChat = (c: CanvasRenderingContext2D) => {
-  c.lineWidth = 2;
+  c.lineWidth = 1.8;
   c.lineCap = "round";
   c.lineJoin = "round";
 
-  // Outer Hexagon Path (Scaled for 24x24 canvas space)
+  // Outer Precision Hexagon
   c.beginPath();
   c.moveTo(12, 2);
   c.lineTo(20, 6.5);
@@ -332,27 +332,20 @@ export const drawAIChat = (c: CanvasRenderingContext2D) => {
   c.closePath();
   c.stroke();
 
-  // Inner Radiant Star Nucleus
+  // Inner Radiant 4-point Star Nucleus
   c.beginPath();
-  c.moveTo(12, 6);
-  c.lineTo(14, 10);
-  c.lineTo(18, 12);
-  c.lineTo(14, 14);
-  c.lineTo(12, 18);
-  c.lineTo(10, 14);
-  c.lineTo(6, 12);
-  c.lineTo(10, 10);
+  c.moveTo(12, 7);
+  c.lineTo(13.5, 10.5);
+  c.lineTo(17, 12);
+  c.lineTo(13.5, 13.5);
+  c.lineTo(12, 17);
+  c.lineTo(10.5, 13.5);
+  c.lineTo(7, 12);
+  c.lineTo(10.5, 10.5);
   c.closePath();
   c.stroke();
-
-  // 4 Supernova Radial Sparkle Accents
-  c.beginPath();
-  c.arc(12, 2, 0.8, 0, Math.PI * 2);
-  c.arc(20, 12, 0.8, 0, Math.PI * 2);
-  c.arc(12, 22, 0.8, 0, Math.PI * 2);
-  c.arc(4, 12, 0.8, 0, Math.PI * 2);
-  c.stroke();
 };
+
 
 
 export const drawClassroom = (c: CanvasRenderingContext2D) => {
