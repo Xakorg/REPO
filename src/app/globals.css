@@ -297,28 +297,27 @@
 .light-theme .bg-zinc-950,
 .light-theme .bg-black,
 .light-theme .bg-zinc-900,
-.light-theme .bg-zinc-900\/50,
-.light-theme .bg-[#0a0a10],
-.light-theme .bg-[#05030d] {
+.light-theme [class*="bg-zinc-900"],
+.light-theme [class*="bg-[#0a0a10]"],
+.light-theme [class*="bg-[#05030d]"] {
   background-color: #f9fafb !important;
 }
 .light-theme .border-zinc-700,
 .light-theme .border-zinc-800,
-.light-theme .border-white\/10 {
+.light-theme [class*="border-white"] {
   border-color: #e5e7eb !important;
 }
 .light-theme .text-zinc-400,
-.light-theme .text-white\/40,
-.light-theme .text-white\/50,
-.light-theme .text-white\/60 {
+.light-theme [class*="text-white"] {
   color: #4b5563 !important;
 }
-.light-theme .bg-white\/5 {
+.light-theme [class*="bg-white/5"] {
   background-color: rgba(0, 0, 0, 0.05) !important;
 }
-.light-theme .bg-white\/10 {
+.light-theme [class*="bg-white/10"] {
   background-color: rgba(0, 0, 0, 0.08) !important;
 }
+
 
 /* Dynamic Pet Animations */
 @keyframes pet-orbit {
