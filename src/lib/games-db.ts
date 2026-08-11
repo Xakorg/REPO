@@ -13,10 +13,38 @@ export interface GameMeta {
   route: string; // The URL to launch the game
 }
 
-const premiumGames: GameMeta[] = [
+  {
+    id: "fortnite-cloud",
+    title: "Fortnite (Cloud Edition)",
+    developer: "Epic Games / Xbox Cloud",
+    type: "Free Cloud Stream",
+    genre: ["Battle Royale", "Free Cloud Gaming", "Multiplayer", "Xbox Cloud", "GeForce NOW"],
+    description: "Play Fortnite 100% FREE on Xakteir via Xbox Cloud Gaming and GeForce NOW right in your browser. No subscription or download required!",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=fortnite",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "14:00", description: "100% Free Cloud Gaming Engine Active" }],
+    route: "/game/fortnite-cloud"
+  },
+  {
+    id: "roblox-cloud",
+    title: "Roblox (Cloud Edition)",
+    developer: "Roblox Corporation / Now.gg",
+    type: "Free Cloud Stream",
+    genre: ["Sandbox", "User Created", "Free Cloud Gaming", "Now.gg", "Multiplayer"],
+    description: "Stream and play Roblox 100% FREE directly inside Xakteir using Now.gg Cloud Gaming or launch with 1-click web protocol!",
+    bannerUrl: "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=roblox",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "14:00", description: "Free Browser Cloud Stream Active" }],
+    route: "/game/roblox-cloud"
+  },
   {
     id: "titan",
     title: "Titan",
+
     developer: "Xakteir Studios",
     type: "Tactical Mecha RPG",
     genre: ["Tactical Mecha Citadel", "Foundry Shop & Cores", "Online Lobbies", "Kinetic Artillery", "Mobile Friendly"],
