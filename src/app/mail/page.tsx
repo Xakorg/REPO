@@ -1341,6 +1341,8 @@ export default function MailPage() {
         {!isImage && !isPdf && <Download className="w-3 h-3 text-white/50 opacity-0 group-hover:opacity-100 transition-opacity" />}
       </div>
     );
+  };
+
   // ── Theme Classes ──
 
   const themeClasses = {
