@@ -2965,6 +2965,9 @@ export default function MailPage() {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Rich Signature Studio Modal */}
       <SignatureStudioModal
         open={editingSignature}
@@ -2985,6 +2988,5 @@ export default function MailPage() {
         unreadCount={3}
       />
     </div>
-
   );
 }
