@@ -222,8 +222,12 @@ export default function AetherPulseGame() {
   useEffect(() => {
     const savedUnlocked = localStorage.getItem("ap_unlocked");
     const savedStars = localStorage.getItem("ap_stars");
-    if (savedUnlocked) setUnlockedLevels(JSON.parse(savedUnlocked));
-    if (savedStars) setLevelStars(JSON.parse(savedStars));
+    if (savedUnlocked) {
+      try { setUnlockedLevels(JSON.parse(savedUnlocked)); } catch (e) { console.error(e); }
+    }
+    if (savedStars) {
+      try { setLevelStars(JSON.parse(savedStars)); } catch (e) { console.error(e); }
+    }
   }, []);
 
   // Controls Listener

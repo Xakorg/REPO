@@ -17,7 +17,10 @@ Admin is a comprehensive management dashboard for platform operators to handle s
          - System broadcast publisher, auto-moderation rules management, and live World Cup event notification controls
 
 ## AI Chat
+- **Xakteir Mail:** Smart webmail client with 30 supercharged features including AI thread summarizer, AI smart replies, scheduled send, rich signature studio, read receipts, templates, voice dictation, and mail analytics.
+
 - **Xak AI:** Conversational AI assistant with 30-feature supercharged suite, resilient zero-downtime chat engine, smooth 12-point animated icon, and dynamic browser favicon!
+
 
 
 

@@ -15,8 +15,37 @@ export interface GameMeta {
 
 const premiumGames: GameMeta[] = [
   {
+    id: "fortnite-strike",
+    title: "Fortnite Strike (Native 3D)",
+    developer: "Xakteir Game Studio",
+    type: "3D Battle Royale",
+    genre: ["Battle Royale", "Building Mechanics", "Shooter", "Native WebGL", "Free Game"],
+    description: "Native 3D WebGL Battle Royale on Xakteir! Aim & shoot enemies, harvest wood, and build defense walls to survive the storm circle. 100% Free & Native!",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=fortnitestrike",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "14:00", description: "Native 3D Battle Royale Active" }],
+    route: "/game/fortnite-strike"
+  },
+  {
+    id: "roblox-sandbox",
+    title: "Roblox Sandbox Obby (Native 3D)",
+    developer: "Xakteir Game Studio",
+    type: "3D Sandbox Obby",
+    genre: ["Sandbox", "Obby Builder", "Platformer", "Native WebGL", "Free Game"],
+    description: "Native 3D WebGL Obby Course & World Builder! Jump across hazards, reach finish checkpoints, and build your custom block platforms directly in-game. 100% Free & Native!",
+    bannerUrl: "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=robloxobby",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "14:00", description: "Native 3D Sandbox Obby Active" }],
+    route: "/game/roblox-sandbox"
+  },
+  {
     id: "titan",
     title: "Titan",
+
 
 
     developer: "Xakteir Studios",

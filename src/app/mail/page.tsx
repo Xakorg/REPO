@@ -44,6 +44,9 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { chatWithXakAI } from "@/ai/flows/xak-ai-chat-assistant-flow";
+import { SignatureStudioModal } from "@/components/mail/SignatureStudioModal";
+import { MailAnalyticsModal } from "@/components/mail/MailAnalyticsModal";
+
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
@@ -2962,9 +2965,26 @@ export default function MailPage() {
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+      {/* Rich Signature Studio Modal */}
+      <SignatureStudioModal
+        open={editingSignature}
+        onOpenChange={setEditingSignature}
+        initialSignature={signature}
+        onSave={(sigHtml) => {
+          setSignature(sigHtml);
+          setBody((prev) => prev + "\n\n" + sigHtml);
+        }}
+      />
 
+      {/* Analytics Dashboard Modal */}
+      <MailAnalyticsModal
+        open={showAnalytics}
+        onOpenChange={setShowAnalytics}
+        totalInbox={128}
+        totalSent={45}
+        unreadCount={3}
+      />
     </div>
+
   );
 }
