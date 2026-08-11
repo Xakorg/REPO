@@ -2307,18 +2307,23 @@ export default function MailPage() {
             </div>
 
             {/* Bar chart: emails by day */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-4">Activity (Last 7 Days)</p>
-              <div className="flex items-end gap-3 h-24">
-                {Object.entries(analyticsData.byDay).map(([day, count]) => (
-                  <div key={day} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="text-[9px] text-white/40">{count}</span>
-                    <div className="w-full bg-primary/20 rounded-t-sm transition-all" style={{ height: `${count === 0 ? 4 : Math.max(8, (count / maxByDay) * 80)}px`, backgroundColor: count > 0 ? "hsl(var(--primary)/0.6)" : undefined }} />
-                    <span className="text-[9px] text-white/40 font-bold">{day}</span>
+            {(() => {
+              const maxByDay = Math.max(...Object.values(analyticsData.byDay), 1);
+              return (
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-4">Activity (Last 7 Days)</p>
+                  <div className="flex items-end gap-3 h-24">
+                    {Object.entries(analyticsData.byDay).map(([day, count]) => (
+                      <div key={day} className="flex-1 flex flex-col items-center gap-1">
+                        <span className="text-[9px] text-white/40">{count}</span>
+                        <div className="w-full bg-primary/20 rounded-t-sm transition-all" style={{ height: `${count === 0 ? 4 : Math.max(8, (count / maxByDay) * 80)}px`, backgroundColor: count > 0 ? "hsl(var(--primary)/0.6)" : undefined }} />
+                        <span className="text-[9px] text-white/40 font-bold">{day}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              );
+            })()}
 
             {/* Top recipients */}
             {analyticsData.topRecipients.length > 0 && (
