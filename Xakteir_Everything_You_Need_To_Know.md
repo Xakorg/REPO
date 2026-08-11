@@ -17,7 +17,9 @@ Admin is a comprehensive management dashboard for platform operators to handle s
          - System broadcast publisher, auto-moderation rules management, and live World Cup event notification controls
 
 ## AI Chat
+- **Xakteir Social:** Global social network with 30 supercharged features including timeline feed, rich post composer, interactive polls, likes/reactions, 24-hour stories, community groups, avatar cosmetics, Xak AI caption generator & translator, and engagement analytics.
 - **Xakteir Mail:** Smart webmail client with 30 supercharged features including AI thread summarizer, AI smart replies, scheduled send, rich signature studio, read receipts, templates, voice dictation, and mail analytics.
+
 
 - **Xak AI:** Conversational AI assistant with 30-feature supercharged suite, resilient zero-downtime chat engine, smooth 12-point animated icon, and dynamic browser favicon!
 
