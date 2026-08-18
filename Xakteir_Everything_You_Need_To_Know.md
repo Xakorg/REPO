@@ -127,6 +127,7 @@ Dev Centre is a developer console for creating workspace projects, configuring a
          - Developer account promotion and workspace sandbox project creation
          - Integrated developer tools for databases, auth providers, edge config, functions, webhooks, and crashlytics
          - Project context switcher for toggling between active developer environments
+         - Xakteir Dev Mail dashboard for custom domain email routing, inbound inbox management, outbound sending, and DNS verification
 
 ## DNS
 DNS is an administrative domain nameserver management console for registering domain zones and configuring DNS resource records.
