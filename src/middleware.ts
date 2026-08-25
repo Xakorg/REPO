@@ -65,8 +65,6 @@ export function middleware(req: NextRequest) {
       return NextResponse.next(); 
     }
 
-
-
     // Redirect Root to the IDE prefixed route
     if (path === '/') {
       return NextResponse.redirect(new URL('/xakcode', req.url));
@@ -140,6 +138,28 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(`https://xakteir.com${path}`);
   }
 
+  // 3.5 Handle Knowledge standalone deployment via knowledge.xakteir.com
+  if (hostname === 'knowledge.xakteir.com' || hostname === 'www.knowledge.xakteir.com') {
+    // Allow auth routes and internals to pass through
+    if (path === '/auth' || path.startsWith('/auth/')) return NextResponse.next();
+
+    // Public homepage -> internal /knowledge route
+    if (path === '/') return NextResponse.rewrite(new URL('/knowledge', req.url));
+
+    // If the request already targets /knowledge, just allow it
+    if (path.startsWith('/knowledge')) return NextResponse.next();
+
+    // Allow certain static/public article routes to be rewritten into the knowledge app.
+    // Example: /a/slug -> /knowledge/a/slug
+    const _rootSegment = '/' + path.split('/')[1];
+    if (_rootSegment === '/a' || _rootSegment === '/s') {
+      return NextResponse.rewrite(new URL(`/knowledge${path}`, req.url));
+    }
+
+    // Default: rewrite everything else into the knowledge app namespace
+    return NextResponse.rewrite(new URL(`/knowledge${path}`, req.url));
+  }
+
   // 5. Handle Xakarena Game Client via xakarena.xakteir.com
   if (hostname === 'xakarena.xakteir.com' || hostname === 'www.xakarena.xakteir.com') {
     // Note: Public homepage allowed without session. Specific protected routes can be added here later.
@@ -175,9 +195,9 @@ export function middleware(req: NextRequest) {
     if (path.startsWith('/dev-centre')) return NextResponse.next(); // Already rewritten
     
     // Redirect dev-centre sub-routes
-    const devRoutes = ['/billing', '/compute', '/crashlytics', '/credentials', '/database', '/edge-config', '/emails', '/functions', '/git', '/monitoring', '/preview', '/sockets', '/storage', '/teams', '/webhooks', '/voltra-apps'];
-    const rootSegment = '/' + path.split('/')[1]; 
-    if (devRoutes.includes(rootSegment)) {
+    const devRoutes = ['/billing', '/compute', '/crashlytics', '/credentials', '/database', '/edge-config', '/emails', '/functions', '/git', '/monitoring', '/preview', '/sockets', '/storage', '/t'];
+    const _rootSegment2 = '/' + path.split('/')[1]; 
+    if (devRoutes.includes(_rootSegment2)) {
       return NextResponse.rewrite(new URL(`/dev-centre${path}`, req.url));
     }
     // Redirect other paths to main domain
@@ -197,8 +217,8 @@ export function middleware(req: NextRequest) {
     
     // Redirect Drive sub-routes
     const driveRoutes = ['/settings'];
-    const rootSegment = '/' + path.split('/')[1]; 
-    if (driveRoutes.includes(rootSegment)) {
+    const _rootSegment3 = '/' + path.split('/')[1]; 
+    if (driveRoutes.includes(_rootSegment3)) {
       return NextResponse.rewrite(new URL(`/drive${path}`, req.url));
     }
     // Redirect other paths to main domain
@@ -213,9 +233,9 @@ export function middleware(req: NextRequest) {
     if (path.startsWith('/meet')) return NextResponse.next(); // Already rewritten
     
     // Check if the path belongs to a known global app, if so redirect
-    const globalApps = ['/about', '/admin', '/ai-chat', '/apps', '/archive', '/art', '/authenticator', '/buddy', '/calculator', '/calendar', '/challenge', '/chat', '/classroom', '/code', '/contact', '/desktop', '/dev-centre', '/download-desktop', '/drive', '/forms', '/games', '/installer', '/learn-pro', '/mail', '/map', '/meet', '/mini-player', '/news', '/notes', '/notifications', '/oauth', '/overlay', '/pics', '/privacy', '/profile', '/projects', '/quick-reply', '/rietkax', '/search', '/search-console', '/sheets', '/shop', '/sign', '/sites', '/slides', '/social', '/stream', '/suite', '/tasks', '/terms', '/translate', '/upgrade', '/weather', '/whiteboard', '/write', '/xakarena', '/xakarena-creator', '/xakcode', '/xaksports', '/xakview'];
-    const rootSegment = '/' + path.split('/')[1]; 
-    if (globalApps.includes(rootSegment)) {
+    const globalApps = ['/about', '/admin', '/ai-chat', '/apps', '/archive', '/art', '/authenticator', '/buddy', '/calculator', '/calendar', '/challenge', '/chat', '/classroom', '/code'];
+    const _rootSegment4 = '/' + path.split('/')[1]; 
+    if (globalApps.includes(_rootSegment4)) {
       return NextResponse.redirect(`https://www.xakteir.com${path}`);
     }
     // Otherwise, treat it as a room ID
@@ -239,8 +259,8 @@ export function middleware(req: NextRequest) {
     
     // Redirect Profile sub-routes
     const profileRoutes = ['/security'];
-    const rootSegment = '/' + path.split('/')[1]; 
-    if (profileRoutes.includes(rootSegment)) {
+    const _rootSegment5 = '/' + path.split('/')[1]; 
+    if (profileRoutes.includes(_rootSegment5)) {
       return NextResponse.rewrite(new URL(`/profile${path}`, req.url));
     }
     // Redirect other paths to main domain
