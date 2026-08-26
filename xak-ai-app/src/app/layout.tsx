@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
@@ -10,7 +9,6 @@ import { OnboardingProvider } from '@/components/OnboardingProvider';
 import { UpdateManager } from '@/components/UpdateManager';
 import { CommandCenter } from '@/components/CommandCenter';
 import { LockedAccountGuard } from '@/components/LockedAccountGuard';
-import { TimeTravelOverlay } from '@/components/TimeTravelOverlay';
 import { NotificationManager } from '@/components/NotificationManager';
 import { FocusModeListener } from '@/components/FocusModeListener';
 import { DesktopBridge } from '@/components/desktop-bridge';
@@ -46,7 +44,7 @@ export default function RootLayout({
               <CommandCenter />
               <UpdateManager />
               <NotificationManager />
-              <TimeTravelOverlay />
+              {/* TimeTravelOverlay removed to avoid server-side prerender errors */}
               <FirebaseErrorListener />
               <Toaster />
               <DesktopBridge />
