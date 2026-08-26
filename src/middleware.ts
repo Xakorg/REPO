@@ -381,14 +381,38 @@ export function middleware(req: NextRequest) {
     }
   }
 
-    
+  //Handle Notes subdomain 
   if (hostname === 'notes.xakteir.com' || hostname === 'www.notes.xakteir.com' || hostname.startsWith('notes.localhost')) {
     if (path === '/') return NextResponse.rewrite(new URL('/notes', req.url));
     if (path.startsWith('/notes')) return NextResponse.next();
+
+  if (hostname === 'xakteir.com/notes' window.location.href = 'https://notes.xakteir.com';
     
     // If you go to a random path on the subdomain, kick to main site
     return NextResponse.redirect(`https://www.xakteir.com${path}`);
   }
+
+    //  Handle About standalone deployment via about.xakteir.com
+  if (hostname === 'about.xakteir.com' || hostname === 'www.about.xakteir.com' || hostname.startsWith('about.localhost')) {
+    if (path === '/') return NextResponse.rewrite(new URL('/about', req.url));
+    if (path.startsWith('/about')) return NextResponse.next();
+
+  if (hostname === 'xakteir.com/about' window.location.href = 'https://about.xakteir.com';
+    
+    // If you go to a random path on the subdomain, kick to main site
+    return NextResponse.redirect(`https://www.xakteir.com${path}`);
+  }
+  // Handle Classroom Subdomain
+  if (hostname === 'clasroom.xakteir.com' || hostname === 'www.classroom.xakteir.com' || hostname.startsWith('classroom.localhost')) {
+    if (path === '/') return NextResponse.rewrite(new URL('/classroom', req.url));
+    if (path.startsWith('/classroom')) return NextResponse.next();
+
+  if (hostname === 'xakteir.com/classroom' window.location.href = 'https://classroom.xakteir.com';
+    
+    // If you go to a random path on the subdomain, kick to main site
+    return NextResponse.redirect(`https://www.xakteir.com${path}`);
+  }
+
 
 
   // 15. Enforce Subdomain Isolation (Prevent direct path access from other domains)
