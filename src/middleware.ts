@@ -381,6 +381,16 @@ export function middleware(req: NextRequest) {
     }
   }
 
+    
+  if (hostname === 'notes.xakteir.com' || hostname === 'www.notes.xakteir.com' || hostname.startsWith('notes.localhost')) {
+    if (path === '/') return NextResponse.rewrite(new URL('/notes', req.url));
+    if (path.startsWith('/notes')) return NextResponse.next();
+    
+    // If you go to a random path on the subdomain, kick to main site
+    return NextResponse.redirect(`https://www.xakteir.com${path}`);
+  }
+
+
   // 15. Enforce Subdomain Isolation (Prevent direct path access from other domains)
   if (
     hostname !== 'xakarena.xakteir.com' && hostname !== 'www.xakarena.xakteir.com' &&
