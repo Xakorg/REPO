@@ -66,7 +66,7 @@ export default function RootLayout({
                     <CommandCenter />
                     <UpdateManager />
                     <NotificationManager />
-                    <TimeTravelOverlay />
+                    {/* TimeTravelOverlay removed to avoid server-side prerender errors */}
                     <FirebaseErrorListener />
                     <Toaster />
                     <DesktopBridge />
