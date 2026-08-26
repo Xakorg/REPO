@@ -9,7 +9,6 @@ import { OnboardingProvider } from '@/components/OnboardingProvider';
 import { UpdateManager } from '@/components/UpdateManager';
 import { CommandCenter } from '@/components/CommandCenter';
 import { LockedAccountGuard } from '@/components/LockedAccountGuard';
-import { TimeTravelOverlay } from '@/components/TimeTravelOverlay';
 import { NotificationManager } from '@/components/NotificationManager';
 import { FocusModeListener } from '@/components/FocusModeListener';
 import { DesktopBridge } from '@/components/desktop-bridge';
