@@ -113,7 +113,8 @@
     "y-webrtc": "^10.3.0",
     "yjs": "^13.6.31",
     "zod": "^3.24.2",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.14",
+    "dexie": "^3.2.4"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
