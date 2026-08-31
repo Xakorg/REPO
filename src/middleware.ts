@@ -199,7 +199,7 @@ export function middleware(req: NextRequest) {
     if (path.startsWith('/dev-centre')) return NextResponse.next(); // Already rewritten
     
     // Redirect dev-centre sub-routes
-    const devRoutes = ['/billing', '/compute', '/crashlytics', '/credentials', '/database', '/edge-config', '/emails', '/functions', '/git', '/monitoring', '/preview', '/sockets', '/storage', '/t[...]';
+    const devRoutes = ['/billing', '/compute', '/crashlytics', '/credentials', '/database', '/edge-config', '/emails', '/functions', '/git', '/monitoring', '/preview', '/sockets', '/storage', '/tests', '/settings', '/usage', '/analytics'];
     const _rootSegment2 = '/' + path.split('/')[1]; 
     if (devRoutes.includes(_rootSegment2)) {
       return NextResponse.rewrite(new URL(`/dev-centre${path}`, req.url));
