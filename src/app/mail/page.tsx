@@ -175,6 +175,7 @@ export default function MailPage() {
   const [gmailToken, setGmailToken] = useState<string | null>(null);
   const [gmailEmails, setGmailEmails] = useState<any[]>([]);
   const [loadingGmail, setLoadingGmail] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // ── SUPERCHARGE FEATURES ──
   const [mailTheme, setMailTheme] = useState<"obsidian" | "cyberpunk" | "holographic" | "matrix">("obsidian");
@@ -294,9 +295,11 @@ export default function MailPage() {
     return () => clearTimeout(t);
   }, [searchQuery]);
 
-  // ─── Responsive sidebar ─────────────────────────────────────────────────
+  // ─── Responsive sidebar with mobile detection ──────────────────────────────
   useEffect(() => {
     const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
       if (window.innerWidth < 1024) setSidebarOpen(false);
       else setSidebarOpen(true);
     };
@@ -1396,7 +1399,7 @@ export default function MailPage() {
         </div>
       )}
 
-      <div className="flex-1 flex p-4 lg:p-6 gap-6 overflow-hidden relative">
+      <div className="flex-1 flex flex-col lg:flex-row p-2 lg:p-6 gap-4 lg:gap-6 overflow-hidden relative">
 
         {/* ── SIDEBAR ── */}
         <div className={cn(
@@ -1493,11 +1496,11 @@ export default function MailPage() {
         </div>
 
         {/* ── MAIL VIEWER ── */}
-        <div className={cn("flex-1 glass-card rounded-[3.5rem] overflow-hidden flex bg-black/25 shadow-2xl divide-white/5", splitPane === "vertical" ? "flex-row divide-x" : "flex-col divide-y")}>
+        <div className={cn("flex-1 glass-card rounded-[3.5rem] overflow-hidden flex bg-black/25 shadow-2xl divide-white/5", isMobile ? "flex-col divide-y" : (splitPane === "vertical" ? "flex-row divide-x" : "flex-col divide-y"))}>
 
           {/* List Rail */}
-          {(!selectedId || layoutMode === "split") && (
-            <div className={cn("flex flex-col bg-[#090912]/30 shrink-0", layoutMode === "list" ? "flex-1 h-full" : (splitPane === "vertical" ? "w-[400px] h-full" : "h-[40%] w-full"))}>
+          {(!selectedId || layoutMode === "split" || isMobile) && (
+            <div className={cn("flex flex-col bg-[#090912]/30 shrink-0", layoutMode === "list" || isMobile ? "flex-1 h-full" : (splitPane === "vertical" ? "w-[400px] h-full" : "h-[40%] w-full"))}>
 
               <header className="p-4 border-b border-white/5 bg-black/20 space-y-3">
                 <div className="flex items-center justify-between">

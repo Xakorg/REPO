@@ -665,20 +665,27 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           voiceRemoteStreams.current[otherUser.uid] = remoteMs;
           
           peer.ontrack = (event) => {
-            const track = event.track;
-            if (track) remoteMs.addTrack(track);
+            // Prefer attaching whole streams when available, otherwise attach individual track
             if (event.streams && event.streams[0]) {
               event.streams[0].getTracks().forEach((t) => remoteMs.addTrack(t));
+            } else if (event.track) {
+              remoteMs.addTrack(event.track);
             }
             setVoiceRemoteStreamsVersion(v => v + 1);
-            
-            const audioEl = document.createElement("audio");
+
+            const audioElId = `remote-audio-${otherUser.uid}`;
+            let audioEl = document.getElementById(audioElId) as HTMLAudioElement | null;
+            if (!audioEl) {
+              audioEl = document.createElement("audio");
+              audioEl.id = audioElId;
+              audioEl.autoplay = true;
+              // playsInline helps mobile browsers play without fullscreen
+              (audioEl as any).playsInline = true;
+              audioEl.className = "voice-remote-audio";
+              document.body.appendChild(audioEl);
+            }
             audioEl.srcObject = remoteMs;
-            audioEl.autoplay = true;
             audioEl.volume = isDeafened ? 0 : 1;
-            audioEl.className = "voice-remote-audio";
-            audioEl.id = `remote-audio-${event.track.id}`;
-            document.body.appendChild(audioEl);
             audioEl.play().catch(e => console.warn(e));
           };
           
@@ -737,17 +744,25 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           voiceRemoteStreams.current[fromId] = remoteMs;
 
           peer.ontrack = (event) => {
-            const track = event.track;
-            if (track) remoteMs.addTrack(track);
             if (event.streams && event.streams[0]) {
               event.streams[0].getTracks().forEach((t) => remoteMs.addTrack(t));
+            } else if (event.track) {
+              remoteMs.addTrack(event.track);
             }
             setVoiceRemoteStreamsVersion(v => v + 1);
-            const audioEl = document.createElement("audio");
+
+            const audioElId = `remote-audio-${fromId}`;
+            let audioEl = document.getElementById(audioElId) as HTMLAudioElement | null;
+            if (!audioEl) {
+              audioEl = document.createElement("audio");
+              audioEl.id = audioElId;
+              audioEl.autoplay = true;
+              (audioEl as any).playsInline = true;
+              audioEl.className = "voice-remote-audio";
+              document.body.appendChild(audioEl);
+            }
             audioEl.srcObject = remoteMs;
-            audioEl.autoplay = true;
             audioEl.volume = isDeafened ? 0 : 1;
-            audioEl.className = "voice-remote-audio";
             audioEl.play().catch(e => console.warn(e));
           };
 
@@ -1051,21 +1066,45 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     setRemoteCallStream(remoteMs);
 
     peer.ontrack = (event) => {
-      const track = event.track;
-      if (track) remoteMs.addTrack(track);
       if (event.streams && event.streams[0]) {
         event.streams[0].getTracks().forEach((t) => remoteMs.addTrack(t));
+      } else if (event.track) {
+        remoteMs.addTrack(event.track);
       }
+
+      // Ensure remote video element attaches if present; if not and there is a video track, create one.
       const remoteVideo = document.getElementById("direct-call-remote-video") as HTMLVideoElement | null;
       if (remoteVideo) {
         remoteVideo.srcObject = remoteMs;
+        remoteVideo.playsInline = true;
         remoteVideo.play().catch(e => console.warn(e));
+      } else {
+        const hasVideo = (remoteMs.getVideoTracks && remoteMs.getVideoTracks().length > 0);
+        if (hasVideo) {
+          const v = document.createElement("video");
+          v.id = "direct-call-remote-video";
+          v.autoplay = true;
+          v.playsInline = true;
+          v.srcObject = remoteMs;
+          v.className = "direct-call-remote-video";
+          document.body.appendChild(v);
+          v.play().catch(e => console.warn(e));
+        }
       }
-      const remoteAudio = document.getElementById("direct-call-remote-audio") as HTMLAudioElement | null;
-      if (remoteAudio) {
-        remoteAudio.srcObject = remoteMs;
-        remoteAudio.play().catch(e => console.warn(e));
+
+      // Always ensure there's an audio element to play the remote audio (helpful on mobile)
+      const remoteAudioId = "direct-call-remote-audio";
+      let remoteAudio = document.getElementById(remoteAudioId) as HTMLAudioElement | null;
+      if (!remoteAudio) {
+        remoteAudio = document.createElement("audio");
+        remoteAudio.id = remoteAudioId;
+        remoteAudio.autoplay = true;
+        (remoteAudio as any).playsInline = true;
+        remoteAudio.className = "direct-call-remote-audio";
+        document.body.appendChild(remoteAudio);
       }
+      remoteAudio.srcObject = remoteMs;
+      remoteAudio.play().catch(e => console.warn(e));
     };
 
     const signalsRef = collection(firestore!, "meetings", roomId, "signals");
@@ -1159,6 +1198,15 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     if (callStream) {
       callStream.getTracks().forEach((track) => track.stop());
     }
+
+    // Remove any created remote media elements
+    try {
+      const v = document.getElementById('direct-call-remote-video');
+      if (v) v.remove();
+      const a = document.getElementById('direct-call-remote-audio');
+      if (a) a.remove();
+    } catch (e) { /* ignore DOM cleanup errors */ }
+
     directCallIceBuffer.current = [];
     directCallRemoteDescSet.current = false;
     setCallStream(null);
@@ -1229,7 +1277,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   if (!user) return <>{children}</>;
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col overflow-hidden bg-zinc-950 text-white relative">
+    <div className="min-h-screen md:h-[calc(100vh-80px)] flex flex-col overflow-hidden bg-zinc-950 text-white relative">
       <DesktopLauncherBar />
       <div className="flex-1 flex overflow-hidden relative">
       {userData?.customCss && <style dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userData.customCss, { ALLOWED_TAGS: [] }) }} />}
@@ -1244,7 +1292,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               <Menu className="w-6 h-6 text-white" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="bg-[#05030d] border-white/5 p-0 w-[300px] flex shadow-[0_0_100px_rgba(0,0,0,0.8)] text-white">
+          <SheetContent side="left" className="bg-[#05030d] border-white/5 p-0 w-[280px] sm:w-[320px] flex shadow-[0_0_100px_rgba(0,0,0,0.8)] text-white">
             <SheetHeader className="sr-only">
               <SheetTitle>Chat Channels</SheetTitle>
             </SheetHeader>

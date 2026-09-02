@@ -122,20 +122,19 @@ const APPS = [
 
 function MobileAppLauncher({ router, setIsSheetOpen }: { router: any, setIsSheetOpen: (open: boolean) => void }) {
   const [appSearch, setAppSearch] = useState("");
-  // In a real scenario we'd import APPS from a shared config, but keeping it simple here
   const filteredApps = APPS.filter(app => app.name.toLowerCase().includes(appSearch.toLowerCase()));
 
   return (
     <div className="flex flex-col h-full bg-[#0a0a15] text-white">
-      <div className="p-5 border-b-2 border-white/10 flex items-center justify-between bg-black/40 pt-10">
-        <h3 className="text-lg font-black uppercase italic tracking-tighter text-primary leading-none">Apps</h3>
+      <div className="p-4 lg:p-5 border-b-2 border-white/10 flex items-center justify-between bg-black/40 pt-6 lg:pt-10 sticky top-0 z-10">
+        <h3 className="text-base lg:text-lg font-black uppercase italic tracking-tighter text-primary leading-none">Apps</h3>
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <Input autoFocus value={appSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAppSearch(e.target.value)} placeholder="Search..." className="h-9 w-32 rounded-xl bg-secondary/30 border-white/10 pl-9 text-[9px] font-black italic" />
+          <Input autoFocus value={appSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAppSearch(e.target.value)} placeholder="Search..." className="h-10 lg:h-9 w-32 lg:w-32 rounded-xl bg-secondary/30 border-white/10 pl-9 text-xs lg:text-[9px] font-black italic min-h-[44px]" />
         </div>
       </div>
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4 grid grid-cols-4 gap-4 pb-24">
+        <div className="p-4 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3 lg:gap-4 pb-24">
           {filteredApps.map((app) => (
             <button
               key={app.name}
@@ -143,10 +142,10 @@ function MobileAppLauncher({ router, setIsSheetOpen }: { router: any, setIsSheet
                 navigateTo(app.href, router);
                 setIsSheetOpen(false);
               }}
-              className="flex flex-col items-center gap-2 group p-2 hover:bg-white/5 rounded-2xl transition-all"
+              className="flex flex-col items-center gap-2 group p-2 hover:bg-white/5 active:bg-white/10 rounded-2xl transition-all min-h-[80px] active:scale-95"
             >
               <AnimatedAppIcon iconName={app.iconName} className="w-12 h-12 bg-white rounded-xl shadow-lg shadow-white/20" size={48} />
-              <span className="text-[10px] font-medium text-white/70 group-hover:text-white text-center leading-tight">
+              <span className="text-[10px] font-medium text-white/70 group-hover:text-white text-center leading-tight line-clamp-2">
                 {app.name}
               </span>
             </button>
@@ -170,12 +169,12 @@ export function MobileBottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[1000] bg-black/80 backdrop-blur-xl border-t border-white/10 pb-safe md:hidden">
-      <div className="flex items-center justify-around h-16 px-2">
+    <div className="fixed bottom-0 left-0 right-0 z-[1000] bg-black/80 backdrop-blur-xl border-t border-white/10 pb-safe md:hidden safe-area-inset-bottom">
+      <div className="flex items-center justify-around min-h-[60px] px-2">
         {navItems.slice(0, 2).map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
           return (
-            <Link key={item.name} href={item.href} className="flex flex-col items-center justify-center w-full h-full gap-1">
+            <Link key={item.name} href={item.href} className="flex flex-col items-center justify-center w-full h-full gap-1 p-2 min-h-[44px] active:scale-95 transition-transform">
               <item.icon className={cn("w-5 h-5 transition-colors", isActive ? "text-primary" : "text-white/40")} />
               <span className={cn("text-[9px] font-bold tracking-widest uppercase", isActive ? "text-primary" : "text-white/40")}>{item.name}</span>
             </Link>
@@ -185,7 +184,7 @@ export function MobileBottomNav() {
         {/* Center App Launcher Button */}
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
-            <button className="flex flex-col items-center justify-center w-full h-full gap-1 relative -top-3">
+            <button className="flex flex-col items-center justify-center w-full h-full gap-1 relative -top-3 p-2 min-h-[44px] active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(var(--primary),0.5)] border-4 border-[#05030d]">
                 <LayoutGrid className="w-5 h-5 text-black" />
               </div>
@@ -199,7 +198,7 @@ export function MobileBottomNav() {
         {navItems.slice(2).map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
           return (
-            <Link key={item.name} href={item.href} className="flex flex-col items-center justify-center w-full h-full gap-1">
+            <Link key={item.name} href={item.href} className="flex flex-col items-center justify-center w-full h-full gap-1 p-2 min-h-[44px] active:scale-95 transition-transform">
               <item.icon className={cn("w-5 h-5 transition-colors", isActive ? "text-primary" : "text-white/40")} />
               <span className={cn("text-[9px] font-bold tracking-widest uppercase", isActive ? "text-primary" : "text-white/40")}>{item.name}</span>
             </Link>

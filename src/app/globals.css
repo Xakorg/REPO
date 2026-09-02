@@ -386,3 +386,72 @@
 .animate-launcher-dot {
   animation: launcher-dot-cycle 9s linear infinite;
 }
+
+/* ─── MOBILE-FRIENDLY UTILITIES ─── */
+
+/* Ensure tap-target minimum size (44x44px for accessibility) */
+.touch-target-min {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Prevent iOS zoom on input focus */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="url"],
+textarea {
+  font-size: 16px;
+  touch-action: manipulation;
+}
+
+/* Smooth touch interactions */
+* {
+  touch-action: auto;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Enable selection for inputs and text */
+input, textarea, a, button, [role="button"], [role="link"] {
+  -webkit-user-select: auto;
+}
+
+/* Safe area support for notched devices */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+    padding-top: max(0px, env(safe-area-inset-top));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Landscape mode adjustments */
+@media (orientation: landscape) and (max-height: 600px) {
+  /* Reduce padding in landscape on small screens */
+  .p-4 { @apply p-2; }
+  .p-6 { @apply p-3; }
+  .gap-4 { @apply gap-2; }
+  .gap-6 { @apply gap-3; }
+}
+
+/* Prevent iOS Safari rubber band scroll */
+body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Improve mobile form inputs */
+@supports ((-webkit-touch-callout: none)) {
+  /* iOS-specific styles */
+  select {
+    border-radius: 0;
+  }
+  
+  button, [role="button"] {
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}

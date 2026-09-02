@@ -1,194 +1,240 @@
 "use client";
 
-import { useUIStore, type HeaderStyle } from "@/lib/store";
-import { Header, APPS } from "@/components/layout/Header";
-import { Settings as SettingsIcon, LayoutTemplate, Check, GripVertical, Plus, X, MonitorSmartphone } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React, { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Reorder, motion } from "framer-motion";
-import { AnimatedAppIcon } from "@/components/ui/AnimatedAppIcon";
-import { useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { 
+  Settings, Shield, ShieldCheck, Smartphone, Mail, Key, 
+  Lock, Bell, Palette, Globe, Monitor, LogOut, CheckCircle2, 
+  AlertTriangle, Copy, RefreshCw, Layers, ShieldAlert, Cpu
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/firebase";
 
-const HEADER_LAYOUTS: { id: HeaderStyle; label: string; desc: string; icon: React.ReactNode }[] = [
-  { id: 'default', label: 'Default', desc: 'Balanced layout with Apps on the left and Profile on the right.', icon: <LayoutTemplate /> },
-  { id: 'macos', label: 'macOS Style', desc: 'Sleek top menu bar style with dense icons and a unified glass effect.', icon: <MonitorSmartphone /> },
-  { id: 'floating', label: 'Floating Pill', desc: 'Detached pill-shaped floating header in the top center.', icon: <LayoutTemplate className="scale-75" /> },
-  { id: 'centered', label: 'Centered Logo', desc: 'Logo in the middle, controls split symmetrically on the sides.', icon: <LayoutTemplate /> },
-  { id: 'google', label: 'Google Style', desc: 'Minimalist layout with Logo on the left, Apps and Profile on the right.', icon: <LayoutTemplate /> },
-  { id: 'right', label: 'Everything Right', desc: 'Logo on the left, all controls grouped on the right.', icon: <LayoutTemplate /> },
-  { id: 'left', label: 'Everything Left', desc: 'All controls on the left, Logo on the right.', icon: <LayoutTemplate /> },
-  { id: 'hamburger', label: 'Compact', desc: 'Logo on the left, a single menu button on the right containing all features.', icon: <LayoutTemplate /> },
-];
+export default function DiscordStyleSettingsPage() {
+  const { toast } = useToast();
+  const { user } = useUser();
+  const [activeTab, setActiveTab] = useState("security");
 
-export default function SettingsPage() {
-  const { headerStyle, setHeaderStyle, showLogo, setShowLogo, pinnedApps, setPinnedApps } = useUIStore();
-  
-  // Local state for the drag editor to make it feel smooth before syncing globally
-  const [localPinnedApps, setLocalPinnedApps] = useState<string[]>(pinnedApps);
-  const [appSearch, setAppSearch] = useState("");
+  // 2FA Choices State
+  const [totpEnabled, setTotpEnabled] = useState(true);
+  const [emailOtpEnabled, setEmailOtpEnabled] = useState(false);
+  const [smsEnabled, setSmsEnabled] = useState(false);
+  const [phoneNum, setPhoneNum] = useState("+1 (555) 019-2834");
 
-  // Sync to global store when reordering finishes
-  const handleReorder = (newOrder: string[]) => {
-    setLocalPinnedApps(newOrder);
-    setPinnedApps(newOrder);
-  };
+  // Recovery codes
+  const [showBackupCodes, setShowBackupCodes] = useState(false);
+  const backupCodes = ["8A92-B7C1", "4F10-9E2A", "7C33-D11F", "2B54-A98C", "9E11-F670"];
 
-  const removePinnedApp = (appName: string) => {
-    const next = localPinnedApps.filter(n => n !== appName);
-    setLocalPinnedApps(next);
-    setPinnedApps(next);
-  };
+  // Notification Toggles
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [socialMentions, setSocialMentions] = useState(true);
 
-  const addPinnedApp = (appName: string) => {
-    if (localPinnedApps.includes(appName)) return;
-    if (localPinnedApps.length >= 8) return; // Limit to 8 pinned apps
-    const next = [...localPinnedApps, appName];
-    setLocalPinnedApps(next);
-    setPinnedApps(next);
-  };
-
-  const availableApps = APPS.filter(a => !localPinnedApps.includes(a.name) && a.name.toLowerCase().includes(appSearch.toLowerCase()));
+  // Appearance Theme
+  const [selectedTheme, setSelectedTheme] = useState("obsidian");
 
   return (
-    <div className="min-h-screen bg-[#0a0a15] text-white flex flex-col font-sans">
-      <Header />
-      
-      <main className="flex-1 max-w-7xl w-full mx-auto p-8 pt-12 pb-32">
-        <div className="flex items-center gap-4 mb-12">
-          <div className="w-16 h-16 rounded-2xl bg-zinc-900/60 border-2 border-white/10 flex items-center justify-center shadow-xl">
-            <SettingsIcon className="w-8 h-8 text-primary" />
+    <div className="max-w-[1400px] mx-auto py-8 px-6 space-y-8 animate-fade-in text-foreground pb-24">
+      {/* Header */}
+      <header className="flex justify-between items-center glass-card p-8 rounded-[2.5rem] border-white/20 shadow-2xl">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
+            <Settings className="w-6 h-6 text-purple-400" />
           </div>
           <div>
-            <h1 className="text-4xl font-black uppercase italic tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">Settings</h1>
-            <p className="text-white/40 text-sm tracking-widest uppercase font-black mt-1">Configure your Xakteir experience</p>
+            <h1 className="text-3xl font-black text-white uppercase italic">Account Settings & Security</h1>
+            <p className="text-xs text-purple-400 font-bold uppercase tracking-wider">Discord-Style Security & System Controls</p>
           </div>
         </div>
+      </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          <div className="lg:col-span-2 space-y-8">
-            <section className="glass-card rounded-[2rem] p-8 border-4 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)]">
-              <div className="flex items-center gap-3 mb-8">
-                <LayoutTemplate className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl font-black uppercase italic tracking-tighter text-primary">Global Navigation Style</h2>
-              </div>
-              
-              <div className="grid sm:grid-cols-2 gap-4">
-                {HEADER_LAYOUTS.map((layout) => {
-                  const isActive = headerStyle === layout.id;
-                  return (
-                    <button
-                      key={layout.id}
-                      onClick={() => setHeaderStyle(layout.id)}
-                      className={cn(
-                        "text-left p-6 rounded-2xl border-2 transition-all group relative overflow-hidden",
-                        isActive 
-                          ? "bg-primary/10 border-primary shadow-[0_0_30px_rgba(var(--primary),0.2)]" 
-                          : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
-                      )}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className={cn("p-2 rounded-xl", isActive ? "bg-primary/20 text-primary" : "bg-white/10 text-white/50")}>
-                            {layout.icon}
-                          </div>
-                          <h3 className={cn("text-lg font-black uppercase italic tracking-tighter transition-colors", isActive ? "text-primary" : "text-white group-hover:text-primary")}>
-                            {layout.label}
-                          </h3>
-                        </div>
-                        {isActive && <Check className="w-5 h-5 text-primary" />}
-                      </div>
-                      <p className="text-xs text-white/50 leading-relaxed font-medium">
-                        {layout.desc}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
+      {/* Main Settings Navigation */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+        <TabsList className="bg-secondary/30 p-2 rounded-[2.5rem] h-16 gap-3 border-2 border-white/10 shadow-xl w-full max-w-4xl mx-auto flex">
+          <TabsTrigger value="security" className="flex-1 rounded-[1.5rem] h-full font-black uppercase text-[9px] tracking-widest data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all"><ShieldCheck className="w-4 h-4 mr-2" /> 2FA & Security</TabsTrigger>
+          <TabsTrigger value="connections" className="flex-1 rounded-[1.5rem] h-full font-black uppercase text-[9px] tracking-widest data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all"><Globe className="w-4 h-4 mr-2" /> Linked Accounts</TabsTrigger>
+          <TabsTrigger value="notifications" className="flex-1 rounded-[1.5rem] h-full font-black uppercase text-[9px] tracking-widest data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all"><Bell className="w-4 h-4 mr-2" /> Notifications</TabsTrigger>
+          <TabsTrigger value="appearance" className="flex-1 rounded-[1.5rem] h-full font-black uppercase text-[9px] tracking-widest data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all"><Palette className="w-4 h-4 mr-2" /> Appearance</TabsTrigger>
+        </TabsList>
 
-          <div className="space-y-8">
-            <section className="glass-card rounded-[2rem] p-8 border-4 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)]">
-              <div className="flex items-center justify-between mb-6">
+        {/* ── 2FA & SECURITY TAB ── */}
+        <TabsContent value="security" className="space-y-6">
+          <Card className="glass-card rounded-[2.5rem] p-6 border-white/10 bg-black/40 space-y-6">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <h3 className="text-lg font-black uppercase italic text-white flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5 text-purple-400" /> Two-Factor Authentication (2FA) Choices
+                </h3>
+                <p className="text-xs text-white/50">Protect your Xakteir account with multi-layered 2FA authentication options.</p>
+              </div>
+            </div>
+
+            {/* Option 1: Authenticator App */}
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                  <Smartphone className="w-5 h-5 text-purple-300" />
+                </div>
                 <div>
-                  <h2 className="text-xl font-black uppercase italic tracking-tighter text-white">Header Logo</h2>
-                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">Show Xakteir Logo</p>
+                  <h4 className="text-xs font-bold text-white">Authenticator App (TOTP)</h4>
+                  <p className="text-[10px] text-white/50">Use Google Authenticator, Authy, or 1Password to generate 6-digit codes.</p>
                 </div>
-                <Switch checked={showLogo} onCheckedChange={setShowLogo} />
               </div>
-            </section>
+              <Switch checked={totpEnabled} onCheckedChange={(val) => {
+                setTotpEnabled(val);
+                toast({ title: val ? "Authenticator App 2FA Enabled!" : "Authenticator App 2FA Disabled" });
+              }} />
+            </div>
 
-            <section className="glass-card rounded-[2rem] p-8 border-4 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col h-[600px]">
-              <div className="mb-6">
-                <h2 className="text-xl font-black uppercase italic tracking-tighter text-emerald-400">Pinned Header Apps</h2>
-                <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">Drag to reorder ({localPinnedApps.length}/8)</p>
-              </div>
-
-              <div className="bg-black/40 rounded-3xl p-4 border-2 border-white/5 mb-6 min-h-[120px]">
-                <Reorder.Group axis="y" values={localPinnedApps} onReorder={handleReorder} className="space-y-2">
-                  {localPinnedApps.map((appName) => {
-                    const app = APPS.find(a => a.name === appName);
-                    if (!app) return null;
-                    return (
-                      <Reorder.Item key={appName} value={appName} className="relative z-10">
-                        <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10 cursor-grab active:cursor-grabbing hover:bg-white/10 transition-colors group/item">
-                          <div className="flex items-center gap-3">
-                            <GripVertical className="w-4 h-4 text-white/30 group-hover/item:text-white/60" />
-                            <AnimatedAppIcon iconName={app.iconName} className="w-8 h-8 bg-white rounded-lg" size={32} />
-                            <span className="text-sm font-black uppercase tracking-widest">{app.name}</span>
-                          </div>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); removePinnedApp(app.name); }}
-                            className="w-8 h-8 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-colors opacity-0 group-hover/item:opacity-100"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </Reorder.Item>
-                    );
-                  })}
-                  {localPinnedApps.length === 0 && (
-                    <div className="text-center py-6 text-white/30 text-xs font-black uppercase tracking-widest border-2 border-dashed border-white/10 rounded-2xl">
-                      No pinned apps
-                    </div>
-                  )}
-                </Reorder.Group>
-              </div>
-
-              <div className="flex-1 flex flex-col min-h-0">
-                <div className="mb-4">
-                  <input 
-                    type="text" 
-                    placeholder="Search apps to add..." 
-                    value={appSearch}
-                    onChange={(e) => setAppSearch(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:bg-white/10 transition-all font-medium"
-                  />
+            {/* Option 2: Email OTP */}
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-indigo-300" />
                 </div>
-                <div className="flex-1 overflow-y-auto pr-2 space-y-2">
-                  {availableApps.map(app => (
-                    <div key={app.name} className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-transparent hover:border-white/10 transition-colors group/avail">
-                      <div className="flex items-center gap-3">
-                        <AnimatedAppIcon iconName={app.iconName} className="w-8 h-8 bg-white/80 rounded-lg opacity-50 group-hover/avail:opacity-100 transition-opacity" size={32} />
-                        <span className="text-sm font-bold text-white/50 group-hover/avail:text-white transition-colors">{app.name}</span>
-                      </div>
-                      <button 
-                        onClick={() => addPinnedApp(app.name)}
-                        disabled={localPinnedApps.length >= 8}
-                        className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center hover:bg-emerald-500 hover:text-black transition-colors disabled:opacity-30"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
+                <div>
+                  <h4 className="text-xs font-bold text-white">Email One-Time Password (OTP)</h4>
+                  <p className="text-[10px] text-white/50">Receive a security pass code directly in your email inbox during login.</p>
+                </div>
+              </div>
+              <Switch checked={emailOtpEnabled} onCheckedChange={(val) => {
+                setEmailOtpEnabled(val);
+                toast({ title: val ? "Email OTP 2FA Enabled!" : "Email OTP 2FA Disabled" });
+              }} />
+            </div>
+
+            {/* Option 3: SMS Phone 2FA */}
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                  <Key className="w-5 h-5 text-emerald-300" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white">SMS Security Codes</h4>
+                  <p className="text-[10px] text-white/50">Send text verification codes to your mobile phone number.</p>
+                </div>
+              </div>
+              <Switch checked={smsEnabled} onCheckedChange={(val) => {
+                setSmsEnabled(val);
+                toast({ title: val ? "SMS 2FA Enabled!" : "SMS 2FA Disabled" });
+              }} />
+            </div>
+
+            {/* Option 4: Backup Recovery Codes */}
+            <div className="p-5 rounded-2xl bg-purple-500/10 border border-purple-500/20 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-white">Backup Recovery Codes</h4>
+                  <p className="text-[10px] text-white/60">Generate 10 emergency codes to use if you lose access to your 2FA device.</p>
+                </div>
+                <Button onClick={() => setShowBackupCodes(!showBackupCodes)} className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl h-9 px-4">
+                  {showBackupCodes ? "Hide Codes" : "Show Codes"}
+                </Button>
+              </div>
+
+              {showBackupCodes && (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 pt-2 border-t border-purple-500/20">
+                  {backupCodes.map((code, i) => (
+                    <div key={i} className="p-2 rounded-lg bg-black/60 border border-white/10 text-center font-mono text-xs font-bold text-purple-300">
+                      {code}
                     </div>
                   ))}
                 </div>
-              </div>
-            </section>
-          </div>
+              )}
+            </div>
+          </Card>
+        </TabsContent>
 
-        </div>
-      </main>
+        {/* ── LINKED ACCOUNTS TAB ── */}
+        <TabsContent value="connections" className="space-y-6">
+          <Card className="glass-card rounded-[2.5rem] p-6 border-white/10 bg-black/40 space-y-4">
+            <h3 className="text-sm font-black uppercase italic text-white flex items-center gap-2">
+              <Globe className="w-4 h-4 text-purple-400" /> OAuth Single Sign-On Connections
+            </h3>
+
+            <div className="space-y-3">
+              {[
+                { name: "Google", connected: true, icon: "🌐" },
+                { name: "GitHub", connected: true, icon: "💻" },
+                { name: "Discord", connected: false, icon: "💬" },
+                { name: "Apple ID", connected: false, icon: "🍎" },
+              ].map((conn, i) => (
+                <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{conn.icon}</span>
+                    <span className="text-xs font-bold text-white">{conn.name}</span>
+                  </div>
+                  <Button variant={conn.connected ? "outline" : "default"} className={`h-9 px-4 rounded-xl text-xs font-bold ${conn.connected ? "border-emerald-500/40 text-emerald-400" : "bg-purple-600 text-white"}`}>
+                    {conn.connected ? "Connected ✓" : "Connect"}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* ── NOTIFICATIONS TAB ── */}
+        <TabsContent value="notifications" className="space-y-6">
+          <Card className="glass-card rounded-[2.5rem] p-6 border-white/10 bg-black/40 space-y-4">
+            <h3 className="text-sm font-black uppercase italic text-white flex items-center gap-2">
+              <Bell className="w-4 h-4 text-purple-400" /> Notification Preferences
+            </h3>
+
+            <div className="space-y-3">
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-white">Email Digest Updates</h4>
+                  <p className="text-[10px] text-white/50">Receive daily activity digests in your primary email inbox.</p>
+                </div>
+                <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-white">Browser Push Alerts</h4>
+                  <p className="text-[10px] text-white/50">Instant desktop pop-up alerts for urgent updates.</p>
+                </div>
+                <Switch checked={pushNotifications} onCheckedChange={setPushNotifications} />
+              </div>
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* ── APPEARANCE TAB ── */}
+        <TabsContent value="appearance" className="space-y-6">
+          <Card className="glass-card rounded-[2.5rem] p-6 border-white/10 bg-black/40 space-y-4">
+            <h3 className="text-sm font-black uppercase italic text-white flex items-center gap-2">
+              <Palette className="w-4 h-4 text-purple-400" /> System Appearance & Themes
+            </h3>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { id: "obsidian", name: "Obsidian Dark", color: "bg-black border-purple-500/50" },
+                { id: "cyberpunk", name: "Cyberpunk Pink", color: "bg-pink-950 border-pink-500/50" },
+                { id: "matrix", name: "Matrix Green", color: "bg-emerald-950 border-emerald-500/50" },
+                { id: "holographic", name: "Holographic Blue", color: "bg-blue-950 border-cyan-500/50" },
+              ].map((theme) => (
+                <div
+                  key={theme.id}
+                  onClick={() => {
+                    setSelectedTheme(theme.id);
+                    toast({ title: `Applied Theme: ${theme.name} ✨` });
+                  }}
+                  className={`p-4 rounded-2xl border ${theme.color} cursor-pointer hover:scale-105 transition-all text-center space-y-2 ${selectedTheme === theme.id ? "ring-2 ring-purple-400" : ""}`}
+                >
+                  <div className="h-12 rounded-xl bg-white/10 border border-white/10" />
+                  <span className="text-xs font-bold text-white block">{theme.name}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
