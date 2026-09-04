@@ -5,7 +5,6 @@ import Link from "next/link";
 import { GlitchLogo } from "@/components/ui/glitch-logo";
 import { 
   Github, 
-  Twitter, 
   Youtube, 
   ShieldCheck, 
   Activity, 
@@ -50,6 +49,11 @@ function RotatingFeedbackButton() {
   );
 }
 
+const SOCIAL_LINKS = [
+  { icon: Youtube, href: "https://www.youtube.com/channel/UCgCXvHvz-qRdj9cveM0fz-w", label: "YouTube" },
+  { icon: Github, href: "https://github.com/Xakorg", label: "GitHub" }
+];
+
 export function Footer() {
   const firestore = useFirestore();
   
@@ -75,10 +79,10 @@ export function Footer() {
             The playground for creators, gamers, and builders. Everything in one place.
           </p>
           <div className="flex gap-4">
-            {[Twitter, Youtube, Github].map((Icon, i) => (
-              <button key={i} className="w-9 h-9 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all">
+            {SOCIAL_LINKS.map(({ icon: Icon, href, label }, i) => (
+              <a key={i} href={href} target="_blank" rel="noopener noreferrer" className="w-9 h-9 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all" title={label}>
                 <Icon className="w-4 h-4 md:w-5 md:h-5" />
-              </button>
+              </a>
             ))}
           </div>
           <RotatingFeedbackButton />
