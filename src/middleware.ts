@@ -307,6 +307,15 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(`https://www.xakteir.com${path}`);
   }
 
+    // Handle Xakteir Labs via labs.xakteir.com
+  if (hostname === 'labs.xakteir.com' || hostname === 'www.labs.xakteir.com' || hostname.startsWith('labs.localhost')) {
+    if (path === '/') return NextResponse.rewrite(new URL('/labs', req.url));
+    if (path.startsWith('/labs')) return NextResponse.next();
+    
+    // If you go to a random path on the subdomain, kick to main site
+    return NextResponse.redirect(`https://www.xakteir.com${path}`);
+  }
+
   // 13.5 Handle MicroDimension standalone deployment via microdimension.xakteir.com
   if (hostname === 'microdimension.xakteir.com' || hostname === 'www.microdimension.xakteir.com' || hostname.startsWith('microdimension.localhost')) {
     if (path === '/') return NextResponse.rewrite(new URL('/microdimension', req.url));
@@ -375,6 +384,8 @@ export function middleware(req: NextRequest) {
 
     if (path === '/everyworld') return NextResponse.redirect('https://everyworld.xakteir.com');
     if (path.startsWith('/everyworld/')) return NextResponse.redirect(`https://everyworld.xakteir.com${path.replace('/everyworld', '')}`);
+    if (path === '/labs') return NextResponse.redirect('https://labs.xakteir.com');
+    if (path.startsWith('/labs/')) return NextResponse.redirect(`https://labs.xakteir.com${path.replace('/labs', '')}`);
 
     if (path === '/suite') return NextResponse.redirect('https://suite.xakteir.com');
     if (path.startsWith('/suite/')) return NextResponse.redirect(`https://suite.xakteir.com${path.replace('/suite', '')}`);
