@@ -3,6 +3,9 @@
 import { GlitchLogo } from "@/components/ui/glitch-logo";
 import { useEffect, useState } from "react";
 
+  if (hostname === 'labs.xakteir.com' || hostname === 'www.labs.xakteir.com' || hostname.startsWith('labs.localhost')) {
+    const AppName : string = labs
+
 export default function Loading() {
   const [progress, setProgress] = useState(0);
 
@@ -42,13 +45,13 @@ export default function Loading() {
             <h2 className="text-4xl font-black italic text-white tracking-tighter uppercase leading-none">
               Xakteir
             </h2>
-            <p className="text-[10px] font-black uppercase tracking-[0.8em] text-primary/80 animate-pulse">Launching Multiverse</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.8em] text-primary/80 animate-pulse">E N T E R I N G  {AppName}</p>
           </div>
         </div>
       </div>
       
       <div className="absolute bottom-16 flex flex-col items-center opacity-30 gap-2">
-        <p className="text-[10px] font-black uppercase tracking-[0.6em] text-muted-foreground italic">Instant Protocol v4.2.8</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.6em] text-muted-foreground italic">Xakteir</p>
         <div className="w-40 h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent rounded-full" />
       </div>
     </div>
