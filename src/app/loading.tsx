@@ -3,9 +3,6 @@
 import { GlitchLogo } from "@/components/ui/glitch-logo";
 import { useEffect, useState } from "react";
 
-  if (hostname === 'labs.xakteir.com' || hostname === 'www.labs.xakteir.com' || hostname.startsWith('labs.localhost')) {
-    const AppName : string = labs
-
 export default function Loading() {
   const [progress, setProgress] = useState(0);
 
@@ -45,7 +42,7 @@ export default function Loading() {
             <h2 className="text-4xl font-black italic text-white tracking-tighter uppercase leading-none">
               Xakteir
             </h2>
-            <p className="text-[10px] font-black uppercase tracking-[0.8em] text-primary/80 animate-pulse">E N T E R I N G  {AppName}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.8em] text-primary/80 animate-pulse">E N T E R I N G</p>
           </div>
         </div>
       </div>
