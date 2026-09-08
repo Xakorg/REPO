@@ -3,8 +3,48 @@
 import { GlitchLogo } from "@/components/ui/glitch-logo";
 import { useEffect, useState } from "react";
 
+const APP_HOSTNAMES: { [key: string]: string } = {
+  'labs': 'Labs',
+  'code': 'Code',
+  'chat': 'Chat',
+  'maps': 'Maps',
+  'dev': 'Dev Centre',
+  'drive': 'Drive',
+  'meet': 'Meet',
+  'account': 'Account',
+  'accounts': 'Accounts',
+  'voltra': 'Voltra',
+  'voltramax': 'VoltraMax',
+  'microdimension': 'MicroDimension',
+  'everyworld': 'Everyworld',
+  'weather': 'Weather'
+};
+
+function getAppNameFromHostname(hostname: string): string {
+  if (!hostname) return 'Xakteir';
+  
+  // Extract subdomain from hostname
+  const parts = hostname.replace('www.', '').split('.');
+  const subdomain = parts[0];
+  
+  // Special handling for subdomains with dots (e.g., store.voltra.xakteir.com)
+  if (hostname.includes('store.voltra')) return 'Voltra Store';
+  if (hostname.includes('play.voltra')) return 'Voltra Play';
+  
+  return APP_HOSTNAMES[subdomain] || 'Xakteir';
+}
+
 export default function Loading() {
   const [progress, setProgress] = useState(0);
+  const [appName, setAppName] = useState('Xakteir');
+
+  useEffect(() => {
+    // Get hostname from window.location
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      setAppName(getAppNameFromHostname(hostname));
+    }
+  }, []);
 
   useEffect(() => {
     // Optimized loading sequence for Xakteir Core
@@ -42,7 +82,7 @@ export default function Loading() {
             <h2 className="text-4xl font-black italic text-white tracking-tighter uppercase leading-none">
               Xakteir
             </h2>
-            <p className="text-[10px] font-black uppercase tracking-[0.8em] text-primary/80 animate-pulse">E N T E R I N G</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.8em] text-primary/80 animate-pulse">E N T E R I N G  {appName}</p>
           </div>
         </div>
       </div>
