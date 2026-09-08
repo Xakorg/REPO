@@ -52,7 +52,8 @@ If you are modifying existing code, keep these recent changes in mind:
 - **XakChat Sending Fix & Offense Filter Overhaul:** Fixed silent message sending failures in `/chat` caused by unhandled error suppression and false positive `isOffensive` word substring matching.
 
 - **Directory Cleanup:** Deleted deprecated folders `src/app/stream`, `src/app/sign`, `src/app/xakarena`, and `src/app/xakarena-creator`.
-- **Ecosystem Naming & Hierarchy Realignment:** Standardized app titles to: **Xakteir Mail**, **Xakteir Social**, **Xakteir Translate**, **Suite Write**, **Suite Sheets**, **Suite Forms**, **Suite Slides**.
+- **Persistent Chat Archive (`chat.md`):** Added complete conversation logging archive to persist all user prompts, agent responses, and task execution history.
+
 
 
 
