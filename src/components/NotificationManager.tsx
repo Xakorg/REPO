@@ -57,7 +57,13 @@ export function NotificationManager() {
   };
 
   useEffect(() => {
-    if (!latestNotifs || latestNotifs.length === 0) {
+    // Wait for the first Firestore response before deciding whether a
+    // notification is new. `undefined` means the listener is still loading.
+    if (latestNotifs === undefined) {
+      return;
+    }
+
+    if (latestNotifs.length === 0) {
       isFirstLoad.current = false;
       return;
     }

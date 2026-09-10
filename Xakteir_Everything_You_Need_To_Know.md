@@ -531,3 +531,11 @@ Knowledge is an organized, neat knowledge base for Xakteir — a wiki-style app 
          - Publicly browsable at knowledge.xakteir.com with subdomain isolation
          - Article routes under /knowledge/a/<slug> and internal editor paths (future)
          - Designed to be dependency-light and extremely readable
+
+## XakCode GitHub Workspace
+XakCode now includes a GitHub-style repository workspace alongside the full IDE and AI builder.
+         - GitHub OAuth connection uses Firebase's GitHub provider and requests repository access.
+         - `/xakcode/github` lists the connected user's real repositories through the GitHub REST API.
+         - Users can create public or private GitHub repositories directly from XakCode.
+         - Repositories can be opened in the existing XakCode IDE or on GitHub.
+         - The GitHub access token is kept in browser session storage only; it is not written to Firestore.

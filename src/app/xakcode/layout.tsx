@@ -29,7 +29,8 @@ import {
   ShieldPlus,
   RefreshCw,
   GitBranch,
-  Save
+  Save,
+  Github
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 function IDELayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -67,8 +69,27 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
     autoSaveInterval,
     isCompiling,
     setIsCompiling,
-    setCompileDuration
+    setCompileDuration,
+    githubAccessToken,
+    connectGithub
   } = useXakCode();
+  const { toast } = useToast();
+  const [isConnectingGithub, setIsConnectingGithub] = useState(false);
+  const githubConnected = Boolean(githubAccessToken || user?.providerData?.some((provider: { providerId: string }) => provider.providerId === "github.com"));
+
+  const handleGithubConnect = async () => {
+    if (!user || isConnectingGithub) return;
+    setIsConnectingGithub(true);
+    try {
+      const connected = await connectGithub();
+      if (!connected) throw new Error("Could not connect your GitHub account.");
+      toast({ title: "GitHub connected", description: "XakCode can now work with your repositories." });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "GitHub connection failed", description: error?.message });
+    } finally {
+      setIsConnectingGithub(false);
+    }
+  };
 
   // Resource Monitor States
   const [cpuUsage, setCpuUsage] = useState(12);
@@ -175,7 +196,8 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
             <div className="w-8 h-8 rounded-lg bg-sky-600 flex items-center justify-center shadow-lg shadow-sky-900/40">
               <Code2 className="w-4.5 h-4.5 text-white" />
             </div>
-            <h2 className="text-sm font-black uppercase italic tracking-tighter text-white">XakCode IDE</h2>
+            <h2 className="text-sm font-black uppercase italic tracking-tighter text-white">XakCode</h2>
+            <span className="hidden lg:inline text-[8px] font-bold uppercase tracking-widest text-white/30">GitHub workspace</span>
           </div>
           
           <div className="flex gap-2">
@@ -191,6 +213,21 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
             <span className={cn("w-1.5 h-1.5 rounded-full", activeProject?.deployment?.status === 'live' ? "bg-green-500 animate-pulse" : "bg-amber-500")} />
             <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">{activeProject?.name || "No active project"}</span>
           </div>
+
+          <Button
+            onClick={handleGithubConnect}
+            disabled={isConnectingGithub || githubConnected}
+            variant="outline"
+            className={cn(
+              "h-8 rounded-lg px-3 font-black uppercase text-[9px] tracking-widest shadow-xl transition-all",
+              githubConnected
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                : "border-white/10 bg-white/5 text-white hover:bg-white/10"
+            )}
+          >
+            {isConnectingGithub ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : <Github className="w-3 h-3 mr-1.5" />}
+            {githubConnected ? "GitHub connected" : "Connect GitHub"}
+          </Button>
 
           <Button onClick={triggerCompile} disabled={isCompiling} className="bg-sky-600 hover:bg-sky-500 h-8 rounded-lg px-4 font-black uppercase text-[9px] tracking-widest text-white shadow-xl transition-all">
             {isCompiling ? <Loader2 className="w-3 h-3 animate-spin text-white" /> : <><Play className="w-3 h-3 mr-1.5 text-white" /> RUN PREVIEW</>}
@@ -213,6 +250,7 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
               { path: "/xakcode/hosting", icon: Globe, label: "Hosting" },
               { path: "/xakcode/console", icon: Terminal, label: "Console" },
               { path: "/xakcode/git", icon: GitBranch, label: "Git Control" },
+              { path: "/xakcode/github", icon: Github, label: "GitHub Repositories" },
               { path: "/xakcode/utilities", icon: Tv, label: "Utilities" }
             ].map(item => {
               const isActive = pathname === item.path;

@@ -1,10 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from "react";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useAuth, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { GithubAuthProvider, linkWithPopup } from "firebase/auth";
 import { collection, query, doc, setDoc, deleteDoc, serverTimestamp, orderBy, limit, addDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { codeArchitect } from "@/ai/flows/code-architect-flow";
 
 export type EditorTheme = 'dracula' | 'cyberpunk' | 'vscode' | 'monokai' | 'nord' | 'github-light';
 
@@ -132,12 +132,20 @@ interface XakCodeContextProps {
   aiPromptHistory: string[];
   addAiPromptHistory: (val: string) => void;
   handleGenerateCode: (prompt: string, overrideCode?: string) => Promise<void>;
+
+  // GitHub workspace
+  githubAccessToken: string | null;
+  githubRepos: Array<{ id: number; name: string; full_name: string; private: boolean; html_url: string; description: string | null }>;
+  connectGithub: () => Promise<boolean>;
+  refreshGithubRepos: () => Promise<void>;
+  createGithubRepo: (name: string, isPrivate: boolean) => Promise<boolean>;
 }
 
 const XakCodeContext = createContext<XakCodeContextProps | undefined>(undefined);
 
 export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useUser();
+  const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -206,6 +214,63 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     "Upgrade this UI. Add a dark glassmorphic cyber design theme.",
     "Add a dynamic grid system showing dashboard cards with interactive stats."
   ]);
+  const [githubAccessToken, setGithubAccessToken] = useState<string | null>(null);
+  const [githubRepos, setGithubRepos] = useState<Array<{ id: number; name: string; full_name: string; private: boolean; html_url: string; description: string | null }>>([]);
+
+  useEffect(() => {
+    setGithubAccessToken(window.sessionStorage.getItem("xakcode_github_token"));
+  }, []);
+
+  const refreshGithubRepos = async () => {
+    if (!githubAccessToken) return;
+    const response = await fetch("https://api.github.com/user/repos?sort=updated&per_page=50", {
+      headers: { Authorization: `Bearer ${githubAccessToken}`, Accept: "application/vnd.github+json" }
+    });
+    if (!response.ok) throw new Error("GitHub repositories could not be loaded.");
+    setGithubRepos(await response.json());
+  };
+
+  useEffect(() => {
+    if (githubAccessToken) {
+      refreshGithubRepos().catch((error) => {
+        console.error("GitHub repository sync failed:", error);
+        setGithubRepos([]);
+      });
+    }
+  }, [githubAccessToken]);
+
+  const connectGithub = async () => {
+    if (!auth?.currentUser) return false;
+    try {
+      const provider = new GithubAuthProvider();
+      provider.addScope("repo");
+      const credential = await linkWithPopup(auth.currentUser, provider);
+      const token = GithubAuthProvider.credentialFromResult(credential)?.accessToken;
+      if (!token) throw new Error("GitHub did not return an access token.");
+      window.sessionStorage.setItem("xakcode_github_token", token);
+      setGithubAccessToken(token);
+      return true;
+    } catch (error) {
+      console.error("GitHub connection failed:", error);
+      return false;
+    }
+  };
+
+  const createGithubRepo = async (name: string, isPrivate: boolean) => {
+    if (!githubAccessToken || !name.trim()) return false;
+    const response = await fetch("https://api.github.com/user/repos", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${githubAccessToken}`,
+        Accept: "application/vnd.github+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name: name.trim(), private: isPrivate, auto_init: true })
+    });
+    if (!response.ok) return false;
+    await refreshGithubRepos();
+    return true;
+  };
 
   // Fetch projects list
   const projectsQuery = useMemoFirebase(() => {
@@ -840,15 +905,28 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // AI Architect Flow Code Execution
   const handleGenerateCode = async (prompt: string, overrideCode?: string) => {
     const instruction = prompt || aiPrompt;
-    if (!instruction.trim() || isGenerating || !user || !firestore || !activeProject) return;
+    if (!instruction.trim() || isGenerating || !user || !firestore || !activeProject || !githubAccessToken) {
+      if (!githubAccessToken && instruction.trim()) {
+        toast({ variant: "destructive", title: "Connect GitHub first", description: "XakCode AI runs through the GitHub Copilot SDK." });
+      }
+      return;
+    }
     
     setIsGenerating(true);
     try {
       const sourceCode = overrideCode || codeText;
-      const res = await codeArchitect({ 
-        prompt: instruction,
-        context: sourceCode 
+      const response = await fetch("/api/xakcode/copilot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: instruction,
+          code: sourceCode,
+          files: projectFiles,
+          githubToken: githubAccessToken
+        })
       });
+      const res = await response.json();
+      if (!response.ok) throw new Error(res.error || "Copilot request failed.");
       
       handleFileChange(res.code);
       if (res.explanation) {
@@ -954,6 +1032,12 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
       aiPromptHistory,
       addAiPromptHistory,
       handleGenerateCode
+      ,
+      githubAccessToken,
+      githubRepos,
+      connectGithub,
+      refreshGithubRepos,
+      createGithubRepo
     }}>
       {children}
     </XakCodeContext.Provider>
