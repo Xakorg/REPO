@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -176,7 +178,7 @@ export default function XakBuddyPage() {
                   </div>
                 </div>
               )}
-              <Button className="bg-primary hover:bg-primary/90 h-16 px-10 rounded-[1.8rem] font-black uppercase text-xs tracking-widest text-white shadow-xl border-4 border-white/10 relative z-10 transition-all active:scale-95">
+              <Button className="bg-primary hover:bg-primary/90 h-16 px-10 rounded-[1.8rem] font-black uppercase text-xs tracking-widest text-white shadow-xl border-4 border-white/10 relative z-1">
                 <Plus className="w-5 h-5 mr-3" /> Adopt Buddy
               </Button>
             </div>
@@ -186,19 +188,19 @@ export default function XakBuddyPage() {
             <div className="space-y-8 py-6">
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-4">Pick a Name</label>
-                <Input value={newPetName} onChange={(e) => setNewPetName(e.target.value)} placeholder="e.g. Sparky" className="h-14 rounded-2xl bg-secondary/30 border-4 border-white/10 font-bold px-6" />
+                <Input value={newPetName} onChange={(e) => setNewPetName(e.target.value)} placeholder="e.g. Sparky" className="h-14 rounded-2xl bg-secondary/30 border-4 border-white/10 font-bold" />
               </div>
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-4">Buddy Type</label>
                 <div className="grid grid-cols-4 gap-3">
                   {PET_TYPES.map(type => (
-                    <button key={type.id} onClick={() => setNewPetType(type.id)} className={cn("aspect-square rounded-2xl border-4 flex items-center justify-center transition-all", newPetType === type.id ? "bg-primary text-white border-primary shadow-lg scale-110" : "bg-secondary/30 border-white/5 text-muted-foreground hover:bg-white/5")}>
+                    <button key={type.id} onClick={() => setNewPetType(type.id)} className={cn("aspect-square rounded-2xl border-4 flex items-center justify-center transition-all", newPetType === type.id ? "scale-105 border-primary" : "") }>
                       <type.icon className="w-6 h-6" />
                     </button>
                   ))}
                 </div>
               </div>
-              <Button onClick={handleCreatePet} disabled={isCreating || !newPetName} className="w-full h-16 bg-primary hover:bg-primary/90 rounded-[2rem] font-black uppercase tracking-widest text-white shadow-xl border-4 border-white/10">
+              <Button onClick={handleCreatePet} disabled={isCreating || !newPetName} className="w-full h-16 bg-primary hover:bg-primary/90 rounded-[2rem] font-black uppercase tracking-widest text-white">
                 {isCreating ? <Loader2 className="animate-spin w-6 h-6" /> : "Bring Home"}
               </Button>
             </div>
@@ -208,7 +210,7 @@ export default function XakBuddyPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-10">
         <TabsList className="bg-secondary/30 p-2 rounded-[2.5rem] h-20 gap-4 border-4 border-white/10 shadow-xl w-full max-w-2xl mx-auto">
-          <TabsTrigger value="my-pets" className="flex-1 rounded-[1.8rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">My Buddies</TabsTrigger>
+          <TabsTrigger value="my-pets" className="flex-1 rounded-[1.8rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">My Pets</TabsTrigger>
           <TabsTrigger value="online-park" className="flex-1 rounded-[1.8rem] h-full font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">Online Park</TabsTrigger>
         </TabsList>
 
@@ -219,7 +221,7 @@ export default function XakBuddyPage() {
                 {myPets.map(pet => {
                   const TypeIcon = PET_TYPES.find(t => t.id === pet.type)?.icon || Cat;
                   return (
-                    <Card key={pet.id} onClick={() => setSelectedPetId(pet.id)} className={cn("glass-card p-6 rounded-[2.5rem] cursor-pointer transition-all border-4", selectedPetId === pet.id ? "border-primary shadow-xl scale-[1.02]" : "border-white/5 hover:bg-white/5")}>
+                    <Card key={pet.id} onClick={() => setSelectedPetId(pet.id)} className={cn("glass-card p-6 rounded-[2.5rem] cursor-pointer transition-all border-4", selectedPetId === pet.id ? "border-primary scale-102" : "") }>
                       <div className="flex items-center gap-5">
                         <div className="w-12 h-12 rounded-2xl bg-secondary/50 flex items-center justify-center border-2 border-white/5 shadow-inner text-primary"><TypeIcon className="w-6 h-6" /></div>
                         <div className="overflow-hidden">
@@ -243,13 +245,13 @@ export default function XakBuddyPage() {
                     const ActiveIcon = PET_TYPES.find(p => p.id === activePet.type)?.icon || Cat;
                     return <ActiveIcon className="w-64 h-64 text-primary drop-shadow-[0_0_50px_rgba(251,191,36,0.6)]" />;
                   })()}
-                  <div className="absolute -top-10 -right-10 bg-white rounded-full p-4 shadow-xl animate-bounce text-4xl border-4 border-primary/20">{activePet.happiness > 70 ? "😊" : activePet.hunger < 30 ? "🍕?" : "😐"}</div>
+                  <div className="absolute -top-10 -right-10 bg-white rounded-full p-4 shadow-xl animate-bounce text-4xl border-4 border-primary/20">{activePet.happiness > 70 ? "😊" : "🙂"}</div>
                 </div>
                 <div className="mt-16 text-center space-y-3 relative z-10 px-10">
                   <h2 className="text-6xl font-black uppercase italic tracking-tighter text-foreground truncate w-full">{activePet.name}</h2>
                   <div className="flex items-center justify-center gap-4">
                     <Badge className="bg-primary text-white font-black uppercase tracking-widest px-6 py-1 rounded-full text-[10px] border-none shadow-lg">Rank {activePet.level}</Badge>
-                    <button onClick={() => deleteDoc(doc(firestore!, "buddies", activePet.id))} className="text-muted-foreground hover:text-destructive transition-colors p-2 hover:bg-destructive/10 rounded-full"><Trash2 className="w-5 h-5" /></button>
+                    <button onClick={() => deleteDoc(doc(firestore!, "buddies", activePet.id))} className="text-muted-foreground hover:text-destructive transition-colors p-2 hover:bg-destructive/10 rounded-lg"><Trash2 className="w-5 h-5" /></button>
                   </div>
                 </div>
               </Card>
@@ -327,7 +329,7 @@ export default function XakBuddyPage() {
                       return (
                         <div key={pet.id} className="absolute animate-float transition-all duration-1000 group cursor-help z-20" style={{ left: `${pet.posX || 50}%`, top: `${pet.posY || 50}%` }}>
                           <div className="relative">
-                            <div className="absolute -top-16 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 whitespace-nowrap bg-primary text-white px-4 py-2 rounded-2xl shadow-2xl z-20 border-2 border-white/20">
+                            <div className="absolute -top-16 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 whitespace-nowrap bg-primary/10 rounded-xl px-3 py-2">
                               <p className="text-[10px] font-black uppercase italic">{pet.name} (You)</p>
                             </div>
                             <TypeIcon className="w-20 h-20 text-primary drop-shadow-[0_0_30px_rgba(255,255,255,0.6)]" />
@@ -340,7 +342,7 @@ export default function XakBuddyPage() {
                       return (
                         <div key={pet.id} className="absolute animate-wiggle transition-all duration-1000 group cursor-help z-10" style={{ left: `${pet.posX || 30}%`, top: `${pet.posY || 40}%` }}>
                           <div className="relative">
-                            <div className="absolute -top-16 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 whitespace-nowrap bg-black/80 backdrop-blur-xl text-white px-4 py-2 rounded-2xl shadow-2xl z-20 border-2 border-white/10">
+                            <div className="absolute -top-16 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 whitespace-nowrap bg-black/80 rounded-xl px-3 py-2">
                               <p className="text-[10px] font-black uppercase italic">{pet.name}</p>
                               <p className="text-[8px] font-bold uppercase tracking-widest opacity-60">Friend: @{pet.ownerName}</p>
                             </div>
