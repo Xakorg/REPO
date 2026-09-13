@@ -6,7 +6,7 @@ This document contains the shared memory and context for the Xakteir project. Al
 **Xakteir** is a gaming and app ecosystem, essentially a web-based OS/dashboard. It features an app launcher, a premium game store, global UI themes, and social features (Xakchat).
 
 ## 2. Design Aesthetics (CRITICAL)
-- **Vibe:** Ultra-premium, state-of-the-art, dark mode, glassmorphism, dynamic.
+- **Vibe:** Ultra-premium, state-of-the-art, dark modecreddedeaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, glassmorphism, dynamic.
 - **Layouts:** The UI resembles high-end systems (like PS5 or modern desktop App Stores). 
 - **Colors & Styles:** Uses deep blacks (`bg-[#05030d]`, `bg-[#0f0f15]`), vibrant neon accents (indigo, purple, amber, emerald), smooth gradients, and backdrop blur.
 - **Micro-interactions:** Extensive use of `framer-motion` for smooth hover states, page transitions, and subtle scale/opacity animations.
