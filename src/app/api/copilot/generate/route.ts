@@ -3,19 +3,21 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { prompt, code } = body || {};
+    const { prompt, code, githubToken } = body || {};
 
     if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
     }
 
-    // Require server-side COPILOT_API_KEY
-    const key = process.env.COPILOT_API_KEY;
-    if (!key) {
-      return NextResponse.json({ error: 'COPILOT_API_KEY not configured on server. Add it to your environment variables.' }, { status: 400 });
+    // Prefer per-user GitHub token (from OAuth) if provided, otherwise fall back to server COPILOT_API_KEY
+    const serverKey = process.env.COPILOT_API_KEY;
+    const effectiveKey = githubToken || serverKey;
+
+    if (!effectiveKey) {
+      return NextResponse.json({ error: 'No Copilot credential provided. Provide githubToken in the request (user OAuth token with Copilot permission) or set COPILOT_API_KEY on the server.' }, { status: 400 });
     }
 
-    // Try to load the official Copilot SDK dynamically and call common methods.
+    // Try to load the official Copilot SDK dynamically and call common methods using the effective credential.
     try {
       const sdk = await import('@github/copilot-sdk');
 
@@ -27,14 +29,14 @@ export async function POST(req: Request) {
         if (!C) continue;
         try {
           if (typeof C === 'function') {
-            // If it's a factory function that returns a client
+            // try factory
             try {
-              const maybe = (C as any)({ apiKey: key });
+              const maybe = (C as any)({ apiKey: effectiveKey, token: effectiveKey });
               client = maybe && typeof maybe.then === 'function' ? await maybe : maybe;
             } catch (err) {
               // try as constructor
               try {
-                client = new (C as any)({ apiKey: key });
+                client = new (C as any)({ apiKey: effectiveKey, token: effectiveKey });
               } catch (_) {
                 // ignore
               }
@@ -47,8 +49,7 @@ export async function POST(req: Request) {
       }
 
       if (!client) {
-        // If SDK imported but no client created, return info for debugging
-        return NextResponse.json({ error: 'Failed to construct Copilot client from SDK. SDK exports: ' + Object.keys(sdk).join(', ') });
+        return NextResponse.json({ error: 'Failed to construct Copilot client from SDK. SDK exports: ' + Object.keys(sdk).join(', ') }, { status: 500 });
       }
 
       // Try calling known methods on the client
@@ -66,22 +67,16 @@ export async function POST(req: Request) {
         if (typeof client[name] === 'function') {
           try {
             const res = await client[name]({ prompt, input: code });
-            // Normalize response into a text suggestion
             if (!res) continue;
-            if (typeof res === 'string') {
-              return NextResponse.json({ suggestion: res });
-            }
-            // Common response shapes
+            if (typeof res === 'string') return NextResponse.json({ suggestion: res });
             if (res.text) return NextResponse.json({ suggestion: res.text });
             if (res.output) return NextResponse.json({ suggestion: res.output });
             if (res.choices && Array.isArray(res.choices)) {
               const text = res.choices.map((c: any) => c.text || c.message?.content || c.message?.content?.[0]?.content || '').join('\n');
               return NextResponse.json({ suggestion: text || JSON.stringify(res) });
             }
-            // fallback: return full object
             return NextResponse.json({ suggestion: JSON.stringify(res) });
           } catch (err: any) {
-            // try next method
             console.error(`Copilot client method ${name} failed:`, err?.message || err);
           }
         }
