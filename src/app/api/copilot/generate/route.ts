@@ -9,20 +9,89 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
     }
 
-    // If a real Copilot SDK key is configured, this is where we'd call it.
-    // For now we return a stub suggestion and instructions for enabling Copilot SDK.
-
-    if (!process.env.COPILOT_API_KEY && !process.env.NEXT_PUBLIC_COPILOT_KEY) {
-      return NextResponse.json({
-        suggestion: `// Copilot SDK not configured.\n// To enable: add COPILOT_API_KEY (server-side) or NEXT_PUBLIC_COPILOT_KEY (client) and implement Copilot SDK server integration.\n// Received prompt: ${prompt.slice(0, 200)}`
-      });
+    // Require server-side COPILOT_API_KEY
+    const key = process.env.COPILOT_API_KEY;
+    if (!key) {
+      return NextResponse.json({ error: 'COPILOT_API_KEY not configured on server. Add it to your environment variables.' }, { status: 400 });
     }
 
-    // TODO: integrate @github/copilot-sdk server call here when API details available.
-    // Returning a placeholder suggestion for now.
-    const suggestion = `// Copilot (stub) suggestion based on prompt:\n// ${prompt.replace(/\n/g, ' ')}\n\n// Suggestion:\nfunction example() {\n  console.log('This is a placeholder Copilot suggestion.');\n}\n`;
+    // Try to load the official Copilot SDK dynamically and call common methods.
+    try {
+      const sdk = await import('@github/copilot-sdk');
 
-    return NextResponse.json({ suggestion });
+      // Try various constructor helpers
+      const ClientConstructors = [sdk.default, sdk.Copilot, sdk.Client, sdk.createClient, sdk.create];
+      let client: any = null;
+
+      for (const C of ClientConstructors) {
+        if (!C) continue;
+        try {
+          if (typeof C === 'function') {
+            // If it's a factory function that returns a client
+            try {
+              const maybe = (C as any)({ apiKey: key });
+              client = maybe && typeof maybe.then === 'function' ? await maybe : maybe;
+            } catch (err) {
+              // try as constructor
+              try {
+                client = new (C as any)({ apiKey: key });
+              } catch (_) {
+                // ignore
+              }
+            }
+          }
+        } catch (e) {
+          // ignore and continue
+        }
+        if (client) break;
+      }
+
+      if (!client) {
+        // If SDK imported but no client created, return info for debugging
+        return NextResponse.json({ error: 'Failed to construct Copilot client from SDK. SDK exports: ' + Object.keys(sdk).join(', ') });
+      }
+
+      // Try calling known methods on the client
+      const methodCandidates = [
+        'generate',
+        'createCompletion',
+        'createChatCompletion',
+        'completion',
+        'complete',
+        'create',
+        'request',
+      ];
+
+      for (const name of methodCandidates) {
+        if (typeof client[name] === 'function') {
+          try {
+            const res = await client[name]({ prompt, input: code });
+            // Normalize response into a text suggestion
+            if (!res) continue;
+            if (typeof res === 'string') {
+              return NextResponse.json({ suggestion: res });
+            }
+            // Common response shapes
+            if (res.text) return NextResponse.json({ suggestion: res.text });
+            if (res.output) return NextResponse.json({ suggestion: res.output });
+            if (res.choices && Array.isArray(res.choices)) {
+              const text = res.choices.map((c: any) => c.text || c.message?.content || c.message?.content?.[0]?.content || '').join('\n');
+              return NextResponse.json({ suggestion: text || JSON.stringify(res) });
+            }
+            // fallback: return full object
+            return NextResponse.json({ suggestion: JSON.stringify(res) });
+          } catch (err: any) {
+            // try next method
+            console.error(`Copilot client method ${name} failed:`, err?.message || err);
+          }
+        }
+      }
+
+      return NextResponse.json({ error: 'Copilot SDK loaded but no compatible method succeeded. Inspect server logs.' }, { status: 500 });
+    } catch (err: any) {
+      console.error('Failed to import or call Copilot SDK:', err?.message || err);
+      return NextResponse.json({ error: 'Failed to import or call Copilot SDK: ' + (err?.message || err) }, { status: 500 });
+    }
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'failed' }, { status: 500 });
   }
