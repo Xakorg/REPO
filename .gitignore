@@ -90,3 +90,26 @@ dist/
 
 # Optional npm/yarn packages
 npm-shrinkwrap.json
+
+#apps
+src/app/admin
+
+#exe apps/electron/tauri
+desktop-build/
+desktop-out/
+dist-electron
+dist-electron-xak ai
+
+
+
+#other
+api/
+chat.md
+components.md
+.agents/
+.idx/
+.next/
+folder/
+app-analysis.json
+analyze-apps.js
+apphosting.yaml

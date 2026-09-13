@@ -10,7 +10,7 @@ export default function Loading() {
 =======
 const APP_HOSTNAMES: { [key: string]: string } = {
   'labs': 'Labs',
-  'code': 'Code',
+  'xakcode': 'Xakcode',
   'chat': 'Chat',
   'maps': 'Maps',
   'dev': 'Dev Centre',
@@ -23,6 +23,18 @@ const APP_HOSTNAMES: { [key: string]: string } = {
   'microdimension': 'MicroDimension',
   'everyworld': 'Everyworld',
   'weather': 'Weather'
+  'social': 'Social'
+  'Knowledge': 'Knowledge'
+  'mail': 'Mail'
+  'games': 'Games'
+  'about' : 'About'
+  'admin panel' : 'Admin Panel'
+  'xak ai' : 'Xak AI'
+  'authenticator' : 'Authenticator'
+  'buddy' : 'Buddy'
+  'calculator' : 'Calculator'
+  
+
 };
 
 function getAppNameFromHostname(hostname: string): string {

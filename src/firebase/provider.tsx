@@ -37,10 +37,10 @@ export interface FirebaseContextState {
 
 // Return type for useFirebase()
 export interface FirebaseServicesAndUser {
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  storage: FirebaseStorage;
-  auth: Auth;
+  firebaseApp: FirebaseApp | null;
+  firestore: Firestore | null;
+  storage: FirebaseStorage | null;
+  auth: Auth | null;
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
@@ -160,19 +160,27 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
 /**
  * Hook to access core Firebase services and user authentication state.
- * Throws error if core services are not available or used outside provider.
+ * This version is tolerant when the provider is not present (returns nulls instead of throwing),
+ * preventing runtime crashes when parts of the app render without Firebase initialized.
  */
 export const useFirebase = (): FirebaseServicesAndUser => {
   const context = useContext(FirebaseContext);
 
   if (context === undefined) {
-    throw new Error('useFirebase must be used within a FirebaseProvider.');
+    // Do not throw here. Return a safe, empty set of services so components can render and handle missing services gracefully.
+    console.warn('useFirebase: FirebaseContext is undefined. Returning null services.');
+    return {
+      firebaseApp: null,
+      firestore: null,
+      storage: null,
+      auth: null,
+      user: null,
+      isUserLoading: true,
+      userError: null,
+    };
   }
 
-  if (!context.areServicesAvailable || !context.firebaseApp || !context.firestore || !context.storage || !context.auth) {
-    throw new Error('Firebase core services not available. Check FirebaseProvider props.');
-  }
-
+  // If services aren't available yet, return them as nulls rather than throwing.
   return {
     firebaseApp: context.firebaseApp,
     firestore: context.firestore,
@@ -184,26 +192,26 @@ export const useFirebase = (): FirebaseServicesAndUser => {
   };
 };
 
-/** Hook to access Firebase Auth instance. */
-export const useAuth = (): Auth => {
+/** Hook to access Firebase Auth instance. May return null if Auth is not available yet. */
+export const useAuth = (): Auth | null => {
   const { auth } = useFirebase();
   return auth;
 };
 
-/** Hook to access Firestore instance. */
-export const useFirestore = (): Firestore => {
+/** Hook to access Firestore instance. May return null if Firestore is not available yet. */
+export const useFirestore = (): Firestore | null => {
   const { firestore } = useFirebase();
   return firestore;
 };
 
-/** Hook to access Firebase Storage instance. */
-export const useStorage = (): FirebaseStorage => {
+/** Hook to access Firebase Storage instance. May return null if Storage is not available yet. */
+export const useStorage = (): FirebaseStorage | null => {
   const { storage } = useFirebase();
   return storage;
 };
 
-/** Hook to access Firebase App instance. */
-export const useFirebaseApp = (): FirebaseApp => {
+/** Hook to access Firebase App instance. May return null if the App is not available yet. */
+export const useFirebaseApp = (): FirebaseApp | null => {
   const { firebaseApp } = useFirebase();
   return firebaseApp;
 };
@@ -225,101 +233,6 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
  * @returns {UserHookResult} Object with user, isUserLoading, userError.
  */
 export const useUser = (): UserHookResult => {
-  const { user: firebaseUser, isUserLoading, userError } = useFirebase();
-  const [activeAccount, setActiveAccount] = useState<any>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const checkActiveAccount = () => {
-      const accountsJson = localStorage.getItem('xakteir_accounts');
-      const activeId = localStorage.getItem('xakteir_active_account_id');
-      if (accountsJson && activeId) {
-        try {
-          const accounts = JSON.parse(accountsJson);
-          if (Array.isArray(accounts)) {
-            const active = accounts.find((a: any) => a.uid === activeId);
-            if (active) {
-              setActiveAccount(active);
-              return;
-            }
-          }
-        } catch (e) {
-          console.error("Error parsing accounts JSON in firebase provider", e);
-        }
-      }
-      setActiveAccount(null);
-    };
-
-    checkActiveAccount();
-    window.addEventListener('xakteir-accounts-changed', checkActiveAccount);
-    return () => window.removeEventListener('xakteir-accounts-changed', checkActiveAccount);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (firebaseUser) {
-      const accountsJson = localStorage.getItem('xakteir_accounts');
-      let accs: any[] = [];
-      if (accountsJson) {
-        try {
-          const parsed = JSON.parse(accountsJson);
-          if (Array.isArray(parsed)) {
-            accs = parsed;
-          }
-        } catch (e) {
-          console.error("Error parsing accounts JSON in provider sync", e);
-        }
-      }
-      
-      const existingIdx = accs.findIndex((a: any) => a.uid === firebaseUser.uid);
-      const newAcc = {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email || "user@xakteir.com",
-        displayName: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User",
-        photoURL: firebaseUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(firebaseUser.displayName || "User")}`,
-        hat: ""
-      };
-      
-      let changed = false;
-      if (existingIdx >= 0) {
-        // Keep their existing hat, but update photo/display name if changed
-        newAcc.hat = accs[existingIdx].hat || "";
-        accs[existingIdx] = newAcc;
-        changed = true;
-      } else {
-        accs.push(newAcc);
-        changed = true;
-      }
-      
-      const activeId = localStorage.getItem('xakteir_active_account_id');
-      if (activeId !== firebaseUser.uid || changed) {
-        localStorage.setItem('xakteir_accounts', JSON.stringify(accs));
-        localStorage.setItem('xakteir_active_account_id', firebaseUser.uid);
-        window.dispatchEvent(new Event('xakteir-accounts-changed'));
-      }
-    }
-  }, [firebaseUser]);
-
-  const memoizedUser = useMemo(() => {
-    if (!activeAccount) return null;
-    return {
-      uid: activeAccount.uid,
-      email: activeAccount.email,
-      displayName: activeAccount.displayName,
-      photoURL: activeAccount.photoURL,
-      getIdToken: async () => "mock_token_" + activeAccount.uid,
-      emailVerified: true,
-      isAnonymous: false,
-      metadata: {},
-      providerData: [],
-    } as any;
-  }, [activeAccount?.uid, activeAccount?.email, activeAccount?.displayName, activeAccount?.photoURL]);
-
-  return useMemo(() => {
-    if (activeAccount && memoizedUser) {
-      return { user: memoizedUser, isUserLoading: false, userError: null };
-    }
-    return { user: firebaseUser, isUserLoading, userError };
-  }, [activeAccount, memoizedUser, firebaseUser, isUserLoading, userError]);
+  const { user, isUserLoading, userError } = useFirebase();
+  return { user, isUserLoading, userError };
 };
