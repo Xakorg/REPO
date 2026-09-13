@@ -11,7 +11,8 @@ import {
   Users, 
   Zap,
   Globe,
-  Heart
+  Heart,
+  MessageCircle
 } from "lucide-react";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -51,7 +52,8 @@ function RotatingFeedbackButton() {
 
 const SOCIAL_LINKS = [
   { icon: Youtube, href: "https://www.youtube.com/channel/UCgCXvHvz-qRdj9cveM0fz-w", label: "YouTube" },
-  { icon: Github, href: "https://github.com/Xakorg", label: "GitHub" }
+  { icon: Github, href: "https://github.com/Xakorg", label: "GitHub" },
+  { icon: MessageCircle, href: "https://discord.gg/vUmSNRMKv3", label: "Discord" }
 ];
 
 export function Footer() {

@@ -45,6 +45,8 @@ If you are modifying existing code, keep these recent changes in mind:
 - **Xak AI Chat Engine & Resilience Overhaul:** Fixed Xak AI chat failures by adding a 3.5s timeout controller on external Eve AI endpoints, adding a local response synthesizer fallback, and expanding retries.
 - **Xakteir Dev Mail Dashboard:** Added a real Dev Centre mail route with inbox/outbox views, compose UI, delivery stats, and custom domain/DNS status panel for the Xakteir platform.
 
+- **XakCode GitHub Workspace:** Added `/xakcode/github` with Firebase GitHub OAuth, real repository listing and refresh, public/private repository creation, and direct links into the XakCode IDE. GitHub access tokens remain session-scoped in the browser.
+
 
 - **Smooth 12-Point SVG Animated Icon & Favicon Fix:** Re-architected `XakAiAnimatedIcon`.
 

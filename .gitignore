@@ -51,3 +51,42 @@ desktop-out/
 public/downloads/*.exe
 **/*.exe
 dist-electron-xakai/
+
+# IDEs & Editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Python (if used for scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# OS
+Thumbs.db
+*.pid
+*.seed
+
+# Temporary files
+*.tmp
+*.bak
+
+# Local development
+.env.local
+.env.*.local
+
+# Build outputs (if not already covered)
+dist/
+
+# Optional npm/yarn packages
+npm-shrinkwrap.json
