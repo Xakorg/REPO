@@ -3,6 +3,7 @@
 import { useState } from "react";
 import MonacoEditor from "@/components/editor/MonacoEditor";
 import { pushFileClient } from "@/lib/githubClient";
+import { askCopilot } from "@/lib/copilotClient";
 
 export default function WorkspacePage() {
   const [owner, setOwner] = useState("");
@@ -12,6 +13,9 @@ export default function WorkspacePage() {
   const [message, setMessage] = useState("Update from Xakcode");
   const [isSaving, setIsSaving] = useState(false);
   const [result, setResult] = useState<any>(null);
+
+  const [copilotPrompt, setCopilotPrompt] = useState("");
+  const [copilotLoading, setCopilotLoading] = useState(false);
 
   const handleSave = async () => {
     if (!owner || !repo || !path) return alert("owner, repo, and path required");
@@ -28,6 +32,25 @@ export default function WorkspacePage() {
     }
   };
 
+  const handleAskCopilot = async () => {
+    if (!copilotPrompt.trim()) return alert('Enter a prompt for Copilot');
+    setCopilotLoading(true);
+    try {
+      const res = await askCopilot(copilotPrompt, content);
+      if (res?.suggestion) {
+        // append suggestion to content for now
+        setContent((c) => c + "\n\n" + res.suggestion);
+      } else if (res?.error) {
+        alert(`Copilot error: ${res.error}`);
+      }
+    } catch (e: any) {
+      console.error(e);
+      alert(`Copilot request failed: ${e.message || e}`);
+    } finally {
+      setCopilotLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen p-8 bg-[#07070b] text-white">
       <header className="mb-6 flex items-center gap-4">
@@ -40,7 +63,17 @@ export default function WorkspacePage() {
         </button>
       </header>
 
-      <main className="h-[70vh] border border-white/5 rounded overflow-hidden">
+      <section className="mb-6">
+        <div className="flex gap-2 mb-2">
+          <input placeholder="Ask Copilot (e.g. add tests)" value={copilotPrompt} onChange={(e) => setCopilotPrompt(e.target.value)} className="px-3 py-2 rounded bg-white/5 flex-1" />
+          <button onClick={handleAskCopilot} disabled={copilotLoading} className="bg-sky-500 px-4 py-2 rounded font-bold">
+            {copilotLoading ? 'Thinking...' : 'Ask Copilot'}
+          </button>
+        </div>
+        <p className="text-sm text-white/60">Tip: Give Copilot a clear instruction like "Add unit tests for function X".</p>
+      </section>
+
+      <main className="h-[60vh] border border-white/5 rounded overflow-hidden">
         <MonacoEditor value={content} onChange={setContent} />
       </main>
 

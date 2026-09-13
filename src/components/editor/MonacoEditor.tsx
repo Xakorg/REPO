@@ -1,5 +1,6 @@
 "use client";
 
+import Editor from "@monaco-editor/react";
 import React from "react";
 
 export default function MonacoEditor({ value, language = "javascript", onChange }: {
@@ -7,13 +8,14 @@ export default function MonacoEditor({ value, language = "javascript", onChange 
   language?: string;
   onChange?: (val: string) => void;
 }) {
-  // Placeholder editor until monaco is installed. Replace with @monaco-editor/react later.
   return (
     <div className="h-full w-full">
-      <textarea
-        className="w-full h-full bg-black text-white p-4 font-mono text-sm rounded-md"
+      <Editor
+        height="100%"
+        defaultLanguage={language}
         value={value}
-        onChange={(e) => onChange?.(e.target.value)}
+        onChange={(v) => onChange?.(v || "")}
+        options={{ fontFamily: 'JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace', minimap: { enabled: false }, automaticLayout: true }}
       />
     </div>
   );
