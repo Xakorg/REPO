@@ -3,11 +3,6 @@
 import { GlitchLogo } from "@/components/ui/glitch-logo";
 import { useEffect, useState } from "react";
 
-<<<<<<< HEAD
-export default function Loading() {
-  const [progress, setProgress] = useState(0);
-  const [appName, setAppName] = useState("MULTIVERSE");
-=======
 const APP_HOSTNAMES: { [key: string]: string } = {
   'labs': 'Labs',
   'xakcode': 'Xakcode',
@@ -22,19 +17,17 @@ const APP_HOSTNAMES: { [key: string]: string } = {
   'voltramax': 'VoltraMax',
   'microdimension': 'MicroDimension',
   'everyworld': 'Everyworld',
-  'weather': 'Weather'
-  'social': 'Social'
-  'Knowledge': 'Knowledge'
-  'mail': 'Mail'
-  'games': 'Games'
-  'about' : 'About'
-  'admin panel' : 'Admin Panel'
-  'xak ai' : 'Xak AI'
-  'authenticator' : 'Authenticator'
-  'buddy' : 'Buddy'
-  'calculator' : 'Calculator'
-  
-
+  'weather': 'Weather',
+  'social': 'Social',
+  'knowledge': 'Knowledge',
+  'mail': 'Mail',
+  'games': 'Games',
+  'about': 'About',
+  'admin panel': 'Admin Panel',
+  'xak ai': 'Xak AI',
+  'authenticator': 'Authenticator',
+  'buddy': 'Buddy',
+  'calculator': 'Calculator'
 };
 
 function getAppNameFromHostname(hostname: string): string {
@@ -60,20 +53,6 @@ export default function Loading() {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
       setAppName(getAppNameFromHostname(hostname));
-    }
-  }, []);
->>>>>>> 2b0fe8c385bdc500bd50f1021acb8868a0fa5a82
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const hostname = window.location.hostname;
-      if (
-        hostname === "labs.xakteir.com" ||
-        hostname === "www.labs.xakteir.com" ||
-        hostname.startsWith("labs.localhost")
-      ) {
-        setAppName("LABS");
-      }
     }
 
     // Optimized loading sequence for Xakteir Core
@@ -111,13 +90,7 @@ export default function Loading() {
             <h2 className="text-4xl font-black italic text-white tracking-tighter uppercase leading-none">
               Xakteir
             </h2>
-<<<<<<< HEAD
-            <p className="text-[10px] font-black uppercase tracking-[0.8em] text-primary/80 animate-pulse">
-              E N T E R I N G  {appName}
-            </p>
-=======
             <p className="text-[10px] font-black uppercase tracking-[0.8em] text-primary/80 animate-pulse">E N T E R I N G  {appName}</p>
->>>>>>> 2b0fe8c385bdc500bd50f1021acb8868a0fa5a82
           </div>
         </div>
       </div>
