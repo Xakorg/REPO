@@ -12,6 +12,7 @@ import { LockedAccountGuard } from '@/components/LockedAccountGuard';
 import { NotificationManager } from '@/components/NotificationManager';
 import { FocusModeListener } from '@/components/FocusModeListener';
 import { DesktopBridge } from '@/components/desktop-bridge';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: 'Xakteir',
@@ -51,6 +52,7 @@ export default function RootLayout({
             </LockedAccountGuard>
           </OnboardingProvider>
         </FirebaseClientProvider>
+        <Analytics />
       </body>
     </html>
   );
