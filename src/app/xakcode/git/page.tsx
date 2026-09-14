@@ -22,6 +22,8 @@ import {
   Hash
 } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export default function GitPage() {
   const {
     activeProject,
@@ -142,7 +144,7 @@ export default function GitPage() {
                         setDiffFile(files[0]);
                       }
                     }}
-                    className={`p-3.5 rounded-xl border cursor-pointer text-left transition-all ${isActive ? "bg-sky-500/10 border-sky-500/30 text-sky-400" : "bg-white/5 border-transparent text-white/70 hover:bg-white/10 hover:text-white"}`}
+                    className={`p-3.5 rounded-xl border cursor-pointer text-left transition-all ${isActive ? "bg-sky-500/10 border-sky-500/30 text-sky-400" : "bg-white/5 border-transparent text-white/70 hover:text-white"}`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[10.5px] font-black truncate w-40">{c.message}</span>
