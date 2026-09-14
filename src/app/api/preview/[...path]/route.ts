@@ -1,41 +1,43 @@
+export const runtime = 'nodejs';
+
 import { NextResponse } from "next/server";
 import { getFirestore } from "@/lib/firebaseAdmin";
 
-function parseDeployFromHost(host: string | null) {
+function extractSubdomain(host: string | null) {
   if (!host) return null;
   // host examples:
-  // dpl-abc123.code.xakteir.com  -> deployId = dpl-abc123
-  // owner-repo-dpl-abc123.code.xakteir.com -> optionally parse owner/repo if your naming scheme includes it
-  const m = host.match(/^([^\.]+)\.code\.xakteir\.com$/);
-  if (m) return m[1];
+  // chosensub.code.xakteir.com  -> chosensub
+  // chosensub.code.xakteir.com:443 -> include port, remove it
+  const hostname = host.split(':')[0];
+  const m = hostname.match(/^([a-z0-9-]+)\.code\.xakteir\.com$/i);
+  if (m) return m[1].toLowerCase();
   return null;
 }
 
 async function fetchUpstream(owner: string, repo: string, deployId: string, path: string) {
   const base = `https://${owner}.github.io/${repo}/deployments/${deployId}`;
-  // ensure path begins with /
   const suffix = path ? `/${path}` : '/';
   const target = base + suffix;
-  // Forward request to GitHub Pages
+  // Note: we use a simple fetch; Vercel will handle outbound networking.
   return fetch(target, { method: 'GET' });
 }
 
 export async function GET(req: Request, { params }: any) {
   try {
     const host = req.headers.get('host');
-    const deployId = parseDeployFromHost(host);
-    if (!deployId) return NextResponse.json({ error: 'deployId not found in host' }, { status: 400 });
+    const subdomain = extractSubdomain(host);
+    if (!subdomain) return NextResponse.json({ error: 'subdomain not found in host' }, { status: 400 });
 
     const db = getFirestore();
-    const doc = await db.collection('deployments').doc(deployId).get();
-    if (!doc.exists) return NextResponse.json({ error: 'deploy not found' }, { status: 404 });
+    const q = await db.collection('deployments').where('subdomain', '==', subdomain).limit(1).get();
+    if (q.empty) return NextResponse.json({ error: 'deploy not found for subdomain' }, { status: 404 });
 
-    const data = doc.data() as any;
+    const data = q.docs[0].data() as any;
     const owner = data.owner;
     const repo = data.repo;
-    if (!owner || !repo) return NextResponse.json({ error: 'mapping incomplete' }, { status: 500 });
+    const deployId = data.deployId;
+    if (!owner || !repo || !deployId) return NextResponse.json({ error: 'mapping incomplete' }, { status: 500 });
 
-    // Build path string from params
     const pathParts = params?.path || [];
     const fetchPath = Array.isArray(pathParts) ? pathParts.join('/') : String(pathParts || '');
     const upstream = await fetchUpstream(owner, repo, deployId, fetchPath);
@@ -45,15 +47,14 @@ export async function GET(req: Request, { params }: any) {
       return new Response(text, { status: upstream.status });
     }
 
-    // Copy response headers (filter as needed)
+    // Copy relevant headers from upstream
     const headers = new Headers();
     upstream.headers.forEach((v, k) => {
       if (k.toLowerCase() === 'set-cookie') return;
       headers.set(k, v);
     });
 
-    const body = upstream.body;
-    return new Response(body, { status: 200, headers });
+    return new Response(upstream.body, { status: 200, headers });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'proxy failed' }, { status: 500 });
   }
