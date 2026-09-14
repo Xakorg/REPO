@@ -6,6 +6,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Terminal, Trash2, ArrowRight, CornerDownLeft } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export default function ConsolePage() {
   const {
     activeProject,
