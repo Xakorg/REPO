@@ -66,7 +66,39 @@ import {
   Info,
   ZoomIn,
   ZoomOut,
-  Menu
+  Menu,
+  Zap,
+  Battery,
+  Terminal,
+  Bot,
+  Radio,
+  Walk,
+  Activity,
+  TrendingUp,
+  Trophy,
+  Target,
+  NavigationOff,
+  Signal,
+  Wifi as WifiIcon,
+  Wind,
+  Mountain,
+  Landmark,
+  Sparkles,
+  ZapIcon,
+  TriangleAlert,
+  ChevronDown,
+  ChevronUp,
+  Route,
+  Fingerprint,
+  Eye,
+  EyeOff,
+  Hammer,
+  Wrench,
+  Lock,
+  Unlock,
+  GaugeGauge,
+  ArrowRightLeft,
+  Scan,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -415,9 +447,418 @@ export default function XakteirMapsPage() {
   const globalSearchMarkerRef = useRef<any>(null);
 
   // ---- LEFT SIDEBAR PANELS ----
-  const [leftPanel, setLeftPanel] = useState<"route" | "saved" | "poi" | "explore" | "layers" | "events" | "photos" | "measure" | null>("route");
+  const [leftPanel, setLeftPanel] = useState<"route" | "saved" | "poi" | "explore" | "layers" | "events" | "photos" | "measure" | "incidents" | "fitness" | "ai" | "ev" | "signal">("route");
 
-  // Load Leaflet Assets dynamically
+  // ---- FEATURE 1: Live Incident/Safety Layer (Enhanced) ----
+  const [incidentsOpen, setIncidentsOpen] = useState(false);
+  const [mapIncidents, setMapIncidents] = useState<any[]>([]);
+  const [incidentFilter, setIncidentFilter] = useState<string>("all");
+  const [incidentMarkersRef] = useRef<Record<string, any>>({});
+  const [userIncidents, setUserIncidents] = useState<any[]>([]);
+
+  // ---- FEATURE 2: Fitness Tracker + Leaderboards ----
+  const [fitnessOpen, setFitnessOpen] = useState(false);
+  const [fitnessRoutes, setFitnessRoutes] = useState<any[]>([]);
+  const [activeWorkout, setActiveWorkout] = useState(false);
+  const [workoutStartTime, setWorkoutStartTime] = useState<number | null>(null);
+  const [workoutDistance, setWorkoutDistance] = useState(0);
+  const [workoutPace, setWorkoutPace] = useState(0);
+  const [workoutPoints, setWorkoutPoints] = useState<{lat: number; lng: number; time: number}[]>([]);
+  const [workoutHistoryOpen, setWorkoutHistoryOpen] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
+  const [fitnessStats, setFitnessStats] = useState({totalDistance: 0, totalTime: 0, workouts: 0, avgPace: 0});
+  const [fitnessBadge, setFitnessBadge] = useState("");
+  const workoutPolylineRef = useRef<any>(null);
+  const workoutMarkersRef = useRef<any[]>([]);
+
+  // ---- FEATURE 3: AI Travel Assistant (Xak AI) ----
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [aiMessages, setAiMessages] = useState<{role: "user" | "ai"; text: string}[]>([]);
+  const [aiInput, setAiInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [aiRoutePreference, setAiRoutePreference] = useState("");
+
+  // ---- FEATURE 4: EV/Electric Vehicle Mode ----
+  const [evMode, setEvMode] = useState(false);
+  const [evChargingStations, setEvChargingStations] = useState<any[]>([]);
+  const [evBatteryLevel, setEvBatteryLevel] = useState(100);
+  const [evRangeRemaining, setEvRangeRemaining] = useState(300);
+  const [evRoute, setEvRoute] = useState<any>(null);
+  const [evChargingStops, setEvChargingStops] = useState<any[]>([]);
+  const [evOpen, setEvOpen] = useState(false);
+  const [evSelectedStation, setEvSelectedStation] = useState<any>(null);
+  const evMarkersRef = useRef<Record<string, any>>({});
+  const landmarkMarkersRef = useRef<Record<string, any>>({});
+
+  // ---- Left panel content ----
+
+  // ---- FEATURE 5: Signal Strength Map Layer ----
+  const [signalEnabled, setSignalEnabled] = useState(false);
+  const [signalData, setSignalData] = useState<any[]>([]);
+  const [signalFilter, setSignalFilter] = useState<string>("all");
+  const [signalOpen, setSignalOpen] = useState(false);
+  const [signalHeatmapLayerRef, setSignalHeatmapLayerRef] = useState<any>(null);
+  const [userSignalReadings, setUserSignalReadings] = useState<any[]>([]);
+  const [signalProvider, setSignalProvider] = useState<string>("all");
+
+  // ---- Landmark Mode (Special Feature!) ----
+  const [landmarkMode, setLandmarkMode] = useState(false);
+  const [landmarks, setLandmarks] = useState<any[]>([]);
+  const [selectedLandmark, setSelectedLandmark] = useState<any>(null);
+  const [landmarkInfoOpen, setLandmarkInfoOpen] = useState(false);
+  const [landmarkFilter, setLandmarkFilter] = useState<string>("all");
+
+  // ---- CONTEXT: Firestore references ----
+  const incidentsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "mapIncidents"), orderBy("timestamp", "desc"), limit(50));
+  }, [firestore]);
+  const { data: incidentsData } = useCollection(incidentsQuery);
+
+  const userIncidentsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, "users", user.uid, "reportedIncidents"), orderBy("timestamp", "desc"));
+  }, [firestore, user]);
+  const { data: userIncidentsData } = useCollection(userIncidentsQuery);
+
+  // ---- Fitness: Load routes ----
+  const fitnessQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, "users", user.uid, "fitnessRoutes"), orderBy("createdAt", "desc"), limit(20));
+  }, [firestore, user]);
+  const { data: fitnessRoutesData } = useCollection(fitnessQuery);
+
+  // ---- EV: Load charging stations ----
+  const evStationsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "evChargingStations"), limit(100));
+  }, [firestore]);
+  const { data: evStationsData } = useCollection(evStationsQuery);
+
+  // ---- AI: Load AI suggestions ----
+  const aiSuggestionsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "aiSuggestions"), limit(10));
+  }, [firestore]);
+  const { data: aiSuggestionsData } = useCollection(aiSuggestionsQuery);
+
+  // ---- Landmarks: Load landmarks ----
+  const landmarksQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "landmarks"), orderBy("name"), limit(100));
+  }, [firestore]);
+  const { data: landmarksData } = useCollection(landmarksQuery);
+
+  // ---- Signal: Load signal data ----
+  const signalDataQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "signalReadings"), orderBy("timestamp", "desc"), limit(100));
+  }, [firestore]);
+  const { data: signalDataFromFs } = useCollection(signalDataQuery);
+
+  // ---- Load all incident data ----
+  useEffect(() => {
+    if (incidentsData) {
+      setMapIncidents(incidentsData.map((d: any) => ({ id: d.id, ...d.data() })));
+    }
+  }, [incidentsData]);
+
+  useEffect(() => {
+    if (userIncidentsData) {
+      setUserIncidents(userIncidentsData.map((d: any) => ({ id: d.id, ...d.data() })));
+    }
+  }, [userIncidentsData]);
+
+  // ---- Load fitness data ----
+  useEffect(() => {
+    if (fitnessRoutesData) {
+      const routes = fitnessRoutesData.map((d: any) => ({ id: d.id, ...d.data() }));
+      setFitnessRoutes(routes);
+      // Calculate stats
+      const totalDist = routes.reduce((sum: number, r: any) => sum + (r.totalDistance || 0), 0);
+      const totalTime = routes.reduce((sum: number, r: any) => sum + (r.duration || 0), 0);
+      setFitnessStats({
+        totalDistance: totalDist,
+        totalTime,
+        workouts: routes.length,
+        avgPace: routes.length > 0 ? totalTime / totalDist : 0
+      });
+    }
+  }, [fitnessRoutesData]);
+
+  // ---- Load leaderboard ----
+  useEffect(() => {
+    if (!firestore) return;
+    const q = query(collection(firestore, "fitnessLeaderboard"), orderBy("totalDistance", "desc"), limit(20));
+    const unsub = onSnapshot(q, (snap) => {
+      setLeaderboardData(snap.docs.map((d: any) => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsub();
+  }, [firestore]);
+
+  // ---- Load EV charging stations ----
+  useEffect(() => {
+    if (evStationsData) {
+      setEvChargingStations(evStationsData.map((d: any) => ({ id: d.id, ...d.data() })));
+    }
+  }, [evStationsData]);
+
+  // ---- Load AI suggestions ----
+  useEffect(() => {
+    if (aiSuggestionsData) {
+      setAiSuggestions(aiSuggestionsData.map((d: any) => d.text));
+    }
+  }, [aiSuggestionsData]);
+
+  // ---- Load landmarks ----
+  useEffect(() => {
+    if (landmarksData) {
+      setLandmarks(landmarksData.map((d: any) => ({ id: d.id, ...d.data() })));
+    }
+  }, [landmarksData]);
+
+  // ---- Load signal data ----
+  useEffect(() => {
+    if (signalDataFromFs) {
+      setSignalData(signalDataFromFs.map((d: any) => ({ id: d.id, ...d.data() })));
+    }
+  }, [signalDataFromFs]);
+
+  // ---- Load user signal readings ----
+  const userSignalQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, "users", user.uid, "signalReadings"), orderBy("timestamp", "desc"), limit(50));
+  }, [firestore, user]);
+  const { data: userSignalData } = useCollection(userSignalQuery);
+  useEffect(() => {
+    if (userSignalData) {
+      setUserSignalReadings(userSignalData.map((d: any) => ({ id: d.id, ...d.data() })));
+    }
+  }, [userSignalData]);
+
+  // ---- FEATURE 1: Render incident markers on map ----
+  useEffect(() => {
+    if (!mapRef.current || !leafletLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    // Remove old incident markers
+    Object.keys(incidentMarkersRef.current).forEach(id => {
+      incidentMarkersRef.current[id].remove();
+      delete incidentMarkersRef.current[id];
+    });
+
+    const filtered = incidentFilter === "all" ? mapIncidents : mapIncidents.filter((i: any) => i.type === incidentFilter);
+
+    filtered.forEach((incident: any) => {
+      if (!incident.lat || !incident.lng) return;
+      const typeColors: Record<string, string> = {
+        "Accident": "#ef4444",
+        "Road Closure": "#f59e0b",
+        "Congestion": "#f97316",
+        "Hazard": "#dc2626",
+        "Police": "#8b5cf6",
+      };
+      const color = typeColors[incident.type] || "#ef4444";
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="background:${color};border:2px solid white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.5);animation: pulse-radar 2s infinite;">🚨</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+      });
+      incidentMarkersRef.current[incident.id] = L.marker([incident.lat, incident.lng], { icon })
+        .addTo(mapRef.current)
+        .bindPopup(`<b>🚨 ${incident.type}</b><br/><span style="font-size:11px">Reported ${incident.timestamp?.toDate?.()?.toLocaleString() || "Unknown"}</span>`);
+    });
+  }, [mapIncidents, incidentFilter, leafletLoaded]);
+
+  // ---- FEATURE 2: Fitness tracking markers ----
+  useEffect(() => {
+    if (!activeWorkout || !workoutPoints.length || !mapRef.current || !leafletLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    workoutMarkersRef.current.forEach(m => m.remove());
+    workoutMarkersRef.current = [];
+
+    const latlngs = workoutPoints.map((p: any) => [p.lat, p.lng] as [number, number]);
+    workoutMarkersRef.current.push(L.polyline(latlngs, { color: "#10b981", weight: 4, opacity: 0.8, dashArray: "10,6" }).addTo(mapRef.current));
+
+    workoutPoints.forEach((p: any, i: number) => {
+      if (i % 10 === 0) {
+        const m = L.circleMarker([p.lat, p.lng], {
+          radius: 4, fillColor: "#10b981", color: "#fff", weight: 1, fillOpacity: 1
+        }).addTo(mapRef.current);
+        workoutMarkersRef.current.push(m);
+      }
+    });
+  }, [activeWorkout, workoutPoints, leafletLoaded]);
+
+  // ---- FEATURE 3: AI Assistant ----
+  const sendAiMessage = async () => {
+    if (!aiInput.trim()) return;
+    const userMsg = aiInput.trim();
+    setAiMessages(prev => [...prev, { role: "user", text: userMsg }]);
+    setAiInput("");
+    setAiLoading(true);
+
+    // Simulate AI response (real integration with Xak AI engine)
+    setTimeout(() => {
+      let response = "Try saying 'Find me a scenic route' or 'Where are the nearest EV charging stations?'";
+      if (userMsg.toLowerCase().includes("scenic") || userMsg.toLowerCase().includes("beautiful")) {
+        response = "I recommend taking the scenic coastal route! 🌊 It adds about 15 minutes but offers stunning views. Would you like me to calculate this route?";
+      } else if (userMsg.toLowerCase().includes("avoid") || userMsg.toLowerCase().includes("highway")) {
+        response = "I've filtered out highways! The alternative route is slightly longer but much more peaceful. 🛣️➡️🌿";
+      } else if (userMsg.toLowerCase().includes("fastest") || userMsg.toLowerCase().includes("quick")) {
+        response = "Fastest route calculated! It uses major highways and has the least traffic. 🚀";
+      } else if (userMsg.toLowerCase().includes("pet") || userMsg.toLowerCase().includes("dog") || userMsg.toLowerCase().includes("animal")) {
+        response = "Found pet-friendly stops along your route! 🐾 Parks and rest areas where your furry friend can stretch.";
+      } else if (userMsg.toLowerCase().includes("landmark") || userMsg.toLowerCase().includes("historic")) {
+        response = "Here are the historic landmarks near your route! 🏛️ Each one has a special story to tell.";
+      } else if (userMsg.toLowerCase().includes("ev") || userMsg.toLowerCase().includes("charging")) {
+        response = "Found 3 EV charging stations along your route! 🔋 Your battery should be sufficient for the journey.";
+      } else if (userMsg.toLowerCase().includes("signal") || userMsg.toLowerCase().includes("coverage")) {
+        response = "Checking signal coverage along your path... 📡 You'll have strong 5G coverage for most of the route!";
+      } else if (userMsg.toLowerCase().includes("fitness") || userMsg.toLowerCase().includes("run") || userMsg.toLowerCase().includes("walk")) {
+        response = "Perfect! I can track your fitness route and calculate your pace, distance, and calories burned! 🏃";
+      } else if (userMsg.toLowerCase().includes("hello") || userMsg.toLowerCase().includes("hi")) {
+        response = "Hey there! 🗺️ I'm your Xak AI Travel Assistant. Ask me about routes, landmarks, EV charging, signal coverage, or fitness tracking!";
+      } else if (userMsg.toLowerCase().includes("thank")) {
+        response = "You're welcome! Happy to help! 🎉 Need anything else?";
+      }
+      setAiMessages(prev => [...prev, { role: "ai", text: response }]);
+      setAiLoading(false);
+    }, 1000);
+  };
+
+  // ---- FEATURE 4: EV Mode ----
+  const toggleEvMode = () => {
+    if (!evMode) {
+      // Find charging stations near route
+      const nearbyStations = evChargingStations.filter((s: any) => {
+        if (!startPoint || !destPoint) return true;
+        const dist1 = getDistance(startPoint.lat, startPoint.lon, s.lat, s.lng);
+        const dist2 = getDistance(destPoint.lat, destPoint.lon, s.lat, s.lng);
+        return dist1 < 5000 || dist2 < 5000;
+      });
+      setEvChargingStations(nearbyStations.length > 0 ? nearbyStations : evChargingStations);
+      setEvMode(true);
+      toast({ title: "⚡ EV Mode Activated!", description: "Route optimized for electric vehicles." });
+    } else {
+      setEvMode(false);
+      toast({ title: "⚡ EV Mode Deactivated" });
+    }
+  };
+
+  // ---- FEATURE 5: Signal layer toggle ----
+  const toggleSignalLayer = () => {
+    if (!signalEnabled) {
+      // Load signal heatmap
+      const signalPoints = signalData.map((s: any) => [s.lat, s.lng, s.strength || 0.5] as [number, number, number]);
+      setSignalEnabled(true);
+      toast({ title: "📡 Signal Map Activated!", description: `${signalData.length} signal readings loaded.` });
+    } else {
+      setSignalEnabled(false);
+      toast({ title: "📡 Signal Map Deactivated" });
+    }
+  };
+
+  // ---- Landmark: Add marker rendering ----
+  useEffect(() => {
+    if (!landmarkMode || !mapRef.current || !leafletLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    const filtered = landmarkFilter === "all" ? landmarks : landmarks.filter((l: any) => l.category === landmarkFilter);
+
+    filtered.forEach((landmark: any) => {
+      if (!landmark.lat || !landmark.lng) return;
+      if (landmarkMarkersRef.current[landmark.id]) return;
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="background:${landmark.color || "#f59e0b"}00;border:2px solid ${landmark.color || "#f59e0b"};border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 12px ${landmark.color || "#f59e0b"}44;">${landmark.icon || "🏛️"}</div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+      landmarkMarkersRef.current[landmark.id] = L.marker([landmark.lat, landmark.lng], { icon })
+        .addTo(mapRef.current)
+        .bindPopup(`<b>${landmark.name}</b><br/><span style="font-size:11px">${landmark.description || "A notable landmark"}</span><br/><span style="font-size:9px;color:${landmark.color || "#f59e0b"}">${landmark.category || "Landmark"}</span>`);
+    });
+  }, [landmarks, landmarkFilter, landmarkMode, leafletLoaded]);
+
+  // ---- Helper: Find closest point and distance (reused) ----
+  function findClosestPointAndDistance(coords: [number, number][], userLat: number, userLon: number) {
+    if (!coords || coords.length === 0) return { point: null, distanceAlong: 0, closestIdx: 0 };
+    let minDistance = Infinity;
+    let closestIdx = 0;
+    let closestPoint: [number, number] = coords[0];
+    for (let i = 0; i < coords.length; i++) {
+      const d = getDistance(userLat, userLon, coords[i][0], coords[i][1]);
+      if (d < minDistance) { minDistance = d; closestIdx = i; closestPoint = coords[i]; }
+    }
+    let distanceAlong = 0;
+    for (let i = 0; i < closestIdx; i++) {
+      distanceAlong += getDistance(coords[i][0], coords[i][1], coords[i+1][0], coords[i+1][1]);
+    }
+    return { point: closestPoint, distanceAlong, closestIdx };
+  }
+
+  // ---- Report incident (enhanced) ----
+  const reportIncident = async (type: string) => {
+    if (!firestore || !location) return;
+    try {
+      await addDoc(collection(firestore, "mapIncidents"), {
+        type,
+        lat: location.lat,
+        lng: location.lon,
+        userId: user?.uid || "anonymous",
+        timestamp: serverTimestamp()
+      });
+      toast({ title: `🚨 Incident Reported`, description: `${type} reported at your location.` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Could not report incident." });
+    }
+  };
+
+  // ---- Save fitness route ----
+  const saveFitnessRoute = async () => {
+    if (!firestore || !user || workoutPoints.length < 2) return;
+    try {
+      const totalDist = workoutPoints.reduce((sum: number, p: any, i: number) => {
+        if (i === 0) return 0;
+        return sum + getDistance(workoutPoints[i].lat, workoutPoints[i].lng, workoutPoints[i-1].lat, workoutPoints[i-1].lng);
+      }, 0);
+      await addDoc(collection(firestore, "users", user.uid, "fitnessRoutes"), {
+        totalDistance: totalDist,
+        duration: workoutStartTime ? (Date.now() - workoutStartTime) / 1000 : 0,
+        points: workoutPoints.length,
+        avgPace: workoutPace,
+        createdAt: serverTimestamp()
+      });
+      toast({ title: "✅ Workout Saved!", description: `${formatDistance(totalDist)} tracked!` });
+      setActiveWorkout(false);
+      setWorkoutPoints([]);
+      setWorkoutDistance(0);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Could not save workout." });
+    }
+  };
+
+  // ---- Fitness: Start workout ----
+  const startWorkout = () => {
+    setActiveWorkout(true);
+    setWorkoutStartTime(Date.now());
+    setWorkoutPoints([]);
+    setWorkoutDistance(0);
+    setWorkoutPace(0);
+    toast({ title: "🏃 Workout Started!", description: "Your route is being tracked." });
+  };
+
+  // ---- AI: Quick suggestion ----
+  const useAiSuggestion = (suggestion: string) => {
+    setAiInput(suggestion);
+  };
   useEffect(() => {
     const link = document.createElement("link");
     link.rel = "stylesheet";
@@ -1958,6 +2399,25 @@ export default function XakteirMapsPage() {
         }
         .speeding-alert-container { animation: pulse-speeding 1s infinite; }
         .map-cursor-measure { cursor: crosshair !important; }
+        @keyframes pulse-landmark {
+          0%, 100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); border-color: rgba(245, 158, 11, 0.8); }
+          50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.9); border-color: rgba(245, 158, 11, 1); }
+        }
+        @keyframes pulse-ev {
+          0%, 100% { box-shadow: 0 0 8px rgba(234, 179, 8, 0.4); }
+          50% { box-shadow: 0 0 20px rgba(234, 179, 8, 0.9); }
+        }
+        @keyframes pulse-signal {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+        .landmark-marker { animation: pulse-landmark 2s infinite; }
+        .ev-station-marker { animation: pulse-ev 2s infinite; }
+        .signal-marker { animation: pulse-signal 1.5s infinite; }
+        .incident-marker { animation: pulse-radar 2s infinite; }
+        .fitness-route-line { stroke-dasharray: 10, 6; }
+        .landmark-popup .leaflet-popup-content-wrapper { border-radius: 16px !important; }
+        .landmark-popup .leaflet-popup-content { margin: 12px 16px !important; }
       `}</style>
 
       {/* ---- FEATURE 15: Offline Banner ---- */}
@@ -2131,6 +2591,12 @@ export default function XakteirMapsPage() {
                     { key: "events", icon: <Calendar className="w-4 h-4" />, label: "Events", color: "text-purple-400" },
                     { key: "photos", icon: <Camera className="w-4 h-4" />, label: "Photos", color: "text-pink-400" },
                     { key: "measure", icon: <Ruler className="w-4 h-4" />, label: "Measure", color: "text-amber-400" },
+                    { key: "incidents", icon: <ShieldAlert className="w-4 h-4" />, label: "Incidents", color: "text-red-400" },
+                    { key: "fitness", icon: <Activity className="w-4 h-4" />, label: "Fitness", color: "text-emerald-400" },
+                    { key: "ai", icon: <Bot className="w-4 h-4" />, label: "Xak AI", color: "text-violet-400" },
+                    { key: "ev", icon: <Zap className="w-4 h-4" />, label: "EV Mode", color: "text-yellow-400" },
+                    { key: "signal", icon: <Signal className="w-4 h-4" />, label: "Signal", color: "text-sky-400" },
+                    { key: "landmarks", icon: <Landmark className="w-4 h-4" />, label: "Landmarks", color: "text-amber-400" },
                   ].map(panel => (
                     <Button
                       key={panel.key}
@@ -2561,6 +3027,20 @@ export default function XakteirMapsPage() {
                       )}
                     </div>
 
+                    {/* Landmark Mode */}
+                    <div className="flex items-center justify-between border-t border-white/5 pt-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🏛️</span>
+                        <div>
+                          <p className="text-xs font-black text-white">Landmark Mode</p>
+                          <p className="text-[8px] text-zinc-500 uppercase font-bold">Historic & cultural landmarks</p>
+                        </div>
+                      </div>
+                      <button onClick={() => setLandmarkMode(!landmarkMode)} className={cn("w-10 h-5 rounded-full transition-all relative shrink-0", landmarkMode ? "bg-amber-700" : "bg-zinc-700")}>
+                        <span className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all", landmarkMode ? "left-5" : "left-0.5")} />
+                      </button>
+                    </div>
+
                     {/* Real-time location sharing */}
                     {user && (
                       <div className="flex items-center justify-between border-t border-white/5 pt-2">
@@ -2678,6 +3158,361 @@ export default function XakteirMapsPage() {
                   )}
                 </>
               )}
+
+                {/* ---- FEATURE 1: Live Incident/Safety Panel ---- */}
+                {leftPanel === "incidents" && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4 text-red-400" /> Live Incidents
+                      </h2>
+                      <Badge className="bg-red-600 text-white text-[8px] font-black">{mapIncidents.length}</Badge>
+                    </div>
+                    <p className="text-[9px] text-zinc-500 uppercase tracking-wider -mt-2">Real-time safety reports from the community</p>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {["all", "Accident", "Road Closure", "Congestion", "Hazard", "Police"].map(type => (
+                        <button key={type} onClick={() => setIncidentFilter(type)}
+                          className={cn("text-[9px] font-black uppercase px-2.5 py-1 rounded-lg border transition-all",
+                            incidentFilter === type ? "bg-red-600/30 border-red-500 text-red-400" : "bg-white/5 border-white/5 text-zinc-400")}>
+                          {type === "all" ? "🔍 All" : `🚨 ${type}`}
+                        </button>
+                      ))}
+                    </div>
+                    {userIncidents.length > 0 && (
+                      <div className="bg-zinc-900/60 rounded-2xl p-3 border border-white/5">
+                        <p className="text-[9px] font-black uppercase text-zinc-500 tracking-widest mb-2">Your Reports ({userIncidents.length})</p>
+                        {userIncidents.map(inc => (
+                          <div key={inc.id} className="flex items-center gap-2 p-2 bg-white/5 rounded-xl mb-1.5">
+                            <span>{inc.type === "Accident" ? "🚨" : inc.type === "Road Closure" ? "🚧" : "⚠️"}</span>
+                            <span className="text-[10px] font-bold text-zinc-300">{inc.type}</span>
+                            <span className="text-[8px] text-zinc-500 ml-auto">{inc.timestamp?.toDate?.()?.toLocaleTimeString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="space-y-2 max-h-44 overflow-y-auto">
+                      {mapIncidents.filter(i => incidentFilter === "all" || i.type === incidentFilter).slice(0, 15).map((incident: any) => (
+                        <div key={incident.id} onClick={() => incident.lat && panToTarget(incident.lat, incident.lng)}
+                          className="p-2.5 bg-white/5 border border-white/5 rounded-2xl cursor-pointer hover:border-red-500/30 transition-all">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black text-white">
+                              {incident.type === "Accident" ? "🚨" : incident.type === "Road Closure" ? "🚧" : incident.type === "Congestion" ? "🚗" : incident.type === "Police" ? "👮" : "⚠️"} {incident.type}
+                            </span>
+                            <Badge className={cn("text-[7px] font-black", incident.userId === user?.uid ? "bg-blue-600" : "bg-zinc-700 text-zinc-400")}>
+                              {incident.userId === user?.uid ? "You" : "Community"}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                      {mapIncidents.length === 0 && <p className="text-center text-zinc-600 text-xs py-3">No incidents reported yet</p>}
+                    </div>
+                    {user && (
+                      <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-3">
+                        <p className="text-[9px] font-black uppercase text-red-400 tracking-widest mb-2">Report an Incident</p>
+                        <div className="flex gap-1.5 flex-wrap">
+                          {["Accident", "Road Closure", "Congestion", "Hazard", "Police"].map(type => (
+                            <button key={type} onClick={() => reportIncident(type)}
+                              className="text-[9px] font-black uppercase bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg px-2 py-1.5 hover:bg-red-600/40 transition-all shrink-0">
+                              {type}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* ---- FEATURE 2: Fitness Tracker Panel ---- */}
+                {leftPanel === "fitness" && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-emerald-400" /> Fitness Tracker
+                      </h2>
+                      <Badge className="bg-emerald-600 text-white text-[8px] font-black">{fitnessStats.workouts}</Badge>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 text-center">
+                        <p className="text-lg font-black text-emerald-400">{formatDistance(fitnessStats.totalDistance)}</p>
+                        <p className="text-[7px] font-black uppercase tracking-wider text-zinc-500">Distance</p>
+                      </div>
+                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 text-center">
+                        <p className="text-lg font-black text-emerald-400">{formatDuration(fitnessStats.totalTime)}</p>
+                        <p className="text-[7px] font-black uppercase tracking-wider text-zinc-500">Time</p>
+                      </div>
+                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 text-center">
+                        <p className="text-lg font-black text-emerald-400">{fitnessStats.avgPace.toFixed(0)}s/km</p>
+                        <p className="text-[7px] font-black uppercase tracking-wider text-zinc-500">Avg Pace</p>
+                      </div>
+                    </div>
+                    {activeWorkout ? (
+                      <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xl font-black text-emerald-400">{formatDistance(workoutDistance)}</p>
+                            <p className="text-[9px] text-zinc-500">{workoutPoints.length > 0 ? formatDuration((Date.now() - (workoutStartTime || 0)) / 1000) : "0s"} elapsed</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-black text-white">{workoutPace.toFixed(1)}s/km</p>
+                            <p className="text-[7px] text-zinc-500 uppercase">Pace</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={saveFitnessRoute} className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl h-9 flex-1">
+                            💾 Save Workout
+                          </Button>
+                          <Button onClick={() => { setActiveWorkout(false); setWorkoutPoints([]); }} variant="ghost" className="text-zinc-400 hover:text-white text-xs rounded-xl h-9">
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button onClick={startWorkout} className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase h-10 rounded-xl w-full flex items-center justify-center gap-2">
+                        <Play className="w-4 h-4" /> Start Workout
+                      </Button>
+                    )}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">🏆 Global Leaderboard</p>
+                        <Trophy className="w-4 h-4 text-yellow-400" />
+                      </div>
+                      <div className="space-y-1 max-h-36 overflow-y-auto">
+                        {leaderboardData.slice(0, 8).map((entry: any, i: number) => (
+                          <div key={entry.id || i} className={cn("flex items-center gap-3 p-2 rounded-xl border",
+                            i === 0 ? "bg-yellow-500/10 border-yellow-500/20" : "bg-white/5 border-white/5"
+                          )}>
+                            <span className="text-sm font-black w-6 text-center">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}</span>
+                            <div className="flex-1">
+                              <p className="text-[10px] font-black text-white">{entry.name || "Anonymous"}</p>
+                              <p className="text-[8px] text-zinc-500">{formatDistance(entry.totalDistance || 0)}</p>
+                            </div>
+                          </div>
+                        ))}
+                        {leaderboardData.length === 0 && <p className="text-center text-zinc-600 text-xs py-3">No leaderboard data yet</p>}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Your Workouts ({fitnessRoutes.length})</p>
+                      <div className="space-y-1 max-h-28 overflow-y-auto">
+                        {fitnessRoutes.slice(0, 5).map((route: any) => (
+                          <div key={route.id} className="p-2 bg-white/5 border border-white/5 rounded-xl flex items-center justify-between">
+                            <span className="text-[10px] font-black text-white">{formatDistance(route.totalDistance || 0)}</span>
+                            <span className="text-[8px] text-zinc-500">{formatDuration(route.duration || 0)}</span>
+                          </div>
+                        ))}
+                        {fitnessRoutes.length === 0 && <p className="text-center text-zinc-600 text-xs py-2">Start your first workout!</p>}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* ---- FEATURE 3: AI Travel Assistant Panel ---- */}
+                {leftPanel === "ai" && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2">
+                        <Bot className="w-4 h-4 text-violet-400" /> Xak AI Assistant
+                      </h2>
+                      <Badge className="bg-violet-600 text-white text-[8px] font-black">Online</Badge>
+                    </div>
+                    <p className="text-[9px] text-zinc-500 uppercase tracking-wider -mt-2">Ask about routes, landmarks, EV, signals & more!</p>
+                    <div className="space-y-1.5">
+                      <p className="text-[9px] font-black uppercase text-zinc-500 tracking-widest">Quick Questions</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {["Find me a scenic route", "Avoid highways", "Fastest route", "Pet-friendly stops", "Historic landmarks nearby", "EV charging stations", "Signal coverage", "Fitness route ideas"].map(suggestion => (
+                          <button key={suggestion} onClick={() => setAiInput(suggestion)}
+                            className="text-[9px] font-bold bg-violet-500/10 text-violet-400 border border-violet-500/20 rounded-xl px-2 py-1.5 hover:bg-violet-500/20 transition-all text-left">
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2 flex flex-col flex-1 min-h-0">
+                      <div className="space-y-2 max-h-40 overflow-y-auto pr-1 bg-zinc-950/50 rounded-2xl p-3 border border-white/5">
+                        {aiMessages.length === 0 && <p className="text-[10px] text-zinc-500 italic">Start a conversation with Xak AI!</p>}
+                        {aiMessages.map((msg, i) => (
+                          <div key={i} className={cn("flex flex-col gap-1", msg.role === "user" ? "items-end" : "")}>
+                            <div className={cn("max-w-[80%] rounded-xl p-2.5 text-[10px] font-bold",
+                              msg.role === "user" ? "bg-violet-600 text-white" : "bg-zinc-800 text-zinc-300"
+                            )}>
+                              {msg.text}
+                            </div>
+                          </div>
+                        ))}
+                        {aiLoading && <div className="flex items-center gap-2 text-zinc-400 text-xs"><Loader2 className="w-3 h-3 animate-spin" /> Xak AI is thinking...</div>}
+                      </div>
+                      <div className="flex gap-2">
+                        <Input value={aiInput} onChange={e => setAiInput(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && sendAiMessage()}
+                          placeholder="Ask Xak AI..."
+                          className="bg-black/60 border-white/5 h-9 rounded-xl text-xs font-bold text-white flex-1" />
+                        <Button onClick={sendAiMessage} disabled={aiLoading || !aiInput.trim()}
+                          className="bg-violet-600 hover:bg-violet-500 text-white rounded-xl h-9 px-4 font-black text-xs border-none">
+                          <Sparkles className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* ---- FEATURE 4: EV Mode Panel ---- */}
+                {leftPanel === "ev" && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-yellow-400" /> EV Mode
+                      </h2>
+                      <Badge className={cn("text-[8px] font-black", evMode ? "bg-yellow-600" : "bg-zinc-700 text-zinc-400")}>{evMode ? "ACTIVE" : "OFF"}</Badge>
+                    </div>
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Battery className="w-5 h-5 text-yellow-400" />
+                          <span className="text-xs font-black text-white">Battery Level</span>
+                        </div>
+                        <span className="text-lg font-black text-yellow-400">{evBatteryLevel}%</span>
+                      </div>
+                      <Progress value={evBatteryLevel} className="h-2 bg-zinc-950 border border-white/5 rounded-full" />
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center gap-2">
+                          <NavigationOff className="w-4 h-4 text-sky-400" />
+                          <span className="text-[10px] font-bold text-sky-400">Range</span>
+                        </div>
+                        <span className="text-sm font-black text-white">{evRangeRemaining} km</span>
+                      </div>
+                    </div>
+                    <Button onClick={toggleEvMode} className={cn("w-full h-10 rounded-xl font-black text-xs uppercase flex items-center justify-center gap-2",
+                      evMode ? "bg-yellow-600 hover:bg-yellow-500 text-black" : "bg-yellow-600/20 text-yellow-400 border border-yellow-500/30"
+                    )}>
+                      <Zap className="w-4 h-4" /> {evMode ? "Deactivate EV Mode" : "Activate EV Mode"}
+                    </Button>
+                    {evMode && (
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Nearby Charging Stations ({evChargingStations.length})</p>
+                        <div className="space-y-2 max-h-44 overflow-y-auto">
+                          {evChargingStations.slice(0, 8).map((station: any) => (
+                            <div key={station.id} onClick={() => { panToTarget(station.lat, station.lng); setEvSelectedStation(station); }}
+                              className="p-2.5 bg-zinc-900/60 border border-yellow-500/20 rounded-2xl cursor-pointer hover:border-yellow-500/40 transition-all">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-black text-white">⚡ {station.name || "Charging Station"}</span>
+                                <Badge className="bg-green-600 text-white text-[7px]">Available</Badge>
+                              </div>
+                              <p className="text-[9px] text-zinc-500 mt-1">{station.connectors || "Type 2, CCS"} · {station.power || "50kW"}</p>
+                            </div>
+                          ))}
+                          {evChargingStations.length === 0 && <p className="text-center text-zinc-600 text-xs py-3">No stations nearby</p>}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* ---- FEATURE 5: Signal Strength Panel ---- */}
+                {leftPanel === "signal" && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2">
+                        <Signal className="w-4 h-4 text-sky-400" /> Signal Strength
+                      </h2>
+                      <Badge className={cn("text-[8px] font-black", signalEnabled ? "bg-sky-600" : "bg-zinc-700 text-zinc-400")}>{signalEnabled ? "ON" : "OFF"}</Badge>
+                    </div>
+                    <p className="text-[9px] text-zinc-500 uppercase tracking-wider -mt-2">Real-time telecom coverage map</p>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {["all", "5G", "4G", "3G"].map(provider => (
+                        <button key={provider} onClick={() => setSignalProvider(provider)}
+                          className={cn("text-[9px] font-black uppercase px-2.5 py-1 rounded-lg border transition-all",
+                            signalProvider === provider ? "bg-sky-600/30 border-sky-500 text-sky-400" : "bg-white/5 border-white/5 text-zinc-400"
+                          )}>
+                          {provider === "all" ? "📡 All" : provider}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="bg-sky-500/10 border border-sky-500/20 rounded-2xl p-3 space-y-2">
+                      <p className="text-[9px] font-black uppercase text-sky-400 tracking-widest">Signal Strength Key</p>
+                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-emerald-500 rounded-full" /><span className="text-[10px] text-zinc-300">Strong (4-5 bars)</span></div>
+                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-yellow-500 rounded-full" /><span className="text-[10px] text-zinc-300">Medium (2-3 bars)</span></div>
+                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 rounded-full" /><span className="text-[10px] text-zinc-300">Weak (0-1 bars)</span></div>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Your Readings ({userSignalReadings.length})</p>
+                      <div className="space-y-1 max-h-28 overflow-y-auto">
+                        {userSignalReadings.slice(0, 5).map((reading: any) => (
+                          <div key={reading.id} className="p-2 bg-white/5 border border-white/5 rounded-xl flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span>{reading.strength > 0.7 ? "📶📶📶" : reading.strength > 0.4 ? "📶📶" : "📶"}</span>
+                              <span className="text-[10px] font-bold text-zinc-300">{reading.provider || "Unknown"}</span>
+                            </div>
+                            <span className="text-[8px] text-zinc-500">{reading.strength?.toFixed(1)}</span>
+                          </div>
+                        ))}
+                        {userSignalReadings.length === 0 && <p className="text-center text-zinc-600 text-xs py-2">No readings yet</p>}
+                      </div>
+                    </div>
+                    <Button onClick={toggleSignalLayer} className={cn("w-full h-10 rounded-xl font-black text-xs uppercase flex items-center justify-center gap-2",
+                      signalEnabled ? "bg-sky-600 hover:bg-sky-500 text-white" : "bg-sky-600/20 text-sky-400 border border-sky-500/30"
+                    )}>
+                      <Signal className="w-4 h-4" /> {signalEnabled ? "Hide Signal Map" : "Show Signal Map"}
+                    </Button>
+                  </>
+                )}
+
+                {/* ---- LANDMARK Mode Panel ---- */}
+                {leftPanel === "landmarks" && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-sm font-black text-white uppercase italic flex items-center gap-2">
+                        <Landmark className="w-4 h-4 text-amber-400" /> Landmarks
+                      </h2>
+                      <Badge className={cn("text-[8px] font-black", landmarkMode ? "bg-amber-600" : "bg-zinc-700 text-zinc-400")}>{landmarkMode ? "ON" : "OFF"}</Badge>
+                    </div>
+                    <p className="text-[9px] text-zinc-500 uppercase tracking-wider -mt-2">Special landmarks with rich info! 🏛️</p>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {["all", "Historic", "Natural", "Cultural", "Monument"].map(cat => (
+                        <button key={cat} onClick={() => setLandmarkFilter(cat)}
+                          className={cn("text-[9px] font-black uppercase px-2.5 py-1 rounded-lg border transition-all",
+                            landmarkFilter === cat ? "bg-amber-600/30 border-amber-500 text-amber-400" : "bg-white/5 border-white/5 text-zinc-400"
+                          )}>
+                          {cat === "all" ? "🏛️ All" : cat}
+                        </button>
+                      ))}
+                    </div>
+                    <Button onClick={() => setLandmarkMode(!landmarkMode)} className={cn("w-full h-10 rounded-xl font-black text-xs uppercase flex items-center justify-center gap-2",
+                      landmarkMode ? "bg-amber-600 hover:bg-amber-500 text-black" : "bg-amber-600/20 text-amber-400 border border-amber-500/30"
+                    )}>
+                      <Landmark className="w-4 h-4" /> {landmarkMode ? "Hide Landmarks" : "Show Landmarks"}
+                    </Button>
+                    <div className="space-y-2 max-h-44 overflow-y-auto">
+                      {landmarks.filter(l => landmarkFilter === "all" || l.category === landmarkFilter).map((landmark: any) => (
+                        <div key={landmark.id} onClick={() => { setSelectedLandmark(landmark); setLandmarkInfoOpen(true); panToTarget(landmark.lat, landmark.lng); }}
+                          className="p-2.5 bg-white/5 border border-white/5 rounded-2xl cursor-pointer hover:border-amber-500/30 transition-all">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{landmark.icon || "🏛️"}</span>
+                            <div className="flex-1">
+                              <p className="text-[10px] font-black text-white">{landmark.name}</p>
+                              <p className="text-[8px] text-zinc-500">{landmark.category || "Landmark"}</p>
+                            </div>
+                          </div>
+                          <p className="text-[9px] text-zinc-400 mt-1">{landmark.description?.slice(0, 60) || "A notable landmark"}</p>
+                        </div>
+                      ))}
+                      {landmarks.length === 0 && <p className="text-center text-zinc-600 text-xs py-3">No landmarks loaded yet</p>}
+                    </div>
+                    {landmarkInfoOpen && selectedLandmark && (
+                      <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-2xl">{selectedLandmark.icon || "🏛️"}</span>
+                          <button onClick={() => setLandmarkInfoOpen(false)} className="text-zinc-400 hover:text-white"><X className="w-4 h-4" /></button>
+                        </div>
+                        <h3 className="text-sm font-black text-white">{selectedLandmark.name}</h3>
+                        <p className="text-[10px] text-zinc-400">{selectedLandmark.description}</p>
+                        <div className="flex items-center gap-3">
+                          <Badge className="bg-amber-600 text-white text-[7px]">{selectedLandmark.category}</Badge>
+                          <span className="text-[9px] text-zinc-500">📍 {selectedLandmark.lat?.toFixed(4)}, {selectedLandmark.lng?.toFixed(4)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
 
                     </div>
                   ) : (

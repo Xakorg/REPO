@@ -14,7 +14,7 @@ import {
   Smile
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { GlitchLogo } from "@/components/ui/glitch-logo";
+
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import { doc, updateDoc, serverTimestamp, query, collection, orderBy, limit, where } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
@@ -25,17 +25,53 @@ import { cn } from "@/lib/utils";
 
 const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
 
-const RIDDLES = [
-  { q: "What has keys but can't open locks?", a: "A piano" },
-  { q: "What has to be broken before you can use it?", a: "An egg" },
-  { q: "I’m tall when I’m young, and I’m short when I’m old. What am I?", a: "A candle" },
-];
+const getDailyHash = () => {
+    const d = new Date();
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  };
 
-const JOKES = [
-  { q: "Why did the developer go broke?", a: "Because he used up all his cache!" },
-  { q: "How many programmers does it take to change a light bulb?", a: "None, that's a hardware problem." },
-  { q: "What's a ghost's favorite coding language?", a: "Boo-lean!" },
-];
+  const DAILY_JOKE_KEY = "xakteir_daily_joke";
+  const DAILY_RIDDLE_KEY = "xakteir_daily_riddle";
+
+  async function fetchDailyJoke(): Promise<{ question: string; answer: string }> {
+    const hash = getDailyHash();
+    const cached = localStorage.getItem(DAILY_JOKE_KEY);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed.hash === hash) return parsed.data;
+      } catch {}
+    }
+    try {
+      const res = await fetch("https://v2.jokeapi.dev/joke/Programming?type=single");
+      const data = await res.json();
+      const joke = data.error ? { question: "Why did the developer go broke?", answer: "Because he used up all his cache!" } : { question: data.joke, answer: "" };
+      localStorage.setItem(DAILY_JOKE_KEY, JSON.stringify({ hash, data: joke }));
+      return joke;
+    } catch {
+      return { question: "Why did the developer go broke?", answer: "Because he used up all his cache!" };
+    }
+  }
+
+  async function fetchDailyRiddle(): Promise<{ question: string; answer: string }> {
+    const hash = getDailyHash();
+    const cached = localStorage.getItem(DAILY_RIDDLE_KEY);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed.hash === hash) return parsed.data;
+      } catch {}
+    }
+    try {
+      const res = await fetch("https://v2.jokeapi.dev/joke/Dark?type=single");
+      const data = await res.json();
+      const riddle = data.error ? { question: "What has keys but can't open locks?", answer: "A piano" } : { question: data.joke, answer: "" };
+      localStorage.setItem(DAILY_RIDDLE_KEY, JSON.stringify({ hash, data: riddle }));
+      return riddle;
+    } catch {
+      return { question: "What has keys but can't open locks?", answer: "A piano" };
+    }
+  }
 
 export default function XakteirEntry() {
 
@@ -52,6 +88,9 @@ function XakteirDashboard() {
   const [migrationEmail, setMigrationEmail] = useState("");
   const [isMigrating, setIsMigrating] = useState(false);
   const [showRiddleAnswer, setShowRiddleAnswer] = useState(false);
+  const [dailyJoke, setDailyJoke] = useState<{ question: string; answer: string }>({ question: "", answer: "" });
+  const [dailyRiddle, setDailyRiddle] = useState<{ question: string; answer: string }>({ question: "", answer: "" });
+  const [dailyContentLoading, setDailyContentLoading] = useState(true);
 
   const userRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -83,6 +122,20 @@ function XakteirDashboard() {
   const isSuperAdmin = useMemo(() => SUPER_ADMIN_EMAILS.includes(user?.email?.toLowerCase() || ""), [user]);
   const needsMigration = useMemo(() => !!(user?.email?.toLowerCase().endsWith("@xakteir.com") && userData !== undefined && !userData?.personalEmail && !isSuperAdmin), [user, userData, isSuperAdmin]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setDailyContentLoading(true);
+      const [joke, riddle] = await Promise.all([fetchDailyJoke(), fetchDailyRiddle()]);
+      if (!cancelled) {
+        setDailyJoke(joke);
+        setDailyRiddle(riddle);
+        setDailyContentLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (searchInput.trim()) {
@@ -104,16 +157,11 @@ function XakteirDashboard() {
     }
   };
 
-  const dailyIndex = useMemo(() => {
-    const today = new Date();
-    return (today.getFullYear() + today.getMonth() + today.getDate()) % 3;
-  }, []);
-
   return (
     <div className="min-h-screen flex flex-col items-center animate-fade-in relative overflow-x-hidden text-white pb-32 px-4 md:px-0">
       <main className="flex-1 w-full max-w-7xl px-2 md:px-8 flex flex-col items-center pt-[6vh] md:pt-[12vh] space-y-12 md:space-y-20 relative z-10">
         <div className="flex flex-col items-center gap-6 md:gap-10 group cursor-pointer" onClick={() => window.location.reload()}>
-          <GlitchLogo className="scale-[0.7] md:scale-[2]" />
+          <img src="/favicon.ico" alt="Xakteir" className="w-20 h-20 object-contain scale-[0.7] md:scale-[2] group-hover:scale-110 transition-transform drop-shadow-[0_0_60px_rgba(255,255,255,0.4)]" />
           <div className="text-center space-y-3 md:space-y-4">
             <h1 className="text-4xl md:text-9xl font-black tracking-tighter uppercase italic leading-none text-white flex items-center justify-center gap-4 md:gap-8 drop-shadow-[0_0_80px_rgba(255,255,255,0.4)]">
               XAKTEIR <BadgeCheck className="w-6 h-6 md:w-12 md:h-12 text-blue-500 fill-current animate-pulse shadow-2xl" />
@@ -174,16 +222,24 @@ function XakteirDashboard() {
           <Card className="glass-card rounded-[2.5rem] md:rounded-[4rem] p-8 md:p-12 space-y-6 md:space-y-10 shadow-[0_50px_100px_rgba(0,0,0,0.6)] bg-indigo-600/5 border-4 border-indigo-500/20 group hover:border-indigo-500/40 transition-all">
             <div className="flex items-center gap-4">
               <HelpCircle className="w-6 h-6 text-indigo-400 group-hover:rotate-12 transition-transform" />
-              <h2 className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.5em] text-indigo-400 italic">Riddle</h2>
+              <h2 className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.5em] text-indigo-400 italic">Daily Riddle</h2>
             </div>
             <div className="space-y-6 md:space-y-10">
-              <p className="text-sm md:text-2xl font-black italic leading-tight text-white/90 drop-shadow-xl">"{RIDDLES[dailyIndex].q}"</p>
-              {showRiddleAnswer ? (
-                <div className="p-6 bg-indigo-500/10 rounded-2xl border-2 border-indigo-500/20 animate-in slide-in-from-top-2">
-                   <p className="text-[10px] md:text-base font-black uppercase text-indigo-400 italic">Solution: {RIDDLES[dailyIndex].a}</p>
-                </div>
+              {dailyContentLoading ? (
+                <div className="py-8 flex justify-center"><Loader2 className="animate-spin text-indigo-400 w-8 h-8" /></div>
               ) : (
-                <Button onClick={() => setShowRiddleAnswer(true)} variant="ghost" className="h-12 md:h-14 px-8 rounded-2xl text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] border-2 border-white/5 hover:bg-indigo-500/20 hover:text-white transition-all shadow-md">Show Answer</Button>
+                <>
+                  <p className="text-sm md:text-2xl font-black italic leading-tight text-white/90 drop-shadow-xl">"{dailyRiddle.question}"</p>
+                  {showRiddleAnswer ? (
+                    <div className="p-6 bg-indigo-500/10 rounded-2xl border-2 border-indigo-500/20 animate-in slide-in-from-top-2">
+                       <p className="text-[10px] md:text-base font-black uppercase text-indigo-400 italic">
+                         {dailyRiddle.answer ? `Solution: ${dailyRiddle.answer}` : "Reveal tomorrow for the answer!"}
+                       </p>
+                    </div>
+                  ) : (
+                    <Button onClick={() => setShowRiddleAnswer(true)} variant="ghost" className="h-12 md:h-14 px-8 rounded-2xl text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] border-2 border-white/5 hover:bg-indigo-500/20 hover:text-white transition-all shadow-md">Show Answer</Button>
+                  )}
+                </>
               )}
             </div>
           </Card>
@@ -191,13 +247,21 @@ function XakteirDashboard() {
           <Card className="glass-card rounded-[2.5rem] md:rounded-[4rem] p-8 md:p-12 space-y-6 md:space-y-10 shadow-[0_50px_100px_rgba(0,0,0,0.6)] bg-amber-600/5 border-4 border-amber-500/20 group hover:border-amber-500/40 transition-all">
             <div className="flex items-center gap-4">
               <Smile className="w-6 h-6 text-amber-400 group-hover:animate-bounce transition-transform" />
-              <h2 className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.5em] text-amber-400 italic">Joke</h2>
+              <h2 className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.5em] text-amber-400 italic">Daily Joke</h2>
             </div>
             <div className="space-y-6 md:space-y-10">
-              <p className="text-sm md:text-2xl font-black italic leading-tight text-white/90 drop-shadow-xl">{JOKES[dailyIndex].q}</p>
-              <div className="p-6 bg-amber-500/10 rounded-2xl border-2 border-amber-500/20">
-                 <p className="text-[10px] md:text-base font-black uppercase text-amber-400 italic leading-snug">{JOKES[dailyIndex].a}</p>
-              </div>
+              {dailyContentLoading ? (
+                <div className="py-8 flex justify-center"><Loader2 className="animate-spin text-amber-400 w-8 h-8" /></div>
+              ) : (
+                <>
+                  <p className="text-sm md:text-2xl font-black italic leading-tight text-white/90 drop-shadow-xl">"{dailyJoke.question}"</p>
+                  {dailyJoke.answer && (
+                    <div className="p-6 bg-amber-500/10 rounded-2xl border-2 border-amber-500/20">
+                       <p className="text-[10px] md:text-base font-black uppercase text-amber-400 italic leading-snug">{dailyJoke.answer}</p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </Card>
         </div>

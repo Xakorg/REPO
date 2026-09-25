@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="voltramax-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff6600"/>
+      <stop offset="50%" stop-color="#ff0066"/>
+      <stop offset="100%" stop-color="#00ffcc"/>
+    </linearGradient>
+  </defs>
+  <polygon points="32,4 58,18 58,46 32,60 6,46 6,18" fill="url(#voltramax-grad)" opacity="0.9"/>
+  <polygon points="32,12 48,22 48,42 32,52 16,42 16,22" fill="#05030d" opacity="0.8"/>
+  <text x="32" y="40" text-anchor="middle" fill="url(#voltramax-grad)" font-family="Inter, sans-serif" font-weight="900" font-size="18">VM</text>
+</svg>

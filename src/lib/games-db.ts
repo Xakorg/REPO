@@ -1930,6 +1930,90 @@ const premiumGames: GameMeta[] = [
       { time: "12:50", description: "Initial Update" }
     ],
     route: "/games/play/pixel_knight"
+  },
+  {
+    id: "cyber-sprint",
+    title: "Cyber Sprint",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["2D", "Arcade", "Racing", "Synthwave", "Endless"],
+    description: "High-speed endless runner through neon cybercity streets. Dodge traffic, boost with nitro, and set records.",
+    bannerUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=cybersprint",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "2026", description: "Initial Launch" }],
+    route: "/game/cyber-sprint"
+  },
+  {
+    id: "data-fortress",
+    title: "Data Fortress",
+    developer: "Xakteir Studios",
+    type: "Strategy",
+    genre: ["Strategy", "Tower Defense", "Cyberpunk", "2D"],
+    description: "Defend your data fortress from wave after wave of corrupted AI. Upgrade turrets, deploy firewalls, and survive.",
+    bannerUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=datafortress",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "2026", description: "Initial Launch" }],
+    route: "/game/data-fortress"
+  },
+  {
+    id: "neural-rider",
+    title: "Neural Rider",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["2D", "Action", "Racing", "Futuristic"],
+    description: "Ride the neural highways on a hoverbike. Accelerate through neon tunnels, dodge traffic, and dominate the leaderboard.",
+    bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=neuralrider",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "2026", description: "Initial Launch" }],
+    route: "/game/neural-rider"
+  },
+  {
+    id: "voltra-dash",
+    title: "Voltra Dash",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["2D", "Racing", "Futuristic", "Speed"],
+    description: "Pilot the ultimate Voltra sports car through the neon-lit streets of Xakteir City. Drift through corners and break records.",
+    bannerUrl: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=voltradash",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "2026", description: "Initial Launch" }],
+    route: "/game/voltra-dash"
+  },
+  {
+    id: "xak-brawl",
+    title: "Xak Brawl",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["Action", "Fighting", "2D", "Multiplayer"],
+    description: "Classic 2D fighting game. Choose your fighter, master special moves, and battle your way to the top.",
+    bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=xakbrawl",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "2026", description: "Initial Launch" }],
+    route: "/game/xak-brawl"
+  },
+  {
+    id: "star-breaker",
+    title: "Star Breaker",
+    developer: "Xakteir Studios",
+    type: "Arcade",
+    genre: ["2D", "Action", "Shooter", "Space", "Bullet Hell"],
+    description: "Destroy enemy fleets across the galaxy. Collect power-ups, dodge asteroid fields, and unleash devastating ultimate weapons.",
+    bannerUrl: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1200&q=80",
+    iconUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=starbreaker",
+    releaseDate: "2026",
+    price: "Free",
+    updates: [{ time: "2026", description: "Initial Launch" }],
+    route: "/game/star-breaker"
   }
 ];
 

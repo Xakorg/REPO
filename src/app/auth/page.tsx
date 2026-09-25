@@ -471,38 +471,61 @@ function AuthContent() {
 
   // STANDARD SIGN IN UI
   return (
-    <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center p-6 relative">
-      <div className="mb-8 z-10 flex bg-black/40 p-2 rounded-full border border-white/5 shadow-xl backdrop-blur-sm">
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-[#05030d]">
+      {/* Animated background */}
+      <div className="absolute inset-0 mesh-background !z-0" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 !z-0" />
+      <div className="absolute inset-0 arcade-grid opacity-[0.03] pointer-events-none !z-0" />
+      
+      {/* Floating gradient orbs */}
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px] !z-0" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-accent/10 rounded-full blur-[150px] !z-0" />
+
+      {/* Logo and Title */}
+      <div className="relative z-10 flex flex-col items-center mb-8">
+        <div className="relative">
+          <GlitchLogo className="scale-150" />
+          <div className="absolute inset-0 bg-primary/20 rounded-[2.5rem] blur-[80px] animate-pulse opacity-40" />
+        </div>
+        <h1 className="mt-6 text-5xl md:text-7xl font-black italic uppercase tracking-tighter text-white drop-shadow-[0_0_80px_rgba(255,255,255,0.3)]">
+          XAKTEIR
+        </h1>
+        <p className="mt-2 text-[10px] md:text-[11px] font-black uppercase tracking-[1.2em] text-white/30 italic">
+          Sign In to Your Universe
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <div className="relative z-10 mb-8 flex bg-black/60 backdrop-blur-xl p-1.5 rounded-full border border-white/10 shadow-[0_0_60px_rgba(0,0,0,0.5)]">
         <button 
-          className="px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all bg-primary text-black shadow-[0_0_15px_rgba(var(--primary),0.5)]"
+          className="px-10 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all bg-primary text-black shadow-[0_0_20px_rgba(var(--primary),0.4)]"
           onClick={() => setActiveTab('signin')}
         >
           Sign In
         </button>
         <button 
-          className="px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all text-white/50 hover:text-white"
+          className="px-10 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all text-white/50 hover:text-white"
           onClick={() => { setActiveTab('signup'); setWizardStep(0); }}
         >
           Sign Up
         </button>
       </div>
 
-      <Card className="w-full max-w-lg glass-card rounded-[4rem] border-white/5 shadow-2xl overflow-hidden relative z-10">
-        <div className="absolute inset-0 arcade-grid opacity-10 pointer-events-none" />
+      {/* Card */}
+      <Card className="w-full max-w-md glass-card rounded-[2.5rem] border-white/10 shadow-[0_100px_200px_rgba(0,0,0,0.8)] overflow-hidden relative z-10 backdrop-blur-xl">
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/80 pointer-events-none" />
+        <div className="absolute inset-0 arcade-grid opacity-5 pointer-events-none" />
         
-        <CardHeader className="text-center space-y-8 pt-12">
-          <div className="flex justify-center"><GlitchLogo className="scale-110" /></div>
-          <div className="space-y-2">
-            <CardTitle className="text-5xl font-black italic uppercase tracking-tighter text-white">
-              {step === 'verify-2fa' ? "Verify Code" : step === 'forgot' ? "Reset Password" : "Sign In"}
-            </CardTitle>
-            <CardDescription className="text-xs font-bold uppercase tracking-[0.4em] text-muted-foreground opacity-60">
-              Account Access
-            </CardDescription>
-          </div>
+        <CardHeader className="text-center space-y-6 pt-8 pb-4">
+          <CardTitle className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-white">
+            {step === 'verify-2fa' ? "Verify Code" : step === 'forgot' ? "Reset Password" : "Welcome Back"}
+          </CardTitle>
+          <CardDescription className="text-xs font-bold uppercase tracking-[0.4em] text-muted-foreground opacity-60">
+            {step === 'verify-2fa' ? "Security Check" : step === 'forgot' ? "Account Recovery" : "Access Your Account"}
+          </CardDescription>
         </CardHeader>
 
-        <CardContent className="p-10 pt-0 relative z-10 min-h-[350px] flex flex-col">
+        <CardContent className="p-8 pt-4 relative z-10 flex flex-col">
           {step === 'verify-2fa' ? (
              <div className="space-y-10 animate-in zoom-in-95">
                 <div className="flex justify-center">

@@ -29,7 +29,28 @@ import {
   ShieldPlus,
   RefreshCw,
   GitBranch,
-  Save
+  Save,
+  Plug,
+  LayoutGrid,
+  Wrench,
+  Palette,
+  Eye,
+  Search,
+  Zap,
+  BookOpen,
+  Layers,
+  Puzzle,
+  X,
+  Check,
+  ArrowRight,
+  Crown,
+  Star,
+  Download,
+  Package,
+  Bot,
+  Users,
+  MapPin,
+  Compass
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

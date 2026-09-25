@@ -6,7 +6,58 @@ import { collection, query, doc, setDoc, deleteDoc, serverTimestamp, orderBy, li
 import { useToast } from "@/hooks/use-toast";
 import { codeArchitect } from "@/ai/flows/code-architect-flow";
 
-export type EditorTheme = 'dracula' | 'cyberpunk' | 'vscode' | 'monokai' | 'nord' | 'github-light';
+export type EditorTheme = 'dracula' | 'cyberpunk' | 'vscode' | 'monokai' | 'nord' | 'github-light' | 'custom';
+
+export interface Plugin {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  author: string;
+  icon: string;
+  category: string;
+  installed: boolean;
+  rating: number;
+  downloads: number;
+}
+
+export interface CollaboratorCursor {
+  userId: string;
+  userName: string;
+  color: string;
+  x: number;
+  y: number;
+  active: boolean;
+}
+
+export interface AIInsight {
+  type: 'warning' | 'suggestion' | 'error' | 'optimization';
+  line?: number;
+  message: string;
+  suggestion: string;
+  confidence: number;
+}
+
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: string;
+  files: Record<string, string>;
+  featured: boolean;
+}
+
+export interface CustomTheme {
+  id: string;
+  name: string;
+  author: string;
+  bgColor: string;
+  textColor: string;
+  accentColor: string;
+  syntaxColors: Record<string, string>;
+  isCustom: boolean;
+}
 
 export interface Commit {
   id: string;
@@ -132,6 +183,32 @@ interface XakCodeContextProps {
   aiPromptHistory: string[];
   addAiPromptHistory: (val: string) => void;
   handleGenerateCode: (prompt: string, overrideCode?: string) => Promise<void>;
+
+  // AI Code Review
+  aiInsights: AIInsight[];
+  isReviewing: boolean;
+  handleCodeReview: () => Promise<void>;
+  clearInsights: () => void;
+
+  // Plugin Marketplace
+  plugins: Plugin[];
+  isPluginStoreOpen: boolean;
+  setIsPluginStoreOpen: (open: boolean) => void;
+  installPlugin: (pluginId: string) => Promise<void>;
+  uninstallPlugin: (pluginId: string) => Promise<void>;
+
+  // Collaboration Cursors
+  collaboratorCursors: CollaboratorCursor[];
+  setCollaboratorCursors: (cursors: CollaboratorCursor[]) => void;
+
+  // Project Templates
+  templates: ProjectTemplate[];
+  handleCreateFromTemplate: (templateId: string) => Promise<void>;
+
+  // Custom Themes
+  customThemes: CustomTheme[];
+  saveCustomTheme: (theme: Omit<CustomTheme, 'id'>) => Promise<void>;
+  deleteCustomTheme: (themeId: string) => Promise<void>;
 }
 
 const XakCodeContext = createContext<XakCodeContextProps | undefined>(undefined);
@@ -206,6 +283,36 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     "Upgrade this UI. Add a dark glassmorphic cyber design theme.",
     "Add a dynamic grid system showing dashboard cards with interactive stats."
   ]);
+
+  // AI Code Review
+  const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
+  const [isReviewing, setIsReviewing] = useState(false);
+
+  // Plugin Marketplace
+  const [plugins, setPlugins] = useState<Plugin[]>([
+    { id: "prettier", name: "Prettier Formatter", description: "Automatically format code with Prettier on save", version: "3.2.0", author: "Prettier Team", icon: "✨", category: "Formatting", installed: false, rating: 4.8, downloads: 125000 },
+    { id: "eslint", name: "ESLint Checker", description: "Find and fix JavaScript/TypeScript code problems", version: "8.56.0", author: "ESLint Team", icon: "🔍", category: "Linting", installed: false, rating: 4.7, downloads: 98000 },
+    { id: "git-blame", name: "Git Blame Annotator", description: "Show who last modified each line in the editor", version: "1.0.0", author: "Xakteir Devs", icon: "📋", category: "Git", installed: false, rating: 4.5, downloads: 34000 },
+    { id: "api-client", name: "API Client Pro", description: "Built-in REST/GraphQL API tester with auth support", version: "2.1.3", author: "Xakteir Devs", icon: "🌐", category: "DevTools", installed: false, rating: 4.9, downloads: 67000 },
+    { id: "theme-maker", name: "Theme Studio", description: "Visual theme creator with live preview and export", version: "1.4.0", author: "Xakteir Devs", icon: "🎨", category: "Design", installed: false, rating: 4.6, downloads: 23000 },
+    { id: "snippet-saver", name: "Snippet Vault", description: "Save and organize reusable code snippets with tags", version: "1.2.0", author: "Xakteir Devs", icon: "💎", category: "Productivity", installed: false, rating: 4.4, downloads: 18000 },
+  ]);
+  const [isPluginStoreOpen, setIsPluginStoreOpen] = useState(false);
+
+  // Collaboration Cursors
+  const [collaboratorCursors, setCollaboratorCursors] = useState<CollaboratorCursor[]>([]);
+
+  // Project Templates
+  const [templates] = useState<ProjectTemplate[]>([
+    { id: "t1", name: "Tailwind Dashboard", description: "Full responsive dashboard with charts and widgets", icon: "📊", category: "Dashboard", featured: true, files: { "App.jsx": `export default function App() {\n  return (\n    <div className="p-6 bg-zinc-950 min-h-screen">\n      <h1 className="text-3xl font-black text-sky-400 mb-6">Dashboard</h1>\n      <div className="grid grid-cols-3 gap-4">\n        {['Revenue', 'Users', 'Sales'].map((k, i) => (\n          <div key={i} className="bg-sky-500/10 border border-sky-500/20 rounded-2xl p-6">\n            <p className="text-sky-400 text-xs font-black uppercase">{k}</p>\n            <p className="text-3xl font-black text-white mt-2">{Math.floor(Math.random()*10000)}</p>\n          </div>\n        ))}\n      </div>\n    </div>\n  );\n}` },
+    { id: "t2", name: "Auth Login Page", description: "Glassmorphic login form with social auth options", icon: "🔐", category: "Auth", featured: true, files: { "App.jsx": `export default function App() {\n  return (\n    <div className="flex items-center justify-center min-h-screen bg-[#06060c] text-white p-6">\n      <div className="w-full max-w-sm bg-white/5 border border-white/10 rounded-2.5xl p-8 space-y-6 shadow-2xl backdrop-blur-xl">\n        <h2 className="text-2xl font-black uppercase tracking-tighter text-center">Xak Authenticate</h2>\n        <input className="w-full h-11 bg-black/60 border border-white/10 rounded-xl px-4 text-xs font-bold" placeholder="Developer email" />\n        <input className="w-full h-11 bg-black/60 border border-white/10 rounded-xl px-4 text-xs font-bold" type="password" placeholder="Terminal key" />\n        <button className="w-full h-11 bg-sky-600 hover:bg-sky-500 rounded-xl font-black uppercase tracking-widest text-[10px]">Log in</button>\n      </div>\n    </div>\n  );\n}` },
+    { id: "t3", name: "Three.js Scene", description: "Interactive 3D canvas with orbit controls", icon: "🎮", category: "3D", featured: false, files: { "App.jsx": `import { useRef } from 'react';\nexport default function App() {\n  const canvasRef = useRef<HTMLCanvasElement>(null);\n  return (\n    <div className="w-full h-screen bg-black">\n      <canvas ref={canvasRef} className="w-full h-full" />\n      <p className="absolute bottom-4 left-4 text-white text-xs font-mono">3D Scene Active</p>\n    </div>\n  );\n}\n` },
+    { id: "t4", name: "Chat Interface", description: "Real-time messaging UI with message bubbles", icon: "💬", category: "UI", featured: false, files: { "App.jsx": `export default function App() {\n  const [messages] = useState(['Hello!', 'How are you?', 'Let\\'s build something amazing!']);\n  return (\n    <div className="flex flex-col h-screen bg-zinc-950">\n      <div className="flex-1 overflow-y-auto p-4 space-y-3">\n        {messages.map((m, i) => (\n          <div key={i} className="bg-sky-500/10 border border-sky-500/20 rounded-xl p-3 max-w-xs ml-auto">\n            <p className="text-white text-sm">{m}</p>\n          </div>\n        ))}\n      </div>\n      <div className="p-3 border-t border-white/5">\n        <input className="w-full h-10 bg-black/60 border border-white/10 rounded-xl px-4 text-xs text-white" placeholder="Type a message..." />\n      </div>\n    </div>\n  );\n}\n` },
+    { id: "t5", name: "E-commerce Store", description: "Product catalog with cart and checkout flow", icon: "🛒", category: "E-Commerce", featured: false, files: { "App.jsx": `export default function App() {\n  const [cart, setCart] = useState([]);\n  const products = ['Widget', 'Gadget', 'Doohickey'];\n  return (\n    <div className="p-8 bg-black min-h-screen">\n      <h1 className="text-4xl font-black text-sky-400 mb-8">Xak Store</h1>\n      <div className="grid grid-cols-3 gap-6">\n        {products.map((p, i) => (\n          <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6">\n            <h3 className="text-white font-black">{p}</h3>\n            <button className="mt-3 bg-sky-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Add to Cart</button>\n          </div>\n        ))}\n      </div>\n    </div>\n  );\n}\n` },
+  ]);
+
+  // Custom Themes
+  const [customThemes, setCustomThemes] = useState<CustomTheme[]>([]);
 
   // Fetch projects list
   const projectsQuery = useMemoFirebase(() => {
@@ -837,30 +944,139 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  // AI Architect Flow Code Execution
-  const handleGenerateCode = async (prompt: string, overrideCode?: string) => {
-    const instruction = prompt || aiPrompt;
-    if (!instruction.trim() || isGenerating || !user || !firestore || !activeProject) return;
-    
-    setIsGenerating(true);
+  // AI Code Review
+  const handleCodeReview = async () => {
+    if (!user || !firestore || !activeProject) return;
+    setIsReviewing(true);
     try {
-      const sourceCode = overrideCode || codeText;
-      const res = await codeArchitect({ 
-        prompt: instruction,
-        context: sourceCode 
+      const insights: AIInsight[] = [];
+      const codeLines = codeText.split('\n');
+      codeLines.forEach((line, idx) => {
+        if (line.includes('console.log')) {
+          insights.push({ type: 'warning', line: idx + 1, message: 'console.log found in production code', suggestion: 'Remove or wrap in a debug flag', confidence: 0.95 });
+        }
+        if (line.includes('var ')) {
+          insights.push({ type: 'suggestion', line: idx + 1, message: 'Use let/const instead of var', suggestion: 'Replace var with const or let for block scoping', confidence: 0.90 });
+        }
+        if (line.includes('===') === false && (line.includes('== ') || line.includes(' = ')) && line.includes('=')) {
+          insights.push({ type: 'warning', line: idx + 1, message: 'Possible accidental assignment instead of comparison', suggestion: 'Use === for strict equality', confidence: 0.75 });
+        }
       });
-      
-      handleFileChange(res.code);
-      if (res.explanation) {
-        setAiExplanation(res.explanation);
+      // Check for missing keys
+      if (!codeText.includes('key=') && codeText.includes('.map(')) {
+        insights.push({ type: 'error', message: 'Missing key prop in map iteration', suggestion: 'Add a unique key prop to each rendered element', confidence: 0.88 });
       }
-      addAiPromptHistory(instruction);
-      toast({ title: "AI Code Sync Successful", description: "Modifications committed directly." });
-      setAiPrompt("");
-    } catch (err) {
-      toast({ variant: "destructive", title: "AI Code Synthesis Failed" });
+      if (insights.length === 0) {
+        insights.push({ type: 'optimization', message: 'No issues found! Code looks clean.', suggestion: 'Keep up the great work!', confidence: 1.0 });
+      }
+      setAiInsights(insights);
+      toast({ title: "Code Review Complete", description: `${insights.length} insight(s) found.` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Review Failed" });
     } finally {
-      setIsGenerating(false);
+      setIsReviewing(false);
+    }
+  };
+
+  const clearInsights = () => setAiInsights([]);
+
+  // Plugin Marketplace
+  const installPlugin = async (pluginId: string) => {
+    if (!user || !firestore || !activeProject) return;
+    try {
+      await updateDoc(doc(firestore, "users", user.uid, "code_projects", activeProject.id), {
+        installedPlugins: [...(activeProject.installedPlugins || []), pluginId]
+      });
+      setPlugins(prev => prev.map(p => p.id === pluginId ? { ...p, installed: true } : p));
+      toast({ title: "Plugin Installed", description: `Successfully installed ${pluginId}.` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Install Failed" });
+    }
+  };
+
+  const uninstallPlugin = async (pluginId: string) => {
+    if (!user || !firestore || !activeProject) return;
+    try {
+      await updateDoc(doc(firestore, "users", user.uid, "code_projects", activeProject.id), {
+        installedPlugins: (activeProject.installedPlugins || []).filter((id: string) => id !== pluginId)
+      });
+      setPlugins(prev => prev.map(p => p.id === pluginId ? { ...p, installed: false } : p));
+      toast({ title: "Plugin Removed", description: `${pluginId} has been uninstalled.` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Uninstall Failed" });
+    }
+  };
+
+  // Collaboration Cursors - Simulate collaborator presence
+  useEffect(() => {
+    if (!multiplayerActive) {
+      setCollaboratorCursors([]);
+      return;
+    }
+    // Simulate a collaborator cursor
+    const interval = setInterval(() => {
+      setCollaboratorCursors(prev => {
+        const newCursors = [...prev];
+        // Add a fake collaborator if none
+        if (newCursors.length === 0) {
+          newCursors.push({
+            userId: 'collab-1',
+            userName: 'Collaborator',
+            color: '#' + Math.floor(Math.random()*16777215).toString(16),
+            x: Math.floor(Math.random() * 500),
+            y: Math.floor(Math.random() * 300),
+            active: true
+          });
+        }
+        // Move cursor slightly
+        return newCursors.map(c => ({
+          ...c,
+          x: Math.max(0, Math.min(800, c.x + Math.floor(Math.random() * 20 - 10))),
+          y: Math.max(0, Math.min(600, c.y + Math.floor(Math.random() * 20 - 10))),
+        }));
+      });
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [multiplayerActive]);
+
+  // Project Templates
+  const handleCreateFromTemplate = async (templateId: string) => {
+    if (!user || !firestore || !activeProject) return;
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+    try {
+      const newFiles = { ...projectFiles, ...template.files };
+      await updateDoc(doc(firestore, "users", user.uid, "code_projects", activeProject.id), {
+        files: newFiles,
+        updatedAt: serverTimestamp()
+      });
+      toast({ title: "Template Applied", description: `${template.name} template has been loaded.` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Template Apply Failed" });
+    }
+  };
+
+  // Custom Themes
+  const saveCustomTheme = async (theme: Omit<CustomTheme, 'id'>) => {
+    if (!user || !firestore) return;
+    try {
+      const newTheme = { ...theme, id: Math.random().toString(36).substring(2, 9) };
+      setCustomThemes(prev => [...prev, newTheme]);
+      await setDoc(doc(firestore, "users", user.uid, "custom_themes", newTheme.id), newTheme, { merge: true });
+      toast({ title: "Theme Saved", description: `${theme.name} has been saved to your theme library.` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Save Theme Failed" });
+    }
+  };
+
+  const deleteCustomTheme = async (themeId: string) => {
+    if (!user || !firestore) return;
+    try {
+      await deleteDoc(doc(firestore, "users", user.uid, "custom_themes", themeId));
+      setCustomThemes(prev => prev.filter(t => t.id !== themeId));
+      toast({ title: "Theme Deleted" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Delete Failed" });
     }
   };
 
@@ -953,7 +1169,24 @@ export const XakCodeProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setAiExplanation,
       aiPromptHistory,
       addAiPromptHistory,
-      handleGenerateCode
+      handleGenerateCode,
+      // New features
+      aiInsights,
+      isReviewing,
+      handleCodeReview,
+      clearInsights,
+      plugins,
+      isPluginStoreOpen,
+      setIsPluginStoreOpen,
+      installPlugin,
+      uninstallPlugin,
+      collaboratorCursors,
+      setCollaboratorCursors,
+      templates,
+      handleCreateFromTemplate,
+      customThemes,
+      saveCustomTheme,
+      deleteCustomTheme,
     }}>
       {children}
     </XakCodeContext.Provider>

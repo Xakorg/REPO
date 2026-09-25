@@ -48,8 +48,11 @@ If you are modifying existing code, keep these recent changes in mind:
 
 - **Directory Cleanup:** Deleted deprecated folders `src/app/stream`, `src/app/sign`, `src/app/xakarena`, and `src/app/xakarena-creator`.
 - **Ecosystem Naming & Hierarchy Realignment:** Standardized app titles to: **Xakteir Mail**, **Xakteir Social**, **Xakteir Translate**, **Suite Write**, **Suite Sheets**, **Suite Forms**, **Suite Slides**.
-
-
+- **Daily Joke & Riddle API Integration:** Replaced static arrays with dynamic fetching from JokeAPI (v2.jokeapi.dev) with date-based caching in localStorage for truly different content every single day.
+- **Auth Page Fullscreen Overhaul:** Made sign-in page fullscreen (`min-h-screen`) with animated mesh background, floating gradient orbs, larger GlitchLogo, and improved glass-morphism card styling.
+- **Home Page Logo Replacement:** Replaced `<GlitchLogo>` component with `<img src="/favicon.ico">` for a real favicon-based logo on the dashboard.
+- **Default App Icons Fixed:** Changed all `"iconName": "default"` entries in the `APPS` array to `"apps"` in Header.tsx, so apps now render proper app-grid icons instead of the X fallback. Created `voltra.svg` and `voltramax.svg` favicon assets.
+- **6 New Games Added:** Added Cyber Sprint, Data Fortress, Neural Rider, Voltra Dash, Xak Brawl, and Star Breaker to `games-db.ts`.
 
 ## 📝 Your Mission
 Your goal is to build out real features, supercharge existing ones, and help transition this massive web ecosystem into a native, premium experience for Voltramax. 
