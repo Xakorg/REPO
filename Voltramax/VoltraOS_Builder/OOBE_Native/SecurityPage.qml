@@ -1,147 +1,228 @@
-import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
+import QtGraphicalEffects 1.15
 
 Item {
     id: root
     width: 1920
     height: 1080
 
-    ColumnLayout {
-        anchors.centerIn: parent
-        spacing: 40
-
-        Text {
-            text: "Secure your VoltraMax."
-            font.family: "Syne"
-            font.pixelSize: 64
-            font.weight: Font.Bold
-            color: "white"
-            Layout.alignment: Qt.AlignHCenter
+    Rectangle {
+        anchors.fill: parent
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#0a0a1a" }
+            GradientStop { position: 1.0; color: "#1a1a3e" }
         }
+    }
 
-        RowLayout {
-            Layout.alignment: Qt.AlignHCenter
-            spacing: 40
-            Layout.topMargin: 20
+    Rectangle {
+        id: glassPanel
+        width: 700
+        height: 620
+        anchors.centerIn: parent
+        color: Qt.rgba(10/255, 10/255, 20/255, 0.85)
+        radius: 28
+        border.color: Qt.rgba(255/255, 255/255, 255/255, 0.15)
+        border.width: 1
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 28
+            width: parent.width * 0.8
+
+            Text {
+                text: "Security Setup"
+                font.pixelSize: 34
+                font.weight: Font.Bold
+                color: "white"
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            Text {
+                text: "Protect your VoltraOS with multiple layers of security."
+                font.pixelSize: 16
+                color: "#8888aa"
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
 
             // PIN Code Setup
             Rectangle {
-                width: 350
-                height: 300
-                color: Qt.rgba(255/255, 255/255, 255/255, 0.03)
+                width: parent.width
+                height: 200
+                color: "#151530"
+                radius: 16
                 border.color: Qt.rgba(255/255, 255/255, 255/255, 0.1)
-                radius: 20
+                border.width: 1
 
                 ColumnLayout {
                     anchors.centerIn: parent
-                    spacing: 20
+                    spacing: 16
+                    anchors.margins: 20
 
-                    Text {
-                        text: "🔢"
-                        font.pixelSize: 48
-                        Layout.alignment: Qt.AlignHCenter
-                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 20
 
-                    Text {
-                        text: "Device PIN"
-                        font.family: "Inter"
-                        font.pixelSize: 22
-                        font.weight: Font.Bold
-                        color: "white"
-                        Layout.alignment: Qt.AlignHCenter
-                    }
-
-                    TextField {
-                        placeholderText: "Enter 6-digit PIN"
-                        echoMode: TextInput.Password
-                        font.family: "Inter"
-                        font.pixelSize: 20
-                        color: "white"
-                        horizontalAlignment: TextInput.AlignHCenter
-                        background: Rectangle {
-                            color: Qt.rgba(0,0,0,0.5)
-                            border.color: parent.activeFocus ? "#a855f7" : Qt.rgba(255/255, 255/255, 255/255, 0.2)
-                            radius: 8
+                        // PIN Setup
+                        ColumnLayout {
+                            Layout.weight: 1
+                            Text { text: "🔢"; font.pixelSize: 36; Layout.alignment: Qt.AlignHCenter }
+                            Text { text: "Device PIN"; font.pixelSize: 18; color: "white"; Layout.alignment: Qt.AlignHCenter }
+                            TextField {
+                                placeholderText: "Enter 4-8 digit PIN"
+                                echoMode: TextInput.Password
+                                Layout.fillWidth: true
+                                font.pixelSize: 18
+                                onAccepted: {
+                                    if (text.length >= 4) OOBE.signInWithPin(text);
+                                }
+                            }
                         }
-                        padding: 15
-                        Layout.preferredWidth: 200
-                        Layout.alignment: Qt.AlignHCenter
+
+                        // Fingerprint Setup
+                        ColumnLayout {
+                            Layout.weight: 1
+                            Text { text: "👆"; font.pixelSize: 36; Layout.alignment: Qt.AlignHCenter }
+                            Text { text: "Fingerprint"; font.pixelSize: 18; color: "white"; Layout.alignment: Qt.AlignHCenter }
+                            Rectangle {
+                                width: 80; height: 80
+                                radius: 40
+                                color: OOBE.fingerprintEnrolled > 0 ? "#1a3a1a" : "#2a2a2a"
+                                border.color: OOBE.fingerprintEnrolled > 0 ? "#34C759" : "#555555"
+                                border.width: 2
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                Text {
+                                    text: OOBE.fingerprintEnrolled > 0 ? "✓" : "+"
+                                    font.pixelSize: 32
+                                    anchors.centerIn: parent
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: { OOBE.enrollFingerprint(); }
+                                }
+                            }
+                        }
                     }
                 }
             }
 
-            // Fingerprint / Biometrics
+            // Drawing Pattern Setup
             Rectangle {
-                width: 350
-                height: 300
-                color: fingerprintMouse.containsMouse ? Qt.rgba(255/255, 255/255, 255/255, 0.08) : Qt.rgba(255/255, 255/255, 255/255, 0.03)
-                border.color: fingerprintMouse.containsMouse ? "#a855f7" : Qt.rgba(255/255, 255/255, 255/255, 0.1)
-                radius: 20
+                width: parent.width
+                height: 160
+                color: "#151530"
+                radius: 16
+                border.color: Qt.rgba(255/255, 255/255, 255/255, 0.1)
+                border.width: 1
 
-                Behavior on color { ColorAnimation { duration: 200 } }
-
-                ColumnLayout {
+                RowLayout {
                     anchors.centerIn: parent
                     spacing: 20
+                    anchors.margins: 20
 
-                    Text {
-                        text: "👆"
-                        font.pixelSize: 48
-                        Layout.alignment: Qt.AlignHCenter
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 10
+                        Text { text: "✏️"; font.pixelSize: 36; Layout.alignment: Qt.AlignHCenter }
+                        Text { text: "Draw Pattern"; font.pixelSize: 18; color: "white"; Layout.alignment: Qt.AlignHCenter }
+                        Text {
+                            text: "Draw a pattern on a 3x3 grid to unlock your device."
+                            font.pixelSize: 13
+                            color: "#8888aa"
+                            Layout.alignment: Qt.AlignHCenter
+                        }
                     }
 
+                    Rectangle {
+                        width: 120; height: 120
+                        radius: 8
+                        color: "#0a0a1a"
+                        border.color: primaryColor
+                        border.width: 1
+                        Text { text: "🎨"; font.pixelSize: 40; anchors.centerIn: parent }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: { OOBE.setAuthMethod(4); }
+                        }
+                    }
+                }
+            }
+
+            // Auto-lock settings
+            ColumnLayout {
+                width: parent.width
+                spacing: 12
+
+                Text { text: "Auto-Lock Settings"; font.pixelSize: 20; color: "white" }
+
+                RowLayout {
+                    width: parent.width
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 50
+                        radius: 10
+                        color: "#151530"
+                        border.color: Qt.rgba(255/255, 255/255, 255/255, 0.1)
+                        border.width: 1
+                        RowLayout {
+                            anchors.centerIn: parent
+                            Text { text: "Lock after"; color: "#c0c0c0"; font.pixelSize: 16 }
+                            ComboBox {
+                                model: ["1 minute", "5 minutes", "15 minutes", "30 minutes", "Never"]
+                                currentIndex: 1
+                                font.pixelSize: 14
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Buttons row
+            RowLayout {
+                width: parent.width
+                spacing: 16
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 52
+                    radius: 14
+                    color: primaryColor
                     Text {
-                        text: "Fingerprint"
-                        font.family: "Inter"
-                        font.pixelSize: 22
-                        font.weight: Font.Bold
+                        text: "Continue →"
                         color: "white"
-                        Layout.alignment: Qt.AlignHCenter
+                        font.pixelSize: 18
+                        font.bold: true
+                        anchors.centerIn: parent
                     }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: { stackView.push("MultiUserPage.qml"); }
+                    }
+                }
 
+                Rectangle {
+                    width: 120
+                    height: 52
+                    radius: 14
+                    color: "#40FFFFFF"
+                    border.color: "#CCCCCC"
+                    border.width: 1
                     Text {
-                        text: "Add a fingerprint for\ninstant hardware login."
-                        font.family: "Inter"
-                        font.pixelSize: 14
-                        color: "#a0a0a0"
-                        horizontalAlignment: Text.AlignHCenter
-                        Layout.alignment: Qt.AlignHCenter
+                        text: "Skip"
+                        color: "#666666"
+                        font.pixelSize: 16
+                        anchors.centerIn: parent
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: { stackView.push("CompletePage.qml"); }
                     }
                 }
-
-                MouseArea {
-                    id: fingerprintMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                }
-            }
-        }
-
-        Rectangle {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 40
-            width: 250
-            height: 60
-            radius: 30
-            color: nextMouse.containsMouse ? "#a855f7" : "#9333ea"
-            
-            Behavior on color { ColorAnimation { duration: 200 } }
-
-            Text {
-                anchors.centerIn: parent
-                text: "Continue"
-                font.family: "Inter"
-                font.pixelSize: 20
-                font.weight: Font.DemiBold
-                color: "white"
-            }
-
-            MouseArea {
-                id: nextMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                onClicked: stackView.push("MultiUserPage.qml")
             }
         }
     }

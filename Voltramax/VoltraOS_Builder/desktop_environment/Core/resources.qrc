@@ -1,0 +1,62 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="/">
+    <!-- Core Files -->
+    <file>BootSplash.qml</file>
+    <file>Desktop.qml</file>
+    <file>SystemSettings.qml</file>
+    <file>WTLOverlay.qml</file>
+    
+    <!-- Apps/Browser -->
+    <file>Apps/Browser/VoltraBrowser.qml</file>
+    
+    <!-- Apps/Terminal -->
+    <file>Apps/Terminal/VoltTerm.qml</file>
+    <file>Apps/Terminal/Terminal.qml</file>
+    
+    <!-- Apps/Files -->
+    <file>Apps/Files/VoltraFiles.qml</file>
+    <file>Apps/Files/VoltMaster.qml</file>
+    
+    <!-- Apps/Weather -->
+    <file>Apps/Weather/VoltraCamera.qml</file>
+    <file>Apps/Weather/VoltraWeather.qml</file>
+    
+    <!-- Apps/Store -->
+    <file>Apps/Store/VoltraStore.qml</file>
+    <file>Apps/Store/VoltraStudio.qml</file>
+    
+    <!-- Apps/Installer -->
+    <file>Apps/Installer/VoltraInstaller.qml</file>
+    
+    <!-- Apps/Drive & Stream -->
+    <file>Apps/Drive/XakteirDrive.qml</file>
+    <file>Apps/Stream/XakteirStream.qml</file>
+    
+    <!-- Apps/Games -->
+    <file>Apps/Games/GameHub.qml</file>
+    
+    <!-- Apps/Chat -->
+    <file>Apps/Chat/XakChat.qml</file>
+    
+    <!-- Apps/XakAI -->
+    <file>Apps/XakAI/XakPlayground.qml</file>
+    <file>Apps/XakAI/XakAIOptInPage.qml</file>
+    <file>Apps/XakAI/XakAIPage.qml</file>
+</qresource>
+<qresource prefix="/OOBE">
+    <file alias="Main.qml">../OOBE_Native/Main.qml</file>
+    <file alias="WelcomePage.qml">../OOBE_Native/WelcomePage.qml</file>
+    <file alias="NetworkPage.qml">../OOBE_Native/NetworkPage.qml</file>
+    <file alias="AccountPage.qml">../OOBE_Native/AccountPage.qml</file>
+    <file alias="BiometricPage.qml">../OOBE_Native/BiometricPage.qml</file>
+    <file alias="SecurityPage.qml">../OOBE_Native/SecurityPage.qml</file>
+    <file alias="MultiUserPage.qml">../OOBE_Native/MultiUserPage.qml</file>
+    <file alias="ThemePage.qml">../OOBE_Native/ThemePage.qml</file>
+    <file alias="CustomizationPage.qml">../OOBE_Native/CustomizationPage.qml</file>
+    <file alias="PrivacyPage.qml">../OOBE_Native/PrivacyPage.qml</file>
+    <file alias="XakAIOptInPage.qml">../OOBE_Native/XakAIOptInPage.qml</file>
+    <file alias="XakAIPage.qml">../OOBE_Native/XakAIPage.qml</file>
+    <file alias="CompletePage.qml">../OOBE_Native/CompletePage.qml</file>
+    <file alias="XakteirAccountPage.qml">../OOBE_Native/XakteirAccountPage.qml</file>
+</qresource>
+</RCC>

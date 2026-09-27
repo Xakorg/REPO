@@ -19,40 +19,119 @@ This file contains the critical context, rules, and architecture you need to suc
 - **Styling:** Tailwind CSS with custom Vanilla CSS utilities in `globals.css`.
 - **Animations:** `framer-motion` for micro-interactions and page transitions.
 - **UI Components:** Lucide-React for icons, Radix UI (or similar) primitives for accessible components.
+- **OS Desktop:** Qt6/QML + C++17 (VoltraOS). Bare-metal 32-bit kernel with GRUB multiboot bootloader.
 
 ## 🧠 Lore & Ecosystem
 - **Xakteir vs. VoltraOS:** Xakteir is the parent ecosystem (currently on the web). VoltraOS is the operating system. **Voltramax** is the initiative to turn Xakteir web apps into desktop apps for VoltraOS.
 - **The Apps:** The `src/app` directory is massive (70+ subdirectories) containing everything from `/chat` and `/mail` to `/xakcode` and `/xakarena`. Read `Xakteir_Everything_You_Need_To_Know.md` for the full breakdown.
 
+## 📁 VoltraOS Project Structure
+
+### `Voltramax/VoltraOS_Builder/` — Main OS Build Directory
+- **`OOBE_Native/`** — Out-of-Box Experience (QtQuick QML pages + C++ manager)
+  - `Main.qml` — Root window with StackView, dark animated background, glassmorphism
+  - `WelcomePage.qml` — Full cinematic welcome screen with feature highlights
+  - `NetworkPage.qml` — Network config with Wi-Fi list, status indicator, connection progress
+  - `AccountPage.qml` — Account creation/sign-in with Firebase, optional password/PIN, Xakteir OAuth
+  - `BiometricPage.qml` — Biometric auth: Face ID, Fingerprint enrollment, Draw Pattern, skip option
+  - `SecurityPage.qml` — PIN setup, fingerprint enrollment, auto-lock settings, drawing pattern
+  - `MultiUserPage.qml` — Multi-user support: Adult, Child, Guest accounts
+  - `ThemePage.qml` — Dark/Light/Voltra themes with accent color picker, wallpaper selector
+  - `CustomizationPage.qml` — Avatar, device name, display name, wallpaper, sound/vibration
+  - `PrivacyPage.qml` — Diagnostic data, location, analytics toggles, full disk encryption
+  - `XakAIOptInPage.qml` — Xak AI enable/decline with capability preview
+  - `XakAIPage.qml` — Voice training with waveform visualization and progress tracking
+  - `CompletePage.qml` — Setup summary with all configuration details
+  - `XakteirAccountPage.qml` — Xakteir sign-in with Firebase OAuth, Google/Apple/Email options
+  - `OOBEManager.h/.cpp` — C++ backend with Firebase profile sync, PIN validation, fingerprint timer
+  - `resources.qrc` — QML resource file
+
+- **`desktop_environment/`** — Qt6 Desktop Environment (organized into subdirectories)
+  - **`Core/`** — Main entry point, desktop shell, boot splash, settings
+    - `main.cpp` — VDS entry point, injects all services into QML
+    - `Desktop.qml` — Main desktop shell with app launcher, sidebar
+    - `BootSplash.qml` — Boot splash screen
+    - `SystemSettings.qml` — System settings
+    - `WTLOverlay.qml` — Window transition overlay
+    - `DesktopDaemon.cpp/.h` — Core daemon with hardware polling, IPC server
+    - `SettingsEngine.cpp/.h` — Settings management
+    - `Settings/` — Settings UI
+  - **`Apps/Browser/`** — Web browser engine
+    - `BrowserEngine.cpp/.h`, `VoltraBrowser.qml`
+  - **`Apps/Terminal/`** — Terminal emulator
+    - `TerminalPTY.cpp/.h`, `VoltTerm.qml`
+  - **`Apps/Games/`** — Game aggregator
+    - `GameAggregatorService.cpp/.h`, `GameHub.qml`
+  - **`Apps/Chat/`** — XakChat messaging
+    - `XakChatService.cpp/.h`, `XakChat.qml`
+  - **`Apps/XakAI/`** — Xak AI features
+    - `XakCoachingService.cpp/.h`, `XakPlayground.qml`, `XakAIOptInPage.qml`, `XakAIPage.qml`
+  - **`Apps/Files/`** — File manager
+    - `VoltraFileSystemModel.cpp/.h`, `VoltraFiles.qml`, `VoltMaster.cpp/.h/.qml`
+  - **`Apps/Weather/`** — Weather and camera
+    - `VoltraCamera.qml`, `VoltraWeather.qml`
+  - **`Apps/Store/`** — App store
+    - `VoltraStore.qml`
+  - **`Apps/Installer/`** — OS installer
+    - `VoltraInstaller.qml`, `InstallerEngine.cpp/.h`
+  - **`Apps/Drive/`** — Cloud drive sync
+    - `DriveEngine.cpp/.h`, `XakteirDrive.qml`
+  - **`Apps/Stream/`** — Streaming services
+    - `StreamEngine.cpp/.h`, `XakteirStream.qml`
+  - **`Core/Windows/`** — Window management
+    - `WTLManager.cpp/.h`, `WTLOverlay.qml`
+  - **`Core/Streaming/`** — Streaming engine
+    - `StreamEngine.cpp/.h`
+  - **`Core/Kernel/`** — Kernel bridges
+    - `SyscallBridge.cpp/.h` — Native Linux syscall bridge
+  - **`Core/Settings/`** — Settings engine
+    - `SettingsEngine.cpp/.h`, `SystemSettings.qml`
+  - `CMakeLists.txt` — Build configuration for VoltraOS executable
+  - `resources.qrc` — Qt resource file
+
+- **`OOBE_Native/`** — Out-of-Box Experience
+- **`lock_screen/`** — Lock screen implementation
+- **`kernel/`** — VoltraOS kernel source, Makefile, Dockerfile, linker.ld, grub.cfg
+- **`Kernel/`** — Kernel source files
+
+### Build Commands
+- **Kernel Build:** `cd voltra_kernel && make` (uses Docker or native gcc-i686/nasm/grub)
+- **Desktop Build:** `cd desktop_environment && cmake . && cmake --build .`
+- **ISO Generation:** `cd Voltramax/VoltraOS_Builder && make`
+
 ## 🛠️ Recent Tech Debt & Upgrades
-If you are modifying existing code, keep these recent changes in mind:
+If you are modifying existing code, keep these changes in mind:
 - **No `alert()`:** All `alert()` calls have been replaced with the `useToast()` hook. Do not introduce new `alert()` calls.
 - **Glassmorphism UI:** We recently overhauled the chat interface to use a premium, desktop-ready aesthetic. Use `.glass-panel` and `.glass-button` utilities from `globals.css` where applicable.
-- **Framer Motion:** Use `motion.div` for smooth entrance animations (e.g., `initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}`) to maintain the premium feel. We also heavily use `Reorder.Group` for drag-and-drop mechanics (e.g. in `/settings`).
-- **Global Header State:** The `<Header />` layout is managed by `useUIStore` (`src/lib/store.ts`). This includes `headerStyle`, `showLogo`, and `pinnedApps`. Users can drag-and-drop apps to pin them to the header via `/settings`.
-- **Game Store Ownership:** The `/games` library now enforces ownership. Users start with 0 games (`localStorage: xakteir_game_library = []`) and must claim them from the overhauled `/games/store`.
-- **Linked Accounts:** Users can connect multiple OAuth providers (Google, GitHub, Apple) to their main email account via the Profile page using Firebase's `linkWithPopup`.
-- **Custom Discord Auth:** Because Firebase Identity Platform is paid, Discord OAuth is handled entirely by a custom Next.js API Route (`/api/auth/discord`). It mints a Custom Firebase Token using...
-- **Xakteir Social 30-Feature Supercharged Upgrade:** Transformed `/social` into a full-featured social media platform: Global Social Timeline, Rich Post Composer (Text, Images, Polls, GIFs, Spoilers), Avatar cosmetics, and more.
-- **Xakteir Mail 30-Feature Supercharged Suite:** Upgraded `/mail` with 30 fully integrated capabilities: AI Thread Summarizer, AI Smart One-Click Reply, AI Tone & Polish Assistant, Scheduled Send, and delivery analytics.
+- **Framer Motion:** Use `motion.div` for smooth entrance animations to maintain the premium feel.
+- **Global Header State:** The `<Header />` layout is managed by `useUIStore` (`src/lib/store.ts`).
+- **Game Store Ownership:** The `/games` library now enforces ownership. Users start with 0 games and must claim them.
+- **Linked Accounts:** Users can connect multiple OAuth providers via the Profile page using Firebase's `linkWithPopup`.
+- **Xak AI Chat Engine & Resilience Overhaul:** Fixed Xak AI chat failures by adding a 3.5s timeout controller and local response fallback.
 
-- **Native Fortnite Strike & Roblox Sandbox Obby Games:** Created 100% native, zero-external-dependency WebGL games directly inside Xakteir Games: **Fortnite Strike**.
-- **Xak AI Chat Engine & Resilience Overhaul:** Fixed Xak AI chat failures by adding a 3.5s timeout controller on external Eve AI endpoints, adding a local response synthesizer fallback, and expanding retries.
-- **Xakteir Dev Mail Dashboard:** Added a real Dev Centre mail route with inbox/outbox views, compose UI, delivery stats, and custom domain/DNS status panel for the Xakteir platform.
+- **VoltraOS OOBE Overhaul (Major):** Every OOBE page completely rewritten with real functionality:
+  - **AccountPage:** Firebase/Firestore sign-in, optional password/PIN, Xakteir OAuth, profile avatar
+  - **BiometricPage:** Face ID scan, fingerprint enrollment, touchscreen drawing pattern, skip option
+  - **WelcomePage:** Full cinematic screen with animated orbs, feature highlights, VoltraOS branding
+  - **NetworkPage:** Wi-Fi list with signal bars, security badges, connection status indicator
+  - **SecurityPage:** PIN + fingerprint + drawing pattern setup, auto-lock settings
+  - **MultiUserPage:** Adult/Child/Guest account types with user management
+  - **ThemePage:** Dark/Light/Voltra themes with accent color picker
+  - **CustomizationPage:** Avatar, device name, display name, wallpaper, sound/vibration
+  - **PrivacyPage:** Diagnostic, location, analytics toggles, encryption status
+  - **XakAIOptInPage:** Enable/decline Xak AI with capability preview
+  - **XakAIPage:** Voice training with waveform visualization, progress tracking
+  - **CompletePage:** Full setup summary, boot progress bar
+  - **XakteirAccountPage:** Xakteir OAuth, Google/Apple/Email alternatives
+  - **OOBEManager:** Expanded with Firebase profile sync, PIN validation, fingerprint timers, drawing verification, auth method switching, password requirement toggle
 
+- **Desktop Environment Reorganized:** `desktop_environment/` split into `Core/` and `Apps/` subdirectories (Browser, Terminal, Games, Chat, XakAI, Files, Weather, Store, Installer, Drive, Stream, Windows, Kernel, Settings)
 
-- **Smooth 12-Point SVG Animated Icon & Favicon Fix:** Re-architected `XakAiAnimatedIcon`.
-
-
-- **XakChat Sending Fix & Offense Filter Overhaul:** Fixed silent message sending failures in `/chat` caused by unhandled error suppression and false positive `isOffensive` word substring matching.
-
-- **Directory Cleanup:** Deleted deprecated folders `src/app/stream`, `src/app/sign`, `src/app/xakarena`, and `src/app/xakarena-creator`.
-- **Ecosystem Naming & Hierarchy Realignment:** Standardized app titles to: **Xakteir Mail**, **Xakteir Social**, **Xakteir Translate**, **Suite Write**, **Suite Sheets**, **Suite Forms**, **Suite Slides**.
-- **Daily Joke & Riddle API Integration:** Replaced static arrays with dynamic fetching from JokeAPI (v2.jokeapi.dev) with date-based caching in localStorage for truly different content every single day.
-- **Auth Page Fullscreen Overhaul:** Made sign-in page fullscreen (`min-h-screen`) with animated mesh background, floating gradient orbs, larger GlitchLogo, and improved glass-morphism card styling.
-- **Home Page Logo Replacement:** Replaced `<GlitchLogo>` component with `<img src="/favicon.ico">` for a real favicon-based logo on the dashboard.
-- **Default App Icons Fixed:** Changed all `"iconName": "default"` entries in the `APPS` array to `"apps"` in Header.tsx, so apps now render proper app-grid icons instead of the X fallback. Created `voltra.svg` and `voltramax.svg` favicon assets.
-- **6 New Games Added:** Added Cyber Sprint, Data Fortress, Neural Rider, Voltra Dash, Xak Brawl, and Star Breaker to `games-db.ts`.
+- **Daily Joke & Riddle API Integration:** Replaced static arrays with dynamic fetching from JokeAPI (v2.jokeapi.dev) with date-based caching in localStorage.
+- **Auth Page Fullscreen Overhaul:** Made sign-in page fullscreen with animated mesh background, floating gradient orbs, larger GlitchLogo, and improved glass-morphism card styling.
+- **Home Page Logo Replacement:** Replaced `<GlitchLogo>` component with favicon image.
+- **Default App Icons Fixed:** Changed all `"default"` iconName entries in the `APPS` array to `"apps"` in Header.tsx. Created `voltra.svg` and `voltramax.svg` favicon assets.
+- **6 New Games Added:** Cyber Sprint, Data Fortress, Neural Rider, Voltra Dash, Xak Brawl, Star Breaker to `games-db.ts`.
 
 ## 📝 Your Mission
 Your goal is to build out real features, supercharge existing ones, and help transition this massive web ecosystem into a native, premium experience for Voltramax. 

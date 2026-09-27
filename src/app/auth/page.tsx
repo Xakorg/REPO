@@ -488,7 +488,7 @@ function AuthContent() {
           <div className="absolute inset-0 bg-primary/20 rounded-[2.5rem] blur-[80px] animate-pulse opacity-40" />
         </div>
         <h1 className="mt-6 text-5xl md:text-7xl font-black italic uppercase tracking-tighter text-white drop-shadow-[0_0_80px_rgba(255,255,255,0.3)]">
-          XAKTEIR
+          X A K T E I R
         </h1>
         <p className="mt-2 text-[10px] md:text-[11px] font-black uppercase tracking-[1.2em] text-white/30 italic">
           Sign In to Your Universe

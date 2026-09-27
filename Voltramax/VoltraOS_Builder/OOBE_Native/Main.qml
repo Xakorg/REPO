@@ -9,16 +9,16 @@ Window {
     height: 1080
     visible: true
     title: "VoltraOS Setup"
-    // Simulate borderless full-screen enterprise setup
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
 
-    // Bright & Ethereal Background
+    // Dark background for OOBE
     Rectangle {
         id: bg
         anchors.fill: parent
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#FFFFFF" }
-            GradientStop { position: 1.0; color: "#E0E8F0" }
+            GradientStop { position: 0.0; color: "#0a0a1a" }
+            GradientStop { position: 0.5; color: "#1a1a3e" }
+            GradientStop { position: 1.0; color: "#0a0a1a" }
         }
 
         // Animated ambient glow spheres
@@ -26,22 +26,20 @@ Window {
             width: 800; height: 800
             radius: 400
             x: -200; y: -200
-            color: "#4000AAFF" // Bright blue ethereal glow
+            color: "#2000AAFF"
             filterMode: Image.Pad
-            
             SequentialAnimation on x {
                 loops: Animation.Infinite
                 NumberAnimation { to: 100; duration: 15000; easing.type: Easing.InOutQuad }
                 NumberAnimation { to: -200; duration: 15000; easing.type: Easing.InOutQuad }
             }
         }
-        
+
         Rectangle {
             width: 1000; height: 1000
             radius: 500
             x: mainWindow.width - 600; y: mainWindow.height - 600
-            color: "#4000FFCC" // Soft teal glow
-            
+            color: "#2000FFCC"
             SequentialAnimation on y {
                 loops: Animation.Infinite
                 NumberAnimation { to: mainWindow.height - 800; duration: 20000; easing.type: Easing.InOutSine }
@@ -49,7 +47,6 @@ Window {
             }
         }
 
-        // Apply a massive blur over the ambient spheres to make them look like soft light
         FastBlur {
             anchors.fill: parent
             source: bg
@@ -57,13 +54,11 @@ Window {
         }
     }
 
-    // StackView for Cinematic Page Transitions
+    // StackView for cinematic page transitions
     StackView {
         id: stackView
         anchors.fill: parent
         initialItem: "WelcomePage.qml"
-
-        // Cinematic Push Transition
         pushEnter: Transition {
             ParallelAnimation {
                 NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 800; easing.type: Easing.OutCubic }
@@ -78,18 +73,35 @@ Window {
         }
     }
 
-    // Global properties for pages to use
+    // Global styling properties
     property color primaryColor: "#007AFF"
-    property color textColor: "#1C1C1E"
-    property color glassColor: "#80FFFFFF"
-    property color glassBorder: "#40FFFFFF"
-    
+    property color textColor: "#E0E0E0"
+    property color glassColor: Qt.rgba(10/255, 10/255, 20/255, 0.85)
+    property color glassBorder: Qt.rgba(255/255, 255/255, 255/255, 0.15)
+
     // Connect to OOBE backend signals
     Connections {
         target: OOBE
         function onOobeFinished() {
-            // Trigger final cinematic close
             Qt.quit();
+        }
+        function onXakteirAuthSuccess() {
+            console.log("[Main] Xakteir auth success!");
+        }
+        function onXakteirAuthFailed() {
+            console.log("[Main] Xakteir auth failed.");
+        }
+        function onFingerprintEnrolledComplete() {
+            console.log("[Main] Fingerprint enrolled successfully.");
+        }
+        function onDrawingVerified() {
+            console.log("[Main] Drawing pattern verified.");
+        }
+        function onNetworkConnectionSuccess() {
+            console.log("[Main] Network connected.");
+        }
+        function onNetworkConnectionFailed() {
+            console.log("[Main] Network connection failed.");
         }
     }
 }

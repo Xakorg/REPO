@@ -88,7 +88,20 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
     autoSaveInterval,
     isCompiling,
     setIsCompiling,
-    setCompileDuration
+    setCompileDuration,
+    aiInsights,
+    isReviewing,
+    handleCodeReview,
+    plugins,
+    isPluginStoreOpen,
+    setIsPluginStoreOpen,
+    installPlugin,
+    uninstallPlugin,
+    templates,
+    handleCreateFromTemplate,
+    customThemes,
+    saveCustomTheme,
+    deleteCustomTheme,
   } = useXakCode();
 
   // Resource Monitor States

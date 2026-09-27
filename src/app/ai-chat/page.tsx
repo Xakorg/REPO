@@ -311,7 +311,7 @@ export default function XakAIChatHomePage() {
                     handleStartChat(input, "standard");
                   }
                 }}
-                placeholder="Message Xak AI... (Shift+Enter for new line)"
+                placeholder="Ask Xak Anything... (Shift+Enter for new line)"
                 rows={2}
                 className="w-full resize-none bg-transparent border-0 text-sm text-white placeholder:text-white/20 focus-visible:ring-0 p-2 min-h-[50px] leading-relaxed"
               />
@@ -349,7 +349,7 @@ export default function XakAIChatHomePage() {
               {[
                 { title: "Draft an Email", desc: "Gmail & Xakteir Mail support", prompt: "Draft a professional project update email" },
                 { title: "Build an HTML Game", desc: "Instant playable canvas prototype", prompt: "Build a neon space shooter game in HTML" },
-                { title: "Control Xakteir UI", desc: "AI Agent navigation & actions", prompt: "Control Xakteir: navigate to Games app" },
+                { title: "Control Xakteir", desc: "AI Agent navigation & actions", prompt: "Control Xakteir: navigate to Games app" },
                 { title: "Analyze Document", desc: "Deep PDF & text parsing", prompt: "Help me analyze and summarize a document" },
               ].map((card, i) => (
                 <button

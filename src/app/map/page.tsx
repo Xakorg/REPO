@@ -770,7 +770,15 @@ export default function XakteirMapsPage() {
     const L = (window as any).L;
     if (!L) return;
 
+    // Clean up old markers when filter changes
     const filtered = landmarkFilter === "all" ? landmarks : landmarks.filter((l: any) => l.category === landmarkFilter);
+    const currentIds = new Set(filtered.map((l: any) => l.id));
+    Object.keys(landmarkMarkersRef.current).forEach(id => {
+      if (!currentIds.has(id)) {
+        landmarkMarkersRef.current[id].remove();
+        delete landmarkMarkersRef.current[id];
+      }
+    });
 
     filtered.forEach((landmark: any) => {
       if (!landmark.lat || !landmark.lng) return;
@@ -786,6 +794,16 @@ export default function XakteirMapsPage() {
         .bindPopup(`<b>${landmark.name}</b><br/><span style="font-size:11px">${landmark.description || "A notable landmark"}</span><br/><span style="font-size:9px;color:${landmark.color || "#f59e0b"}">${landmark.category || "Landmark"}</span>`);
     });
   }, [landmarks, landmarkFilter, landmarkMode, leafletLoaded]);
+
+  // Clean up landmark markers when landmarkMode is disabled
+  useEffect(() => {
+    if (!landmarkMode) {
+      Object.keys(landmarkMarkersRef.current).forEach(id => {
+        landmarkMarkersRef.current[id].remove();
+        delete landmarkMarkersRef.current[id];
+      });
+    }
+  }, [landmarkMode]);
 
   // ---- Helper: Find closest point and distance (reused) ----
   function findClosestPointAndDistance(coords: [number, number][], userLat: number, userLon: number) {
@@ -1301,6 +1319,70 @@ export default function XakteirMapsPage() {
       .then(d => setCurrentWeather(d))
       .catch(() => {});
   }, [location, weatherOpen, leftPanel]);
+
+  // ---- FEATURE 5: Signal heatmap layer ----
+  useEffect(() => {
+    if (!mapRef.current || !leafletLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    if (signalEnabled) {
+      const filtered = signalFilter === "all" ? signalData : signalData.filter((s: any) => s.provider === signalFilter || s.strength > 0.5);
+      const signalPoints = filtered.map((s: any) => [s.lat, s.lng, s.strength || 0.5] as [number, number, number]);
+      if (signalPoints.length > 0) {
+        if (!signalHeatmapLayerRef.current) {
+          if (typeof (L as any).heatLayer !== "undefined") {
+            signalHeatmapLayerRef.current = (L as any).heatLayer(signalPoints, {
+              radius: 30, blur: 20, maxZoom: 17,
+              gradient: { 0.2: "#ef4444", 0.5: "#f59e0b", 1.0: "#22c55e" }
+            }).addTo(mapRef.current);
+          }
+        } else {
+          signalHeatmapLayerRef.current.setOptions({ data: signalPoints });
+        }
+      }
+    } else {
+      if (signalHeatmapLayerRef.current) {
+        signalHeatmapLayerRef.current.remove();
+        signalHeatmapLayerRef.current = null;
+      }
+    }
+  }, [signalEnabled, signalData, signalFilter, leafletLoaded]);
+
+  // ---- FEATURE 4: EV charging station markers ----
+  useEffect(() => {
+    if (!mapRef.current || !leafletLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    // Remove old EV markers
+    Object.keys(evMarkersRef.current).forEach(id => {
+      evMarkersRef.current[id].remove();
+      delete evMarkersRef.current[id];
+    });
+
+    if (evMode) {
+      evChargingStations.forEach((station: any) => {
+        if (!station.lat || !station.lng) return;
+        if (evMarkersRef.current[station.id]) return;
+        const icon = L.divIcon({
+          className: "",
+          html: `<div style="background:#eab308;border:2px solid white;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(234,179,8,0.6);">⚡</div>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
+        });
+        evMarkersRef.current[station.id] = L.marker([station.lat, station.lng], { icon })
+          .addTo(mapRef.current)
+          .bindPopup(`<b>⚡ ${station.name || "Charging Station"}</b><br/>${station.connectors || "Type 2"} · ${station.power || "50kW"}`);
+      });
+    }
+  }, [evMode, evChargingStations, leafletLoaded]);
+
+  // ---- FEATURE 1: Incident markers cleanup ----
+  useEffect(() => {
+    if (!landmarkMode) return;
+    // Already handled by landmark useEffect
+  }, [landmarkMode]);
 
   // ---- FEATURE 11: Measure distance drawing ----
   useEffect(() => {
@@ -2436,7 +2518,7 @@ export default function XakteirMapsPage() {
             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-500">Syncing Geo-Registry...</p>
           </div>
         ) : (
-          <div id="leaflet-map-holder" className={cn("w-full h-full rounded-none border-none z-10", measureMode && "map-cursor-measure")} />
+          <div id="leaflet-map-holder" className={cn("w-full h-full rounded-none border-none z-10", measureMode && "map-cursor-measure", landmarkMode && "landmark-mode", signalEnabled && "signal-mode")} />
         )}
 
         {/* ---- FEATURE 20: Context Menu (Right-click reverse geocode) ---- */}
