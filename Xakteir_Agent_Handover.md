@@ -107,6 +107,14 @@ If you are modifying existing code, keep these changes in mind:
 - **Global Header State:** The `<Header />` layout is managed by `useUIStore` (`src/lib/store.ts`).
 - **Game Store Ownership:** The `/games` library now enforces ownership. Users start with 0 games and must claim them.
 - **Linked Accounts:** Users can connect multiple OAuth providers via the Profile page using Firebase's `linkWithPopup`.
+- **XakCode IDE Batch 1 Features (Major):** Completely expanded the XakCode IDE with 5 new feature modules:
+  - **Extension Marketplace** (`/xakcode/extensions`) — Browse and install extensions (Prettier, ESLint, Git Blame, API Client, Theme Maker, Snippet Vault) with install/uninstall logic and Firestore persistence
+  - **Project Templates Gallery** (`/xakcode/templates`) — Featured and community templates (Tailwind Dashboard, Auth Login, Three.js Scene, Chat Interface, E-Commerce) with one-click bootstrap
+  - **AI Code Review & Insights** (`/xakcode/insights`) — Full code analysis engine detecting `console.log`, `var` usage, missing keys, and providing confidence-scored suggestions with inline AI assistant chat
+  - **Custom Theme Editor** (`/xakcode/settings`) — Create, save, and delete custom editor themes with color pickers, font settings, tab size, auto-save intervals, and ambient sound controls
+  - **Collaboration Cursor Tracking** — Simulated multi-user cursor positions using Y.js WebRTC awareness states, integrated into the multiplayer system
+  - **Extended Sidebar Navigation** — Added Extensions, Templates, and Insights nav items to the IDE sidebar
+
 - **Xak AI Chat Engine & Resilience Overhaul:** Fixed Xak AI chat failures by adding a 3.5s timeout controller and local response fallback.
 
 - **VoltraOS OOBE Overhaul (Major):** Every OOBE page completely rewritten with real functionality:

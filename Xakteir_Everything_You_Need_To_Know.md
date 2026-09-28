@@ -7,6 +7,8 @@ Knowledge is an organized, neat knowledge base for Xakteir — a wiki-style app 
            - Article routes under /knowledge/a/<slug> and internal editor paths (future)
            - Designed to be dependency-light and extremely readable
 
+- **XakCode IDE Batch 1 Features:** Added Extension Marketplace (`/xakcode/extensions`), Project Templates Gallery (`/xakcode/templates`), AI Code Review & Insights (`/xakcode/insights`), Custom Theme Editor (`/xakcode/settings`), and Collaboration Cursor Tracking (WebRTC/Y.js). IDE now has 8 sidebar navigation items including Extensions, Templates, and Insights tabs.
+
 ## Recent Changes
 - **VoltraOS OOBE Complete Overhaul:** Every OOBE page completely rewritten with real functionality: AccountPage now supports Firebase/Firestore sign-in with optional PIN/password, BiometricPage adds fingerprint enrollment, drawing pattern auth, and skip option, WelcomePage has full cinematic design, NetworkPage has Wi-Fi list with signal bars, all other pages expanded significantly with proper UI and real settings
 - **OOBEManager Expanded:** Added Firebase profile sync, PIN validation, fingerprint timer, drawing verification, auth method switching (password/PIN/fingerprint/face/drawing), password requirement toggle, device name/display name properties, oobeProgress tracking

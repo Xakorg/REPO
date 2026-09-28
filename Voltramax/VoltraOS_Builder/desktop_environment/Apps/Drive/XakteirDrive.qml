@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtGraphicalEffects 1.15
 
 Item {
     id: driveRoot
@@ -10,7 +11,7 @@ Item {
     Rectangle {
         id: bg
         anchors.fill: parent
-        color: "#08080A" // Near black
+        color: "#08080A"
     }
 
     // Top Cloud Connection Banner
@@ -31,26 +32,37 @@ Item {
             anchors.margins: 20
             spacing: 20
 
-            Text { 
-                text: "☁️ Xakteir Drive"
+            Canvas {
+                width: 28; height: 28
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.clearRect(0,0,28,28)
+                    ctx.fillStyle = "#4285F4"
+                    ctx.beginPath(); ctx.arc(14,14,10,0,Math.PI*2); ctx.fill()
+                    ctx.fillStyle = "#fff"
+                    ctx.beginPath(); ctx.arc(14,14,5,0,Math.PI*2); ctx.fill()
+                }
+            }
+            Text {
+                text: "Xakteir Drive"
                 color: "white"
-                font.pixelSize: 28 
+                font.pixelSize: 28
                 font.family: "Syne"
                 font.bold: true
             }
 
-            Item { Layout.fillWidth: true } // Spacer
+            Item { Layout.fillWidth: true }
 
             ColumnLayout {
                 spacing: 2
-                Text { 
+                Text {
                     text: DriveEngine.isCloudConnected ? "WebSocket: wss://xakteir.com/sync" : "WebSocket: Disconnected (Offline)"
                     color: DriveEngine.isCloudConnected ? "#00FFCC" : "white"
                     font.pixelSize: 12
                     font.family: "Courier New"
                     Layout.alignment: Qt.AlignRight
                 }
-                Text { 
+                Text {
                     text: DriveEngine.syncStatusText
                     color: "white"
                     font.pixelSize: 16
@@ -58,11 +70,26 @@ Item {
                     Layout.alignment: Qt.AlignRight
                 }
             }
-            
+
             // Manual Sync Button
             Rectangle {
                 width: 40; height: 40; radius: 8; color: "#33FFFFFF"
-                Text { anchors.centerIn: parent; text: "🔄"; font.pixelSize: 20 }
+                Canvas {
+                    width: 18; height: 18
+                    anchors.centerIn: parent
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        ctx.clearRect(0,0,18,18)
+                        ctx.strokeStyle = "#a0a0a0"
+                        ctx.lineWidth = 1.5
+                        ctx.beginPath()
+                        ctx.moveTo(9,4); ctx.lineTo(9,12); ctx.lineTo(14,16)
+                        ctx.stroke()
+                        ctx.beginPath()
+                        ctx.moveTo(9,14); ctx.lineTo(9,6); ctx.lineTo(4,2)
+                        ctx.stroke()
+                    }
+                }
                 MouseArea {
                     anchors.fill: parent
                     onClicked: DriveEngine.triggerManualSync()
@@ -99,7 +126,7 @@ Item {
             Layout.fillHeight: true
             clip: true
             spacing: 5
-            
+
             model: ListModel { id: fModel }
 
             Connections {
@@ -133,9 +160,21 @@ Item {
                     anchors.rightMargin: 15
                     spacing: 15
 
-                    Text { text: "📄"; font.pixelSize: 24 }
-                    
-                    Text { 
+                    // File type icon drawn with Canvas
+                    Canvas {
+                        width: 24; height: 24
+                        onPaint: {
+                            var ctx = getContext("2d")
+                            ctx.clearRect(0,0,24,24)
+                            ctx.fillStyle = "#4285F4"
+                            ctx.fillRect(3, 3, 18, 18)
+                            ctx.fillStyle = "#fff"
+                            ctx.font = "10px Inter"
+                            ctx.fillText("📄", 6, 18)
+                        }
+                    }
+
+                    Text {
                         text: model.name
                         color: "white"
                         font.pixelSize: 18
@@ -145,16 +184,16 @@ Item {
 
                     Text { text: model.size; color: "#AAAAAA"; font.pixelSize: 14; Layout.preferredWidth: 100 }
                     Text { text: model.lastModified; color: "#AAAAAA"; font.pixelSize: 14; Layout.preferredWidth: 150 }
-                    
+
                     // Sync Status Indicator
                     RowLayout {
                         Layout.preferredWidth: 150
                         Layout.alignment: Qt.AlignRight
                         spacing: 10
 
-                        Text { 
+                        Text {
                             text: {
-                                if (model.syncState === "Synced") return "✔️ Synced";
+                                if (model.syncState === "Synced") return "✔ Synced";
                                 if (model.syncState === "Syncing") return "🔄 Syncing...";
                                 return "☁️ Offline Pending";
                             }
@@ -170,7 +209,7 @@ Item {
                         }
                     }
 
-                    // Simulate Modifying the File (Triggers Delta Sync)
+                    // Edit button (triggers Delta Sync)
                     Rectangle {
                         width: 80; height: 30; radius: 4; color: "#33FFFFFF"
                         Text { anchors.centerIn: parent; text: "EDIT"; color: "white"; font.bold: true }

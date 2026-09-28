@@ -8,7 +8,7 @@ import {
   KeyRound, Settings, Share2, History, Users2, DownloadCloud, 
   PieChart, Copy, Image as ImageIcon, Trash, Tag, StarOff, 
   Activity, Mail, CalendarClock, LockKeyhole, Scissors, 
-  SlidersHorizontal, Code, Link as LinkIcon, Grid, List, 
+  SlidersHorizontal, Sparkles, Keyboard, Code, Link as LinkIcon, Grid, List, 
   SearchCode, FileArchive, PlaySquare, WifiOff, FileSignature, FileEdit,
   Video, Music, FileText, FileCode2, ChevronRight, FolderPlus, Palette, PenLine, RotateCcw,
   RefreshCw, Laptop
@@ -30,6 +30,11 @@ import Editor from "@monaco-editor/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import KnowledgeGraph3D from "@/components/drive/KnowledgeGraph3D";
+import VersionHistory from "@/components/drive/features/VersionHistory";
+import BulkRename from "@/components/drive/features/BulkRename";
+import KeyboardShortcuts from "@/components/drive/features/KeyboardShortcuts";
+import SmartOrganizer from "@/components/drive/features/SmartOrganizer";
+import SecureShare from "@/components/drive/features/SecureShare";
 // --- IndexedDB Local File Handling ---
 const DB_NAME = 'xakteir-drive';
 const STORE_NAME = 'handles';
@@ -134,6 +139,14 @@ export default function XakDrivePage() {
   const [emptyContextMenu, setEmptyContextMenu] = useState<EmptyContextMenuState>(null);
   const [previewFile, setPreviewFile] = useState<any>(null);
   const [previewContent, setPreviewContent] = useState<string>("");
+
+  // Feature States
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+  const [versionHistoryFile, setVersionHistoryFile] = useState<any>(null);
+  const [bulkRenameOpen, setBulkRenameOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [organizerOpen, setOrganizerOpen] = useState(false);
+  const [secureShareFile, setSecureShareFile] = useState<any>(null);
 
   // Sync Engine State
   const [syncedFolders, setSyncedFolders] = useState<Record<string, FileSystemDirectoryHandle>>({});
@@ -637,8 +650,8 @@ export default function XakDrivePage() {
                       <PenLine className="w-4 h-4 mr-2" /> Rename
                     </button>
                     {!contextMenu.file.isFolder && (
-                      <button onClick={() => setShareFile(contextMenu.file)} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
-                        <Share2 className="w-4 h-4 mr-2" /> Share Link
+                      <button onClick={() => setSecureShareFile(contextMenu.file)} className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-blue-600 hover:text-white flex items-center">
+                        <ShieldCheck className="w-4 h-4 mr-2" /> Secure Share
                       </button>
                     )}
                     {!contextMenu.file.isFolder && (
@@ -924,6 +937,14 @@ export default function XakDrivePage() {
                 <button onClick={() => setViewMode('3d')} className={cn("p-1.5 rounded-md transition-colors", viewMode === '3d' ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]" : "text-zinc-500 hover:text-purple-400")}><Activity className="w-4 h-4" /></button>
               </div>
               
+              {/* Feature Buttons */}
+              <Button variant="outline" size="sm" className="h-9 border-white/10 bg-zinc-900 text-purple-400 hover:text-purple-300 hover:bg-purple-600/10" onClick={() => setOrganizerOpen(true)} title="AI Organizer">
+                <Sparkles className="w-4 h-4 mr-1" /> AI
+              </Button>
+              <Button variant="outline" size="sm" className="h-9 border-white/10 bg-zinc-900 text-zinc-400 hover:text-zinc-200" onClick={() => setShortcutsOpen(true)} title="Keyboard Shortcuts">
+                <Keyboard className="w-4 h-4" />
+              </Button>
+              
               {driveMode !== 'trash' && (
                 <>
                   {currentFolderId !== 'root' && (
@@ -1177,6 +1198,43 @@ export default function XakDrivePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* VERSION HISTORY */}
+      <VersionHistory
+        file={versionHistoryFile}
+        open={versionHistoryOpen}
+        onOpenChange={setVersionHistoryOpen}
+        onRestore={(url, name) => {
+          setPreviewFile(prev => ({ ...prev, url, name }));
+          setVersionHistoryOpen(false);
+        }}
+      />
+
+      {/* BULK RENAME */}
+      <BulkRename
+        selectedFiles={selectedFiles.size > 0 ? driveFilesRaw?.filter(f => selectedFiles.has(f.id)) || [] : []}
+        open={bulkRenameOpen}
+        onOpenChange={setBulkRenameOpen}
+        onRenameComplete={() => {}}
+      />
+
+      {/* KEYBOARD SHORTCUTS */}
+      <KeyboardShortcuts open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+
+      {/* AI SMART ORGANIZER */}
+      <SmartOrganizer
+        files={driveFilesRaw || []}
+        open={organizerOpen}
+        onOpenChange={setOrganizerOpen}
+      />
+
+      {/* SECURE SHARE */}
+      <SecureShare
+        file={secureShareFile}
+        open={!!secureShareFile}
+        onOpenChange={(open) => { if (!open) setSecureShareFile(null); }}
+      />
+
     </div>
   );
 }

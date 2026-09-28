@@ -61,6 +61,10 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/no
 import { isOffensive } from "@/lib/username";
 import Link from "next/link";
 import Room3D from "./Room3D";
+import { ChatGamesBar } from "@/components/chat/ChatGamesBar";
+import { MiniGamePanel } from "@/components/chat/MiniGamePanel";
+import { CollabCanvas } from "@/components/chat/CollabCanvas";
+import { Gamepad2, Wallet, Sparkles, Crown, Users } from "lucide-react";
 
 const SUPER_ADMIN_EMAILS = ["admin@xakteir.com", "admin2@xakteir.com"];
 
@@ -201,6 +205,11 @@ export default function ServerChatPage() {
   // Feature 13: Slow mode
   const [slowModeUntil, setSlowModeUntil] = useState(0);
   const [slowModeCountdown, setSlowModeCountdown] = useState(0);
+
+  // Mini-Games & Collab state
+  const [showGameLauncher, setShowGameLauncher] = useState(false);
+  const [activeGameType, setActiveGameType] = useState("");
+  const [showCollabCanvas, setShowCollabCanvas] = useState(false);
 
   // Feature 1 + 2: E2E Encryption and Disappearing messages
   const [e2eEnabled, setE2eEnabled] = useState(false);
@@ -2578,6 +2587,25 @@ export default function ServerChatPage() {
       {showBookmarks && (
         <BookmarksPanel 
           onClose={() => setShowBookmarks(false)} 
+        />
+      )}
+
+      {/* Mini-Game Launcher */}
+      {showGameLauncher && (
+        <MiniGamePanel
+          gameType={activeGameType}
+          channelId={channelId}
+          serverName={serverName}
+          onClose={() => { setShowGameLauncher(false); setActiveGameType(""); }}
+        />
+      )}
+
+      {/* Collab Canvas */}
+      {showCollabCanvas && (
+        <CollabCanvas
+          channelId={channelId}
+          serverName={serverName}
+          onClose={() => setShowCollabCanvas(false)}
         />
       )}
     </main>

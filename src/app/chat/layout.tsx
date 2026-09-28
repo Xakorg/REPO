@@ -60,6 +60,12 @@ import { Card } from "@/components/ui/card";
 import { getIceServers } from "@/lib/webrtc/config";
 import { IceCandidateBuffer } from "@/lib/webrtc/ice-buffer";
 import { DesktopLauncherBar } from "@/components/chat/DesktopLauncherBar";
+import { ChatGamesBar } from "@/components/chat/ChatGamesBar";
+import { GameLauncher } from "@/components/chat/GameLauncher";
+import { AdvancedSearch } from "@/components/chat/AdvancedSearch";
+import { CreditsRewards } from "@/components/chat/CreditsRewards";
+import { CosmeticsStore } from "@/components/chat/CosmeticsStore";
+import { Gamepad2, Coins, Sparkles, Crown, Wallet, Palette } from "lucide-react";
 
 const SERVERS = [
 
@@ -165,6 +171,12 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   const [statusEmoji, setStatusEmoji] = useState("💬");
   const [bioText, setBioText] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // New feature modals
+  const [showGameLauncher, setShowGameLauncher] = useState(false);
+  const [showCreditsRewards, setShowCreditsRewards] = useState(false);
+  const [showCosmeticsStore, setShowCosmeticsStore] = useState(false);
+  const [activeGameType, setActiveGameType] = useState<string>("");
 
   // Collapsible sidebar
   const [textCollapsed, setTextCollapsed] = useState(false);
@@ -2811,6 +2823,29 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      {/* Mini-Game Launcher */}
+      {showGameLauncher && (
+        <GameLauncher
+          gameType={activeGameType}
+          channelId={isServerRoute ? searchParams.get("c") || "general" : undefined}
+          serverName={activeServer}
+          onClose={() => { setShowGameLauncher(false); setActiveGameType(""); }}
+        />
+      )}
+
+      {/* Credits & Rewards */}
+      <CreditsRewards open={showCreditsRewards} onClose={() => setShowCreditsRewards(false)} />
+
+      {/* Cosmetics Store */}
+      <CosmeticsStore open={showCosmeticsStore} onClose={() => setShowCosmeticsStore(false)} />
+
+      {/* Advanced Search */}
+      <AdvancedSearch
+        open={showGlobalSearch}
+        onClose={() => setShowGlobalSearch(false)}
+      />
+
       </div>
     </div>
   );

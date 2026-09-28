@@ -2500,6 +2500,10 @@ export default function XakteirMapsPage() {
         .fitness-route-line { stroke-dasharray: 10, 6; }
         .landmark-popup .leaflet-popup-content-wrapper { border-radius: 16px !important; }
         .landmark-popup .leaflet-popup-content { margin: 12px 16px !important; }
+        .landmark-mode .leaflet-tile-pane { filter: sepia(0.15) hue-rotate(-10deg) saturate(1.2); }
+        .signal-mode .leaflet-tile-pane { filter: brightness(0.85) contrast(1.1); }
+        .landmark-mode::after { content: ''; position: absolute; top: 80px; left: 50%; transform: translateX(-50%); z-index: 500; background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 6px 16px; border-radius: 20px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; pointer-events: none; }
+        .signal-mode::after { content: ''; position: absolute; top: 80px; left: 50%; transform: translateX(-50%); z-index: 500; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; pointer-events: none; }
       `}</style>
 
       {/* ---- FEATURE 15: Offline Banner ---- */}

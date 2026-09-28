@@ -126,11 +126,11 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const timer = setInterval(() => {
       setCpuUsage(prev => {
-        const delta = Math.floor(Math.random() * 11) - 5; // -5 to +5
+        const delta = Math.floor(Math.random() * 11) - 5;
         return Math.max(5, Math.min(95, prev + delta));
       });
       setRamUsage(prev => {
-        const delta = Math.floor(Math.random() * 5) - 2; // -2 to +2
+        const delta = Math.floor(Math.random() * 5) - 2;
         return Math.max(30, Math.min(85, prev + delta));
       });
       setDbLatency(prev => {
@@ -244,9 +244,12 @@ function IDELayoutInner({ children }: { children: React.ReactNode }) {
           <div className="space-y-4 w-full px-2">
             {[
               { path: "/xakcode", icon: Code2, label: "Editor" },
+              { path: "/xakcode/extensions", icon: Plug, label: "Extensions" },
+              { path: "/xakcode/templates", icon: LayoutGrid, label: "Templates" },
               { path: "/xakcode/hosting", icon: Globe, label: "Hosting" },
               { path: "/xakcode/console", icon: Terminal, label: "Console" },
               { path: "/xakcode/git", icon: GitBranch, label: "Git Control" },
+              { path: "/xakcode/insights", icon: Sparkles, label: "Insights" },
               { path: "/xakcode/utilities", icon: Tv, label: "Utilities" }
             ].map(item => {
               const isActive = pathname === item.path;

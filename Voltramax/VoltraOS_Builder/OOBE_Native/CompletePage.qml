@@ -163,24 +163,50 @@ Item {
         }
     }
 
-    // Xak AI status indicator
+    // Xak AI status indicator - Diamond/Orb shape
     Rectangle {
         visible: OOBE.enableXakAI
-        color: "#203b82f6"
-        border.color: "#3b82f6"
-        border.width: 2
+        width: 60
+        height: 60
         radius: 12
+        color: "#34C759"
+        border.color: "#FFD700"
+        border.width: 3
         anchors {
             bottom: parent.bottom
             horizontalCenter: parent.horizontalCenter
-            bottomMargin: 20
+            bottomMargin: 25
+        }
+        layer.enabled: true
+        layer.effect: DropShadow {
+            color: "#FFD700"
+            radius: 15
+            samples: 16
+            spread: 0.3
         }
 
-        Text {
-            text: "⚡ Xak AI: Ready | VoltraOS v1.0.0"
-            font.pixelSize: 14
-            color: "#3b82f6"
+        // Diamond shape with rotation
+        Rectangle {
+            width: 36; height: 36
+            radius: 4
+            color: "#FFD700"
             anchors.centerIn: parent
+            transform: Rotation { origin.x: 18; origin.y: 18; angle: 45 }
+            
+            Text {
+                text: "No.1"
+                font.pixelSize: 10
+                font.bold: true
+                color: "#0a0a1a"
+                anchors.centerIn: parent
+            }
+        }
+
+        // Pulse animation
+        NumberAnimation on opacity {
+            from: 0.7; to: 1.0; duration: 2000
+            loops: Animation.Infinite
+            easing.type: Easing.InOutQuad
         }
     }
 }
