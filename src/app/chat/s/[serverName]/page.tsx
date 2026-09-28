@@ -2453,7 +2453,8 @@ export default function ServerChatPage() {
                <span className="text-[8px] text-zinc-700 font-bold uppercase tracking-widest self-center">Formatting & Privacy</span>
              </div>
 
-             <form onSubmit={(e) => handleSend(e)} className="flex items-end gap-3 md:gap-4">
+             <ChatGamesBar onLaunchGame={(type) => { setActiveGameType(type); setShowGameLauncher(true); }} channelId={channelId} serverName={serverName} />
+              <form onSubmit={(e) => handleSend(e)} className="flex items-end gap-3 md:gap-4">
                 <div className="flex-1 glass-panel bg-black/40 border-2 border-white/10 rounded-[2rem] p-2 md:p-3 flex items-center gap-3 md:gap-4 relative shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_32px_rgba(16,185,129,0.1)] transition-all">
                    <input 
                      type="file" 

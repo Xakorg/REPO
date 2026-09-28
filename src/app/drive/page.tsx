@@ -729,7 +729,7 @@ export default function XakDrivePage() {
       </AnimatePresence>
 
       {/* SHARE DIALOG */}
-      <Dialog open={!!shareFile} onOpenChange={(open) => !open && setShareFile(null)}>
+      <Dialog open={!!secureShareFile} onOpenChange={(open) => !open && setSecureShareFile(null)}>
         <DialogContent className="bg-zinc-950 border-white/10 text-white max-w-sm">
           <DialogHeader>
             <DialogTitle>Share {shareFile?.name}</DialogTitle>
