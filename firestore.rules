@@ -706,5 +706,59 @@ service cloud.firestore {
     match /dns_records/{id} {
       allow read, write: if isSignedIn();
     }
+
+    // ─────────────────────────────────────────────
+    // XAKTEIR MAPS — Community map layers
+    // ─────────────────────────────────────────────
+
+    // Live incident/safety reports (accidents, road closures, congestion…)
+    // Public read so the safety layer works for everyone; reports must be signed in
+    // and are attributed via the userId field.
+    match /mapIncidents/{id} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // Global fitness leaderboard
+    match /fitnessLeaderboard/{id} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // EV charging station directory
+    match /evChargingStations/{id} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // Xak AI travel assistant prompt suggestions
+    match /aiSuggestions/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Curated landmark registry (Landmark Mode)
+    match /landmarks/{id} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // Community signal strength readings
+    match /signalReadings/{id} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
   }
 }

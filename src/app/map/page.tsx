@@ -72,20 +72,16 @@ import {
   Terminal,
   Bot,
   Radio,
-  Walk,
   Activity,
   TrendingUp,
   Trophy,
   Target,
-  NavigationOff,
   Signal,
   Wifi as WifiIcon,
   Wind,
   Mountain,
   Landmark,
   Sparkles,
-  ZapIcon,
-  TriangleAlert,
   ChevronDown,
   ChevronUp,
   Route,
@@ -96,7 +92,6 @@ import {
   Wrench,
   Lock,
   Unlock,
-  GaugeGauge,
   ArrowRightLeft,
   Scan,
 } from "lucide-react";
@@ -447,46 +442,36 @@ export default function XakteirMapsPage() {
   const globalSearchMarkerRef = useRef<any>(null);
 
   // ---- LEFT SIDEBAR PANELS ----
-  const [leftPanel, setLeftPanel] = useState<"route" | "saved" | "poi" | "explore" | "layers" | "events" | "photos" | "measure" | "incidents" | "fitness" | "ai" | "ev" | "signal">("route");
+  const [leftPanel, setLeftPanel] = useState<"route" | "saved" | "poi" | "explore" | "layers" | "events" | "photos" | "measure" | "incidents" | "fitness" | "ai" | "ev" | "signal" | "landmarks">("route");
 
   // ---- FEATURE 1: Live Incident/Safety Layer (Enhanced) ----
-  const [incidentsOpen, setIncidentsOpen] = useState(false);
   const [mapIncidents, setMapIncidents] = useState<any[]>([]);
   const [incidentFilter, setIncidentFilter] = useState<string>("all");
-  const [incidentMarkersRef] = useRef<Record<string, any>>({});
+  const incidentMarkersRef = useRef<Record<string, any>>({});
   const [userIncidents, setUserIncidents] = useState<any[]>([]);
 
   // ---- FEATURE 2: Fitness Tracker + Leaderboards ----
-  const [fitnessOpen, setFitnessOpen] = useState(false);
   const [fitnessRoutes, setFitnessRoutes] = useState<any[]>([]);
   const [activeWorkout, setActiveWorkout] = useState(false);
   const [workoutStartTime, setWorkoutStartTime] = useState<number | null>(null);
   const [workoutDistance, setWorkoutDistance] = useState(0);
   const [workoutPace, setWorkoutPace] = useState(0);
   const [workoutPoints, setWorkoutPoints] = useState<{lat: number; lng: number; time: number}[]>([]);
-  const [workoutHistoryOpen, setWorkoutHistoryOpen] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [fitnessStats, setFitnessStats] = useState({totalDistance: 0, totalTime: 0, workouts: 0, avgPace: 0});
-  const [fitnessBadge, setFitnessBadge] = useState("");
-  const workoutPolylineRef = useRef<any>(null);
   const workoutMarkersRef = useRef<any[]>([]);
 
   // ---- FEATURE 3: AI Travel Assistant (Xak AI) ----
-  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [aiMessages, setAiMessages] = useState<{role: "user" | "ai"; text: string}[]>([]);
   const [aiInput, setAiInput] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
-  const [aiRoutePreference, setAiRoutePreference] = useState("");
 
   // ---- FEATURE 4: EV/Electric Vehicle Mode ----
   const [evMode, setEvMode] = useState(false);
   const [evChargingStations, setEvChargingStations] = useState<any[]>([]);
   const [evBatteryLevel, setEvBatteryLevel] = useState(100);
   const [evRangeRemaining, setEvRangeRemaining] = useState(300);
-  const [evRoute, setEvRoute] = useState<any>(null);
-  const [evChargingStops, setEvChargingStops] = useState<any[]>([]);
-  const [evOpen, setEvOpen] = useState(false);
   const [evSelectedStation, setEvSelectedStation] = useState<any>(null);
   const evMarkersRef = useRef<Record<string, any>>({});
   const landmarkMarkersRef = useRef<Record<string, any>>({});
@@ -496,9 +481,7 @@ export default function XakteirMapsPage() {
   // ---- FEATURE 5: Signal Strength Map Layer ----
   const [signalEnabled, setSignalEnabled] = useState(false);
   const [signalData, setSignalData] = useState<any[]>([]);
-  const [signalFilter, setSignalFilter] = useState<string>("all");
-  const [signalOpen, setSignalOpen] = useState(false);
-  const [signalHeatmapLayerRef, setSignalHeatmapLayerRef] = useState<any>(null);
+  const signalHeatmapLayerRef = useRef<any>(null);
   const [userSignalReadings, setUserSignalReadings] = useState<any[]>([]);
   const [signalProvider, setSignalProvider] = useState<string>("all");
 
@@ -662,8 +645,8 @@ export default function XakteirMapsPage() {
       };
       const color = typeColors[incident.type] || "#ef4444";
       const icon = L.divIcon({
-        className: "",
-        html: `<div style="background:${color};border:2px solid white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.5);animation: pulse-radar 2s infinite;">🚨</div>`,
+        className: "incident-marker",
+        html: `<div style="background:${color};border:2px solid white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.5);">🚨</div>`,
         iconSize: [28, 28],
         iconAnchor: [14, 14]
       });
@@ -672,6 +655,29 @@ export default function XakteirMapsPage() {
         .bindPopup(`<b>🚨 ${incident.type}</b><br/><span style="font-size:11px">Reported ${incident.timestamp?.toDate?.()?.toLocaleString() || "Unknown"}</span>`);
     });
   }, [mapIncidents, incidentFilter, leafletLoaded]);
+
+  // ---- FEATURE 2: Record live GPS points while a workout is active ----
+  useEffect(() => {
+    if (!activeWorkout || !location) return;
+    setWorkoutPoints(prev => {
+      const last = prev[prev.length - 1];
+      // Ignore jittery/duplicate fixes (< 5m apart)
+      if (last && getDistance(last.lat, last.lng, location.lat, location.lon) < 5) return prev;
+      return [...prev, { lat: location.lat, lng: location.lon, time: Date.now() }];
+    });
+  }, [activeWorkout, location]);
+
+  // ---- FEATURE 2: Recalculate workout distance + pace ----
+  useEffect(() => {
+    if (!activeWorkout || !workoutStartTime) return;
+    let total = 0;
+    for (let i = 1; i < workoutPoints.length; i++) {
+      total += getDistance(workoutPoints[i - 1].lat, workoutPoints[i - 1].lng, workoutPoints[i].lat, workoutPoints[i].lng);
+    }
+    setWorkoutDistance(total);
+    const elapsed = (Date.now() - workoutStartTime) / 1000;
+    setWorkoutPace(total > 10 && elapsed > 0 ? elapsed / (total / 1000) : 0);
+  }, [workoutPoints, activeWorkout, workoutStartTime]);
 
   // ---- FEATURE 2: Fitness tracking markers ----
   useEffect(() => {
@@ -683,12 +689,13 @@ export default function XakteirMapsPage() {
     workoutMarkersRef.current = [];
 
     const latlngs = workoutPoints.map((p: any) => [p.lat, p.lng] as [number, number]);
-    workoutMarkersRef.current.push(L.polyline(latlngs, { color: "#10b981", weight: 4, opacity: 0.8, dashArray: "10,6" }).addTo(mapRef.current));
+    workoutMarkersRef.current.push(L.polyline(latlngs, { color: "#10b981", weight: 4, opacity: 0.8, className: "fitness-route-line" }).addTo(mapRef.current));
 
     workoutPoints.forEach((p: any, i: number) => {
       if (i % 10 === 0) {
         const m = L.circleMarker([p.lat, p.lng], {
-          radius: 4, fillColor: "#10b981", color: "#fff", weight: 1, fillOpacity: 1
+          radius: 4, fillColor: "#10b981", color: "#fff", weight: 1, fillOpacity: 1,
+          className: "signal-marker"
         }).addTo(mapRef.current);
         workoutMarkersRef.current.push(m);
       }
@@ -754,8 +761,6 @@ export default function XakteirMapsPage() {
   // ---- FEATURE 5: Signal layer toggle ----
   const toggleSignalLayer = () => {
     if (!signalEnabled) {
-      // Load signal heatmap
-      const signalPoints = signalData.map((s: any) => [s.lat, s.lng, s.strength || 0.5] as [number, number, number]);
       setSignalEnabled(true);
       toast({ title: "📡 Signal Map Activated!", description: `${signalData.length} signal readings loaded.` });
     } else {
@@ -784,14 +789,17 @@ export default function XakteirMapsPage() {
       if (!landmark.lat || !landmark.lng) return;
       if (landmarkMarkersRef.current[landmark.id]) return;
       const icon = L.divIcon({
-        className: "",
-        html: `<div style="background:${landmark.color || "#f59e0b"}00;border:2px solid ${landmark.color || "#f59e0b"};border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 12px ${landmark.color || "#f59e0b"}44;">${landmark.icon || "🏛️"}</div>`,
+        className: "landmark-marker",
+        html: `<div style="background:${landmark.color || "#f59e0b"}00;border:2px solid ${landmark.color || "#f59e0b"};border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;">${landmark.icon || "🏛️"}</div>`,
         iconSize: [36, 36],
         iconAnchor: [18, 18]
       });
       landmarkMarkersRef.current[landmark.id] = L.marker([landmark.lat, landmark.lng], { icon })
         .addTo(mapRef.current)
-        .bindPopup(`<b>${landmark.name}</b><br/><span style="font-size:11px">${landmark.description || "A notable landmark"}</span><br/><span style="font-size:9px;color:${landmark.color || "#f59e0b"}">${landmark.category || "Landmark"}</span>`);
+        .bindPopup(
+          `<b>${landmark.icon || "🏛️"} ${landmark.name}</b><br/><span style="font-size:11px">${landmark.description || "A notable landmark"}</span><br/><span style="font-size:9px;color:${landmark.color || "#f59e0b"}">${landmark.category || "Landmark"}</span>`,
+          { className: "landmark-popup" }
+        );
     });
   }, [landmarks, landmarkFilter, landmarkMode, leafletLoaded]);
 
@@ -804,40 +812,6 @@ export default function XakteirMapsPage() {
       });
     }
   }, [landmarkMode]);
-
-  // ---- Helper: Find closest point and distance (reused) ----
-  function findClosestPointAndDistance(coords: [number, number][], userLat: number, userLon: number) {
-    if (!coords || coords.length === 0) return { point: null, distanceAlong: 0, closestIdx: 0 };
-    let minDistance = Infinity;
-    let closestIdx = 0;
-    let closestPoint: [number, number] = coords[0];
-    for (let i = 0; i < coords.length; i++) {
-      const d = getDistance(userLat, userLon, coords[i][0], coords[i][1]);
-      if (d < minDistance) { minDistance = d; closestIdx = i; closestPoint = coords[i]; }
-    }
-    let distanceAlong = 0;
-    for (let i = 0; i < closestIdx; i++) {
-      distanceAlong += getDistance(coords[i][0], coords[i][1], coords[i+1][0], coords[i+1][1]);
-    }
-    return { point: closestPoint, distanceAlong, closestIdx };
-  }
-
-  // ---- Report incident (enhanced) ----
-  const reportIncident = async (type: string) => {
-    if (!firestore || !location) return;
-    try {
-      await addDoc(collection(firestore, "mapIncidents"), {
-        type,
-        lat: location.lat,
-        lng: location.lon,
-        userId: user?.uid || "anonymous",
-        timestamp: serverTimestamp()
-      });
-      toast({ title: `🚨 Incident Reported`, description: `${type} reported at your location.` });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Could not report incident." });
-    }
-  };
 
   // ---- Save fitness route ----
   const saveFitnessRoute = async () => {
@@ -1327,7 +1301,7 @@ export default function XakteirMapsPage() {
     if (!L) return;
 
     if (signalEnabled) {
-      const filtered = signalFilter === "all" ? signalData : signalData.filter((s: any) => s.provider === signalFilter || s.strength > 0.5);
+      const filtered = signalProvider === "all" ? signalData : signalData.filter((s: any) => s.provider === signalProvider);
       const signalPoints = filtered.map((s: any) => [s.lat, s.lng, s.strength || 0.5] as [number, number, number]);
       if (signalPoints.length > 0) {
         if (!signalHeatmapLayerRef.current) {
@@ -1347,7 +1321,7 @@ export default function XakteirMapsPage() {
         signalHeatmapLayerRef.current = null;
       }
     }
-  }, [signalEnabled, signalData, signalFilter, leafletLoaded]);
+  }, [signalEnabled, signalData, signalProvider, leafletLoaded]);
 
   // ---- FEATURE 4: EV charging station markers ----
   useEffect(() => {
@@ -1366,7 +1340,7 @@ export default function XakteirMapsPage() {
         if (!station.lat || !station.lng) return;
         if (evMarkersRef.current[station.id]) return;
         const icon = L.divIcon({
-          className: "",
+          className: "ev-station-marker",
           html: `<div style="background:#eab308;border:2px solid white;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(234,179,8,0.6);">⚡</div>`,
           iconSize: [30, 30],
           iconAnchor: [15, 15]
@@ -1377,12 +1351,6 @@ export default function XakteirMapsPage() {
       });
     }
   }, [evMode, evChargingStations, leafletLoaded]);
-
-  // ---- FEATURE 1: Incident markers cleanup ----
-  useEffect(() => {
-    if (!landmarkMode) return;
-    // Already handled by landmark useEffect
-  }, [landmarkMode]);
 
   // ---- FEATURE 11: Measure distance drawing ----
   useEffect(() => {
@@ -2310,14 +2278,20 @@ export default function XakteirMapsPage() {
   // ---- FEATURE 1: Incident reporting ----
   const reportIncident = async (type: string) => {
     if (!firestore || !location) return;
+    const payload = {
+      type,
+      lat: location.lat,
+      lng: location.lon,
+      userId: user?.uid || "anonymous",
+      timestamp: serverTimestamp()
+    };
     try {
-      await addDoc(collection(firestore, "mapIncidents"), {
-        type,
-        lat: location.lat,
-        lng: location.lon,
-        userId: user?.uid || "anonymous",
-        timestamp: serverTimestamp()
-      });
+      // Community feed
+      await addDoc(collection(firestore, "mapIncidents"), payload);
+      // Personal history (drives the "Your Reports" list)
+      if (user) {
+        await addDoc(collection(firestore, "users", user.uid, "reportedIncidents"), payload);
+      }
       toast({ title: `🚨 Incident Reported`, description: `${type} reported at your location.` });
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: "Could not report incident." });
@@ -2498,12 +2472,13 @@ export default function XakteirMapsPage() {
         .signal-marker { animation: pulse-signal 1.5s infinite; }
         .incident-marker { animation: pulse-radar 2s infinite; }
         .fitness-route-line { stroke-dasharray: 10, 6; }
-        .landmark-popup .leaflet-popup-content-wrapper { border-radius: 16px !important; }
-        .landmark-popup .leaflet-popup-content { margin: 12px 16px !important; }
+        .landmark-popup .leaflet-popup-content-wrapper { border-radius: 16px !important; background: rgba(24, 24, 27, 0.96) !important; color: #fff !important; border: 1px solid rgba(245, 158, 11, 0.35); }
+        .landmark-popup .leaflet-popup-content { margin: 12px 16px !important; font-size: 11px; line-height: 1.5; }
+        .landmark-popup .leaflet-popup-tip { background: rgba(24, 24, 27, 0.96) !important; }
         .landmark-mode .leaflet-tile-pane { filter: sepia(0.15) hue-rotate(-10deg) saturate(1.2); }
         .signal-mode .leaflet-tile-pane { filter: brightness(0.85) contrast(1.1); }
-        .landmark-mode::after { content: ''; position: absolute; top: 80px; left: 50%; transform: translateX(-50%); z-index: 500; background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 6px 16px; border-radius: 20px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; pointer-events: none; }
-        .signal-mode::after { content: ''; position: absolute; top: 80px; left: 50%; transform: translateX(-50%); z-index: 500; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; pointer-events: none; }
+        .landmark-mode::after { content: '🏛️ Landmark Mode'; position: absolute; top: 80px; left: 50%; transform: translateX(-50%); z-index: 500; background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 6px 16px; border-radius: 20px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; pointer-events: none; white-space: nowrap; }
+        .signal-mode::after { content: '📡 Signal Map'; position: absolute; top: 80px; left: 50%; transform: translateX(-50%); z-index: 500; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; pointer-events: none; white-space: nowrap; }
       `}</style>
 
       {/* ---- FEATURE 15: Offline Banner ---- */}
@@ -3461,10 +3436,16 @@ export default function XakteirMapsPage() {
                       <Progress value={evBatteryLevel} className="h-2 bg-zinc-950 border border-white/5 rounded-full" />
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center gap-2">
-                          <NavigationOff className="w-4 h-4 text-sky-400" />
+                          <Route className="w-4 h-4 text-sky-400" />
                           <span className="text-[10px] font-bold text-sky-400">Range</span>
                         </div>
                         <span className="text-sm font-black text-white">{evRangeRemaining} km</span>
+                      </div>
+                      <div className="pt-3 mt-1 border-t border-white/5 space-y-1">
+                        <Slider value={[evBatteryLevel]} min={5} max={100} step={1}
+                          onValueChange={v => setEvBatteryLevel(v[0])}
+                          className="cursor-pointer" aria-label="Battery level" />
+                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500">Drag to simulate your charge</p>
                       </div>
                     </div>
                     <Button onClick={toggleEvMode} className={cn("w-full h-10 rounded-xl font-black text-xs uppercase flex items-center justify-center gap-2",
@@ -3488,6 +3469,27 @@ export default function XakteirMapsPage() {
                           ))}
                           {evChargingStations.length === 0 && <p className="text-center text-zinc-600 text-xs py-3">No stations nearby</p>}
                         </div>
+                        {evSelectedStation && (
+                          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-black text-white">⚡ {evSelectedStation.name || "Charging Station"}</p>
+                              <button onClick={() => setEvSelectedStation(null)} className="text-zinc-400 hover:text-white"><X className="w-4 h-4" /></button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="bg-black/30 rounded-xl p-2">
+                                <p className="text-[8px] font-black uppercase text-zinc-500">Connectors</p>
+                                <p className="text-[10px] font-black text-white">{evSelectedStation.connectors || "Type 2"}</p>
+                              </div>
+                              <div className="bg-black/30 rounded-xl p-2">
+                                <p className="text-[8px] font-black uppercase text-zinc-500">Power</p>
+                                <p className="text-[10px] font-black text-white">{evSelectedStation.power || "50kW"}</p>
+                              </div>
+                            </div>
+                            {evSelectedStation.lat && (
+                              <p className="text-[9px] text-zinc-500">📍 {evSelectedStation.lat.toFixed(4)}, {evSelectedStation.lng.toFixed(4)}</p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </>
