@@ -58,3 +58,32 @@ Xakteir Maps is a full navigation and live-urban-data map app.
 - **VoltraOS Build Pipeline:** Kernel (`voltra_kernel/`) uses Docker with Ubuntu 24.04, gcc-i686, nasm, grub-pc-bin, xorriso, mtools. Desktop (`desktop_environment/`) uses CMake + Qt6. Full ISO generation via top-level `Makefile`.
 - **VoltraOS Desktop Environment:** Qt6/QML desktop with services: DesktopDaemon, BrowserEngine, TerminalPTY, GameAggregatorService, XakChatService, XakCoachingService, VoltraFileSystemModel, DriveEngine, StreamEngine, WTLManager, SyscallBridge
 - **Kernel:** Bare-metal 32-bit freestanding C kernel with GRUB multiboot bootloader. ~40 source files including main.c, memory.c, interrupts.c, drivers/, fs/, fs/, etc.
+
+---
+
+## VoltraMax native platform layer (new)
+
+**`desktop_environment/Shared/` is the root dependency every native app now has.**
+
+Before this existed, every native VoltraMax app was an isolated island with no
+account and no way to talk to a server - which is exactly why every feature
+first shipped only in the web copy under `src/`. The native apps had nowhere to
+send data.
+
+Two pieces, both real, both registered in `CMakeLists.txt`:
+
+- **`Shared/Http/HttpClient`** - the one HTTP client for the whole binary.
+  Bearer tokens, exponential backoff with jitter, ETag-based conflict detection
+  (a `412` is a conflict and is never retried), and RFC 7233 resumable chunked
+  upload that survives a process restart.
+- **`Shared/Account/XakteirAccount`** - one connected Xakteir account, speaking
+  the same Firebase Identity Toolkit endpoints as the web app, so web and
+  desktop sessions are genuinely interchangeable. Guest is a real identity with
+  a stable local id; sign-in is optional, never a gate; a failed refresh falls
+  back to a real guest rather than a fake signed-in state.
+
+Also added `Qt6::Network`, which had never been linked.
+
+**Honest status:** not compiled - this machine has no Qt install. `defaultApiKey()`
+is a placeholder. Tokens are in `QSettings` rather than the OS keychain. Full
+limitations list in `desktop_environment/Shared/README.md`.

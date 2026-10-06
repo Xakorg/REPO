@@ -156,3 +156,51 @@ If you are modifying existing code, keep these changes in mind:
 Your goal is to build out real features, supercharge existing ones, and help transition this massive web ecosystem into a native, premium experience for Voltramax. 
 
 Have fun, be energetic, and write great code! 🚀
+
+---
+
+## VoltraMax Shared platform layer (commit 3b034369)
+
+**Read this first: `desktop_environment/Shared/` is now the root dependency of every native app.**
+
+### The problem it solves
+Every native VoltraMax app was a standalone island - no account, no network stack, no sync. That is the direct reason every feature ended up implemented only in the web copy under `src/`. The native apps had nowhere to send data.
+
+### What is in `desktop_environment/Shared/`
+
+| File | Lines | Role |
+|---|---|---|
+| `Http/HttpClient.h` | 319 | Single HTTP egress point API |
+| `Http/HttpClient.cpp` | 988 | retry/backoff, ETag conflicts, RFC 7233 resumable upload |
+| `Account/XakteirAccount.h` | 300 | connected Xakteir account API |
+| `Account/XakteirAccount.cpp` | 1243 | Identity Toolkit sign-in, session persistence, device registry |
+| `README.md` | - | contracts + honest limitations |
+| `mesh/*` | - | pooled-bandwidth networking, **Qt-free by requirement** |
+
+### Hard rules for anyone working in this repo
+
+1. **Do not create your own `QNetworkAccessManager`.** Route through `Shared/Http/HttpClient`. It is the only place bearer tokens are attached.
+2. **Do not invent a second account object.** Get `XakteirAccount` and use it. Guest is a real identity with a stable `localId`.
+3. **`Shared/mesh` must stay Qt-free.** It has to be liftable into the VoltraPlay kernel image unchanged. It may not include `Shared/Http` or anything that pulls in Qt.
+4. **Sign-in is optional everywhere.** Every network path needs a working unauthenticated variant. The shared-bandwidth WiFi must work for a guest device.
+
+### CMakeLists.txt changes that were made
+- `find_package(... Network REQUIRED)` - `Qt6::Network` was **not linked before**.
+- `Qt6::Network` added to `target_link_libraries`.
+- `Shared/Http/*` and `Shared/Account/*` added to `PROJECT_SOURCES`.
+
+If you add a shared component, add it to `PROJECT_SOURCES` and add its include dir to `target_include_directories`.
+
+### KNOWN LIMITATIONS - do not pretend these are done
+- **Nothing here has been compiled.** This machine has no Qt install. Structural checks pass (brace balance, declaration/definition agreement across all four files) but that is not a compiler. Expect the first `cmake` build to surface more.
+- **`XakteirAccount::defaultApiKey()` is a placeholder.** Sign-in calls will fail until the real Firebase project key is substituted.
+- **Tokens persist in `QSettings`, not the OS keychain.** Real gap, recorded in `Shared/README.md`.
+- **No MFA flow.** Second-factor enrolment/challenge not implemented.
+- **`HttpClient` does not follow redirects** (`ManualRedirectPolicy`, deliberately, to stop bearer leakage). A redirecting endpoint currently returns a `3xx` with an empty body.
+- **No password-vault implementation yet.** `XakteirAccount` only exposes `hasVault`/`fetchVaultFlag()`. The vault itself (`Shared/Vault`) is still to be built.
+
+### Firewall: who owns what
+Nobody edits `CMakeLists.txt`, `Core/main.cpp`, or `firestore.rules` from a subagent - document the exact block in your own README instead. I integrate them.
+
+### Git state
+Branch `Rollbak`. `3b034369` pushed. `116` changed paths total at time of writing, most of it in-progress subagent work under `Apps/Mail`, `Apps/Paint`, `Apps/Voltraclip`, `src/lib/*`, `src/app/*`.
