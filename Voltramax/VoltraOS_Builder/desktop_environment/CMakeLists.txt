@@ -9,7 +9,13 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # Find Qt6 components required for the massive VoltraOS ecosystem
-find_package(Qt6 COMPONENTS Core Gui Qml Quick WebEngineQuick WebSockets REQUIRED)
+#
+# Network is required by Shared/Http, which is the single HTTP egress point for
+# every app in this binary. Before that layer existed each app rolled its own
+# connection, which is how the web copy of every feature ended up being the only
+# one that worked. Gui/Qml/Quick provide the UI; WebEngineQuick powers the
+# browser; WebSockets is used by Chat and Stream.
+find_package(Qt6 COMPONENTS Core Gui Qml Quick WebEngineQuick WebSockets Network REQUIRED)
 
 # Combine the Desktop Environment, WTL, and OOBE subsystems into a single binary
 set(PROJECT_SOURCES
@@ -33,6 +39,27 @@ set(PROJECT_SOURCES
     Core/SettingsEngine.h
     Core/Streaming/StreamEngine.cpp
     Core/Streaming/StreamEngine.h
+
+    # --------------------------------------------------------------------
+    # Shared platform layer
+    #
+    # The root dependency of every app below. Before this existed, each app was
+    # a standalone island with no account and no sync, which is exactly why
+    # every feature ended up implemented only in the web copy under src/.
+    #
+    # HttpClient is the single HTTP egress point for the whole binary: it owns
+    # bearer attachment, retry policy, conditional requests and resumable
+    # upload. XakteirAccount is the connected Xakteir account every other
+    # subsystem talks to - guest is a real identity, sign-in is optional, and a
+    # failure always surfaces the server's actual reason.
+    #
+    # Shared/mesh is owned separately and is deliberately Qt-free so it can be
+    # lifted into the VoltraPlay kernel image unchanged.
+    # --------------------------------------------------------------------
+    Shared/Http/HttpClient.cpp
+    Shared/Http/HttpClient.h
+    Shared/Account/XakteirAccount.cpp
+    Shared/Account/XakteirAccount.h
     
     # Apps & Media
     Apps/Browser/BrowserEngine.cpp
@@ -57,6 +84,8 @@ set(PROJECT_SOURCES
     Apps/Weather/VoltraCamera.qml
     Apps/Weather/VoltraWeather.qml
     Apps/Store/VoltraStore.qml
+    Apps/Store/StoreEngine.cpp
+    Apps/Store/StoreEngine.h
     Apps/Installer/VoltraInstaller.qml
     Apps/Installer/InstallerEngine.cpp
     Apps/Installer/InstallerEngine.h
@@ -90,6 +119,8 @@ target_link_libraries(VoltraOS PRIVATE
     Qt6::Quick
     Qt6::WebEngineQuick
     Qt6::WebSockets
+    # Network backs Shared/Http, the single HTTP egress point.
+    Qt6::Network
 )
 
 # Include directories
