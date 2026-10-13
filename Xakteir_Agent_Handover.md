@@ -152,6 +152,13 @@ If you are modifying existing code, keep these changes in mind:
   - **New Firestore collections + rules added:** `mapIncidents`, `fitnessLeaderboard`, `evChargingStations`, `aiSuggestions`, `landmarks`, `signalReadings` are top-level and need explicit rules in `firestore.rules` (the `users/{userId}/{collectionName}/{docId}` generic subcollection rule already covers the personal ones). Public read, signed-in create, owner-or-admin update where user-generated.
   - **CSS note:** the map's keyframes and mode classes (`pulse-landmark`, `pulse-ev`, `pulse-signal`, `.landmark-mode`, `.signal-mode`) live in an inline `<style>` block inside the component's return, not in `globals.css`. Marker animation classes are attached via Leaflet `divIcon` `className` / polyline `className` options.
 
+- **Local Dev Toolchain (Windows host, set up Oct 2026):** there is now a real toolchain on this machine.
+  - **Node v24.21.0 + npm 11.19.0 + npx + `tsc`** are installed **portably** at `C:\Users\ridwa\AppData\Local\nodejs\node-v24.21.0-win-x64` and that folder was appended to the **user PATH**. Fresh shells started by an agent may not inherit it — prefix `$env:Path = "C:\Users\ridwa\AppData\Local\nodejs\node-v24.21.0-win-x64;$env:Path"` if `node` is not found.
+  - Invoke npm as **`npm.cmd`** — PowerShell execution policy blocks `npm.ps1`. Useful scripts: `npm.cmd run dev` (Next dev on port 9002), `npm.cmd run typecheck` (`tsc --noEmit`).
+  - **Vercel CLI** is installed globally (`vercel@63.x`). `vercel login` is interactive and must be run by the human.
+  - **⚠️ Corrupt `node_modules` gotcha:** an interrupted `npm install` can leave the tree *truncated* (thousands of files, some partial or 0 bytes). Symptoms: `next-swc.win32-x64-msvc.node is not a valid Win32 application`, or Turbopack's `The module has no exports at all` (e.g. `@floating-ui/core/dist/floating-ui.core.mjs` is 0 bytes). `npm install` alone will **not** fix it — use a clean, integrity-checked reinstall: `npm.cmd ci --prefer-offline`. Then, because npm 11 blocks postinstall scripts by default, run `npm.cmd install-scripts approve --all` and `npm.cmd rebuild` (needed for `esbuild`, `sharp`, `@firebase/util`).
+  - **Git identity:** global `user.name` = `allbizmaker-hub`, `user.email` = `allbizmaker@gmail.com`, credential helper = `manager` (Git Credential Manager). The interactive GitHub login **cannot be launched from an agent shell** (`git-credential-manager.exe` is blocked there) — the human must run `& "C:\Program Files\Git\mingw64\bin\git-credential-manager.exe" github login`.
+
 ## 📝 Your Mission
 Your goal is to build out real features, supercharge existing ones, and help transition this massive web ecosystem into a native, premium experience for Voltramax. 
 

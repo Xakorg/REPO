@@ -409,7 +409,9 @@ export default function XakteirMapsPage() {
   // ---- FEATURE 19: Heatmap ----
   const [heatmapEnabled, setHeatmapEnabled] = useState(false);
   const heatmapLayerRef = useRef<any>(null);
-  const heatmapScriptLoaded = useRef(false);
+  // Shared by the Activity Heatmap and the Signal Strength layer — leaflet.heat is
+  // loaded exactly once, independently of which layer is switched on first.
+  const [heatScriptReady, setHeatScriptReady] = useState(false);
 
   // ---- FEATURE 10: Explore Nearby ----
   const [exploreOpen, setExploreOpen] = useState(false);
@@ -543,20 +545,20 @@ export default function XakteirMapsPage() {
   // ---- Load all incident data ----
   useEffect(() => {
     if (incidentsData) {
-      setMapIncidents(incidentsData.map((d: any) => ({ id: d.id, ...d.data() })));
+      setMapIncidents(incidentsData);
     }
   }, [incidentsData]);
 
   useEffect(() => {
     if (userIncidentsData) {
-      setUserIncidents(userIncidentsData.map((d: any) => ({ id: d.id, ...d.data() })));
+      setUserIncidents(userIncidentsData);
     }
   }, [userIncidentsData]);
 
   // ---- Load fitness data ----
   useEffect(() => {
     if (fitnessRoutesData) {
-      const routes = fitnessRoutesData.map((d: any) => ({ id: d.id, ...d.data() }));
+      const routes = fitnessRoutesData;
       setFitnessRoutes(routes);
       // Calculate stats
       const totalDist = routes.reduce((sum: number, r: any) => sum + (r.totalDistance || 0), 0);
@@ -583,7 +585,7 @@ export default function XakteirMapsPage() {
   // ---- Load EV charging stations ----
   useEffect(() => {
     if (evStationsData) {
-      setEvChargingStations(evStationsData.map((d: any) => ({ id: d.id, ...d.data() })));
+      setEvChargingStations(evStationsData);
     }
   }, [evStationsData]);
 
@@ -597,14 +599,14 @@ export default function XakteirMapsPage() {
   // ---- Load landmarks ----
   useEffect(() => {
     if (landmarksData) {
-      setLandmarks(landmarksData.map((d: any) => ({ id: d.id, ...d.data() })));
+      setLandmarks(landmarksData);
     }
   }, [landmarksData]);
 
   // ---- Load signal data ----
   useEffect(() => {
     if (signalDataFromFs) {
-      setSignalData(signalDataFromFs.map((d: any) => ({ id: d.id, ...d.data() })));
+      setSignalData(signalDataFromFs);
     }
   }, [signalDataFromFs]);
 
@@ -616,7 +618,7 @@ export default function XakteirMapsPage() {
   const { data: userSignalData } = useCollection(userSignalQuery);
   useEffect(() => {
     if (userSignalData) {
-      setUserSignalReadings(userSignalData.map((d: any) => ({ id: d.id, ...d.data() })));
+      setUserSignalReadings(userSignalData);
     }
   }, [userSignalData]);
 
@@ -1294,9 +1296,21 @@ export default function XakteirMapsPage() {
       .catch(() => {});
   }, [location, weatherOpen, leftPanel]);
 
+  // ---- Shared loader: leaflet.heat (used by both Activity Heatmap and Signal Map) ----
+  useEffect(() => {
+    if (!leafletLoaded || heatScriptReady) return;
+    const L = (window as any).L;
+    if (L && typeof (L as any).heatLayer !== "undefined") { setHeatScriptReady(true); return; }
+    const s = document.createElement("script");
+    s.src = "https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js";
+    s.onload = () => setHeatScriptReady(true);
+    s.onerror = () => console.error("Failed to load leaflet.heat");
+    document.head.appendChild(s);
+  }, [leafletLoaded, heatScriptReady]);
+
   // ---- FEATURE 5: Signal heatmap layer ----
   useEffect(() => {
-    if (!mapRef.current || !leafletLoaded) return;
+    if (!mapRef.current || !leafletLoaded || !heatScriptReady) return;
     const L = (window as any).L;
     if (!L) return;
 
@@ -1321,7 +1335,7 @@ export default function XakteirMapsPage() {
         signalHeatmapLayerRef.current = null;
       }
     }
-  }, [signalEnabled, signalData, signalProvider, leafletLoaded]);
+  }, [signalEnabled, signalData, signalProvider, leafletLoaded, heatScriptReady]);
 
   // ---- FEATURE 4: EV charging station markers ----
   useEffect(() => {
@@ -1537,7 +1551,7 @@ export default function XakteirMapsPage() {
 
   // ---- FEATURE 19: Heatmap ----
   useEffect(() => {
-    if (!mapRef.current || !leafletLoaded) return;
+    if (!mapRef.current || !leafletLoaded || !heatScriptReady) return;
     const L = (window as any).L;
     if (!L) return;
 
@@ -1549,31 +1563,20 @@ export default function XakteirMapsPage() {
       return;
     }
 
-    const loadHeat = () => {
-      const points = [
-        ...mapEvents.filter(e => e.lat && e.lng).map(e => [e.lat, e.lng, 0.8]),
-        ...mapPhotos.filter(p => p.lat && p.lng).map(p => [p.lat, p.lng, 0.6]),
-      ];
-      if (heatmapLayerRef.current) heatmapLayerRef.current.remove();
-      if (typeof (L as any).heatLayer !== "undefined" && points.length > 0) {
-        heatmapLayerRef.current = (L as any).heatLayer(points, {
-          radius: 35,
-          blur: 25,
-          maxZoom: 17,
-          gradient: { 0.2: "#2563eb", 0.5: "#f59e0b", 1.0: "#ef4444" }
-        }).addTo(mapRef.current);
-      }
-    };
-
-    if (!heatmapScriptLoaded.current) {
-      const s = document.createElement("script");
-      s.src = "https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js";
-      s.onload = () => { heatmapScriptLoaded.current = true; loadHeat(); };
-      document.head.appendChild(s);
-    } else {
-      loadHeat();
+    const points = [
+      ...mapEvents.filter(e => e.lat && e.lng).map(e => [e.lat, e.lng, 0.8]),
+      ...mapPhotos.filter(p => p.lat && p.lng).map(p => [p.lat, p.lng, 0.6]),
+    ];
+    if (heatmapLayerRef.current) heatmapLayerRef.current.remove();
+    if (typeof (L as any).heatLayer !== "undefined" && points.length > 0) {
+      heatmapLayerRef.current = (L as any).heatLayer(points, {
+        radius: 35,
+        blur: 25,
+        maxZoom: 17,
+        gradient: { 0.2: "#2563eb", 0.5: "#f59e0b", 1.0: "#ef4444" }
+      }).addTo(mapRef.current);
     }
-  }, [heatmapEnabled, mapEvents, mapPhotos, leafletLoaded]);
+  }, [heatmapEnabled, mapEvents, mapPhotos, leafletLoaded, heatScriptReady]);
 
   // ---- FEATURE 3: Location sharing (friends) ----
   useEffect(() => {
