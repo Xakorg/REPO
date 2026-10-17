@@ -599,10 +599,10 @@ private:
     // ---- drawing internals ---------------------------------------------------
     StrokeStyle styleForTool(int tool) const;
     void beginLiveStroke(const RawSample &sample);
-    void extendLiveStroke(const RawSample &sample);
+    void extendLiveStrokeFrom(const StrokePoint &point);
     void finishLiveStroke();
-    void applySymmetryToStroke(Stroke &stroke) const;
-    QVector<QPointF> symmetryOffsets() const;
+    void cancelLiveStroke();
+    QVector<QTransform> symmetryTransforms() const;
 
     // ---- shape gesture ---------------------------------------------------------
     void beginShapeGesture(const QPointF &docPos);
@@ -618,7 +618,7 @@ private:
 
     // ---- move / transform gesture --------------------------------------------------
     void beginMoveGesture(const QPointF &docPos);
-    void updateMoveGesture(const QPointF &docPos, bool constrain);
+    void updateMoveGesture(const QPointF &docPos, const QPointF &prevDoc, bool constrain);
     void commitMoveGesture();
 
     // ---- eyedropper / pan ------------------------------------------------------------
@@ -668,6 +668,13 @@ private:
 
     QVariantList m_layerCache;
 
+    // Cached composite. LayerEngine::composite() returns a fresh QImage by
+    // value, and the canvas holds a reference across a paint() call, so the
+    // engine must own a stable image and rebuild it only when the serial moves.
+    mutable QImage m_compositeCache;
+    mutable quint64 m_cacheSerial = 0;
+    mutable bool m_cacheValid = false;
+
     // Live gesture state.
     enum Gesture { GestureNone, GestureStroke, GestureShape, GestureSelect,
                    GestureMove, GesturePan, GestureEyedrop };
@@ -693,6 +700,15 @@ private:
     int m_moveHandle = 0;
     QPointF m_moveAccum;
     bool m_pendingSelectionCommit = false;
+
+    // Modifier keys tracked by the engine itself: key events arrive at the
+    // canvas item, but pen events arrive without key state, so the engine keeps
+    // its own mirror of the four modifiers and the canvas tells it when they
+    // change. This mirrors the key state in PaintCanvasItem.
+    bool m_shiftDown = false;
+    bool m_altDown = false;
+    bool m_ctrlDown = false;
+    bool m_spaceDown = false;
 
     ClipboardBlob m_clipboard;
 
