@@ -4,6 +4,7 @@ import './globals.css';
 import { FirebaseProvider } from '@/firebase';
 import { Toaster } from '@/components/ui/toaster';
 import { XakcodeAuthProvider } from '@/contexts/xakcode-auth-context';
+import { Analytics } from '@vercel/analytics/next';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Toaster />
           </XakcodeAuthProvider>
         </FirebaseProvider>
+        <Analytics />
       </body>
     </html>
   );
