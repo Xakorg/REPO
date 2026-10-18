@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useXakCode } from "../context";
-import DOMPurify from 'dompurify';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +41,22 @@ export default function UtilitiesPage() {
     ambientVolumes,
     setAmbientVolume
   } = useXakCode();
+
+  const [domPurify, setDomPurify] = useState<any>(null);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    import('dompurify')
+      .then((mod) => {
+        const createDOMPurify = (mod && (mod.default || mod));
+        try {
+          const dp = createDOMPurify ? createDOMPurify(window) : null;
+          setDomPurify(dp);
+        } catch (e) {
+          setDomPurify(null);
+        }
+      })
+      .catch(() => setDomPurify(null));
+  }, []);
 
   // Active Sound Refs for Working Audio Player
   const lofiRef = useRef<HTMLAudioElement | null>(null);
@@ -164,7 +179,12 @@ export default function UtilitiesPage() {
   const shadowCssCode = `box-shadow: ${shadowX}px ${shadowY}px ${shadowBlur}px ${shadowSpread}px ${shadowColor};`;
 
   // 6. SVG Preview State
-  const [svgCode, setSvgCode] = useState(`<svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\n  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>\n</svg>`);
+  const [svgCode, setSvgCode] = useState(`<svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\n  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-[...]`);
+
+  const sanitizedSvg = useMemo(() => {
+    if (!domPurify) return '';
+    try { return domPurify.sanitize(svgCode); } catch { return ''; }
+  }, [domPurify, svgCode]);
 
   // 7. Regex Tester State
   const [regexPattern, setRegexPattern] = useState("\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b");
@@ -210,7 +230,7 @@ export default function UtilitiesPage() {
         {/* Title */}
         <div className="space-y-1">
           <h2 className="text-xl font-black uppercase italic tracking-tighter text-white">Productivity Dashboard</h2>
-          <p className="text-[10px] text-muted-foreground italic leading-relaxed">Integrated utility panels containing workspace checkers, audio sound machines, Pomodoro timers, and code generators.</p>
+          <p className="text-[10px] text-muted-foreground italic leading-relaxed">Integrated utility panels containing workspace checkers, audio sound machines, Pomodoro timers, and code generato[...]</p>
         </div>
 
         {/* TOP ROW: Pomodoro & Ambient Sounds */}
@@ -506,7 +526,7 @@ export default function UtilitiesPage() {
 
               {/* SVG visual display */}
               <div className="border border-white/10 rounded-xl bg-black/60 flex items-center justify-center h-20 p-2 relative overflow-hidden">
-                <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(svgCode) }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizedSvg }} />
                 <span className="absolute bottom-1 right-2 text-[7px] text-white/30 font-black uppercase tracking-wider font-mono">Canvas</span>
               </div>
             </div>
