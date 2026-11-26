@@ -18,7 +18,39 @@ interface XakcodeAuthContextType {
 
 const XakcodeAuthContext = createContext<XakcodeAuthContextType | undefined>(undefined);
 
+function normalizeSavedAccounts() {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const savedAccounts = localStorage.getItem('xakteir_accounts');
+    if (!savedAccounts) return;
+
+    const parsedAccounts: unknown = JSON.parse(savedAccounts);
+    if (!Array.isArray(parsedAccounts)) {
+      localStorage.setItem('xakteir_accounts', '[]');
+      return;
+    }
+
+    const validAccounts = parsedAccounts.filter(
+      (account): account is Record<string, unknown> => !!account && typeof account === 'object' && !Array.isArray(account)
+    );
+    if (validAccounts.length !== parsedAccounts.length) {
+      localStorage.setItem('xakteir_accounts', JSON.stringify(validAccounts));
+    }
+  } catch {
+    // Recover from malformed or inaccessible local storage instead of crashing the app shell.
+    try {
+      localStorage.setItem('xakteir_accounts', '[]');
+    } catch {
+      // Storage may be disabled by the browser; the app can still continue without saved accounts.
+    }
+  }
+}
+
 export function XakcodeAuthProvider({ children }: { children: React.ReactNode }) {
+  // Header reads this persisted key while rendering, so normalize stale/corrupt values first.
+  normalizeSavedAccounts();
+
   const { user: firebaseUser } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
