@@ -37,19 +37,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="fixed inset-0 arcade-grid opacity-10 pointer-events-none" aria-hidden="true" />
 
         <FirebaseProvider>
-          <OnboardingProvider>
-            <LockedAccountGuard>
-              <FocusModeListener />
-              <main className="relative z-10">
-                {children}
-              </main>
-              <CommandCenter />
-              <UpdateManager />
-              <NotificationManager />
-              <Toaster />
-              <DesktopBridge />
-            </LockedAccountGuard>
-          </OnboardingProvider>
+          <XakcodeAuthProvider>
+            <OnboardingProvider>
+              <LockedAccountGuard>
+                <FocusModeListener />
+                <main className="relative z-10">
+                  {children}
+                </main>
+                <CommandCenter />
+                <UpdateManager />
+                <NotificationManager />
+                <Toaster />
+                <DesktopBridge />
+              </LockedAccountGuard>
+            </OnboardingProvider>
+          </XakcodeAuthProvider>
         </FirebaseProvider>
       </body>
     </html>
