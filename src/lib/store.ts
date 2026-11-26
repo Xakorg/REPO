@@ -38,6 +38,8 @@ interface UIState {
   setPinnedApps: (apps: string[]) => void;
 }
 
+const HEADER_STYLES: HeaderStyle[] = ['default', 'google', 'right', 'left', 'hamburger', 'macos', 'floating', 'centered'];
+
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
@@ -50,6 +52,26 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'xakteir-ui-storage',
+      // Old or manually edited local storage can contain null or invalid values.
+      // Merge only validated preferences so one bad field cannot crash the global header.
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState && typeof persistedState === 'object'
+          ? persistedState as Partial<UIState>
+          : {};
+
+        return {
+          ...currentState,
+          headerStyle: HEADER_STYLES.includes(persisted.headerStyle as HeaderStyle)
+            ? persisted.headerStyle as HeaderStyle
+            : currentState.headerStyle,
+          showLogo: typeof persisted.showLogo === 'boolean'
+            ? persisted.showLogo
+            : currentState.showLogo,
+          pinnedApps: Array.isArray(persisted.pinnedApps)
+            ? persisted.pinnedApps.filter((app): app is string => typeof app === 'string')
+            : currentState.pinnedApps,
+        };
+      },
     }
   )
 );
